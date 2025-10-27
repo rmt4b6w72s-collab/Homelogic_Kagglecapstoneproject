@@ -20,13 +20,6 @@ class CustomNavigationProvider
                     ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.pages.dashboard'))
                     ->sort(-1000),
 
-                // Medications
-                NavigationItem::make('Medications')
-                    ->icon('heroicon-o-beaker')
-                    ->url(route('filament.admin.resources.medications.index'))
-                    ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.resources.medications.*'))
-                    ->sort(-900),
-
                 // Appointment
                 NavigationItem::make('Appointment')
                     ->icon('heroicon-o-calendar-days')
@@ -86,16 +79,6 @@ class CustomNavigationProvider
                             ->icon('heroicon-o-chart-bar')
                             ->url(route('filament.admin.pages.assessment-charts'))
                             ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.pages.assessment-charts')),
-                        
-                        NavigationItem::make('Medication History')
-                            ->icon('heroicon-o-cube')
-                            ->url(route('filament.admin.pages.medication-history'))
-                            ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.pages.medication-history')),
-                        
-                        NavigationItem::make('Medication Reports')
-                            ->icon('heroicon-o-cube')
-                            ->url(route('filament.admin.pages.medication-reports'))
-                            ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.pages.medication-reports')),
                         
                         NavigationItem::make('Appointments Charts')
                             ->icon('heroicon-o-chart-bar')
