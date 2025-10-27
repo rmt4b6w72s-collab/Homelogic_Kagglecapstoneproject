@@ -12,93 +12,111 @@ class CustomNavigationProvider
     public function __invoke(NavigationBuilder $builder): NavigationBuilder
     {
         return $builder
-            ->groups([
-                // Dashboard Group
-                NavigationGroup::make('Dashboard')
-                    ->icon('heroicon-o-home')
-                    ->items([
-                        NavigationItem::make('Dashboard')
-                            ->icon('heroicon-o-home')
-                            ->url(route('filament.admin.pages.dashboard'))
-                            ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.pages.dashboard'))
-                            ->sort(-1000),
-                    ]),
+            ->items([
+                // Dashboard
+                NavigationItem::make('Dashboard')
+                    ->icon('heroicon-o-chart-bar')
+                    ->url(route('filament.admin.pages.dashboard'))
+                    ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.pages.dashboard'))
+                    ->sort(-1000),
 
-                // Resident Care Group
-                NavigationGroup::make('Resident Care')
+                // Medications
+                NavigationItem::make('Medications')
+                    ->icon('heroicon-o-beaker')
+                    ->url(route('filament.admin.resources.medications.index'))
+                    ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.resources.medications.*'))
+                    ->sort(-900),
+
+                // Appointment
+                NavigationItem::make('Appointment')
+                    ->icon('heroicon-o-calendar-days')
+                    ->url(route('filament.admin.resources.appointments.index'))
+                    ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.resources.appointments.*'))
+                    ->sort(-800),
+
+                // Assessments
+                NavigationItem::make('Assessments')
+                    ->icon('heroicon-o-clipboard-document-list')
+                    ->url(route('filament.admin.resources.assessments.index'))
+                    ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.resources.assessments.*'))
+                    ->sort(-700),
+
+                // Vitals
+                NavigationItem::make('Vitals')
                     ->icon('heroicon-o-heart')
-                    ->items([
-                        NavigationItem::make('Residents')
-                            ->icon('heroicon-o-users')
-                            ->url(route('filament.admin.resources.residents.index'))
-                            ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.resources.residents.*')),
+                    ->url(route('filament.admin.pages.view-vitals'))
+                    ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.pages.view-vitals'))
+                    ->sort(-600),
+
+                // Sleep
+                NavigationItem::make('Sleep')
+                    ->icon('heroicon-o-moon')
+                    ->url(route('filament.admin.resources.sleep-records.index'))
+                    ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.resources.sleep-records.*'))
+                    ->sort(-500),
+
+                // Reports (with dropdown)
+                NavigationItem::make('Reports')
+                    ->icon('heroicon-o-chart-bar-square')
+                    ->url('#')
+                    ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.pages.*reports*'))
+                    ->sort(-400)
+                    ->childItems([
+                        NavigationItem::make('Resident Reports')
+                            ->url(route('filament.admin.pages.resident-reports'))
+                            ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.pages.resident-reports')),
                         
-                        NavigationItem::make('View Vitals')
-                            ->icon('heroicon-o-heart')
-                            ->url(route('filament.admin.pages.view-vitals'))
-                            ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.pages.view-vitals'))
-                            ->sort(20),
+                        NavigationItem::make('Medication Reports')
+                            ->url(route('filament.admin.pages.medication-reports'))
+                            ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.pages.medication-reports')),
                         
-                        NavigationItem::make('Resident Appointments')
-                            ->icon('heroicon-o-calendar-days')
-                            ->url(route('filament.admin.resources.appointments.index'))
-                            ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.resources.appointments.*'))
-                            ->sort(30),
+                        NavigationItem::make('Assessment Reports')
+                            ->url(route('filament.admin.pages.assessment-reports'))
+                            ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.pages.assessment-reports')),
                         
-                        NavigationItem::make('Assessments')
-                            ->icon('heroicon-o-clipboard-document-list')
-                            ->url(route('filament.admin.resources.assessments.index'))
-                            ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.resources.assessments.*'))
-                            ->sort(40),
-                        
-                        NavigationItem::make('Medications')
-                            ->icon('heroicon-o-beaker')
-                            ->url(route('filament.admin.resources.medications.index'))
-                            ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.resources.medications.*'))
-                            ->sort(50),
+                        NavigationItem::make('Staff Reports')
+                            ->url(route('filament.admin.pages.staff-reports'))
+                            ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.pages.staff-reports')),
                     ]),
 
-                // Staff Management Group
-                NavigationGroup::make('Staff Management')
+                // Staff (with dropdown)
+                NavigationItem::make('Staff')
                     ->icon('heroicon-o-user-group')
-                    ->items([
+                    ->url('#')
+                    ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.resources.users.*') || request()->routeIs('filament.admin.resources.leave-requests.*'))
+                    ->sort(-300)
+                    ->childItems([
                         NavigationItem::make('Manage Users')
-                            ->icon('heroicon-o-users')
                             ->url(route('filament.admin.resources.users.index'))
                             ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.resources.users.*')),
                         
-                        NavigationItem::make('Roles & Permissions')
-                            ->icon('heroicon-o-shield-check')
-                            ->url(route('filament.admin.resources.roles.index'))
-                            ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.resources.roles.*')),
-                        
                         NavigationItem::make('Leave Requests')
-                            ->icon('heroicon-o-calendar')
                             ->url(route('filament.admin.resources.leave-requests.index'))
                             ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.resources.leave-requests.*')),
+                        
+                        NavigationItem::make('Roles & Permissions')
+                            ->url(route('filament.admin.resources.roles.index'))
+                            ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.resources.roles.*')),
                     ]),
 
-                // System Administration Group
-                NavigationGroup::make('Administration')
+                // Administration (with dropdown)
+                NavigationItem::make('Administration')
                     ->icon('heroicon-o-cog-6-tooth')
-                    ->items([
+                    ->url('#')
+                    ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.resources.facilities.*') || request()->routeIs('filament.admin.resources.branches.*') || request()->routeIs('filament.admin.resources.vital-ranges.*'))
+                    ->sort(-200)
+                    ->childItems([
                         NavigationItem::make('Facilities')
-                            ->icon('heroicon-o-building-office')
                             ->url(route('filament.admin.resources.facilities.index'))
-                            ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.resources.facilities.*'))
-                            ->sort(60),
+                            ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.resources.facilities.*')),
                         
                         NavigationItem::make('Branches')
-                            ->icon('heroicon-o-building-office-2')
                             ->url(route('filament.admin.resources.branches.index'))
-                            ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.resources.branches.*'))
-                            ->sort(70),
+                            ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.resources.branches.*')),
                         
                         NavigationItem::make('Vital Ranges')
-                            ->icon('heroicon-o-scale')
                             ->url(route('filament.admin.resources.vital-ranges.index'))
-                            ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.resources.vital-ranges.*'))
-                            ->sort(80),
+                            ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.resources.vital-ranges.*')),
                     ]),
             ]);
     }

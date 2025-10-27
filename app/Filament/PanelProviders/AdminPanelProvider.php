@@ -33,12 +33,6 @@ class AdminPanelProvider extends PanelProvider
                 in: app_path('Filament/Widgets'),
                 for: 'App\\Filament\\Widgets',
             )
-            ->navigationGroups([
-                'Dashboard',
-                'Resident Care', 
-                'Staff Management',
-                'System Administration',
-            ])
             ->navigationBuilder(CustomNavigationProvider::class)
             ->topNavigation()
             ->sidebarCollapsibleOnDesktop()

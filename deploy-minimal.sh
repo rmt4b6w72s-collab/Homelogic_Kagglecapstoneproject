@@ -38,3 +38,6 @@ sudo service php8.3-fpm restart
 php artisan queue:restart
 
 echo "✅ Deployment completed!"
+
+
+

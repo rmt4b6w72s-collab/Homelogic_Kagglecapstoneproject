@@ -71,3 +71,6 @@ echo "============================="
 echo "Your application should now be working properly."
 echo "The current symlink has been created and the cache table exists."
 
+
+
+

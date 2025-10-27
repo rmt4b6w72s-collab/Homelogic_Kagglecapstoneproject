@@ -88,3 +88,6 @@ echo "🎉 Cache table fix completed!"
 echo "=============================="
 echo "The cache table should now be working properly."
 
+
+
+

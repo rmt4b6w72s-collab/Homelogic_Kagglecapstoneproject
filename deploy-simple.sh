@@ -53,3 +53,6 @@ php artisan queue:restart
 
 echo "✅ Deployment completed successfully!"
 echo "🌐 Application is now live at: https://evergreen-v5ywe0w6.on-forge.com"
+
+
+
