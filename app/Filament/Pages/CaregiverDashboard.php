@@ -23,7 +23,15 @@ class CaregiverDashboard extends Page
 
     public static function canAccess(): bool
     {
-        return Auth::check() && Auth::user()->hasRole('caregiver');
+        $user = Auth::user();
+        return Auth::check() && (
+            $user->role === 'caregiver' || 
+            $user->role === 'care_giver' || 
+            $user->role === 'nurse' || 
+            $user->role === 'registered_nurse' || 
+            $user->role === 'licensed_nurse' ||
+            $user->hasRole('caregiver')
+        );
     }
 
     public static function shouldRegisterNavigation(): bool
