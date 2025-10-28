@@ -26,6 +26,7 @@ class MedicationHistory extends Page implements HasTable
     protected static ?string $navigationGroup = 'Reports';
     protected static ?int $navigationSort = 3;
     protected static string $view = 'filament.pages.medication-history';
+    protected static bool $shouldRegisterNavigation = false;
 
     public ?int $selectedResident = null;
 

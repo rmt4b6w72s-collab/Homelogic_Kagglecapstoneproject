@@ -21,6 +21,7 @@ class MedicationReports extends Page
     protected static ?string $navigationLabel = 'Medication Reports';
     protected static ?string $navigationGroup = 'Reports';
     protected static ?int $navigationSort = 3;
+    protected static bool $shouldRegisterNavigation = false;
 
     public static function canAccess(): bool
     {

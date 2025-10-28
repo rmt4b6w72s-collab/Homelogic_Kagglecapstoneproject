@@ -19,7 +19,13 @@ class AdminDashboard extends BaseDashboard
 
     public static function canAccess(): bool
     {
-        return Auth::check() && (Auth::user()->hasRole('administrator') || Auth::user()->hasRole('super_admin'));
+        $user = Auth::user();
+        return Auth::check() && (
+            $user->role === 'admin' || 
+            $user->role === 'administrator' || 
+            $user->hasRole('administrator') || 
+            $user->hasRole('super_admin')
+        );
     }
 
     public static function shouldRegisterNavigation(): bool

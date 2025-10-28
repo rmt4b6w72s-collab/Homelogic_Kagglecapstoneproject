@@ -22,6 +22,7 @@ class MedicationAdministrationResource extends Resource
     protected static ?string $modelLabel = 'Medication Administration';
     protected static ?string $pluralModelLabel = 'Medication Administrations';
     protected static ?string $navigationGroup = 'Medications';
+    protected static bool $shouldRegisterNavigation = false;
 
     public static function shouldRegisterNavigation(): bool
     {

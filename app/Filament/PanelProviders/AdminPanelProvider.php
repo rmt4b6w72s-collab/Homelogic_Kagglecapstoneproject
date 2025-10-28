@@ -5,6 +5,8 @@ namespace App\Filament\PanelProviders;
 use Filament\Panel;
 use Filament\PanelProvider;
 use App\Filament\Navigation\CustomNavigationProvider;
+use Filament\Http\Responses\Auth\Contracts\LoginResponse;
+use Illuminate\Http\RedirectResponse;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -19,24 +21,6 @@ class AdminPanelProvider extends PanelProvider
                 'primary' => '#3B82F6',
                 'gray' => '#6B7280',
             ])
-            ->discoverResources(
-                in: app_path('Filament/Resources'),
-                for: 'App\\Filament\\Resources',
-            )
-            ->discoverPages(
-                in: app_path('Filament/Pages'),
-                for: 'App\\Filament\\Pages',
-            )
-            ->discoverWidgets(
-                in: app_path('Filament/Widgets'),
-                for: 'App\\Filament\\Widgets',
-            )
-            ->navigationGroups([
-                'Dashboard',
-                'Resident Care', 
-                'Staff Management',
-                'System Administration',
-            ])
             ->navigationBuilder(CustomNavigationProvider::class)
             ->topNavigation()
             ->sidebarCollapsibleOnDesktop()
@@ -47,7 +31,31 @@ class AdminPanelProvider extends PanelProvider
             ->renderHook(
                 'panels::topbar.end',
                 fn (): string => view('filament.components.user-menu'),
+            )
+            ->loginResponse(
+                LoginResponse::class,
+                fn (): LoginResponse => app(RoleBasedLoginResponse::class)
             );
+    }
+}
+
+class RoleBasedLoginResponse implements LoginResponse
+{
+    public function toResponse($request): RedirectResponse
+    {
+        $user = auth()->user();
+        
+        // Redirect based on user role
+        if ($user->role === 'admin' || $user->role === 'administrator') {
+            return redirect()->to('/admin/admin-dashboard');
+        } elseif ($user->role === 'caregiver' || $user->role === 'care_giver') {
+            return redirect()->to('/admin/caregiver-dashboard');
+        } elseif ($user->role === 'nurse' || $user->role === 'registered_nurse' || $user->role === 'licensed_nurse') {
+            return redirect()->to('/admin/caregiver-dashboard'); // Nurses can use caregiver dashboard
+        } else {
+            // Default redirect for other roles
+            return redirect()->to('/admin/dashboard');
+        }
     }
 }
 

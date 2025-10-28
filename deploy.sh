@@ -1,50 +1,54 @@
 #!/bin/bash
 
-# Laravel Forge Deployment Script
-# This script handles the deployment with consolidated migrations
+# Laravel Forge Deployment Script for Edmond Serenity AFH
+echo "🚀 Starting deployment for Edmond Serenity AFH..."
 
-echo "🚀 Starting deployment process..."
+# Exit on any error
+set -e
 
-# Set application to maintenance mode
-echo "📝 Setting maintenance mode..."
-php artisan down
+# Install/update Composer dependencies
+echo "📦 Installing Composer dependencies..."
+composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev
 
-# Clear all caches
-echo "🧹 Clearing caches..."
-php artisan config:clear
-php artisan cache:clear
-php artisan view:clear
-php artisan route:clear
+# Install/update NPM dependencies and build assets
+echo "🎨 Building frontend assets..."
+npm ci
+npm run build
 
-# Install/update dependencies
-echo "📦 Installing dependencies..."
-composer install --no-dev --optimize-autoloader
-
-# Run database migrations with fresh approach
+# Run database migrations
 echo "🗄️ Running database migrations..."
+php artisan migrate --force
 
-# Check if we need to reset the database
-if [ "$RESET_DATABASE" = "true" ]; then
-    echo "🔄 Resetting database with consolidated migrations..."
-    php artisan migrate:fresh --seed --force
-else
-    echo "📊 Running standard migrations..."
-    php artisan migrate --force
+# Seed production data (only on first deployment)
+if [ ! -f .deployed ]; then
+    echo "🌱 Seeding production database..."
+    php artisan db:seed --class=ProductionSeeder --force
+    touch .deployed
 fi
 
-# Optimize for production
-echo "⚡ Optimizing for production..."
+# Clear and cache configuration
+echo "⚡ Optimizing application..."
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache
+php artisan event:cache
 
-# Set proper permissions
-echo "🔐 Setting permissions..."
-chmod -R 755 storage bootstrap/cache
-chown -R www-data:www-data storage bootstrap/cache
+# Clear application cache
+php artisan cache:clear
 
-# Bring application back online
-echo "✅ Bringing application online..."
-php artisan up
+# Restart PHP-FPM (try different versions)
+echo "🔄 Restarting PHP-FPM..."
+if command -v php8.3-fpm &> /dev/null; then
+    sudo service php8.3-fpm restart
+elif command -v php8.4-fpm &> /dev/null; then
+    sudo service php8.4-fpm restart
+else
+    sudo service php-fpm restart
+fi
 
-echo "🎉 Deployment completed successfully!"
+# Restart queue workers (if using queues)
+echo "🔄 Restarting queue workers..."
+php artisan queue:restart
+
+echo "✅ Deployment completed successfully!"
+echo "🌐 Application is now live at: https://evergreen-v5ywe0w6.on-forge.com"
