@@ -14,37 +14,25 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
-            // Core system seeders
-            RolePermissionSeeder::class,
-            FacilitySeeder::class,
-            BranchSeeder::class,
-            AdminUserSeeder::class,
-            CaregiverSeeder::class,
+            // Essential production seeders (run first)
+            UnifiedProductionSeeder::class,
             
-            // Resident and care data
+            // Additional data seeders (for development/testing)
+            CaregiverSeeder::class,
             ResidentSeeder::class,
             AssessmentSeeder::class,
             AssignmentSeeder::class,
-            
-            // Health and medical data
-            VitalRangeSeeder::class,
             VitalSignSeeder::class,
             MedicationSeeder::class,
             MedicationAdministrationSeeder::class,
             AppointmentTypeSeeder::class,
             AppointmentSeeder::class,
-            
-            // Sleep monitoring
             SleepPatternSeeder::class,
             SleepRecordSeeder::class,
             SleepHourlyDataSeeder::class,
-            
-            // Behavior and incidents
             BehaviorCategorySeeder::class,
             BehaviorSeeder::class,
             IncidentSeeder::class,
-            
-            // Staff and documentation
             EmployeeDocumentSeeder::class,
             HealthcareProviderSeeder::class,
             LeaveRequestSeeder::class,

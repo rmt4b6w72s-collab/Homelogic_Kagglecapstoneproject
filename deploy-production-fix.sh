@@ -19,8 +19,7 @@ php artisan migrate --force
 
 # 4. Run seeders to ensure admin user and permissions exist
 echo "🌱 Running database seeders..."
-php artisan db:seed --class=RolePermissionSeeder --force
-php artisan db:seed --class=AdminUserSeeder --force
+php artisan db:seed --class=UnifiedProductionSeeder --force
 
 # 5. Clear all caches
 echo "🧹 Clearing caches..."
