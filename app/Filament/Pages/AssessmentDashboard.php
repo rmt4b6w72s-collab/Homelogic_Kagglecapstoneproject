@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use Filament\Pages\Page;
+use Illuminate\Support\Facades\Auth;
 
 class AssessmentDashboard extends Page
 {
@@ -13,6 +14,15 @@ class AssessmentDashboard extends Page
     protected static ?string $navigationGroup = null;
     protected static string $view = 'filament.pages.assessments';
     protected static string $routePath = 'assessments';
+
+    public static function canAccess(): bool
+    {
+        return Auth::check() && (
+            Auth::user()->hasRole('administrator') || 
+            Auth::user()->hasRole('super_admin') ||
+            Auth::user()->hasRole('caregiver')
+        );
+    }
 
     public function mount(): void
     {
