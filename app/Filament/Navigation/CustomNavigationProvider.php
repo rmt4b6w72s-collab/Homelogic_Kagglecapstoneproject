@@ -34,21 +34,29 @@ class CustomNavigationProvider
                     ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.resources.assessments.*'))
                     ->sort(-800),
 
-                // Vitals (force visible and defer URL resolution)
+                // Medications
+                NavigationItem::make('Medications')
+                    ->icon('heroicon-o-pill')
+                    ->url('/admin/medications')
+                    ->isActiveWhen(fn (): bool => request()->is('admin/medications*') || 
+                        request()->is('admin/medication-administrations*'))
+                    ->sort(-750),
+
+                // Vitals
                 NavigationItem::make('Vitals')
                     ->icon('heroicon-o-heart')
-                    ->url(fn () => route('filament.admin.pages.view-vitals'))
-                    ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.pages.view-vitals'))
-                    ->hidden(false)
+                    ->url('/admin/view-vitals')
+                    ->isActiveWhen(fn (): bool => request()->is('admin/view-vitals*') || 
+                        request()->is('admin/vital-signs*'))
                     ->sort(-700),
 
-                // Sleep (force visible and defer URL resolution)
+                // Sleep
                 NavigationItem::make('Sleep')
                     ->icon('heroicon-o-moon')
-                    ->url(fn () => route('filament.admin.resources.sleep-records.index'))
-                    ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.resources.sleep-records.*'))
-                    ->hidden(false)
-                    ->sort(-600),
+                    ->url('/admin/sleep-records')
+                    ->isActiveWhen(fn (): bool => request()->is('admin/sleep-records*') || 
+                        request()->is('admin/sleep-patterns*'))
+                    ->sort(-650),
 
                 // Reports (with dropdown)
                 NavigationItem::make('Reports')

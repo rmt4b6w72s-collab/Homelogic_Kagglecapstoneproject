@@ -29,8 +29,11 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->login()
             ->colors([
-                'primary' => Color::hex('#0D9488'),
-                'gray' => Color::Gray,
+                'primary' => '#2D5016', // Dark green for buttons and links
+                'gray' => '#654321', // Dark brown for cards and topbar
+                'success' => '#2D5016', // Dark green for success
+                'warning' => '#D4A574', // Warm beige for warnings
+                'danger' => '#8B4513', // Dark brown for danger
             ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
@@ -55,10 +58,11 @@ class AdminPanelProvider extends PanelProvider
                 'Reports',
                 'Administration',
             ])
+            ->navigation(CustomNavigationProvider::class)
             ->topNavigation()
-            ->sidebarCollapsibleOnDesktop()
-            ->brandName('Edmond Serenity AFH')
-            ->brandLogo(asset('images/logo.svg'))
+            ->brandName('Evergreen Oasis Care Home')
+            ->brandLogo(asset('images/logo.jpeg'))
+            ->brandLogoHeight('3rem')
             ->maxContentWidth('full')
             ->renderHook(
                 'panels::topbar.end',

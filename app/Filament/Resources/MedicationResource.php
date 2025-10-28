@@ -22,9 +22,9 @@ class MedicationResource extends Resource
     protected static ?string $navigationLabel = 'Medications';
     protected static ?string $modelLabel = 'Medication';
     protected static ?string $pluralModelLabel = 'Medications';
-    protected static ?string $navigationGroup = 'Resident Care';
+    protected static ?string $navigationGroup = null;
     protected static ?int $navigationSort = 45;
-    protected static bool $shouldRegisterNavigation = false;
+    protected static bool $shouldRegisterNavigation = true;
 
     public static function getEloquentQuery(): Builder
     {
