@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\UserResource\Pages;
 
 use App\Filament\Resources\UserResource;
+use App\Models\Role;
 use Filament\Actions;
 use Filament\Resources\Pages\CreateRecord;
 
@@ -22,6 +23,20 @@ class CreateUser extends CreateRecord
         }
 
         return $data;
+    }
+
+    protected function afterCreate(): void
+    {
+        // Automatically assign administrator role if user role is 'admin' or 'administrator'
+        $user = $this->record;
+        $role = $user->role ?? null;
+        
+        if (in_array($role, ['admin', 'administrator'])) {
+            $adminRole = Role::where('name', 'administrator')->first();
+            if ($adminRole && !$user->hasRole('administrator')) {
+                $user->assignRole('administrator');
+            }
+        }
     }
 
     protected function getRedirectUrl(): string
