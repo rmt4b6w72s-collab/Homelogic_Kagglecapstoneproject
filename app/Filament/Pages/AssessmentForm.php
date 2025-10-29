@@ -8,14 +8,17 @@ use App\Models\AssessmentQuestion;
 use Filament\Pages\Page;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Forms\Concerns\InteractsWithForms;
+use Filament\Forms\Contracts\HasForms;
 use Filament\Actions;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 
-class AssessmentForm extends Page
+class AssessmentForm extends Page implements HasForms
 {
+    use InteractsWithForms;
     protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-check';
     protected static ?string $navigationLabel = 'Complete Assessment';
     protected static ?string $title = 'Complete Assessment';
@@ -424,11 +427,34 @@ class AssessmentForm extends Page
             ->label('Submit Assessment')
             ->color('success')
             ->action(function () {
-                // Get the current form state
-                $formData = $this->form->getState();
-                
-                // Merge form data into our data array
-                $this->data = array_merge_recursive($this->data, $formData);
+                // Get the current form state - this captures all current form values
+                try {
+                    $formData = $this->form->getState();
+                    
+                    // Merge form data into our data array (form data takes precedence)
+                    if (isset($formData['sections']) && is_array($formData['sections'])) {
+                        if (!isset($this->data['sections'])) {
+                            $this->data['sections'] = [];
+                        }
+                        foreach ($formData['sections'] as $sectionId => $sectionData) {
+                            if (isset($sectionData['questions'])) {
+                                if (!isset($this->data['sections'][$sectionId])) {
+                                    $this->data['sections'][$sectionId] = ['questions' => []];
+                                }
+                                if (!isset($this->data['sections'][$sectionId]['questions'])) {
+                                    $this->data['sections'][$sectionId]['questions'] = [];
+                                }
+                                // Merge questions, form data takes precedence
+                                $this->data['sections'][$sectionId]['questions'] = array_merge(
+                                    $this->data['sections'][$sectionId]['questions'],
+                                    $sectionData['questions']
+                                );
+                            }
+                        }
+                    }
+                } catch (\Exception $e) {
+                    \Log::error('Error getting form state: ' . $e->getMessage());
+                }
                 
                 $this->saveAssessment();
                 
