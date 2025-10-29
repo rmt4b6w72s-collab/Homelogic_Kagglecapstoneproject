@@ -55,9 +55,6 @@ class AssessmentForm extends Page
             
             // Fill the form with the data (after all data is loaded)
             $this->form->fill($this->data);
-            
-            // Also set default values on form fields to ensure they're populated
-            $this->setDefaultValuesOnFormFields();
         }
     }
 
@@ -236,25 +233,45 @@ class AssessmentForm extends Page
             }
             
             foreach ($section->questions as $question) {
+                // Get saved value from loaded data if available
+                $defaultValue = null;
+                if (isset($this->data['sections'][$section->id]['questions'][$question->id])) {
+                    $defaultValue = $this->data['sections'][$section->id]['questions'][$question->id];
+                    // Decode JSON if needed
+                    if (is_string($defaultValue)) {
+                        $decoded = json_decode($defaultValue, true);
+                        if (json_last_error() === JSON_ERROR_NONE) {
+                            $defaultValue = $decoded;
+                        }
+                    }
+                }
+                
                 $field = match ($question->response_type) {
                     'text' => Forms\Components\TextInput::make("sections.{$section->id}.questions.{$question->id}")
-                        ->label($question->question_text),
+                        ->label($question->question_text)
+                        ->default($defaultValue),
                     'number' => Forms\Components\TextInput::make("sections.{$section->id}.questions.{$question->id}")
                         ->label($question->question_text)
-                        ->numeric(),
+                        ->numeric()
+                        ->default($defaultValue),
                     'select' => Forms\Components\Select::make("sections.{$section->id}.questions.{$question->id}")
                         ->label($question->question_text)
-                        ->options(is_array($question->response_options) ? $question->response_options : (is_string($question->response_options) ? json_decode($question->response_options, true) : [])),
+                        ->options(is_array($question->response_options) ? $question->response_options : (is_string($question->response_options) ? json_decode($question->response_options, true) : []))
+                        ->default($defaultValue),
                     'radio' => Forms\Components\Radio::make("sections.{$section->id}.questions.{$question->id}")
                         ->label($question->question_text)
-                        ->options(is_array($question->response_options) ? $question->response_options : (is_string($question->response_options) ? json_decode($question->response_options, true) : [])),
+                        ->options(is_array($question->response_options) ? $question->response_options : (is_string($question->response_options) ? json_decode($question->response_options, true) : []))
+                        ->default($defaultValue),
                     'checkbox' => Forms\Components\CheckboxList::make("sections.{$section->id}.questions.{$question->id}")
                         ->label($question->question_text)
-                        ->options(is_array($question->response_options) ? $question->response_options : (is_string($question->response_options) ? json_decode($question->response_options, true) : [])),
+                        ->options(is_array($question->response_options) ? $question->response_options : (is_string($question->response_options) ? json_decode($question->response_options, true) : []))
+                        ->default($defaultValue),
                     'date' => Forms\Components\DatePicker::make("sections.{$section->id}.questions.{$question->id}")
-                        ->label($question->question_text),
+                        ->label($question->question_text)
+                        ->default($defaultValue),
                     default => Forms\Components\TextInput::make("sections.{$section->id}.questions.{$question->id}")
-                        ->label($question->question_text),
+                        ->label($question->question_text)
+                        ->default($defaultValue),
                 };
 
                 $sectionSchema[] = $field;
@@ -407,6 +424,12 @@ class AssessmentForm extends Page
             ->label('Submit Assessment')
             ->color('success')
             ->action(function () {
+                // Get the current form state
+                $formData = $this->form->getState();
+                
+                // Merge form data into our data array
+                $this->data = array_merge_recursive($this->data, $formData);
+                
                 $this->saveAssessment();
                 
                 $this->assessment->update([
