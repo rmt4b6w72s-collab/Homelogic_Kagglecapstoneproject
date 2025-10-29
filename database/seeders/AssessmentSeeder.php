@@ -36,7 +36,7 @@ class AssessmentSeeder extends Seeder
                 $createdAt = Carbon::now()->subDays(rand(1, 365));
                 $assessor = $users->random();
                 
-                Assessment::create([
+                $assessment = Assessment::create([
                     'resident_id' => $resident->id,
                     'branch_id' => $resident->branch_id,
                     'assessor_id' => $assessor->id,
@@ -50,6 +50,9 @@ class AssessmentSeeder extends Seeder
                     'created_at' => $createdAt,
                     'updated_at' => $createdAt,
                 ]);
+
+                // Create assessment sections for this assessment
+                $this->createAssessmentSections($assessment, $createdAt);
             }
         }
 
@@ -108,5 +111,39 @@ class AssessmentSeeder extends Seeder
             $recommendations[array_rand($recommendations)],
             $recommendations[array_rand($recommendations)]
         ];
+    }
+
+    /**
+     * Create assessment sections for an assessment.
+     */
+    private function createAssessmentSections(Assessment $assessment, Carbon $createdAt): void
+    {
+        $sectionTypes = [
+            'demographic',
+            'medical_history',
+            'functional',
+            'cognitive',
+            'behavioral',
+            'nutritional',
+            'environmental',
+            'risk'
+        ];
+
+        // Create 4-6 sections per assessment
+        $sectionCount = rand(4, 6);
+        $selectedSections = array_slice($sectionTypes, 0, $sectionCount);
+
+        foreach ($selectedSections as $sectionType) {
+            AssessmentSection::create([
+                'assessment_id' => $assessment->id,
+                'section_type' => $sectionType,
+                'score' => rand(50, 100),
+                'notes' => "Assessment notes for {$sectionType} section.",
+                'is_completed' => rand(0, 1) === 1,
+                'completed_at' => $assessment->is_completed ? $createdAt->copy() : null,
+                'created_at' => $createdAt,
+                'updated_at' => $createdAt,
+            ]);
+        }
     }
 }
