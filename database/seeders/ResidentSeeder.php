@@ -525,18 +525,49 @@ class ResidentSeeder extends Seeder
             $branch = $branches[$index % $branches->count()];
             $residentData['branch_id'] = $branch->id;
             
+            // Determine gender from name or default to 'Unknown'
+            $firstName = $residentData['first_name'] ?? '';
+            $gender = $residentData['gender'] ?? $this->guessGender($firstName);
+            
+            // Set room from room_number if room is not set
+            $room = $residentData['room'] ?? $residentData['room_number'] ?? null;
+            
             Resident::firstOrCreate(
-                ['name' => $residentData['name']],
+                ['name' => $residentData['name'], 'branch_id' => $branch->id],
                 array_merge($residentData, [
+                    'gender' => $gender,
+                    'room' => $room,
+                    'room_number' => $residentData['room_number'] ?? $room,
                     'middle_names' => $residentData['middle_names'] ?? null,
                     'diagnosis' => $residentData['diagnosis'] ?? null,
                     'allergies' => $residentData['allergies'] ?? null,
                     'physician_name' => $residentData['physician_name'] ?? null,
                     'pep_or_doctor' => $residentData['pep_or_doctor'] ?? null,
-                    'room' => $residentData['room_number'] ?? null,
                     'cart' => $residentData['cart'] ?? null,
+                    'status' => $residentData['status'] ?? 'active',
+                    'is_active' => $residentData['is_active'] ?? true,
                 ])
             );
         }
+        
+        $this->command->info('✅ Created ' . Resident::count() . ' residents');
+    }
+    
+    /**
+     * Guess gender from common first names (simple heuristic)
+     */
+    private function guessGender(string $firstName): string
+    {
+        $femaleNames = ['Margaret', 'Alice', 'Edna', 'Florence', 'Mildred', 'Dorothy', 'Eleanor', 'Helen', 'Ruth', 'Irene', 'Violet', 'Lillian', 'Gladys', 'Beatrice'];
+        $maleNames = ['Harold', 'Walter', 'Eugene', 'Arthur', 'Robert', 'William', 'Charles', 'Frank', 'George', 'Norman', 'Raymond', 'Howard', 'Clarence', 'Stanley'];
+        
+        if (in_array($firstName, $femaleNames)) {
+            return 'Female';
+        }
+        if (in_array($firstName, $maleNames)) {
+            return 'Male';
+        }
+        
+        return 'Unknown';
     }
 }
