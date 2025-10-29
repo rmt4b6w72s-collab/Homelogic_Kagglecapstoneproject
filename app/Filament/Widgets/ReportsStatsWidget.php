@@ -26,7 +26,7 @@ class ReportsStatsWidget extends BaseWidget
                 ->color('success')
                 ->icon('heroicon-o-user'),
             
- Beth        Stat::make('Pending Assessments', Assessment::whereNotIn('status', ['approved', 'archived'])->count())
+            Stat::make('Pending Assessments', Assessment::whereNotIn('status', ['approved', 'archived'])->count())
                 ->description('Incomplete assessments')
                 ->descriptionIcon('heroicon-m-document-text')
                 ->color('warning')
