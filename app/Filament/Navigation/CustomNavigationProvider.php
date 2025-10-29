@@ -109,7 +109,7 @@ class CustomNavigationProvider
                             ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.pages.staff-charts')),
                     ]),
 
-                // Administration (with dropdown) - Ninth item
+                // Administration (with dropdown) - Eighth item
                 NavigationItem::make('Administration')
                     ->icon('heroicon-o-cog-6-tooth')
                     ->url('#')
@@ -118,9 +118,16 @@ class CustomNavigationProvider
                         request()->routeIs('filament.admin.resources.vital-ranges.*') ||
                         request()->routeIs('filament.admin.resources.users.*') || 
                         request()->routeIs('filament.admin.resources.leave-requests.*') ||
-                        request()->routeIs('filament.admin.resources.roles.*'))
+                        request()->routeIs('filament.admin.resources.roles.*') ||
+                        request()->routeIs('filament.admin.resources.residents.*'))
                     ->sort(80)
                     ->childItems([
+                        // Residents - First item in Administration dropdown
+                        NavigationItem::make('Residents')
+                            ->icon('heroicon-o-users')
+                            ->url(route('filament.admin.resources.residents.index'))
+                            ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.resources.residents.*')),
+                        
                         // Facility Management
                         NavigationItem::make('Facilities')
                             ->url(route('filament.admin.resources.facilities.index'))
