@@ -20,6 +20,12 @@ class ViewAssessment extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
+            Actions\Action::make('complete')
+                ->label('Complete Assessment')
+                ->icon('heroicon-o-clipboard-document-check')
+                ->color('success')
+                ->url(fn (): string => '/admin/assessment-form?assessment=' . $this->record->id)
+                ->visible(fn (): bool => $this->record->status !== 'approved'),
             Actions\EditAction::make()
                 ->label('Edit Assessment')
                 ->color('primary'),
