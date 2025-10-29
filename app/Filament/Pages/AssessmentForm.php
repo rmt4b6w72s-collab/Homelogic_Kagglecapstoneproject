@@ -47,10 +47,13 @@ class AssessmentForm extends Page
             
             $this->data = $this->assessment->toArray();
             
-            // Pre-fill medical history information from resident data
+            // Load saved response values from the database (priority 1)
+            $this->loadSavedAnswers();
+            
+            // Pre-fill medical history information from resident data (priority 2 - only if not already saved)
             $this->prefillMedicalHistoryData();
             
-            // Fill the form with the pre-filled data
+            // Fill the form with the data
             $this->form->fill($this->data);
         }
     }
@@ -92,6 +95,36 @@ class AssessmentForm extends Page
         }
     }
 
+    protected function loadSavedAnswers(): void
+    {
+        if (!$this->assessment) {
+            return;
+        }
+
+        // Load all sections with their questions
+        $sections = $this->assessment->sections()->with('questions')->get();
+
+        foreach ($sections as $section) {
+            foreach ($section->questions as $question) {
+                // Only load if there's a saved value
+                if (!empty($question->response_value)) {
+                    $fieldName = "sections.{$section->id}.questions.{$question->id}";
+                    
+                    // Decode JSON if it's a JSON string (for checkbox/arrays)
+                    $value = $question->response_value;
+                    if (is_string($value)) {
+                        $decoded = json_decode($value, true);
+                        if (json_last_error() === JSON_ERROR_NONE) {
+                            $value = $decoded;
+                        }
+                    }
+                    
+                    $this->data[$fieldName] = $value;
+                }
+            }
+        }
+    }
+
     protected function prefillMedicalHistoryData(): void
     {
         if (!$this->assessment || !$this->assessment->resident) {
@@ -121,10 +154,13 @@ class AssessmentForm extends Page
                 default => null,
             };
 
+            // Only pre-fill if there's no saved value already
             if ($value !== null) {
-                // Set the value using the exact form field name format
                 $fieldName = "sections.{$medicalSection->id}.questions.{$question->id}";
-                $this->data[$fieldName] = $value;
+                // Only set if not already populated from saved answers
+                if (!isset($this->data[$fieldName]) || empty($this->data[$fieldName])) {
+                    $this->data[$fieldName] = $value;
+                }
             }
         }
     }
