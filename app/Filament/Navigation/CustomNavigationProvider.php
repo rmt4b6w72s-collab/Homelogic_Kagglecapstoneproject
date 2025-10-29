@@ -59,9 +59,8 @@ class CustomNavigationProvider
                 // Sleep - Seventh item
                 NavigationItem::make('Sleep')
                     ->icon('heroicon-o-moon')
-                    ->url('/admin/sleep-records')
-                    ->isActiveWhen(fn (): bool => request()->is('admin/sleep-records*') || 
-                        request()->is('admin/sleep-patterns*'))
+                    ->url(route('filament.admin.resources.sleep-records.index'))
+                    ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.resources.sleep-records.*'))
                     ->sort(60),
 
                 // Reports (with dropdown) - Eighth item
