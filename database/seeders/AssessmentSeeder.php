@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use App\Models\Assessment;
+use App\Models\AssessmentSection;
 use App\Models\Resident;
 use App\Models\User;
 use Carbon\Carbon;
