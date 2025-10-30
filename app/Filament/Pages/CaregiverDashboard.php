@@ -271,7 +271,7 @@ class CaregiverDashboard extends Page
         $now = Carbon::now();
         $limit = 10;
 
-        $apps = Appointment::with('resident')
+        $base = Appointment::with('resident')
             ->whereHas('resident.assignments', function($q) use ($userId) {
                 $q->where('caregiver_id', $userId)->where('is_active', true);
             })
@@ -285,22 +285,30 @@ class CaregiverDashboard extends Page
                       ->orderBy('date');
                 }
             })
-            // Some databases may not have an appointment_time column; order by time only when present
-            ->when(Schema::hasColumn('appointments', 'appointment_time'), function ($q) {
-                $q->orderBy('appointment_time');
-            })
             ->when(!Schema::hasColumn('appointments', 'appointment_date') && !Schema::hasColumn('appointments', 'date'), function ($q) {
                 // Ultimate fallback ordering
                 $q->latest('created_at');
+            });
+
+        // Fetch and sort safely in PHP to avoid ordering by missing columns
+        $apps = $base->get()
+            ->sortBy(function ($a) {
+                $date = $a->appointment_date ?? $a->date ?? $a->created_at;
+                $time = $a->appointment_time ?? null; // may not exist
+                $dateObj = $date instanceof Carbon ? $date : ($date ? Carbon::parse($date) : Carbon::now());
+                $timeStr = is_string($time) ? $time : null;
+                $timeMinutes = $timeStr ? (int) Carbon::parse($timeStr)->format('Hi') : 0;
+                return $dateObj->format('Ymd') . sprintf('%04d', $timeMinutes);
             })
-            ->limit($limit)
-            ->get();
+            ->take($limit);
 
         return $apps->map(function ($a) {
             return [
                 'resident' => $a->resident?->name ?? 'Unknown',
                 'date' => optional($a->appointment_date)->format('M j') ?? '',
-                'time' => optional($a->appointment_time)->format('g:i A') ?? 'Anytime',
+                'time' => isset($a->appointment_time) && $a->appointment_time
+                    ? (is_string($a->appointment_time) ? Carbon::parse($a->appointment_time)->format('g:i A') : optional($a->appointment_time)->format('g:i A'))
+                    : 'Anytime',
                 'status' => $a->status ?? 'Scheduled',
             ];
         })->toArray();
