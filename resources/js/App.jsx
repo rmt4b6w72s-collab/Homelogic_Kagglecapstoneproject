@@ -22,6 +22,7 @@ import LeaveRequests from './pages/LeaveRequests';
 import Roles from './pages/Roles';
 import Users from './pages/Users';
 import EmployeeDocuments from './pages/EmployeeDocuments';
+import Profile from './pages/Profile';
 
 // Report sub-pages
 import ChartReports from './pages/reports/ChartReports';
@@ -49,6 +50,7 @@ function App() {
                 <Route index element={<Navigate to="dashboard" replace />} />
                 
                 {/* Main Pages */}
+                <Route path="profile" element={<Profile />} />
                 <Route path="dashboard" element={<Dashboard />} />
                 <Route path="assessments" element={<Assessments />} />
                 <Route path="assessments/:id" element={<AssessmentDetail />} />

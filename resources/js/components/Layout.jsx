@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import api from '../services/api';
 import { 
@@ -66,6 +66,20 @@ export default function Layout() {
     const location = useLocation();
     const [userMenuOpen, setUserMenuOpen] = useState(false);
     const [expandedMenus, setExpandedMenus] = useState({});
+    const [currentUser, setCurrentUser] = useState(null);
+
+    // Fetch current user data
+    useEffect(() => {
+        const fetchUser = async () => {
+            try {
+                const response = await api.get('/user');
+                setCurrentUser(response.data);
+            } catch (err) {
+                console.error('Failed to fetch current user:', err);
+            }
+        };
+        fetchUser();
+    }, []);
 
     return (
         <div className="flex h-screen bg-gray-50">
@@ -189,9 +203,17 @@ export default function Layout() {
                         <div className="relative">
                             <button
                                 onClick={() => setUserMenuOpen(!userMenuOpen)}
-                                className="w-10 h-10 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center"
+                                className="w-10 h-10 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center overflow-hidden"
                             >
-                                <User className="w-6 h-6 text-gray-600" />
+                                {currentUser?.profile_image_url ? (
+                                    <img
+                                        src={currentUser.profile_image_url}
+                                        alt={currentUser.name}
+                                        className="w-full h-full object-cover"
+                                    />
+                                ) : (
+                                    <User className="w-6 h-6 text-gray-600" />
+                                )}
                             </button>
                             {userMenuOpen && (
                                 <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
