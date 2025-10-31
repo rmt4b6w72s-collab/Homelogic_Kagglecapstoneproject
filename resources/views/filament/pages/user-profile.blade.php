@@ -2,10 +2,11 @@
     <form wire:submit="save">
         {{ $this->form }}
         
-        <x-filament-panels::form.actions
-            :actions="$this->getCachedFormActions()"
-            :full-width="$this->hasFullWidthFormActions()"
-        />
+        <div class="mt-4 flex justify-end">
+            <x-filament::button type="submit">
+                Save Profile
+            </x-filament::button>
+        </div>
     </form>
 </x-filament-panels::page>
 

@@ -58,6 +58,24 @@ class UserResource extends Resource
                             ->unique(ignoreRecord: true)
                             ->placeholder('staff@serenityafh.com')
                             ->helperText('This will be used for login'),
+                        
+                        Forms\Components\FileUpload::make('profile_image')
+                            ->label('Profile Picture')
+                            ->image()
+                            ->imageEditor()
+                            ->imageEditorAspectRatios([
+                                null,
+                                '16:9',
+                                '4:3',
+                                '1:1',
+                            ])
+                            ->maxSize(5120)
+                            ->disk('public')
+                            ->directory('profile-images')
+                            ->visibility('private')
+                            ->helperText('Upload a profile picture (max 5MB)')
+                            ->columnSpanFull(),
+                        
                         Forms\Components\Hidden::make('name')
                             ->afterStateUpdated(function ($state, $set, $get) {
                                 $firstName = $get('first_name') ?? '';
