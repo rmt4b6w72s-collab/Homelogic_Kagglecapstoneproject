@@ -85,7 +85,9 @@ class UserController extends Controller
         ]);
 
         // Convert empty string to null for nullable fields
-        $validated['assigned_branch_id'] = $validated['assigned_branch_id'] ?: null;
+        if (array_key_exists('assigned_branch_id', $validated)) {
+            $validated['assigned_branch_id'] = $validated['assigned_branch_id'] ?: null;
+        }
 
         // Handle profile image upload
         if ($request->hasFile('profile_image')) {
@@ -144,7 +146,9 @@ class UserController extends Controller
         ]);
 
         // Convert empty string to null for nullable fields
-        $validated['assigned_branch_id'] = $validated['assigned_branch_id'] ?: null;
+        if (array_key_exists('assigned_branch_id', $validated)) {
+            $validated['assigned_branch_id'] = $validated['assigned_branch_id'] ?: null;
+        }
 
         // Handle profile image upload if provided
         if ($request->hasFile('profile_image')) {
