@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../services/api';
-import { Users, Plus, Edit, Trash2, Search, Filter, Upload, X } from 'lucide-react';
+import { Users, Plus, Edit, Trash2, Search, Filter, Upload, X, Eye, Mail, Phone, Calendar, Briefcase, MapPin, Award, Shield, Clock, User as UserIcon } from 'lucide-react';
 
 export default function UsersPage() {
     const queryClient = useQueryClient();
@@ -10,6 +10,7 @@ export default function UsersPage() {
     const [activeFilter, setActiveFilter] = useState('all');
     const [showForm, setShowForm] = useState(false);
     const [editing, setEditing] = useState(null);
+    const [viewingProfile, setViewingProfile] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
 
     const { data, isLoading } = useQuery({
@@ -147,25 +148,11 @@ export default function UsersPage() {
                                     </div>
                                     <div className="flex space-x-2">
                                         <button
-                                            onClick={() => {
-                                                setEditing(user);
-                                                setShowForm(true);
-                                            }}
-                                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                            title="Edit"
+                                            onClick={() => setViewingProfile(user)}
+                                            className="p-2 text-[#2D5016] hover:bg-green-50 rounded-lg transition-colors"
+                                            title="View Profile"
                                         >
-                                            <Edit className="w-4 h-4" />
-                                        </button>
-                                        <button
-                                            onClick={() => {
-                                                if (window.confirm('Are you sure you want to delete this user?')) {
-                                                    deleteMutation.mutate(user.id);
-                                                }
-                                            }}
-                                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                            title="Delete"
-                                        >
-                                            <Trash2 className="w-4 h-4" />
+                                            <Eye className="w-4 h-4" />
                                         </button>
                                     </div>
                                 </div>
@@ -255,6 +242,14 @@ export default function UsersPage() {
                         setEditing(null);
                         queryClient.invalidateQueries(['users']);
                     }}
+                />
+            )}
+
+            {/* View Profile Modal */}
+            {viewingProfile && (
+                <UserProfileViewer
+                    user={viewingProfile}
+                    onClose={() => setViewingProfile(null)}
                 />
             )}
         </div>
@@ -854,6 +849,229 @@ function UserForm({ record, branches, roles, onClose, onSuccess }) {
                             </button>
                         </div>
                     </form>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+// User Profile Viewer Component
+function UserProfileViewer({ user, onClose }) {
+    return (
+        <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto" style={{ backgroundColor: 'rgba(0, 0, 0, 0.1)' }}>
+            <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[95vh] overflow-y-auto my-8">
+                {/* Header */}
+                <div className="bg-gradient-to-r from-[#2D5016] to-[#4a7a2a] p-8 text-white rounded-t-xl">
+                    <div className="flex items-start justify-between mb-6">
+                        <div className="flex items-center space-x-6">
+                            {/* Profile Picture */}
+                            {user.profile_image ? (
+                                <img
+                                    src={user.profile_image.startsWith('http') ? user.profile_image : `/storage/${user.profile_image}`}
+                                    alt={user.name}
+                                    className="w-32 h-32 rounded-full object-cover border-4 border-white shadow-lg"
+                                    onError={(e) => {
+                                        e.target.style.display = 'none';
+                                        e.target.nextElementSibling.style.display = 'flex';
+                                    }}
+                                />
+                            ) : null}
+                            <div className={`w-32 h-32 rounded-full bg-white flex items-center justify-center border-4 border-white shadow-lg ${user.profile_image ? 'hidden' : ''}`}>
+                                <span className="text-[#2D5016] font-bold text-5xl">
+                                    {user.name?.charAt(0)?.toUpperCase() || 'U'}
+                                </span>
+                            </div>
+                            <div>
+                                <h2 className="text-3xl font-bold mb-2">{user.name || user.email}</h2>
+                                {user.position && (
+                                    <p className="text-xl text-green-100">{user.position}</p>
+                                )}
+                                {user.email && (
+                                    <div className="flex items-center space-x-2 mt-2 text-green-50">
+                                        <Mail className="w-4 h-4" />
+                                        <span>{user.email}</span>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                        <button
+                            onClick={onClose}
+                            className="text-white hover:text-green-200 transition-colors"
+                        >
+                            <X className="w-6 h-6" />
+                        </button>
+                    </div>
+                </div>
+
+                {/* Body */}
+                <div className="p-8">
+                    {/* Personal Information */}
+                    <div className="mb-8">
+                        <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
+                            <UserIcon className="w-5 h-5 mr-2 text-[#2D5016]" />
+                            Personal Information
+                        </h3>
+                        <div className="bg-gray-50 rounded-lg p-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {user.first_name && (
+                                    <div>
+                                        <p className="text-sm text-gray-600 mb-1">First Name</p>
+                                        <p className="font-semibold text-gray-900">{user.first_name}</p>
+                                    </div>
+                                )}
+                                {user.middle_names && (
+                                    <div>
+                                        <p className="text-sm text-gray-600 mb-1">Middle Names</p>
+                                        <p className="font-semibold text-gray-900">{user.middle_names}</p>
+                                    </div>
+                                )}
+                                {user.last_name && (
+                                    <div>
+                                        <p className="text-sm text-gray-600 mb-1">Last Name</p>
+                                        <p className="font-semibold text-gray-900">{user.last_name}</p>
+                                    </div>
+                                )}
+                                {user.date_of_birth && (
+                                    <div>
+                                        <p className="text-sm text-gray-600 mb-1 flex items-center">
+                                            <Calendar className="w-4 h-4 mr-1" />
+                                            Date of Birth
+                                        </p>
+                                        <p className="font-semibold text-gray-900">
+                                            {new Date(user.date_of_birth).toLocaleDateString('en-US', { 
+                                                month: 'long', 
+                                                day: 'numeric', 
+                                                year: 'numeric' 
+                                            })}
+                                        </p>
+                                    </div>
+                                )}
+                                {user.marital_status && (
+                                    <div>
+                                        <p className="text-sm text-gray-600 mb-1">Marital Status</p>
+                                        <p className="font-semibold text-gray-900 capitalize">{user.marital_status}</p>
+                                    </div>
+                                )}
+                                {user.sex && (
+                                    <div>
+                                        <p className="text-sm text-gray-600 mb-1">Sex</p>
+                                        <p className="font-semibold text-gray-900 capitalize">{user.sex}</p>
+                                    </div>
+                                )}
+                                {user.phone_number && (
+                                    <div>
+                                        <p className="text-sm text-gray-600 mb-1 flex items-center">
+                                            <Phone className="w-4 h-4 mr-1" />
+                                            Phone Number
+                                        </p>
+                                        <p className="font-semibold text-gray-900">{user.phone_number}</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Employment Details */}
+                    <div className="mb-8">
+                        <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
+                            <Briefcase className="w-5 h-5 mr-2 text-[#2D5016]" />
+                            Employment Details
+                        </h3>
+                        <div className="bg-gray-50 rounded-lg p-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {user.role && (
+                                    <div>
+                                        <p className="text-sm text-gray-600 mb-1 flex items-center">
+                                            <Shield className="w-4 h-4 mr-1" />
+                                            Role
+                                        </p>
+                                        <p className="font-semibold text-gray-900 capitalize">{user.role.replace('_', ' ')}</p>
+                                    </div>
+                                )}
+                                {user.assigned_branch && (
+                                    <div>
+                                        <p className="text-sm text-gray-600 mb-1 flex items-center">
+                                            <MapPin className="w-4 h-4 mr-1" />
+                                            Assigned Branch
+                                        </p>
+                                        <p className="font-semibold text-gray-900">{user.assigned_branch.name}</p>
+                                    </div>
+                                )}
+                                {user.credentials && (
+                                    <div>
+                                        <p className="text-sm text-gray-600 mb-1 flex items-center">
+                                            <Award className="w-4 h-4 mr-1" />
+                                            Credentials
+                                        </p>
+                                        <p className="font-semibold text-gray-900">{user.credentials}</p>
+                                    </div>
+                                )}
+                                {user.credential_details && (
+                                    <div>
+                                        <p className="text-sm text-gray-600 mb-1">Credential Details</p>
+                                        <p className="font-semibold text-gray-900">{user.credential_details}</p>
+                                    </div>
+                                )}
+                                {user.date_employed && (
+                                    <div>
+                                        <p className="text-sm text-gray-600 mb-1 flex items-center">
+                                            <Clock className="w-4 h-4 mr-1" />
+                                            Date Employed
+                                        </p>
+                                        <p className="font-semibold text-gray-900">
+                                            {new Date(user.date_employed).toLocaleDateString('en-US', { 
+                                                month: 'long', 
+                                                day: 'numeric', 
+                                                year: 'numeric' 
+                                            })}
+                                        </p>
+                                    </div>
+                                )}
+                                {user.supervisor_name && (
+                                    <div>
+                                        <p className="text-sm text-gray-600 mb-1">Supervisor</p>
+                                        <p className="font-semibold text-gray-900">{user.supervisor_name}</p>
+                                    </div>
+                                )}
+                                {user.provider_name && (
+                                    <div>
+                                        <p className="text-sm text-gray-600 mb-1">Provider</p>
+                                        <p className="font-semibold text-gray-900">{user.provider_name}</p>
+                                    </div>
+                                )}
+                                <div>
+                                    <p className="text-sm text-gray-600 mb-1">Status</p>
+                                    <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${
+                                        user.is_active 
+                                            ? 'bg-green-100 text-green-800' 
+                                            : 'bg-red-100 text-red-800'
+                                    }`}>
+                                        {user.is_active ? 'Active' : 'Inactive'}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Additional Information */}
+                    {user.notes && (
+                        <div>
+                            <h3 className="text-xl font-bold text-gray-900 mb-4">Additional Notes</h3>
+                            <div className="bg-gray-50 rounded-lg p-6">
+                                <p className="text-gray-700 whitespace-pre-wrap">{user.notes}</p>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Close Button */}
+                    <div className="mt-8 flex justify-end">
+                        <button
+                            onClick={onClose}
+                            className="px-6 py-2 bg-[#2D5016] text-white rounded-lg hover:bg-[#1a3009] transition-colors"
+                        >
+                            Close
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
