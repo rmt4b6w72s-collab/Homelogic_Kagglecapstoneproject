@@ -47,6 +47,62 @@ class AppointmentController extends Controller
         return response()->json($appointment);
     }
 
+    public function store(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'title' => 'nullable|string|max:255',
+            'resident_id' => 'required|exists:residents,id',
+            'branch_id' => 'nullable|exists:branches,id',
+            'appointment_type_id' => 'nullable|exists:appointment_types,id',
+            'healthcare_provider_id' => 'nullable|exists:healthcare_providers,id',
+            'appointment_date' => 'required|date',
+            'appointment_time' => 'nullable|date_format:H:i',
+            'provider_name' => 'nullable|string|max:255',
+            'location' => 'nullable|string|max:255',
+            'description' => 'nullable|string',
+            'status' => 'nullable|in:scheduled,completed,cancelled,confirmed,in_progress',
+            'next_appointment_date' => 'nullable|date',
+            'recurrence_pattern' => 'nullable|string|max:255',
+            'notes' => 'nullable|string',
+        ]);
+
+        // Default status
+        if (!isset($validated['status'])) {
+            $validated['status'] = 'scheduled';
+        }
+
+        // If branch_id not provided, try to infer from resident
+        if (!isset($validated['branch_id'])) {
+            $resident = \App\Models\Resident::find($validated['resident_id']);
+            if ($resident) {
+                $validated['branch_id'] = $resident->branch_id;
+            }
+        }
+
+        // Auto-generate a title if missing, to satisfy NOT NULL schema in some setups
+        if (!isset($validated['title']) || empty($validated['title'])) {
+            $residentName = isset($resident)
+                ? trim(($resident->first_name ?? '') . ' ' . ($resident->last_name ?? ''))
+                : 'Resident';
+            $dateLabel = is_string($validated['appointment_date'])
+                ? date('M j, Y', strtotime($validated['appointment_date']))
+                : now()->toDateString();
+            $timeLabel = isset($validated['appointment_time']) && !empty($validated['appointment_time'])
+                ? date('g:i A', strtotime($validated['appointment_time']))
+                : '';
+            $withTime = $timeLabel ? " at {$timeLabel}" : '';
+            $provider = $validated['provider_name'] ?? null;
+            $base = $provider ? "Appointment with {$provider}" : 'Appointment';
+            $validated['title'] = "$base - {$residentName} on {$dateLabel}{$withTime}";
+        }
+
+        $validated['created_by'] = auth()->id();
+
+        $appointment = Appointment::create($validated);
+
+        return response()->json($appointment->load(['resident', 'healthcareProvider', 'appointmentType']), 201);
+    }
+
     public function updateStatus(Request $request, $id): JsonResponse
     {
         $request->validate([

@@ -1,0 +1,269 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use App\Models\Assessment;
+use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
+use Carbon\Carbon;
+
+class AssessmentController extends Controller
+{
+    public function index(Request $request): JsonResponse
+    {
+        $query = Assessment::with(['resident', 'branch', 'assessor']);
+
+        // Filter by status
+        if ($request->has('status') && !empty($request->get('status'))) {
+            $query->where('status', $request->get('status'));
+        }
+
+        // Filter by type
+        if ($request->has('assessment_type') && !empty($request->get('assessment_type'))) {
+            $query->where('assessment_type', $request->get('assessment_type'));
+        }
+
+        // Filter by resident
+        if ($request->has('resident_id') && !empty($request->get('resident_id'))) {
+            $query->where('resident_id', $request->get('resident_id'));
+        }
+
+        // Filter by branch
+        if ($request->has('branch_id') && !empty($request->get('branch_id'))) {
+            $query->where('branch_id', $request->get('branch_id'));
+        }
+
+        // Filter by date
+        if ($request->has('date_from')) {
+            $query->whereDate('assessment_date', '>=', $request->get('date_from'));
+        }
+
+        if ($request->has('date_to')) {
+            $query->whereDate('assessment_date', '<=', $request->get('date_to'));
+        }
+
+        // Filter by today
+        if ($request->has('today') && $request->get('today') === 'true') {
+            $query->whereDate('assessment_date', today());
+        }
+
+        // Search
+        if ($request->has('search') && !empty($request->get('search'))) {
+            $search = $request->get('search');
+            $query->where(function($q) use ($search) {
+                $q->where('assessment_type', 'like', "%{$search}%")
+                  ->orWhere('notes', 'like', "%{$search}%")
+                  ->orWhereHas('resident', function($q) use ($search) {
+                      $q->where('first_name', 'like', "%{$search}%")
+                        ->orWhere('last_name', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        $assessments = $query->orderBy('assessment_date', 'desc')
+            ->orderBy('created_at', 'desc')
+            ->paginate($request->get('per_page', 20));
+
+        return response()->json($assessments);
+    }
+
+    public function show($id): JsonResponse
+    {
+        $assessment = Assessment::with(['resident', 'branch', 'assessor', 'sections.questions'])
+            ->findOrFail($id);
+
+        // If no sections exist, create default sections and questions
+        if ($assessment->sections()->count() === 0) {
+            $this->createDefaultSections($assessment);
+            $assessment->refresh();
+            $assessment->load(['sections.questions']);
+        }
+
+        // Ensure section_title accessor is included for each section
+        $assessment->sections->each(function ($section) {
+            if (method_exists($section, 'getSectionTitleAttribute')) {
+                $section->append('section_title');
+            }
+        });
+
+        return response()->json($assessment);
+    }
+
+    private function createDefaultSections(Assessment $assessment): void
+    {
+        $defaultSections = [
+            'demographic' => [
+                'Demographic Information',
+                [
+                    ['What is the resident\'s age?', 'number'],
+                    ['What is the resident\'s gender?', 'select', ['Male', 'Female', 'Other']],
+                    ['What is the resident\'s primary language?', 'text'],
+                    ['Is the resident currently married?', 'yes_no'],
+                    ['What is the resident\'s highest level of education?', 'select', ['Elementary', 'High School', 'College', 'Graduate', 'Other']],
+                ]
+            ],
+            'medical_history' => [
+                'Medical History',
+                [
+                    ['Does the resident have any chronic conditions?', 'yes_no'],
+                    ['List current medications:', 'textarea'],
+                    ['Does the resident have any known allergies?', 'yes_no'],
+                    ['What allergies are present?', 'textarea'],
+                    ['Has the resident had any recent surgeries?', 'yes_no'],
+                ]
+            ],
+            'functional' => [
+                'Functional Assessment',
+                [
+                    ['Can the resident walk independently?', 'yes_no'],
+                    ['Can the resident perform activities of daily living (ADLs) independently?', 'yes_no'],
+                    ['Can the resident transfer from bed to chair independently?', 'yes_no'],
+                    ['Can the resident bathe independently?', 'yes_no'],
+                    ['Can the resident dress independently?', 'yes_no'],
+                ]
+            ],
+            'cognitive' => [
+                'Cognitive Assessment',
+                [
+                    ['Is the resident alert and oriented?', 'yes_no'],
+                    ['Does the resident show signs of memory impairment?', 'yes_no'],
+                    ['Can the resident make decisions independently?', 'yes_no'],
+                    ['Has the resident been diagnosed with dementia or Alzheimer\'s?', 'yes_no'],
+                    ['Describe cognitive abilities:', 'textarea'],
+                ]
+            ],
+            'behavioral' => [
+                'Behavioral Assessment',
+                [
+                    ['Does the resident display any challenging behaviors?', 'yes_no'],
+                    ['Describe any behavioral concerns:', 'textarea'],
+                    ['Is the resident cooperative with care?', 'yes_no'],
+                    ['Does the resident require redirection?', 'yes_no'],
+                ]
+            ],
+        ];
+
+        foreach ($defaultSections as $sectionType => [$sectionTitle, $questions]) {
+            $section = \App\Models\AssessmentSection::create([
+                'assessment_id' => $assessment->id,
+                'section_type' => $sectionType,
+                'is_completed' => false,
+            ]);
+
+            foreach ($questions as $index => $questionData) {
+                \App\Models\AssessmentQuestion::create([
+                    'assessment_section_id' => $section->id,
+                    'question_text' => $questionData[0],
+                    'response_type' => $questionData[1] ?? 'text',
+                    'response_options' => isset($questionData[2]) ? $questionData[2] : null,
+                    'response_value' => null,
+                    'weight' => 1,
+                ]);
+            }
+        }
+    }
+
+    public function store(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'resident_id' => 'required|exists:residents,id',
+            'branch_id' => 'required|exists:branches,id',
+            'assessment_type' => 'required|string|max:255',
+            'assessment_date' => 'required|date',
+            'status' => 'nullable|in:draft,in_progress,completed,reviewed,approved,archived',
+            'notes' => 'nullable|string',
+            'scores' => 'nullable|array',
+            'recommendations' => 'nullable|array',
+        ]);
+
+        $validated['assessor_id'] = auth()->id();
+        $validated['status'] = $validated['status'] ?? 'draft';
+
+        if ($validated['status'] === 'completed') {
+            $validated['completed_at'] = Carbon::now();
+        }
+
+        $assessment = Assessment::create($validated);
+
+        return response()->json($assessment->load(['resident', 'branch', 'assessor']), 201);
+    }
+
+    public function update(Request $request, $id): JsonResponse
+    {
+        $assessment = Assessment::findOrFail($id);
+
+        $validated = $request->validate([
+            'resident_id' => 'sometimes|exists:residents,id',
+            'branch_id' => 'sometimes|exists:branches,id',
+            'assessment_type' => 'sometimes|string|max:255',
+            'assessment_date' => 'sometimes|date',
+            'status' => 'sometimes|in:draft,in_progress,completed,reviewed,approved,archived',
+            'notes' => 'nullable|string',
+            'scores' => 'nullable|array',
+            'recommendations' => 'nullable|array',
+        ]);
+
+        // Update timestamps based on status
+        if (isset($validated['status'])) {
+            if ($validated['status'] === 'completed' && !$assessment->completed_at) {
+                $validated['completed_at'] = Carbon::now();
+            }
+            if ($validated['status'] === 'reviewed' && !$assessment->reviewed_at) {
+                $validated['reviewed_at'] = Carbon::now();
+            }
+            if ($validated['status'] === 'approved' && !$assessment->approved_at) {
+                $validated['approved_at'] = Carbon::now();
+            }
+        }
+
+        $assessment->update($validated);
+
+        return response()->json($assessment->load(['resident', 'branch', 'assessor']));
+    }
+
+    public function destroy($id): JsonResponse
+    {
+        $assessment = Assessment::findOrFail($id);
+        $assessment->delete();
+
+        return response()->json(['message' => 'Assessment deleted successfully']);
+    }
+
+    public function updateStatus(Request $request, $id): JsonResponse
+    {
+        $assessment = Assessment::findOrFail($id);
+
+        $validated = $request->validate([
+            'status' => 'required|in:draft,in_progress,completed,reviewed,approved,archived',
+        ]);
+
+        $status = $validated['status'];
+
+        // Update timestamps based on status
+        if ($status === 'completed' && !$assessment->completed_at) {
+            $assessment->completed_at = Carbon::now();
+            
+            // Calculate and save scores when marking as completed
+            try {
+                $calculatedScores = $assessment->calculateScores();
+                $assessment->scores = $calculatedScores;
+            } catch (\Exception $e) {
+                \Log::error('Failed to calculate assessment scores: ' . $e->getMessage());
+                // Continue even if score calculation fails
+            }
+        }
+        if ($status === 'reviewed' && !$assessment->reviewed_at) {
+            $assessment->reviewed_at = Carbon::now();
+        }
+        if ($status === 'approved' && !$assessment->approved_at) {
+            $assessment->approved_at = Carbon::now();
+        }
+
+        $assessment->status = $status;
+        $assessment->save();
+
+        return response()->json($assessment->load(['resident', 'branch', 'assessor']));
+    }
+}
+

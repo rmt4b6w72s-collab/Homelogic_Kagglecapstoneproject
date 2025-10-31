@@ -1,14 +1,26 @@
+import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import api from '../services/api';
 import { Users, Calendar, Activity, UserCheck } from 'lucide-react';
 
 export default function Dashboard() {
-    const { data: stats, isLoading } = useQuery({
+    const { data: stats, isLoading, error } = useQuery({
         queryKey: ['dashboard-stats'],
         queryFn: async () => {
-            const response = await api.get('/v1/dashboard/stats');
-            return response.data;
+            try {
+                const response = await api.get('/dashboard/stats');
+                return response.data;
+            } catch (err) {
+                console.error('Dashboard API error:', err);
+                return {
+                    total_residents: 0,
+                    today_appointments: 0,
+                    today_vitals: 0,
+                    total_staff: 0,
+                };
+            }
         },
+        retry: false,
     });
 
     const statCards = [
@@ -38,13 +50,24 @@ export default function Dashboard() {
         },
     ];
 
-    if (isLoading) {
-        return <div className="text-center py-12">Loading...</div>;
-    }
-
     return (
-        <div>
+        <div style={{ padding: '20px' }}>
             <h1 className="text-3xl font-bold text-gray-900 mb-6">Dashboard</h1>
+            
+            {error && (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+                    <p className="text-yellow-800 text-sm">
+                        Note: API connection failed. Showing default values. Please check authentication.
+                    </p>
+                </div>
+            )}
+            
+            {isLoading && (
+                <div className="text-center py-12">
+                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                    <p className="mt-4 text-gray-600">Loading dashboard data...</p>
+                </div>
+            )}
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {statCards.map((card, index) => {

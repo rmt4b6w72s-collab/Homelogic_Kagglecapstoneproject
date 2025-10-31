@@ -1,0 +1,379 @@
+import React from 'react';
+import { useParams, Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import api from '../services/api';
+import { ArrowLeft, ClipboardList, Calendar, User, CheckCircle, FileText, TrendingUp, Award } from 'lucide-react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+
+export default function AssessmentReview() {
+    const { id } = useParams();
+    const queryClient = useQueryClient();
+
+    const { data, isLoading, error } = useQuery({
+        queryKey: ['assessment-review', id],
+        queryFn: async () => {
+            const response = await api.get(`/assessments/${id}`);
+            console.log('Assessment Review Data:', response.data);
+            if (response.data?.sections) {
+                console.log('Sections count:', response.data.sections.length);
+                response.data.sections.forEach((section, idx) => {
+                    console.log(`Section ${idx + 1}:`, {
+                        id: section.id,
+                        title: section.title || section.section_title,
+                        questionsCount: section.questions?.length || 0,
+                        questions: section.questions?.map(q => ({
+                            id: q.id,
+                            question_text: q.question_text,
+                            response_value: q.response_value,
+                            response_type: q.response_type
+                        }))
+                    });
+                });
+            }
+            return response.data;
+        },
+        refetchOnWindowFocus: true,
+        refetchOnMount: true,
+    });
+
+    const markCompleteMutation = useMutation({
+        mutationFn: async (status) => api.patch(`/assessments/${id}/status`, { status }),
+        onSuccess: () => {
+            queryClient.invalidateQueries(['assessment-review', id]);
+            queryClient.invalidateQueries(['assessments']);
+            alert('Assessment marked as complete!');
+        },
+        onError: (error) => {
+            console.error('Failed to mark assessment as complete:', error);
+            alert('Failed to mark assessment as complete. Please try again.');
+        },
+    });
+
+    // Calculate completion stats
+    const stats = React.useMemo(() => {
+        if (!data?.sections) return { total: 0, answered: 0, percentage: 0 };
+        
+        let total = 0;
+        let answered = 0;
+        
+        data.sections.forEach(section => {
+            if (section.questions) {
+                total += section.questions.length;
+                answered += section.questions.filter(q => {
+                    const raw = q.response_value;
+                    if (raw === null || raw === undefined) return false;
+                    if (typeof raw === 'boolean') return true;
+                    if (typeof raw === 'number') return true;
+                    return String(raw).trim() !== '';
+                }).length;
+            }
+        });
+        
+        return {
+            total,
+            answered,
+            percentage: total > 0 ? Math.round((answered / total) * 100) : 0
+        };
+    }, [data]);
+
+    if (isLoading) {
+        return (
+            <div className="text-center py-12">
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#2D5016]"></div>
+                <p className="mt-4 text-gray-600">Loading assessment...</p>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <p className="text-red-800 text-sm">{error.response?.data?.message || error.message}</p>
+            </div>
+        );
+    }
+
+    const assessment = data;
+
+    const getStatusBadgeColor = (status) => {
+        // Use brand green variants only
+        return status === 'approved'
+            ? 'bg-green-100 text-green-800 border-green-200'
+            : 'bg-emerald-50 text-emerald-800 border-emerald-200';
+    };
+
+    // Single brand palette: deep green (#2D5016) and emerald accents
+    const sectionColors = [
+        { bg: 'bg-emerald-50', border: 'border-emerald-200', icon: 'text-emerald-700' },
+    ];
+
+    return (
+        <div className="min-h-screen bg-white">
+            {/* Header */}
+            <div className="bg-white border-b border-gray-200 shadow-sm mb-6">
+                <div className="flex items-center justify-between p-6">
+                    <div className="flex items-center space-x-4">
+                        <Link 
+                            to="/assessments" 
+                            className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 inline-flex items-center space-x-2 transition-colors"
+                        >
+                            <ArrowLeft className="w-4 h-4" />
+                            <span>Back to Assessments</span>
+                        </Link>
+                        <div>
+                            <h1 className="text-3xl font-bold text-[#2D5016]">
+                                Assessment Review
+                            </h1>
+                            <div className="flex items-center space-x-3 mt-2">
+                                <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${getStatusBadgeColor(assessment.status)}`}>
+                                    {assessment.status?.replace('_', ' ') || 'Draft'}
+                                </span>
+                                <span className="text-sm text-gray-500">
+                                    {new Date(assessment.assessment_date).toLocaleDateString('en-US', { 
+                                        weekday: 'long', 
+                                        year: 'numeric', 
+                                        month: 'long', 
+                                        day: 'numeric' 
+                                    })}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div className="px-6 pb-6">
+                {/* Stats Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                    <div className="bg-[#2D5016] rounded-xl shadow p-5 text-white">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-emerald-100 text-sm font-medium">Assessment Type</p>
+                                <p className="text-xl font-bold mt-1">{assessment.assessment_type || 'N/A'}</p>
+                            </div>
+                            <ClipboardList className="w-8 h-8 text-emerald-200" />
+                        </div>
+                    </div>
+
+                    <div className="bg-emerald-600 rounded-xl shadow p-5 text-white">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-emerald-100 text-sm font-medium">Completion</p>
+                                <p className="text-xl font-bold mt-1">{stats.percentage}%</p>
+                            </div>
+                            <TrendingUp className="w-8 h-8 text-emerald-200" />
+                        </div>
+                    </div>
+
+                    <div className="bg-emerald-700 rounded-xl shadow p-5 text-white">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-emerald-100 text-sm font-medium">Questions</p>
+                                <p className="text-xl font-bold mt-1">{stats.answered}/{stats.total}</p>
+                            </div>
+                            <FileText className="w-8 h-8 text-emerald-200" />
+                        </div>
+                    </div>
+
+                    <div className="bg-emerald-800 rounded-xl shadow p-5 text-white">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-emerald-100 text-sm font-medium">Resident</p>
+                                <p className="text-lg font-bold mt-1 truncate">
+                                    {assessment.resident?.first_name} {assessment.resident?.last_name}
+                                </p>
+                            </div>
+                            <User className="w-8 h-8 text-emerald-200" />
+                        </div>
+                    </div>
+                </div>
+
+                {/* Sections */}
+                <div className="space-y-6">
+                    {assessment.sections?.length ? (
+                        assessment.sections.map((section, index) => {
+                            const sectionProgress = section.questions?.length > 0
+                                ? Math.round((section.questions.filter(q => {
+                                    const raw = q.response_value;
+                                    if (raw === null || raw === undefined) return false;
+                                    if (typeof raw === 'boolean') return true;
+                                    if (typeof raw === 'number') return true;
+                                    return String(raw).trim() !== '';
+                                }).length / section.questions.length) * 100)
+                                : 0;
+                            
+                            const isComplete = sectionProgress === 100;
+                            const colorScheme = sectionColors[index % sectionColors.length];
+                            
+                            return (
+                                <div 
+                                    key={section.id} 
+                                    className={`bg-white rounded-xl shadow-lg border-2 ${colorScheme.border} overflow-hidden transition-all hover:shadow-xl`}
+                                >
+                                    {/* Section Header */}
+                                    <div className={`${colorScheme.bg} px-6 py-4 border-b-2 ${colorScheme.border}`}>
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center space-x-3">
+                                                <div className={`p-2 rounded-lg bg-white/50 ${colorScheme.icon}`}>
+                                                    <FileText className="w-5 h-5" />
+                                                </div>
+                                                <div>
+                                                    <h2 className="text-xl font-bold text-gray-900">
+                                                        {section.title || section.section_title || 'Section'}
+                                                    </h2>
+                                                    <p className="text-sm text-gray-600 mt-0.5">
+                                                        {section.questions?.length || 0} questions
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center space-x-3">
+                                                <div className="text-right">
+                                                    <p className="text-sm font-semibold text-gray-700">{sectionProgress}%</p>
+                                                    <p className="text-xs text-gray-600">Complete</p>
+                                                </div>
+                                                {isComplete && (
+                                                    <div className="p-2 bg-green-500 rounded-full">
+                                                        <CheckCircle className="w-6 h-6 text-white" />
+                                                    </div>
+                                                )}
+                                                {!isComplete && sectionProgress > 0 && (
+                                                    <Award className={`w-6 h-6 ${colorScheme.icon}`} />
+                                                )}
+                                            </div>
+                                        </div>
+                                        {/* Progress Bar */}
+                                        <div className="mt-3 w-full bg-white/50 rounded-full h-2 overflow-hidden">
+                                            <div
+                                                className={`h-2 rounded-full transition-all duration-500 ${
+                                                    isComplete ? 'bg-green-500' : 'bg-gradient-to-r from-blue-400 to-purple-400'
+                                                }`}
+                                                style={{ width: `${sectionProgress}%` }}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* Questions */}
+                                    <div className="p-6 space-y-4">
+                                        {section.questions?.length ? (
+                                            section.questions.map((q, qIndex) => {
+                                                // Handle different response_value formats
+                                                const raw = q.response_value;
+                                                let strVal = '';
+                                                
+                                                if (raw !== null && raw !== undefined) {
+                                                    // Handle string, number, boolean
+                                                    if (typeof raw === 'boolean') {
+                                                        strVal = raw ? 'true' : 'false';
+                                                    } else if (typeof raw === 'number') {
+                                                        strVal = String(raw);
+                                                    } else {
+                                                        strVal = String(raw).trim();
+                                                    }
+                                                }
+                                                
+                                                const hasAnswer = strVal !== '';
+                                                let answerValue = null;
+                                                
+                                                if (hasAnswer) {
+                                                    if (strVal === 'true' || strVal === '1' || raw === true) {
+                                                        answerValue = 'Yes';
+                                                    } else if (strVal === 'false' || strVal === '0' || raw === false) {
+                                                        answerValue = 'No';
+                                                    } else {
+                                                        answerValue = strVal;
+                                                    }
+                                                }
+
+                                                return (
+                                                    <div 
+                                                        key={q.id} 
+                                                        className={`rounded-lg border-2 transition-all ${
+                                                            hasAnswer 
+                                                                ? 'border-green-200 bg-green-50/50 hover:bg-green-50' 
+                                                                : 'border-gray-200 bg-gray-50/50 hover:bg-gray-50'
+                                                        }`}
+                                                    >
+                                                        <div className="p-4">
+                                                            <div className="flex items-start justify-between mb-3">
+                                                                <div className="flex-1">
+                                                                    <div className="flex items-center space-x-2 mb-2">
+                                                                        <span className={`px-2 py-1 rounded text-xs font-semibold ${
+                                                                            hasAnswer 
+                                                                                ? 'bg-green-100 text-green-800' 
+                                                                                : 'bg-gray-100 text-gray-600'
+                                                                        }`}>
+                                                                            Q{qIndex + 1}
+                                                                        </span>
+                                                                        <span className="px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-700">
+                                                                            {q.response_type}
+                                                                        </span>
+                                                                    </div>
+                                                                    <p className="text-base font-semibold text-gray-900">
+                                                                        {q.question_text}
+                                                                    </p>
+                                                                </div>
+                                                                {hasAnswer && (
+                                                                    <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 ml-3" />
+                                                                )}
+                                                            </div>
+                                                            
+                                                            <div className={`mt-3 p-4 rounded-lg ${
+                                                                hasAnswer 
+                                                                    ? 'bg-white border border-green-200' 
+                                                                    : 'bg-white border-2 border-dashed border-gray-300'
+                                                            }`}>
+                                                                {hasAnswer ? (
+                                                                    <p className="text-gray-900 font-medium">{answerValue}</p>
+                                                                ) : (
+                                                                    <p className="text-gray-400 italic">No answer provided</p>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })
+                                        ) : (
+                                            <p className="text-sm text-gray-500 text-center py-4">No questions in this section.</p>
+                                        )}
+                                    </div>
+                                </div>
+                            );
+                        })
+                    ) : (
+                        <div className="bg-white rounded-xl shadow-lg p-12 text-center">
+                            <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                            <p className="text-lg font-semibold text-gray-900 mb-2">No sections found</p>
+                            <p className="text-sm text-gray-600">This assessment doesn't have any sections yet.</p>
+                        </div>
+                    )}
+
+                    {/* Mark as Complete Button */}
+                    {assessment.sections?.length > 0 && assessment.status !== 'approved' && assessment.status !== 'archived' && (
+                        <div className="bg-white rounded-xl shadow-lg p-6 border-2 border-emerald-200">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <h3 className="text-lg font-semibold text-gray-900 mb-1">Assessment Complete?</h3>
+                                    <p className="text-sm text-gray-600">
+                                        Once marked as complete, this assessment will be finalized.
+                                    </p>
+                                </div>
+                                <button
+                                    onClick={() => {
+                                        if (window.confirm('Are you sure you want to mark this assessment as complete?')) {
+                                            markCompleteMutation.mutate('completed');
+                                        }
+                                    }}
+                                    disabled={markCompleteMutation.isPending || assessment.status === 'completed'}
+                                    className="px-6 py-3 bg-[#2D5016] text-white rounded-lg hover:bg-[#1a3009] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 font-medium"
+                                >
+                                    <CheckCircle className="w-5 h-5" />
+                                    <span>{markCompleteMutation.isPending ? 'Marking...' : assessment.status === 'completed' ? 'Already Completed' : 'Mark as Complete'}</span>
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+}

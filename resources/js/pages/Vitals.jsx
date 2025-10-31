@@ -1,9 +1,541 @@
+import React, { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import api from '../services/api';
+import { Activity, Calendar, User, Heart, Plus, Thermometer, Droplet, Edit, Trash2 } from 'lucide-react';
+
 export default function Vitals() {
+    const queryClient = useQueryClient();
+    const [dateFilter, setDateFilter] = useState('today');
+    const [residentFilter, setResidentFilter] = useState('');
+    const [showForm, setShowForm] = useState(false);
+    const [editing, setEditing] = useState(null);
+
+    const { data, isLoading } = useQuery({
+        queryKey: ['vitals', dateFilter, residentFilter],
+        queryFn: async () => {
+            const params = { per_page: 20 };
+            
+            if (dateFilter === 'today') {
+                params.today = 'true';
+            } else if (dateFilter === 'week') {
+                params.date_from = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+            }
+            
+            if (residentFilter) {
+                params.resident_id = residentFilter;
+            }
+
+            const response = await api.get('/vitals', { params });
+            return response.data;
+        },
+    });
+
+    // Fetch residents for form
+    const { data: residentsData } = useQuery({
+        queryKey: ['residents-list'],
+        queryFn: async () => (await api.get('/residents', { params: { per_page: 100 } })).data,
+    });
+
+    const deleteMutation = useMutation({
+        mutationFn: async (id) => api.delete(`/vitals/${id}`),
+        onSuccess: () => queryClient.invalidateQueries(['vitals']),
+    });
+
     return (
         <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-6">Vitals</h1>
-            <p className="text-gray-600">Vitals page coming soon...</p>
+            <div className="flex items-center justify-between mb-6">
+                <h1 className="text-3xl font-bold text-gray-900">Vital Signs</h1>
+                <button
+                    onClick={() => {
+                        setEditing(null);
+                        setShowForm(true);
+                    }}
+                    className="px-4 py-2 bg-[#2D5016] text-white rounded-lg hover:bg-[#1a3009] transition-colors flex items-center space-x-2"
+                >
+                    <Plus className="w-4 h-4" />
+                    <span>Add Vitals</span>
+                </button>
+            </div>
+            
+            <div className="bg-white rounded-lg shadow p-6 mb-6">
+                <h2 className="text-xl font-semibold text-gray-900 mb-2">Vital Signs Management</h2>
+                <p className="text-gray-600 mb-6">View and track resident vital signs.</p>
+                
+                <div className="flex flex-wrap gap-6">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Date Range:</label>
+                        <div className="flex space-x-2">
+                            <button
+                                onClick={() => setDateFilter('today')}
+                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                                    dateFilter === 'today'
+                                        ? 'bg-[#2D5016] text-white'
+                                        : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                                }`}
+                            >
+                                Today
+                            </button>
+                            <button
+                                onClick={() => setDateFilter('week')}
+                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                                    dateFilter === 'week'
+                                        ? 'bg-[#2D5016] text-white'
+                                        : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                                }`}
+                            >
+                                This Week
+                            </button>
+                            <button
+                                onClick={() => setDateFilter('all')}
+                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                                    dateFilter === 'all'
+                                        ? 'bg-[#2D5016] text-white'
+                                        : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                                }`}
+                            >
+                                All
+                            </button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Resident:</label>
+                        <select
+                            value={residentFilter}
+                            onChange={(e) => setResidentFilter(e.target.value)}
+                            className="px-4 py-2 rounded-lg text-sm border border-gray-300 focus:ring-2 focus:ring-[#2D5016] focus:border-transparent"
+                        >
+                            <option value="">All Residents</option>
+                            {residentsData?.data?.map(r => (
+                                <option key={r.id} value={r.id}>
+                                    {r.first_name} {r.last_name}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            {isLoading ? (
+                <div className="text-center py-12">
+                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#2D5016]"></div>
+                    <p className="mt-4 text-gray-600">Loading vital signs...</p>
+                </div>
+            ) : (
+                <div>
+                    {data?.data?.length > 0 ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {data.data.map((vital) => (
+                                <div key={vital.id} className="bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow">
+                                    <div className="flex items-start justify-between mb-4">
+                                        <div className="flex items-center space-x-3">
+                                            <div className="p-2 bg-purple-100 rounded-lg">
+                                                <Activity className="w-5 h-5 text-purple-600" />
+                                            </div>
+                                            <div>
+                                                <h3 className="text-lg font-semibold text-gray-900">
+                                                    {vital.resident?.first_name} {vital.resident?.last_name}
+                                                </h3>
+                                                <p className="text-xs text-gray-500">
+                                                    {new Date(vital.measurement_date).toLocaleDateString()} at{' '}
+                                                    {vital.measurement_date && typeof vital.measurement_date === 'string' 
+                                                        ? new Date(vital.measurement_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                                                        : 'N/A'}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="flex space-x-2">
+                                            <button
+                                                onClick={() => {
+                                                    setEditing(vital);
+                                                    setShowForm(true);
+                                                }}
+                                                className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                                title="Edit"
+                                            >
+                                                <Edit className="w-4 h-4" />
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    if (window.confirm('Are you sure you want to delete this vital sign record?')) {
+                                                        deleteMutation.mutate(vital.id);
+                                                    }
+                                                }}
+                                                className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                title="Delete"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="grid grid-cols-2 gap-4">
+                                        {vital.systolic && vital.diastolic && (
+                                            <div className="flex items-center space-x-2 p-2 bg-red-50 rounded-lg">
+                                                <Heart className="w-4 h-4 text-red-500 flex-shrink-0" />
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-xs text-gray-500">Blood Pressure</p>
+                                                    <p className="text-sm font-semibold text-gray-900">
+                                                        {vital.systolic}/{vital.diastolic} mmHg
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        )}
+                                        {vital.pulse && (
+                                            <div className="flex items-center space-x-2 p-2 bg-green-50 rounded-lg">
+                                                <Activity className="w-4 h-4 text-green-500 flex-shrink-0" />
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-xs text-gray-500">Pulse</p>
+                                                    <p className="text-sm font-semibold text-gray-900">
+                                                        {vital.pulse} bpm
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        )}
+                                        {vital.temperature && (
+                                            <div className="flex items-center space-x-2 p-2 bg-blue-50 rounded-lg">
+                                                <Thermometer className="w-4 h-4 text-blue-500 flex-shrink-0" />
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-xs text-gray-500">Temperature</p>
+                                                    <p className="text-sm font-semibold text-gray-900">
+                                                        {vital.temperature}°F
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        )}
+                                        {vital.oxygen_saturation && (
+                                            <div className="flex items-center space-x-2 p-2 bg-purple-50 rounded-lg">
+                                                <Droplet className="w-4 h-4 text-purple-500 flex-shrink-0" />
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-xs text-gray-500">O2 Sat</p>
+                                                    <p className="text-sm font-semibold text-gray-900">
+                                                        {vital.oxygen_saturation}%
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                    
+                                    {vital.notes && (
+                                        <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+                                            <p className="text-xs text-gray-700">
+                                                <span className="font-medium">Notes: </span>
+                                                {vital.notes}
+                                            </p>
+                                        </div>
+                                    )}
+                                    
+                                    {vital.taken_by && (
+                                        <p className="text-xs text-gray-500 mt-2">
+                                            Taken by: {vital.taken_by?.name || 'Unknown'}
+                                        </p>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="bg-white rounded-lg shadow p-12 text-center">
+                            <Activity className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                            <p className="text-gray-600 text-lg font-medium">No vital signs found</p>
+                            <p className="text-gray-500 text-sm mt-2">
+                                {dateFilter === 'today' 
+                                    ? 'No vital signs recorded today.' 
+                                    : 'Try adjusting your filters or check back later.'}
+                            </p>
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {showForm && (
+                <VitalSignForm
+                    record={editing}
+                    residents={residentsData?.data || []}
+                    onClose={() => {
+                        setShowForm(false);
+                        setEditing(null);
+                    }}
+                    onSuccess={() => {
+                        setShowForm(false);
+                        setEditing(null);
+                        queryClient.invalidateQueries(['vitals']);
+                    }}
+                />
+            )}
         </div>
     );
 }
 
+function VitalSignForm({ record, residents, onClose, onSuccess }) {
+    const [formData, setFormData] = useState({
+        resident_id: record?.resident_id || '',
+        measurement_date: record?.measurement_date 
+            ? (typeof record.measurement_date === 'string' 
+                ? record.measurement_date.split('T')[0]
+                : new Date(record.measurement_date).toISOString().split('T')[0])
+            : new Date().toISOString().split('T')[0],
+        measurement_time: record?.measurement_date
+            ? (typeof record.measurement_date === 'string'
+                ? new Date(record.measurement_date).toTimeString().slice(0, 5)
+                : new Date(record.measurement_date).toTimeString().slice(0, 5))
+            : new Date().toTimeString().slice(0, 5),
+        systolic: record?.systolic || '',
+        diastolic: record?.diastolic || '',
+        temperature: record?.temperature || '',
+        pulse: record?.pulse || '',
+        oxygen_saturation: record?.oxygen_saturation || '',
+        pain_level: record?.pain_level || '',
+        pain_description: record?.pain_description || '',
+        notes: record?.notes || '',
+    });
+
+    const [errors, setErrors] = useState({});
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setErrors({});
+        setIsSubmitting(true);
+
+        try {
+            // Combine date and time
+            const measurementDateTime = `${formData.measurement_date}T${formData.measurement_time}:00`;
+            
+            const payload = {
+                ...formData,
+                measurement_date: measurementDateTime,
+                resident_id: parseInt(formData.resident_id),
+                systolic: formData.systolic ? parseInt(formData.systolic) : null,
+                diastolic: formData.diastolic ? parseInt(formData.diastolic) : null,
+                temperature: formData.temperature ? parseFloat(formData.temperature) : null,
+                pulse: formData.pulse ? parseInt(formData.pulse) : null,
+                oxygen_saturation: formData.oxygen_saturation ? parseInt(formData.oxygen_saturation) : null,
+                pain_level: formData.pain_level ? parseInt(formData.pain_level) : null,
+            };
+
+            if (record) {
+                await api.put(`/vitals/${record.id}`, payload);
+            } else {
+                await api.post('/vitals', payload);
+            }
+            onSuccess();
+        } catch (error) {
+            if (error.response?.data?.errors) {
+                setErrors(error.response.data.errors);
+            } else {
+                setErrors({ general: error.response?.data?.message || 'Failed to save vital sign' });
+            }
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+            <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto my-8">
+                <div className="p-6">
+                    <div className="flex items-center justify-between mb-6">
+                        <h2 className="text-2xl font-bold text-gray-900">
+                            {record ? 'Edit Vital Sign' : 'Add Vital Sign'}
+                        </h2>
+                        <button
+                            onClick={onClose}
+                            className="text-gray-400 hover:text-gray-600 text-2xl"
+                        >
+                            ×
+                        </button>
+                    </div>
+
+                    {errors.general && (
+                        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                            <p className="text-sm text-red-800">{errors.general}</p>
+                        </div>
+                    )}
+
+                    <form onSubmit={handleSubmit} className="space-y-6">
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Resident *
+                                </label>
+                                <select
+                                    value={formData.resident_id}
+                                    onChange={(e) => setFormData({...formData, resident_id: e.target.value})}
+                                    required
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2D5016] focus:border-transparent"
+                                >
+                                    <option value="">Select Resident</option>
+                                    {residents.map(r => (
+                                        <option key={r.id} value={r.id}>
+                                            {r.first_name} {r.last_name}
+                                        </option>
+                                    ))}
+                                </select>
+                                {errors.resident_id && <p className="text-xs text-red-600 mt-1">{errors.resident_id[0]}</p>}
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Measurement Date *
+                                </label>
+                                <input
+                                    type="date"
+                                    value={formData.measurement_date}
+                                    onChange={(e) => setFormData({...formData, measurement_date: e.target.value})}
+                                    required
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2D5016] focus:border-transparent"
+                                />
+                                {errors.measurement_date && <p className="text-xs text-red-600 mt-1">{errors.measurement_date[0]}</p>}
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Measurement Time
+                                </label>
+                                <input
+                                    type="time"
+                                    value={formData.measurement_time}
+                                    onChange={(e) => setFormData({...formData, measurement_time: e.target.value})}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2D5016] focus:border-transparent"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="border-t pt-4">
+                            <h3 className="text-lg font-semibold text-gray-900 mb-4">Vital Signs</h3>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Systolic (mmHg)
+                                    </label>
+                                    <input
+                                        type="number"
+                                        value={formData.systolic}
+                                        onChange={(e) => setFormData({...formData, systolic: e.target.value})}
+                                        min="0"
+                                        max="300"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2D5016] focus:border-transparent"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Diastolic (mmHg)
+                                    </label>
+                                    <input
+                                        type="number"
+                                        value={formData.diastolic}
+                                        onChange={(e) => setFormData({...formData, diastolic: e.target.value})}
+                                        min="0"
+                                        max="200"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2D5016] focus:border-transparent"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Temperature (°F)
+                                    </label>
+                                    <input
+                                        type="number"
+                                        step="0.1"
+                                        value={formData.temperature}
+                                        onChange={(e) => setFormData({...formData, temperature: e.target.value})}
+                                        min="90"
+                                        max="110"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2D5016] focus:border-transparent"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Pulse (bpm)
+                                    </label>
+                                    <input
+                                        type="number"
+                                        value={formData.pulse}
+                                        onChange={(e) => setFormData({...formData, pulse: e.target.value})}
+                                        min="0"
+                                        max="200"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2D5016] focus:border-transparent"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Oxygen Saturation (%)
+                                    </label>
+                                    <input
+                                        type="number"
+                                        value={formData.oxygen_saturation}
+                                        onChange={(e) => setFormData({...formData, oxygen_saturation: e.target.value})}
+                                        min="0"
+                                        max="100"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2D5016] focus:border-transparent"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Pain Level (0-10)
+                                    </label>
+                                    <input
+                                        type="number"
+                                        value={formData.pain_level}
+                                        onChange={(e) => setFormData({...formData, pain_level: e.target.value})}
+                                        min="0"
+                                        max="10"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2D5016] focus:border-transparent"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Pain Description
+                            </label>
+                            <input
+                                type="text"
+                                value={formData.pain_description}
+                                onChange={(e) => setFormData({...formData, pain_description: e.target.value})}
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2D5016] focus:border-transparent"
+                                placeholder="Describe pain location/type..."
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Notes
+                            </label>
+                            <textarea
+                                value={formData.notes}
+                                onChange={(e) => setFormData({...formData, notes: e.target.value})}
+                                rows={3}
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2D5016] focus:border-transparent"
+                                placeholder="Additional notes..."
+                            />
+                        </div>
+
+                        <div className="flex items-center justify-end space-x-3 pt-4 border-t">
+                            <button
+                                type="button"
+                                onClick={onClose}
+                                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="submit"
+                                disabled={isSubmitting}
+                                className="px-4 py-2 bg-[#2D5016] text-white rounded-lg hover:bg-[#1a3009] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {isSubmitting ? 'Saving...' : (record ? 'Update' : 'Create')}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    );
+}

@@ -1,4 +1,6 @@
+import React, { useState } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
+import api from '../services/api';
 import { 
     LayoutDashboard, 
     Calendar, 
@@ -10,21 +12,58 @@ import {
     RefreshCw,
     Maximize2,
     User,
-    LogOut
+    LogOut,
+    Heart,
+    Pill,
+    Moon,
+    ClipboardList,
+    Settings,
+    ChevronDown,
+    ChevronRight
 } from 'lucide-react';
-import { useState } from 'react';
 
 const navigation = [
-    { name: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
-    { name: 'Appointments', icon: Calendar, path: '/appointments' },
-    { name: 'Organization', icon: Building2, path: '/organization' },
-    { name: 'Residents', icon: Users, path: '/residents' },
-    { name: 'Reports', icon: FileText, path: '/reports' },
+    { name: 'Dashboard', icon: LayoutDashboard, path: '/dashboard', children: null },
+    { name: 'Assessments', icon: ClipboardList, path: '/assessments', children: null },
+    { name: 'Appointment', icon: Calendar, path: '/appointments', children: null },
+    { name: 'Vitals', icon: Heart, path: '/vitals', children: null },
+    { name: 'Medication', icon: Pill, path: '/medications', children: null },
+    { name: 'Sleep', icon: Moon, path: '/sleep', children: null },
+    { 
+        name: 'Reports', 
+        icon: FileText, 
+        path: '/reports', 
+        children: [
+            { name: 'Chart Reports', path: '/reports/charts' },
+            { name: 'Resident Charts', path: '/reports/resident-charts' },
+            { name: 'Vitals Charts', path: '/reports/vitals-charts' },
+            { name: 'Vitals Reports', path: '/reports/vitals-reports' },
+            { name: 'Assessment Charts', path: '/reports/assessment-charts' },
+            { name: 'Appointments Charts', path: '/reports/appointments-charts' },
+            { name: 'Vitals History', path: '/reports/vitals-history' },
+            { name: 'Sleep Charts', path: '/reports/sleep-charts' },
+            { name: 'Staff Charts', path: '/reports/staff-charts' },
+        ]
+    },
+    { 
+        name: 'Administration', 
+        icon: Settings, 
+        path: '/administration', 
+        children: [
+            { name: 'Residents', path: '/administration/residents' },
+            { name: 'Facilities', path: '/administration/facilities' },
+            { name: 'Branches', path: '/administration/branches' },
+            { name: 'Vital Ranges', path: '/administration/vital-ranges' },
+            { name: 'Leave Requests', path: '/administration/leave-requests' },
+            { name: 'Roles & Permissions', path: '/administration/roles' },
+        ]
+    },
 ];
 
 export default function Layout() {
     const location = useLocation();
     const [userMenuOpen, setUserMenuOpen] = useState(false);
+    const [expandedMenus, setExpandedMenus] = useState({});
 
     return (
         <div className="flex h-screen bg-gray-50">
@@ -33,55 +72,103 @@ export default function Layout() {
                 {/* Logo */}
                 <div className="p-6 border-b border-slate-700">
                     <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
-                            <span className="text-white font-bold text-lg">C</span>
+                        <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center shadow-lg overflow-hidden">
+                            <img 
+                                src="/images/logo.jpeg" 
+                                alt="Evergreen Oasis Care Home"
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                    e.target.style.display = 'none';
+                                    e.target.nextElementSibling.style.display = 'flex';
+                                }}
+                            />
+                            <div className="w-full h-full bg-blue-600 rounded-full flex items-center justify-center hidden">
+                                <span className="text-white font-bold text-xl">E</span>
+                            </div>
                         </div>
-                        <span className="text-xl font-semibold">CareLink</span>
+                        <div>
+                            <span className="text-xl font-semibold text-white">Evergreen Oasis</span>
+                            <p className="text-xs text-gray-300">Care Home</p>
+                        </div>
                     </div>
                 </div>
 
                 {/* Navigation */}
-                <nav className="flex-1 p-4 space-y-2">
+                <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
                     {navigation.map((item) => {
                         const Icon = item.icon;
-                        const isActive = location.pathname === item.path;
+                        const isActive = location.pathname === item.path || 
+                            location.pathname.startsWith(item.path + '/') ||
+                            (item.children && item.children.some(child => location.pathname === child.path || location.pathname.startsWith(child.path + '/')));
+                        const hasChildren = item.children && item.children.length > 0;
+                        const isExpanded = expandedMenus[item.name] ?? (isActive && hasChildren);
+                        
                         return (
-                            <Link
-                                key={item.name}
-                                to={item.path}
-                                className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
-                                    isActive
-                                        ? 'bg-blue-600 text-white'
-                                        : 'text-gray-300 hover:bg-slate-700'
-                                }`}
-                            >
-                                <Icon className="w-5 h-5" />
-                                <span>{item.name}</span>
-                            </Link>
+                            <div key={item.name}>
+                                {hasChildren ? (
+                                    <div>
+                                        <button
+                                            onClick={() => setExpandedMenus({...expandedMenus, [item.name]: !isExpanded})}
+                                            className={`w-full flex items-center justify-between space-x-3 px-4 py-3 rounded-lg transition-colors ${
+                                                isActive
+                                                    ? 'bg-[#2D5016] text-white shadow-md'
+                                                    : 'text-gray-300 hover:bg-slate-700 hover:text-white'
+                                            }`}
+                                        >
+                                            <div className="flex items-center space-x-3">
+                                                <Icon className="w-5 h-5" />
+                                                <span>{item.name}</span>
+                                            </div>
+                                            {isExpanded ? (
+                                                <ChevronDown className="w-4 h-4" />
+                                            ) : (
+                                                <ChevronRight className="w-4 h-4" />
+                                            )}
+                                        </button>
+                                        {isExpanded && (
+                                            <div className="ml-8 mt-2 space-y-1">
+                                                {item.children.map((child) => {
+                                                    const isChildActive = location.pathname === child.path || location.pathname.startsWith(child.path + '/');
+                                                    return (
+                                                        <Link
+                                                            key={child.path}
+                                                            to={child.path}
+                                                            className={`block px-4 py-2 rounded-lg transition-colors text-sm ${
+                                                                isChildActive
+                                                                    ? 'bg-slate-700 text-white'
+                                                                    : 'text-gray-400 hover:bg-slate-700 hover:text-white'
+                                                            }`}
+                                                        >
+                                                            {child.name}
+                                                        </Link>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <Link
+                                        to={item.path}
+                                        className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
+                                            isActive
+                                                ? 'bg-[#2D5016] text-white shadow-md'
+                                                : 'text-gray-300 hover:bg-slate-700 hover:text-white'
+                                        }`}
+                                    >
+                                        <Icon className="w-5 h-5" />
+                                        <span>{item.name}</span>
+                                    </Link>
+                                )}
+                            </div>
                         );
                     })}
                 </nav>
-
-                {/* User Profile at bottom */}
-                <div className="p-4 border-t border-slate-700">
-                    <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-slate-600 rounded-full flex items-center justify-center">
-                            <User className="w-6 h-6 text-gray-300" />
-                        </div>
-                        <div className="flex-1">
-                            <p className="text-sm font-medium">Jessica Jones</p>
-                            <Link to="/profile" className="text-xs text-gray-400 hover:text-white">
-                                View profile
-                            </Link>
-                        </div>
-                    </div>
-                </div>
             </aside>
 
             {/* Main Content */}
             <div className="flex-1 flex flex-col overflow-hidden">
                 {/* Top Bar */}
-                <header className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+                <header className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between shadow-sm">
                     <h1 className="text-xl font-semibold text-gray-900">Healthcare Management System</h1>
                     <div className="flex items-center space-x-4">
                         <button className="p-2 hover:bg-gray-100 rounded-lg">
@@ -113,9 +200,18 @@ export default function Layout() {
                                         Profile
                                     </Link>
                                     <button
-                                        onClick={() => {
-                                            // Handle logout
-                                            window.location.href = '/admin/logout';
+                                        onClick={async () => {
+                                            try {
+                                                // Call logout API
+                                                await api.post('/logout');
+                                            } catch (err) {
+                                                console.error('Logout error:', err);
+                                            } finally {
+                                                // Clear local storage and redirect
+                                                localStorage.removeItem('auth_token');
+                                                localStorage.removeItem('user_name');
+                                                window.location.href = '/app/login';
+                                            }
                                         }}
                                         className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2"
                                     >

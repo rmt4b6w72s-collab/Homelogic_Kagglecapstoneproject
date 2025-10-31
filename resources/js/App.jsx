@@ -1,3 +1,4 @@
+import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
@@ -7,19 +8,73 @@ import Vitals from './pages/Vitals';
 import Medications from './pages/Medications';
 import Reports from './pages/Reports';
 import Login from './pages/Login';
+import ProtectedRoute from './components/ProtectedRoute';
+
+// New pages to create
+import Assessments from './pages/Assessments';
+import AssessmentDetail from './pages/AssessmentDetail';
+import AssessmentReview from './pages/AssessmentReview';
+import Sleep from './pages/Sleep';
+import Facilities from './pages/Facilities';
+import Branches from './pages/Branches';
+import VitalRanges from './pages/VitalRanges';
+import LeaveRequests from './pages/LeaveRequests';
+import Roles from './pages/Roles';
+
+// Report sub-pages
+import ChartReports from './pages/reports/ChartReports';
+import ResidentCharts from './pages/reports/ResidentCharts';
+import VitalsCharts from './pages/reports/VitalsCharts';
+import VitalsReports from './pages/reports/VitalsReports';
+import AssessmentCharts from './pages/reports/AssessmentCharts';
+import AppointmentsCharts from './pages/reports/AppointmentsCharts';
+import VitalsHistory from './pages/reports/VitalsHistory';
+import SleepCharts from './pages/reports/SleepCharts';
+import StaffCharts from './pages/reports/StaffCharts';
 
 function App() {
     return (
         <Routes>
             <Route path="/login" element={<Login />} />
-            <Route path="/" element={<Layout />}>
-                <Route index element={<Navigate to="/dashboard" replace />} />
+            <Route 
+                path="/" 
+                element={
+                    <ProtectedRoute>
+                        <Layout />
+                    </ProtectedRoute>
+                }
+            >
+                <Route index element={<Navigate to="dashboard" replace />} />
+                
+                {/* Main Pages */}
                 <Route path="dashboard" element={<Dashboard />} />
-                <Route path="residents" element={<Residents />} />
+                <Route path="assessments" element={<Assessments />} />
+                <Route path="assessments/:id" element={<AssessmentDetail />} />
+                <Route path="assessments/:id/review" element={<AssessmentReview />} />
                 <Route path="appointments" element={<Appointments />} />
                 <Route path="vitals" element={<Vitals />} />
                 <Route path="medications" element={<Medications />} />
+                <Route path="sleep" element={<Sleep />} />
+                
+                {/* Reports */}
                 <Route path="reports" element={<Reports />} />
+                <Route path="reports/charts" element={<ChartReports />} />
+                <Route path="reports/resident-charts" element={<ResidentCharts />} />
+                <Route path="reports/vitals-charts" element={<VitalsCharts />} />
+                <Route path="reports/vitals-reports" element={<VitalsReports />} />
+                <Route path="reports/assessment-charts" element={<AssessmentCharts />} />
+                <Route path="reports/appointments-charts" element={<AppointmentsCharts />} />
+                <Route path="reports/vitals-history" element={<VitalsHistory />} />
+                <Route path="reports/sleep-charts" element={<SleepCharts />} />
+                <Route path="reports/staff-charts" element={<StaffCharts />} />
+                
+                {/* Administration */}
+                <Route path="administration/residents" element={<Residents />} />
+                <Route path="administration/facilities" element={<Facilities />} />
+                <Route path="administration/branches" element={<Branches />} />
+                <Route path="administration/vital-ranges" element={<VitalRanges />} />
+                <Route path="administration/leave-requests" element={<LeaveRequests />} />
+                <Route path="administration/roles" element={<Roles />} />
             </Route>
         </Routes>
     );

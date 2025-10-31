@@ -1,0 +1,201 @@
+import React, { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import api from '../services/api';
+import { Building2, Plus, Search, Edit, Trash2 } from 'lucide-react';
+
+export default function Facilities() {
+  const queryClient = useQueryClient();
+  const [search, setSearch] = useState('');
+  const [showForm, setShowForm] = useState(false);
+  const [editing, setEditing] = useState(null);
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['facilities', search],
+    queryFn: async () => {
+      const res = await api.get('/facilities', { params: { search, per_page: 20 } });
+      return res.data;
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id) => api.delete(`/facilities/${id}`),
+    onSuccess: () => queryClient.invalidateQueries(['facilities']),
+  });
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-3xl font-bold text-gray-900">Facilities</h1>
+        <button
+          onClick={() => { setEditing(null); setShowForm(true); }}
+          className="px-4 py-2 bg-[#2D5016] text-white rounded-lg hover:bg-[#1a3009] transition-colors flex items-center space-x-2"
+        >
+          <Plus className="w-4 h-4" />
+          <span>Add Facility</span>
+        </button>
+      </div>
+
+      <div className="bg-white rounded-lg shadow p-6 mb-6">
+        <div className="relative max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search facilities..."
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2D5016] focus:border-transparent"
+          />
+        </div>
+      </div>
+
+      {isLoading ? (
+        <div className="text-center py-12">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#2D5016]"></div>
+          <p className="mt-4 text-gray-600">Loading facilities...</p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {data?.data?.length ? (
+            data.data.map((f) => (
+              <div key={f.id} className="bg-white rounded-lg shadow p-6">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-start space-x-3">
+                    <div className="p-2 bg-blue-100 rounded-lg"><Building2 className="w-5 h-5 text-blue-600" /></div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900">{f.name}</h3>
+                      {f.address && <p className="text-sm text-gray-600">{f.address}</p>}
+                      {(f.phone || f.email) && (
+                        <p className="text-sm text-gray-500 mt-1">{f.phone}{f.phone && f.email ? ' • ' : ''}{f.email}</p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={() => { setEditing(f); setShowForm(true); }}
+                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
+                      title="Edit"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => window.confirm('Delete facility?') && deleteMutation.mutate(f.id)}
+                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+                      title="Delete"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="bg-white rounded-lg shadow p-12 text-center">
+              <Building2 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-600 text-lg font-medium">No facilities found</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {showForm && (
+        <FacilityForm
+          record={editing}
+          onClose={() => { setShowForm(false); setEditing(null); }}
+          onSuccess={() => { setShowForm(false); setEditing(null); queryClient.invalidateQueries(['facilities']); }}
+        />
+      )}
+    </div>
+  );
+}
+
+function FacilityForm({ record, onClose, onSuccess }) {
+  const [form, setForm] = useState({
+    name: record?.name || '',
+    address: record?.address || '',
+    phone: record?.phone || '',
+    email: record?.email || '',
+    is_active: record?.is_active ?? true,
+  });
+  const [errors, setErrors] = useState({});
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+    setErrors({});
+    try {
+      if (record) {
+        await api.put(`/facilities/${record.id}`, form);
+      } else {
+        await api.post('/facilities', form);
+      }
+      onSuccess();
+    } catch (e) {
+      setErrors(e.response?.data?.errors || { general: e.response?.data?.message || 'Failed to save facility' });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-xl">
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold text-gray-900">{record ? 'Edit Facility' : 'Add Facility'}</h2>
+            <button onClick={onClose} className="text-gray-400 hover:text-gray-600">×</button>
+          </div>
+          {errors.general && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-sm text-red-800">{errors.general}</p>
+            </div>
+          )}
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
+              <input
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                required
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2D5016] focus:border-transparent"
+              />
+              {errors.name && <p className="text-xs text-red-600 mt-1">{errors.name[0]}</p>}
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+              <textarea
+                value={form.address}
+                onChange={(e) => setForm({ ...form, address: e.target.value })}
+                rows={3}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2D5016] focus:border-transparent"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                <input
+                  value={form.phone}
+                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2D5016] focus:border-transparent"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <input
+                  type="email"
+                  value={form.email}
+                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2D5016] focus:border-transparent"
+                />
+              </div>
+            </div>
+            <div className="flex items-center justify-end space-x-3 pt-4 border-t">
+              <button type="button" onClick={onClose} className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</button>
+              <button type="submit" disabled={submitting} className="px-4 py-2 bg-[#2D5016] text-white rounded-lg hover:bg-[#1a3009] disabled:opacity-50">{submitting ? 'Saving...' : (record ? 'Update' : 'Create')}</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+}
+
