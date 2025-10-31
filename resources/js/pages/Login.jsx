@@ -14,7 +14,12 @@ export default function Login() {
     React.useEffect(() => {
         const token = localStorage.getItem('auth_token');
         if (token) {
-            navigate('/dashboard', { replace: true });
+            const role = localStorage.getItem('user_role') || '';
+            if (role === 'administrator' || role === 'admin') {
+                window.location.href = '/admin';
+            } else {
+                navigate('/dashboard', { replace: true });
+            }
         }
     }, [navigate]);
 
@@ -34,9 +39,21 @@ export default function Login() {
                 localStorage.setItem('auth_token', response.data.token);
                 if (response.data.user) {
                     localStorage.setItem('user_name', response.data.user.name || response.data.user.email);
+                    localStorage.setItem('user_role', response.data.user.role || '');
                 }
-                // Redirect to dashboard
-                navigate('/dashboard');
+                
+                // Redirect based on user role
+                const role = response.data.user?.role || '';
+                if (role === 'administrator' || role === 'admin') {
+                    // Redirect to admin panel for administrators
+                    window.location.href = '/admin';
+                } else if (role === 'caregiver' || role === 'care_giver') {
+                    // Redirect to React app for caregivers
+                    navigate('/dashboard');
+                } else {
+                    // Default: redirect to React dashboard
+                    navigate('/dashboard');
+                }
             }
         } catch (err) {
             setError(err.response?.data?.message || 'Invalid credentials. Please try again.');
