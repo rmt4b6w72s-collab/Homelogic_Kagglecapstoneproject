@@ -171,7 +171,7 @@ export default function Sleep() {
                     <p className="mt-4 text-gray-600">Loading sleep records...</p>
                 </div>
             ) : (
-                <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {data?.data?.length > 0 ? (
                         data.data.map((record) => (
                             <div key={record.id} className="bg-white rounded-lg shadow p-6">
