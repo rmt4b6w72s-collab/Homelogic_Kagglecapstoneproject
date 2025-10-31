@@ -394,7 +394,9 @@ function UserForm({ record, branches, roles, onClose, onSuccess }) {
             formDataToSend.append('supervisor_name', formData.supervisor_name || '');
             formDataToSend.append('provider_name', formData.provider_name || '');
             formDataToSend.append('role', formData.role || '');
-            formDataToSend.append('assigned_branch_id', formData.assigned_branch_id ? formData.assigned_branch_id : '');
+            if (formData.assigned_branch_id) {
+                formDataToSend.append('assigned_branch_id', formData.assigned_branch_id);
+            }
             formDataToSend.append('is_active', formData.is_active ? '1' : '0');
             formDataToSend.append('notes', formData.notes || '');
             

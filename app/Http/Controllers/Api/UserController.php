@@ -84,6 +84,9 @@ class UserController extends Controller
             'role_ids.*' => 'exists:roles,id',
         ]);
 
+        // Convert empty string to null for nullable fields
+        $validated['assigned_branch_id'] = $validated['assigned_branch_id'] ?: null;
+
         // Handle profile image upload
         if ($request->hasFile('profile_image')) {
             $file = $request->file('profile_image');
@@ -139,6 +142,9 @@ class UserController extends Controller
             'role_ids' => 'array',
             'role_ids.*' => 'exists:roles,id',
         ]);
+
+        // Convert empty string to null for nullable fields
+        $validated['assigned_branch_id'] = $validated['assigned_branch_id'] ?: null;
 
         // Handle profile image upload if provided
         if ($request->hasFile('profile_image')) {
