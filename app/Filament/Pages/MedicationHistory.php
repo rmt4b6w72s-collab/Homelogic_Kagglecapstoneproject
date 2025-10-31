@@ -7,7 +7,6 @@ use Filament\Tables\Table;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Columns\BadgeColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Forms\Components\DatePicker;
 use Illuminate\Database\Eloquent\Builder;
@@ -81,24 +80,27 @@ class MedicationHistory extends Page implements HasTable
                     ->iconColor('gray')
                     ->description(fn ($record) => $record->administered_at->diffForHumans()),
                 
-                BadgeColumn::make('status')
+                TextColumn::make('status')
                     ->label('Status')
-                    ->colors([
-                        'success' => 'completed',
-                        'warning' => 'missed',
-                        'danger' => 'refused',
-                    ])
+                    ->badge()
+                    ->color(fn (string $state): string => match($state) {
+                        'completed' => 'success',
+                        'missed' => 'warning',
+                        'refused' => 'danger',
+                        default => 'gray',
+                    })
                     ->formatStateUsing(fn (string $state): string => match($state) {
                         'completed' => 'Completed',
                         'missed' => 'Missed',
                         'refused' => 'Refused',
                         default => ucfirst($state),
                     })
-                    ->icons([
-                        'heroicon-o-check-circle' => 'completed',
-                        'heroicon-o-clock' => 'missed',
-                        'heroicon-o-x-circle' => 'refused',
-                    ]),
+                    ->icon(fn (string $state): string => match($state) {
+                        'completed' => 'heroicon-o-check-circle',
+                        'missed' => 'heroicon-o-clock',
+                        'refused' => 'heroicon-o-x-circle',
+                        default => 'heroicon-o-question-mark-circle',
+                    }),
                 
                 TextColumn::make('dosage_given')
                     ->label('Dosage')
