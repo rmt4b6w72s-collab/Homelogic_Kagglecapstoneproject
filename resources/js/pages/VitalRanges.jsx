@@ -48,9 +48,9 @@ export default function VitalRanges() {
             <tbody className="bg-white divide-y divide-gray-200">
               {data?.data?.map((r) => (
                 <tr key={r.id}>
-                  <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{r.vital_type}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">{r.min_value ?? '-'}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">{r.max_value ?? '-'}</td>
+                  <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900 capitalize">{r.parameter?.replace('_', ' ')}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">{r.min_normal ?? '-'}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">{r.max_normal ?? '-'}</td>
                   <td className="px-6 py-4 whitespace-nowrap">{r.unit ?? '-'}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
                     <button onClick={() => { setEditing(r); setShowForm(true); }} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg mr-2"><Edit className="w-4 h-4" /></button>
@@ -82,11 +82,11 @@ export default function VitalRanges() {
 
 function RangeForm({ record, onClose, onSuccess }) {
   const [form, setForm] = useState({
-    vital_type: record?.vital_type || '',
-    min_value: record?.min_value ?? '',
-    max_value: record?.max_value ?? '',
+    parameter: record?.parameter || '',
+    min_normal: record?.min_normal ?? '',
+    max_normal: record?.max_normal ?? '',
     unit: record?.unit || '',
-    notes: record?.notes || '',
+    description: record?.description || '',
   });
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
@@ -122,18 +122,25 @@ function RangeForm({ record, onClose, onSuccess }) {
           )}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Vital Type *</label>
-              <input value={form.vital_type} onChange={(e) => setForm({ ...form, vital_type: e.target.value })} required className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2D5016] focus:border-transparent" />
-              {errors.vital_type && <p className="text-xs text-red-600 mt-1">{errors.vital_type[0]}</p>}
+              <label className="block text-sm font-medium text-gray-700 mb-1">Parameter *</label>
+              <select value={form.parameter} onChange={(e) => setForm({ ...form, parameter: e.target.value })} required className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2D5016] focus:border-transparent">
+                <option value="">Select parameter</option>
+                <option value="systolic">Systolic</option>
+                <option value="diastolic">Diastolic</option>
+                <option value="temperature">Temperature</option>
+                <option value="pulse">Pulse</option>
+                <option value="oxygen_saturation">Oxygen Saturation</option>
+              </select>
+              {errors.parameter && <p className="text-xs text-red-600 mt-1">{errors.parameter[0]}</p>}
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Min</label>
-                <input type="number" step="0.01" value={form.min_value} onChange={(e) => setForm({ ...form, min_value: e.target.value })} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2D5016] focus:border-transparent" />
+                <label className="block text-sm font-medium text-gray-700 mb-1">Min Normal</label>
+                <input type="number" step="0.01" value={form.min_normal} onChange={(e) => setForm({ ...form, min_normal: e.target.value })} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2D5016] focus:border-transparent" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Max</label>
-                <input type="number" step="0.01" value={form.max_value} onChange={(e) => setForm({ ...form, max_value: e.target.value })} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2D5016] focus:border-transparent" />
+                <label className="block text-sm font-medium text-gray-700 mb-1">Max Normal</label>
+                <input type="number" step="0.01" value={form.max_normal} onChange={(e) => setForm({ ...form, max_normal: e.target.value })} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2D5016] focus:border-transparent" />
               </div>
             </div>
             <div>
@@ -141,8 +148,8 @@ function RangeForm({ record, onClose, onSuccess }) {
               <input value={form.unit} onChange={(e) => setForm({ ...form, unit: e.target.value })} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2D5016] focus:border-transparent" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-              <textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={2} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2D5016] focus:border-transparent" />
+              <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+              <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={2} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2D5016] focus:border-transparent" />
             </div>
             <div className="flex items-center justify-end space-x-3 pt-4 border-t">
               <button type="button" onClick={onClose} className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</button>

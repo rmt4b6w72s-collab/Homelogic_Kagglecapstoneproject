@@ -12,18 +12,23 @@ class VitalRangeController extends Controller
     public function index(Request $request): JsonResponse
     {
         $query = VitalRange::query();
-        $ranges = $query->orderBy('vital_type')->paginate($request->get('per_page', 50));
+        $ranges = $query->orderBy('parameter')->paginate($request->get('per_page', 50));
         return response()->json($ranges);
     }
 
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'vital_type' => 'required|string|max:100',
-            'min_value' => 'nullable|numeric',
-            'max_value' => 'nullable|numeric',
+            'parameter' => 'required|string|max:100',
+            'min_normal' => 'nullable|numeric',
+            'max_normal' => 'nullable|numeric',
+            'min_warning' => 'nullable|numeric',
+            'max_warning' => 'nullable|numeric',
+            'min_critical' => 'nullable|numeric',
+            'max_critical' => 'nullable|numeric',
             'unit' => 'nullable|string|max:50',
-            'notes' => 'nullable|string',
+            'description' => 'nullable|string',
+            'is_active' => 'nullable|boolean',
         ]);
         $range = VitalRange::create($validated);
         return response()->json($range, 201);
@@ -33,11 +38,16 @@ class VitalRangeController extends Controller
     {
         $range = VitalRange::findOrFail($id);
         $validated = $request->validate([
-            'vital_type' => 'sometimes|required|string|max:100',
-            'min_value' => 'nullable|numeric',
-            'max_value' => 'nullable|numeric',
+            'parameter' => 'sometimes|required|string|max:100',
+            'min_normal' => 'nullable|numeric',
+            'max_normal' => 'nullable|numeric',
+            'min_warning' => 'nullable|numeric',
+            'max_warning' => 'nullable|numeric',
+            'min_critical' => 'nullable|numeric',
+            'max_critical' => 'nullable|numeric',
             'unit' => 'nullable|string|max:50',
-            'notes' => 'nullable|string',
+            'description' => 'nullable|string',
+            'is_active' => 'nullable|boolean',
         ]);
         $range->update($validated);
         return response()->json($range);
