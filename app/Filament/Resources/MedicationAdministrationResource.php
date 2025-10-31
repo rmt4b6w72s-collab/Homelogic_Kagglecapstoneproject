@@ -144,7 +144,8 @@ class MedicationAdministrationResource extends Resource
                                     ->count();
                                 
                                 return $completedToday >= $totalScheduled;
-                            }),
+                            })
+                            ->dehydrated(),
                         
                         Forms\Components\Select::make('status')
                             ->label('Status')
@@ -183,7 +184,8 @@ class MedicationAdministrationResource extends Resource
                                     ->count();
                                 
                                 return $completedToday >= $totalScheduled;
-                            }),
+                            })
+                            ->dehydrated(),
                         
                         Forms\Components\TextInput::make('dosage_given')
                             ->label('Dosage Given')
