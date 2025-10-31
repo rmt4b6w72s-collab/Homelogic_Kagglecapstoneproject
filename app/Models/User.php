@@ -10,6 +10,7 @@ use Laravel\Sanctum\HasApiTokens;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use Illuminate\Support\Facades\Storage;
+use App\Models\Notification;
 
 class User extends Authenticatable implements FilamentUser
 {
@@ -109,6 +110,16 @@ class User extends Authenticatable implements FilamentUser
     }
 
     // Relationships
+    public function notifications()
+    {
+        return $this->hasMany(Notification::class)->latest();
+    }
+
+    public function unreadNotifications()
+    {
+        return $this->hasMany(Notification::class)->where('is_read', false)->latest();
+    }
+
     public function assignedBranch()
     {
         return $this->belongsTo(Branch::class, 'assigned_branch_id');

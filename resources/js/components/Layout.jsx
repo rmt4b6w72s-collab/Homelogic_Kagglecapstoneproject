@@ -21,6 +21,7 @@ import {
     ChevronDown,
     ChevronRight
 } from 'lucide-react';
+import NotificationDropdown from './NotificationDropdown';
 
 const navigation = [
     { name: 'Dashboard', icon: LayoutDashboard, path: '/dashboard', children: null },
@@ -187,10 +188,7 @@ export default function Layout() {
                 <header className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between shadow-sm">
                     <h1 className="text-xl font-semibold text-gray-900">Healthcare Management System</h1>
                     <div className="flex items-center space-x-4">
-                        <button className="relative p-2 hover:bg-gray-100 rounded-lg">
-                            <Bell className="w-5 h-5 text-gray-600" />
-                            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-                        </button>
+                        <NotificationDropdown />
                         <div className="relative">
                             <button
                                 onClick={() => setUserMenuOpen(!userMenuOpen)}

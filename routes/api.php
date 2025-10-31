@@ -20,6 +20,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\DrugController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\EmployeeDocumentController;
+use App\Http\Controllers\Api\NotificationController;
 
 Route::prefix('v1')->group(function () {
     // Auth routes
@@ -79,6 +80,12 @@ Route::prefix('v1')->group(function () {
 
     // Employee Documents
     Route::apiResource('employee-documents', EmployeeDocumentController::class)->middleware('auth:sanctum');
+
+    // Notifications
+    Route::get('/notifications', [NotificationController::class, 'index'])->middleware('auth:sanctum');
+    Route::get('/notifications/count', [NotificationController::class, 'count'])->middleware('auth:sanctum');
+    Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead'])->middleware('auth:sanctum');
+    Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->middleware('auth:sanctum');
 
     // Charts
     Route::prefix('charts')->middleware('auth:sanctum')->group(function () {
