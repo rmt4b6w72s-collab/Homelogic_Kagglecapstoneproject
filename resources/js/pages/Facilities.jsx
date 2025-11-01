@@ -62,7 +62,6 @@ export default function Facilities() {
               <div key={f.id} className="bg-white rounded-lg shadow p-6">
                 <div className="flex items-start justify-between">
                   <div className="flex items-start space-x-3">
-                    <div className="p-2 bg-green-50 rounded-lg"><Building2 className="w-5 h-5 text-[#2D5016]" /></div>
                     <div>
                       <h3 className="text-lg font-semibold text-gray-900">{f.name}</h3>
                       {f.address && <p className="text-sm text-gray-600">{f.address}</p>}

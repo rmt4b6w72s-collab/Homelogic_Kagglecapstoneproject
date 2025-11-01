@@ -60,7 +60,6 @@ export default function LeaveRequests() {
                 <div className="flex items-start justify-between">
                   <div>
                     <div className="flex items-center space-x-3">
-                      <div className="p-2 bg-green-50 rounded-lg"><Calendar className="w-5 h-5 text-[#2D5016]" /></div>
                       <div>
                         <h3 className="text-lg font-semibold text-gray-900">{lr.staff?.name || 'Staff'}</h3>
                         <p className="text-sm text-gray-500">{new Date(lr.start_date).toLocaleDateString()} - {new Date(lr.end_date).toLocaleDateString()}</p>

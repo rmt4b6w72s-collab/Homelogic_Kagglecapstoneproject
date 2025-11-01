@@ -83,7 +83,6 @@ export default function Branches() {
                 <div className="flex items-start justify-between">
                   <div>
                     <div className="flex items-center space-x-3">
-                      <div className="p-2 bg-green-50 rounded-lg"><Building2 className="w-5 h-5 text-[#2D5016]" /></div>
                       <div>
                         <h3 className="text-lg font-semibold text-gray-900">{b.name}</h3>
                         <p className="text-sm text-gray-500">{b.facility?.name}</p>

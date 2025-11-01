@@ -47,7 +47,6 @@ export default function Roles() {
               <div key={role.id} className="bg-white rounded-lg shadow p-6">
                 <div className="flex items-start justify-between">
                   <div className="flex items-start space-x-3">
-                    <div className="p-2 bg-amber-100 rounded-lg"><Shield className="w-5 h-5 text-amber-600" /></div>
                     <div>
                       <h3 className="text-lg font-semibold text-gray-900">{role.name}</h3>
                       <p className="text-sm text-gray-500 mt-1">{role.permissions?.map(p => p.name).join(', ') || 'No permissions'}</p>

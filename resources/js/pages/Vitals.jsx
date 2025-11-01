@@ -129,9 +129,6 @@ export default function Vitals() {
                                 <div key={vital.id} className="bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow">
                                     <div className="flex items-start justify-between mb-4">
                                         <div className="flex items-center space-x-3">
-                                            <div className="p-2 bg-green-50 rounded-lg">
-                                                <Activity className="w-5 h-5 text-[#2D5016]" />
-                                            </div>
                                             <div>
                                                 <h3 className="text-lg font-semibold text-gray-900">
                                                     {vital.resident?.first_name} {vital.resident?.last_name}
