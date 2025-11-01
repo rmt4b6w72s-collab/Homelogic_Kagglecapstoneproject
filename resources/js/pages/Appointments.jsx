@@ -84,8 +84,6 @@ export default function Appointments() {
 
     return (
         <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4 md:mb-6">Appointments</h1>
-            
             <SectionCard>
                 <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
                     <div>
