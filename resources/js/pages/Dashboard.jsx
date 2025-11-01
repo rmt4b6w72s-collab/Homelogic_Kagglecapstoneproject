@@ -281,6 +281,14 @@ export default function Dashboard() {
                                         {stats?.weekly_activity && <WeeklyActivityChart data={stats.weekly_activity} />}
                                     </div>
                                 </div>
+
+                                {/* Resident Vitals Trend Chart */}
+                                {stats?.resident_list && stats.resident_list.length > 0 && (
+                                    <ResidentVitalsTrendSection 
+                                        residents={stats.resident_list}
+                                        defaultTrend={stats.resident_vitals_trend}
+                                    />
+                                )}
                             </div>
 
                             {/* Right Column - Lists (1/3 width on large screens) */}
@@ -538,6 +546,201 @@ function WeeklyActivityChart({ data }) {
             },
         },
     };
+
+    return (
+        <div style={{ height: '300px' }}>
+            <Line data={chartData} options={options} />
+        </div>
+    );
+}
+
+// Resident Vitals Trend Section Component
+function ResidentVitalsTrendSection({ residents, defaultTrend }) {
+    const [selectedResident, setSelectedResident] = React.useState(residents[0]?.id || null);
+    const [vitalsData, setVitalsData] = React.useState(defaultTrend);
+    const [isLoading, setIsLoading] = React.useState(false);
+
+    React.useEffect(() => {
+        if (residents[0]?.id) {
+            setSelectedResident(residents[0].id);
+            setVitalsData(defaultTrend);
+        }
+    }, [residents, defaultTrend]);
+
+    const handleResidentChange = async (residentId) => {
+        setSelectedResident(residentId);
+        setIsLoading(true);
+        try {
+            const response = await api.get(`/dashboard/resident-vitals/${residentId}`);
+            setVitalsData(response.data);
+        } catch (err) {
+            console.error('Failed to fetch vitals trend:', err);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    return (
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                <h2 className="text-xl font-bold text-[#2D5016]">Resident Vitals Trend</h2>
+                <div className="flex items-center">
+                    {isLoading && (
+                        <div className="inline-flex items-center mr-2">
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#2D5016]"></div>
+                        </div>
+                    )}
+                    <select
+                        value={selectedResident || ''}
+                        onChange={(e) => handleResidentChange(e.target.value)}
+                        className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm font-medium text-[#2D5016] focus:ring-2 focus:ring-[#2D5016] focus:border-transparent bg-white"
+                    >
+                        {residents.map((resident) => (
+                            <option key={resident.id} value={resident.id}>
+                                {resident.name}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+            </div>
+            <div className="p-6">
+                <ResidentVitalsChart data={vitalsData} />
+            </div>
+        </div>
+    );
+}
+
+// Resident Vitals Chart Component
+function ResidentVitalsChart({ data }) {
+    const chartData = {
+        labels: data?.map(item => item.day) || [],
+        datasets: [
+            {
+                label: 'Diastolic BP',
+                data: data?.map(item => item.diastolic_bp) || [],
+                borderColor: '#66BB6A', // Green
+                backgroundColor: 'rgba(102, 187, 106, 0.1)',
+                tension: 0.4,
+                fill: true,
+                pointBackgroundColor: '#66BB6A',
+                pointBorderColor: '#ffffff',
+                pointBorderWidth: 2,
+                pointRadius: 4,
+                pointHoverRadius: 6,
+                yAxisID: 'y',
+            },
+            {
+                label: 'Heart Rate',
+                data: data?.map(item => item.heart_rate) || [],
+                borderColor: '#FFB74D', // Orange
+                backgroundColor: 'rgba(255, 183, 77, 0.1)',
+                tension: 0.4,
+                fill: true,
+                pointBackgroundColor: '#FFB74D',
+                pointBorderColor: '#ffffff',
+                pointBorderWidth: 2,
+                pointRadius: 4,
+                pointHoverRadius: 6,
+                yAxisID: 'y',
+            },
+            {
+                label: 'Systolic BP',
+                data: data?.map(item => item.systolic_bp) || [],
+                borderColor: '#9575CD', // Purple
+                backgroundColor: 'rgba(149, 117, 205, 0.1)',
+                tension: 0.4,
+                fill: true,
+                pointBackgroundColor: '#9575CD',
+                pointBorderColor: '#ffffff',
+                pointBorderWidth: 2,
+                pointRadius: 4,
+                pointHoverRadius: 6,
+                yAxisID: 'y',
+            },
+        ],
+    };
+
+    const options = {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: {
+            mode: 'index',
+            intersect: false,
+        },
+        plugins: {
+            legend: {
+                display: true,
+                position: 'bottom',
+                labels: {
+                    usePointStyle: true,
+                    padding: 20,
+                    font: {
+                        size: 12,
+                        weight: '500',
+                    },
+                    color: '#2D5016',
+                },
+            },
+            tooltip: {
+                backgroundColor: 'rgba(45, 80, 22, 0.9)',
+                padding: 12,
+                titleFont: {
+                    size: 13,
+                    weight: '600',
+                },
+                bodyFont: {
+                    size: 12,
+                },
+                callbacks: {
+                    label: function(context) {
+                        return `${context.dataset.label}: ${context.parsed.y}`;
+                    }
+                }
+            },
+        },
+        scales: {
+            x: {
+                display: true,
+                grid: {
+                    display: true,
+                    drawBorder: false,
+                    color: 'rgba(0, 0, 0, 0.05)',
+                },
+                ticks: {
+                    font: {
+                        size: 11,
+                        weight: '500',
+                    },
+                    color: '#8B4513',
+                },
+            },
+            y: {
+                display: true,
+                beginAtZero: false,
+                grid: {
+                    display: true,
+                    drawBorder: false,
+                    color: 'rgba(0, 0, 0, 0.05)',
+                },
+                ticks: {
+                    font: {
+                        size: 11,
+                        weight: '500',
+                    },
+                    color: '#8B4513',
+                },
+            },
+        },
+    };
+
+    if (!data || data.length === 0) {
+        return (
+            <div className="text-center py-12">
+                <Activity className="w-12 h-12 text-gray-300 mx-auto mb-2" />
+                <p className="text-sm text-gray-500">No vital signs data available</p>
+            </div>
+        );
+    }
 
     return (
         <div style={{ height: '300px' }}>

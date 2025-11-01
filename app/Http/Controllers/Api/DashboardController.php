@@ -42,6 +42,27 @@ class DashboardController extends Controller
         return response()->json($stats);
     }
     
+    public function residentVitalsTrend($residentId): JsonResponse
+    {
+        $user = auth()->user();
+        
+        // Verify caregiver has access to this resident
+        if (in_array($user->role, ['caregiver', 'care_giver', 'nurse', 'registered_nurse', 'licensed_nurse'])) {
+            $hasAccess = Resident::where('id', $residentId)
+                ->whereHas('assignments', function($q) use ($user) {
+                    $q->where('caregiver_id', $user->id)->where('is_active', true);
+                })
+                ->exists();
+            
+            if (!$hasAccess) {
+                return response()->json(['error' => 'Unauthorized'], 403);
+            }
+        }
+        
+        $trend = $this->getResidentVitalsTrend($residentId);
+        return response()->json($trend);
+    }
+    
     private function caregiverStats($user): JsonResponse
     {
         $userId = $user->id;
@@ -87,6 +108,12 @@ class DashboardController extends Controller
         // Resident list
         $residentList = $this->getResidentList($userId);
         
+        // Resident vitals trend for first resident (default)
+        $defaultResident = Resident::whereHas('assignments', function($q) use ($userId) {
+            $q->where('caregiver_id', $userId)->where('is_active', true);
+        })->first();
+        $residentVitalsTrend = $defaultResident ? $this->getResidentVitalsTrend($defaultResident->id) : null;
+        
         return response()->json([
             'assigned_residents' => $assignedResidents,
             'todays_appointments' => $todayAppointments,
@@ -99,6 +126,7 @@ class DashboardController extends Controller
             'medication_reminders' => $medicationReminders,
             'upcoming_appointments_list' => $upcomingAppointmentsList,
             'resident_list' => $residentList,
+            'resident_vitals_trend' => $residentVitalsTrend,
         ]);
     }
     
@@ -233,6 +261,32 @@ class DashboardController extends Controller
                 ];
             })
             ->toArray();
+    }
+    
+    private function getResidentVitalsTrend($residentId): array
+    {
+        $now = now();
+        $weekStart = $now->copy()->startOfWeek();
+        $days = [];
+        
+        for ($i = 0; $i < 7; $i++) {
+            $day = $weekStart->copy()->addDays($i);
+            
+            // Get vitals for this day
+            $vital = VitalSign::where('resident_id', $residentId)
+                ->whereDate('measurement_date', $day->toDateString())
+                ->first();
+            
+            $days[] = [
+                'date' => $day->format('Y-m-d'),
+                'day' => $day->format('D'),
+                'diastolic_bp' => $vital?->diastolic ?? null,
+                'systolic_bp' => $vital?->systolic ?? null,
+                'heart_rate' => $vital?->pulse ?? null,
+            ];
+        }
+        
+        return $days;
     }
 }
 

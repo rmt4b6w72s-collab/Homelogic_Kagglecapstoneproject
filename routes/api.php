@@ -30,6 +30,7 @@ Route::prefix('v1')->group(function () {
 
     // Dashboard
     Route::get('/dashboard/stats', [DashboardController::class, 'stats'])->middleware('auth:sanctum');
+    Route::get('/dashboard/resident-vitals/{residentId}', [DashboardController::class, 'residentVitalsTrend'])->middleware('auth:sanctum');
 
     // Residents
     Route::apiResource('residents', ResidentController::class)->middleware('auth:sanctum');
