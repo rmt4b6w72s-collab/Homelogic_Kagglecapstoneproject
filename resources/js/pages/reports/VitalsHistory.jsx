@@ -4,14 +4,19 @@ import api from '../../services/api';
 import { Line, Bar } from 'react-chartjs-2';
 import { defaultOptions, colors } from '../../utils/chartConfig';
 import { Calendar, Activity } from 'lucide-react';
+import ChartFilters from '../../components/ChartFilters';
 
 export default function VitalsHistory() {
+    const [branchId, setBranchId] = useState(null);
+    const [residentId, setResidentId] = useState(null);
     const [dateRange, setDateRange] = useState('week');
 
     const { data: vitalsData, isLoading } = useQuery({
-        queryKey: ['vitals-history', dateRange],
+        queryKey: ['vitals-history', dateRange, branchId, residentId],
         queryFn: async () => {
             const params = { per_page: 100 };
+            if (branchId) params.branch_id = branchId;
+            if (residentId) params.resident_id = residentId;
             if (dateRange === 'week') {
                 const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
                 params.date_from = weekAgo.toISOString().split('T')[0];
@@ -53,23 +58,14 @@ export default function VitalsHistory() {
         <div>
             <h1 className="text-3xl font-bold text-gray-900 mb-6">Vitals History</h1>
 
-            <div className="bg-white rounded-lg shadow p-6 mb-6">
-                <div className="flex space-x-2">
-                    {['week', 'month', 'all'].map((range) => (
-                        <button
-                            key={range}
-                            onClick={() => setDateRange(range)}
-                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors capitalize ${
-                                dateRange === range
-                                    ? 'bg-[#2D5016] text-white'
-                                    : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-                            }`}
-                        >
-                            {range}
-                        </button>
-                    ))}
-                </div>
-            </div>
+            <ChartFilters
+                branchId={branchId}
+                setBranchId={setBranchId}
+                residentId={residentId}
+                setResidentId={setResidentId}
+                dateRange={dateRange}
+                setDateRange={setDateRange}
+            />
 
             {chartData ? (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

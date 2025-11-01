@@ -1,13 +1,22 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import api from '../../services/api';
 import { Line, Bar } from 'react-chartjs-2';
 import { defaultOptions, colors } from '../../utils/chartConfig';
+import ChartFilters from '../../components/ChartFilters';
 
 export default function VitalsCharts() {
+    const [branchId, setBranchId] = useState(null);
+    const [residentId, setResidentId] = useState(null);
+
     const { data, isLoading } = useQuery({
-        queryKey: ['charts-vitals'],
-        queryFn: async () => (await api.get('/charts/vitals')).data,
+        queryKey: ['charts-vitals', branchId, residentId],
+        queryFn: async () => {
+            const params = {};
+            if (branchId) params.branch_id = branchId;
+            if (residentId) params.resident_id = residentId;
+            return (await api.get('/charts/vitals', { params })).data;
+        },
     });
 
     if (isLoading) {
@@ -22,6 +31,13 @@ export default function VitalsCharts() {
     return (
         <div>
             <h1 className="text-3xl font-bold text-gray-900 mb-6">Vitals Charts</h1>
+
+            <ChartFilters
+                branchId={branchId}
+                setBranchId={setBranchId}
+                residentId={residentId}
+                setResidentId={setResidentId}
+            />
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
                 <div className="bg-white rounded-lg shadow p-6">
