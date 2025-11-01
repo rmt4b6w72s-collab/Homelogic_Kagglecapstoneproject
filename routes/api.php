@@ -21,10 +21,18 @@ use App\Http\Controllers\Api\DrugController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\EmployeeDocumentController;
 use App\Http\Controllers\Api\NotificationController;
+use Illuminate\Cookie\Middleware\EncryptCookies;
+use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
+use Illuminate\Session\Middleware\StartSession;
 
 Route::prefix('v1')->group(function () {
-    // Auth routes
-    Route::post('/login', [AuthController::class, 'login']);
+    // Auth routes - login needs session support for Filament redirects
+    Route::post('/login', [AuthController::class, 'login'])
+        ->middleware([
+            EncryptCookies::class,
+            AddQueuedCookiesToResponse::class,
+            StartSession::class,
+        ]);
     Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
     Route::get('/user', [AuthController::class, 'user'])->middleware('auth:sanctum');
 

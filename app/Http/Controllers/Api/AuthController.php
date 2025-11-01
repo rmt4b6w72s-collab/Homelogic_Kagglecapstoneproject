@@ -19,6 +19,9 @@ class AuthController extends Controller
         if (Auth::attempt($credentials)) {
             $user = Auth::user();
             $token = $user->createToken('api-token')->plainTextToken;
+            
+            // Regenerate session to prevent session fixation attacks
+            $request->session()->regenerate();
 
             return response()->json([
                 'user' => $user,
