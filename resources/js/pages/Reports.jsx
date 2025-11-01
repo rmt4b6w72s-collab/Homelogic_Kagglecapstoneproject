@@ -144,8 +144,8 @@ export default function Reports() {
                                     <p className="text-gray-600 text-sm font-medium">Vital Signs</p>
                                     <p className="text-3xl font-bold text-gray-900 mt-2">{stats.totalVitals}</p>
                                 </div>
-                                <div className="p-3 bg-purple-100 rounded-lg">
-                                    <TrendingUp className="w-6 h-6 text-purple-600" />
+                                <div className="p-3 bg-green-50 rounded-lg">
+                                    <TrendingUp className="w-6 h-6 text-[#2D5016]" />
                                 </div>
                             </div>
                         </div>
