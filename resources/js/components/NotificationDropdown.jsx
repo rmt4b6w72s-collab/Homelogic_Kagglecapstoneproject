@@ -116,7 +116,7 @@ export default function NotificationDropdown() {
                     ></div>
                     
                     {/* Dropdown */}
-                    <div className="absolute right-0 mt-2 w-96 bg-white rounded-lg shadow-xl border border-gray-200 z-50 max-h-[600px] overflow-hidden flex flex-col">
+                    <div className="fixed md:absolute top-16 md:top-auto md:mt-2 right-2 md:right-0 w-[calc(100vw-1rem)] md:w-80 lg:w-96 bg-white rounded-lg shadow-xl border border-gray-200 z-50 max-h-[calc(100vh-5rem)] md:max-h-[600px] overflow-hidden flex flex-col">
                         {/* Header */}
                         <div className="p-4 border-b border-gray-200 flex items-center justify-between">
                             <h3 className="text-lg font-semibold text-gray-900">Notifications</h3>
