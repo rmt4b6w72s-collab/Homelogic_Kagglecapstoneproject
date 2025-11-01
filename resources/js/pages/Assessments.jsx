@@ -176,10 +176,10 @@ export default function Assessments() {
                     <p className="mt-4 text-gray-600">Loading assessments...</p>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {data?.data?.length > 0 ? (
-                            data.data.map((assessment) => (
-                                <div key={assessment.id} className="bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow">
+                <div className="space-y-4">
+                    {data?.data?.length > 0 ? (
+                        data.data.map((assessment) => (
+                            <div key={assessment.id} className="bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow">
                                 <div className="flex items-start justify-between">
                                     <div className="flex-1">
                                         <div className="flex items-center space-x-3 mb-3">
@@ -303,7 +303,7 @@ export default function Assessments() {
                             </div>
                         ))
                     ) : (
-                        <div className="col-span-full bg-white rounded-lg shadow p-12 text-center">
+                        <div className="bg-white rounded-lg shadow p-12 text-center">
                             <ClipboardList className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                             <p className="text-gray-600 text-lg font-medium">No assessments found</p>
                             <p className="text-gray-500 text-sm mt-2">
