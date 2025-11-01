@@ -87,14 +87,14 @@ export default function Appointments() {
             <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4 md:mb-6">Appointments</h1>
             
             <SectionCard>
-                <div className="flex items-start justify-between mb-6">
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
                     <div>
                         <h2 className="text-xl font-semibold text-gray-900 mb-2">Appointment Management</h2>
                         <p className="text-gray-600">View, filter, update, and create resident appointments.</p>
                     </div>
                     <button
                         onClick={() => setShowForm(true)}
-                        className="px-4 py-2 bg-[#2D5016] text-white rounded-lg hover:bg-[#1a3009] transition-colors flex items-center space-x-2"
+                        className="w-full sm:w-auto px-4 py-2 bg-[#2D5016] text-white rounded-lg hover:bg-[#1a3009] transition-colors flex items-center justify-center space-x-2 text-sm md:text-base"
                     >
                         <Plus className="w-4 h-4" />
                         <span>Add Appointment</span>

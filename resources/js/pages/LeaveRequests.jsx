@@ -31,9 +31,9 @@ export default function LeaveRequests() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4 md:mb-6">
         <h1 className="text-3xl font-bold text-gray-900">Leave Requests</h1>
-        <button onClick={() => { setEditing(null); setShowForm(true); }} className="px-4 py-2 bg-[#2D5016] text-white rounded-lg hover:bg-[#1a3009] transition-colors flex items-center space-x-2">
+        <button onClick={() => { setEditing(null); setShowForm(true); }} className="w-full sm:w-auto px-4 py-2 bg-[#2D5016] text-white rounded-lg hover:bg-[#1a3009] transition-colors flex items-center justify-center justify-center space-x-2 text-sm md:text-base text-sm md:text-base">
           <Plus className="w-4 h-4" />
           <span>New Request</span>
         </button>
@@ -123,10 +123,10 @@ function LeaveForm({ record, onClose, onSuccess }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center justify-center z-50 p-4 text-sm md:text-base">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl">
         <div className="p-6">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4 md:mb-6">
             <h2 className="text-2xl font-bold text-gray-900">{record ? 'Edit Leave Request' : 'New Leave Request'}</h2>
             <button onClick={onClose} className="text-gray-400 hover:text-gray-600">×</button>
           </div>
@@ -156,7 +156,7 @@ function LeaveForm({ record, onClose, onSuccess }) {
             </div>
             <div className="flex items-center justify-end space-x-3 pt-4 border-t">
               <button type="button" onClick={onClose} className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</button>
-              <button type="submit" disabled={submitting} className="px-4 py-2 bg-[#2D5016] text-white rounded-lg hover:bg-[#1a3009] disabled:opacity-50">{submitting ? 'Saving...' : (record ? 'Update' : 'Create')}</button>
+              <button type="submit" disabled={submitting} className="w-full sm:w-auto px-4 py-2 bg-[#2D5016] text-white rounded-lg hover:bg-[#1a3009] disabled:opacity-50">{submitting ? 'Saving...' : (record ? 'Update' : 'Create')}</button>
             </div>
           </form>
         </div>

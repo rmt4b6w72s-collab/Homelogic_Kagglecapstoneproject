@@ -69,14 +69,14 @@ export default function UsersPage() {
 
     return (
         <div>
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4 md:mb-6">
                 <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
                 <button
                     onClick={() => {
                         setEditing(null);
                         setShowForm(true);
                     }}
-                    className="px-4 py-2 bg-[#2D5016] text-white rounded-lg hover:bg-[#1a3009] transition-colors flex items-center space-x-2"
+                    className="w-full sm:w-auto px-4 py-2 bg-[#2D5016] text-white rounded-lg hover:bg-[#1a3009] transition-colors flex items-center justify-center space-x-2 text-sm md:text-base"
                 >
                     <Plus className="w-4 h-4" />
                     <span>Add User</span>
@@ -440,7 +440,7 @@ function UserForm({ record, branches, roles, onClose, onSuccess }) {
         <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto" style={{ backgroundColor: 'rgba(0, 0, 0, 0.1)' }}>
             <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto my-8">
                 <div className="p-6">
-                    <div className="flex items-center justify-between mb-6">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4 md:mb-6">
                         <h2 className="text-2xl font-bold text-gray-900">
                             {record ? 'Edit User' : 'Add User'}
                         </h2>

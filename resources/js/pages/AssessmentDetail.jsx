@@ -118,7 +118,7 @@ export default function AssessmentDetail() {
 
     return (
         <div>
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4 md:mb-6">
                 <div className="flex items-center space-x-3">
                     <Link to="/assessments" className="px-3 py-2 rounded-lg border hover:bg-gray-50 text-gray-700 inline-flex items-center">
                         <ArrowLeft className="w-4 h-4 mr-2" /> Back
@@ -204,7 +204,7 @@ export default function AssessmentDetail() {
                         const sectionProgress = getSectionProgress(section);
                         return (
                             <div key={section.id} className="bg-white rounded-lg shadow p-6">
-                                <div className="flex items-center justify-between mb-4">
+                                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
                                     <h2 className="text-lg font-semibold text-gray-900">
                                         {section.title || section.section_title || 'Section'}
                                     </h2>
