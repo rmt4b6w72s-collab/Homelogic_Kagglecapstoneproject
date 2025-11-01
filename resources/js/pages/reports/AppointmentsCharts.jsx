@@ -31,7 +31,7 @@ export default function AppointmentsCharts() {
 
     return (
         <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-6">Appointments Charts</h1>
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4 md:mb-6">Appointments Charts</h1>
 
             <ChartFilters
                 branchId={branchId}

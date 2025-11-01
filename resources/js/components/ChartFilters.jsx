@@ -32,7 +32,7 @@ export default function ChartFilters({
 
     return (
         <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden mb-6">
-            <div className="p-6">
+            <div className="p-4 md:p-6">
                 <h2 className="text-lg font-semibold text-[#2D5016] mb-4">Filters</h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     {/* Branch Filter */}

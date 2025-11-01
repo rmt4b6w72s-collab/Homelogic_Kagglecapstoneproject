@@ -134,7 +134,7 @@ export default function Profile() {
 
     return (
         <div className="max-w-5xl mx-auto">
-            <h1 className="text-3xl font-bold text-gray-900 mb-6">My Profile</h1>
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4 md:mb-6">My Profile</h1>
 
             {/* Profile Header */}
             <div className="bg-gradient-to-r from-[#2D5016] to-[#4a7a2a] rounded-xl shadow-lg p-8 mb-6">

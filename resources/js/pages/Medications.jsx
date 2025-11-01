@@ -101,7 +101,7 @@ export default function Medications() {
 
     return (
         <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-6">Medications</h1>
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4 md:mb-6">Medications</h1>
             
             <div className="bg-white rounded-lg shadow p-6 mb-6">
                 <h2 className="text-xl font-semibold text-gray-900 mb-2">Medication Management</h2>
