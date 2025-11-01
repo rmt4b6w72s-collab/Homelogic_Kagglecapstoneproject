@@ -215,7 +215,6 @@ export default function Layout() {
                         >
                             <Menu className="w-6 h-6" />
                         </button>
-                        <h1 className="text-lg md:text-xl font-semibold text-gray-900">Healthcare Management System</h1>
                     </div>
                     <div className="flex items-center space-x-2 md:space-x-4">
                         <NotificationDropdown />
