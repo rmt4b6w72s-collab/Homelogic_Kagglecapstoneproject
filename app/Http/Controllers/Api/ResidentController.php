@@ -113,6 +113,18 @@ class ResidentController extends Controller
             $validated['profile_image'] = $imagePath;
         }
 
+        // Handle array fields that come as strings - convert to arrays if needed
+        if (isset($validated['medical_conditions']) && is_string($validated['medical_conditions'])) {
+            $validated['medical_conditions'] = !empty(trim($validated['medical_conditions'])) 
+                ? [$validated['medical_conditions']] 
+                : null;
+        }
+        if (isset($validated['allergies']) && is_string($validated['allergies'])) {
+            $validated['allergies'] = !empty(trim($validated['allergies'])) 
+                ? [$validated['allergies']] 
+                : null;
+        }
+
         // Auto-generate name if not provided
         if (!isset($validated['name'])) {
             $parts = array_filter([$validated['first_name'], $validated['middle_names'] ?? null, $validated['last_name']]);
@@ -161,6 +173,18 @@ class ResidentController extends Controller
             $imageName = time() . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
             $imagePath = $image->storeAs('residents/profile_images', $imageName, 'public');
             $validated['profile_image'] = $imagePath;
+        }
+
+        // Handle array fields that come as strings - convert to arrays if needed
+        if (isset($validated['medical_conditions']) && is_string($validated['medical_conditions'])) {
+            $validated['medical_conditions'] = !empty(trim($validated['medical_conditions'])) 
+                ? [$validated['medical_conditions']] 
+                : null;
+        }
+        if (isset($validated['allergies']) && is_string($validated['allergies'])) {
+            $validated['allergies'] = !empty(trim($validated['allergies'])) 
+                ? [$validated['allergies']] 
+                : null;
         }
 
         // Update name if first/last name changed

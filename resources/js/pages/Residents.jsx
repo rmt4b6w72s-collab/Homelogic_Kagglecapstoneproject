@@ -339,10 +339,45 @@ function ResidentForm({ record, branches, onClose, onSuccess }) {
         console.log('Validation passed, proceeding with submission...');
         setIsSubmitting(true);
 
+        // Helper to normalize date format (YYYY-MM-DD)
+        const normalizeDate = (dateValue) => {
+            if (!dateValue) return '';
+            // If it's already in YYYY-MM-DD format, return as-is
+            if (/^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
+                return dateValue;
+            }
+            // If it's in MM/DD/YYYY format, convert it
+            if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateValue)) {
+                const [month, day, year] = dateValue.split('/');
+                return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+            }
+            // Try to parse as date
+            try {
+                const date = new Date(dateValue);
+                if (!isNaN(date.getTime())) {
+                    return date.toISOString().split('T')[0];
+                }
+            } catch (e) {
+                console.warn('Could not parse date:', dateValue);
+            }
+            return dateValue;
+        };
+
         console.log('Form submission started', { formData, profileImage: !!profileImage, record: !!record });
         console.log('Auth token:', localStorage.getItem('auth_token') ? 'Present' : 'Missing');
 
         try {
+            // Normalize dates before sending
+            const normalizedDateOfBirth = normalizeDate(formData.date_of_birth);
+            const normalizedAdmissionDate = normalizeDate(formData.admission_date);
+            
+            console.log('Date normalization:', {
+                original_dob: formData.date_of_birth,
+                normalized_dob: normalizedDateOfBirth,
+                original_admission: formData.admission_date,
+                normalized_admission: normalizedAdmissionDate
+            });
+
             // Use FormData if there's an image, otherwise use JSON
             let response;
             if (profileImage) {
@@ -351,9 +386,9 @@ function ResidentForm({ record, branches, onClose, onSuccess }) {
                 // Always include required fields
                 formDataToSend.append('first_name', formData.first_name || '');
                 formDataToSend.append('last_name', formData.last_name || '');
-                formDataToSend.append('date_of_birth', formData.date_of_birth || '');
+                formDataToSend.append('date_of_birth', normalizedDateOfBirth);
                 formDataToSend.append('branch_id', parseInt(formData.branch_id) || '');
-                formDataToSend.append('admission_date', formData.admission_date || '');
+                formDataToSend.append('admission_date', normalizedAdmissionDate);
                 
                 // Include optional fields (convert empty strings to null for nullable fields)
                 const optionalFields = [
@@ -403,6 +438,10 @@ function ResidentForm({ record, branches, onClose, onSuccess }) {
                         payload[key] = value;
                     }
                 });
+                
+                // Normalize dates in JSON payload
+                payload.date_of_birth = normalizedDateOfBirth;
+                payload.admission_date = normalizedAdmissionDate;
                 payload.branch_id = parseInt(formData.branch_id);
 
                 if (record) {
@@ -458,6 +497,15 @@ function ResidentForm({ record, branches, onClose, onSuccess }) {
                     } else {
                         setErrors({ general: 'Validation failed. Please check all required fields are filled correctly.' });
                     }
+                } else if (error.response.status === 500) {
+                    // Server error - show more details if available
+                    console.error('500 Server Error:', error.response.data);
+                    const errorMessage = error.response.data?.message || 
+                                       error.response.data?.error || 
+                                       'A server error occurred. Please check the server logs or try again later.';
+                    setErrors({ 
+                        general: `Server Error: ${errorMessage}. Please check your input and try again. If the problem persists, contact support.` 
+                    });
                 } else if (error.response.data?.errors) {
                     setErrors(error.response.data.errors);
                 } else {
