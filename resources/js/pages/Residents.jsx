@@ -272,8 +272,84 @@ function ResidentForm({ record, branches, onClose, onSuccess }) {
         record?.profile_image ? `/storage/${record.profile_image}` : null
     );
 
-    // Reset preview when record changes
+    // Helper function to format date for input field (YYYY-MM-DD)
+    const formatDateForInput = (dateValue) => {
+        if (!dateValue) return '';
+        // If it's already in YYYY-MM-DD format, return as-is
+        if (/^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
+            return dateValue;
+        }
+        // If it's a Date object, convert to YYYY-MM-DD
+        if (dateValue instanceof Date) {
+            return dateValue.toISOString().split('T')[0];
+        }
+        // If it's a string date, try to parse it
+        try {
+            const date = new Date(dateValue);
+            if (!isNaN(date.getTime())) {
+                return date.toISOString().split('T')[0];
+            }
+        } catch (e) {
+            // If parsing fails, return empty string
+        }
+        return '';
+    };
+
+    // Update formData when record changes
     React.useEffect(() => {
+        if (record) {
+            // Handle allergies and medical_conditions - convert arrays to strings for form
+            const allergiesValue = Array.isArray(record.allergies) 
+                ? record.allergies.join(', ') 
+                : (record.allergies || '');
+            
+            const medicalConditionsValue = Array.isArray(record.medical_conditions) 
+                ? record.medical_conditions.join(', ') 
+                : (record.medical_conditions || '');
+
+            setFormData({
+                first_name: record.first_name || '',
+                middle_names: record.middle_names || '',
+                last_name: record.last_name || '',
+                date_of_birth: formatDateForInput(record.date_of_birth),
+                gender: record.gender || '',
+                phone: record.phone || '',
+                room: record.room || '',
+                room_number: record.room_number || '',
+                branch_id: record.branch_id || '',
+                admission_date: formatDateForInput(record.admission_date) || new Date().toISOString().split('T')[0],
+                emergency_contact_name: record.emergency_contact_name || '',
+                emergency_contact_phone: record.emergency_contact_phone || '',
+                diagnosis: record.diagnosis || '',
+                allergies: allergiesValue,
+                medical_conditions: medicalConditionsValue,
+                physician_name: record.physician_name || '',
+                is_active: record.is_active ?? true,
+            });
+        } else {
+            // Reset to defaults when no record (creating new)
+            setFormData({
+                first_name: '',
+                middle_names: '',
+                last_name: '',
+                date_of_birth: '',
+                gender: '',
+                phone: '',
+                room: '',
+                room_number: '',
+                branch_id: '',
+                admission_date: new Date().toISOString().split('T')[0],
+                emergency_contact_name: '',
+                emergency_contact_phone: '',
+                diagnosis: '',
+                allergies: '',
+                medical_conditions: '',
+                physician_name: '',
+                is_active: true,
+            });
+        }
+
+        // Reset profile image preview
         if (record?.profile_image) {
             setProfileImagePreview(`/storage/${record.profile_image}`);
         } else {
