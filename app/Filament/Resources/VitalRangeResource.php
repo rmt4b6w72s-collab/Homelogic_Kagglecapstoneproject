@@ -38,7 +38,10 @@ class VitalRangeResource extends Resource
                                 'oxygen_saturation' => 'Oxygen Saturation',
                             ])
                             ->required()
-                            ->unique(ignoreRecord: true)
+                            ->rules([
+                                'required',
+                                \Illuminate\Validation\Rule::unique('vital_ranges', 'parameter')->ignore($this->record),
+                            ])
                             ->searchable(),
                         Forms\Components\TextInput::make('unit')
                             ->label('Unit')
