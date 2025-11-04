@@ -1,3 +1,38 @@
+// Suppress Cloudflare cookie warnings FIRST - before anything else runs
+// This prevents these harmless errors from cluttering the console
+(function() {
+    const originalWarn = console.warn;
+    const originalError = console.error;
+    
+    console.warn = function(...args) {
+        const message = args.join(' ').toString().toLowerCase();
+        if (message.includes('cookie') && (
+            message.includes('_cf_bm') || 
+            message.includes('__cf_bm') || 
+            message.includes('cf_clearance') ||
+            message.includes('rejected for invalid domain')
+        )) {
+            // Suppress Cloudflare cookie warnings
+            return;
+        }
+        originalWarn.apply(console, args);
+    };
+    
+    console.error = function(...args) {
+        const message = args.join(' ').toString().toLowerCase();
+        if (message.includes('cookie') && (
+            message.includes('_cf_bm') || 
+            message.includes('__cf_bm') || 
+            message.includes('cf_clearance') ||
+            message.includes('rejected for invalid domain')
+        )) {
+            // Suppress Cloudflare cookie errors
+            return;
+        }
+        originalError.apply(console, args);
+    };
+})();
+
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
@@ -115,36 +150,6 @@ function initApp() {
         `;
     }
 }
-
-// Suppress Cloudflare cookie warnings (harmless, just noisy)
-const originalWarn = console.warn;
-console.warn = function(...args) {
-    const message = args.join(' ').toString();
-    if (message.includes('Cookie "_cf_bm"') || 
-        message.includes('Cookie "__cf_bm"') || 
-        message.includes('Cookie "cf_clearance"') ||
-        message.includes('Cookie "_cf_bm') ||
-        message.includes('Cookie "__cf_bm')) {
-        // Suppress Cloudflare cookie warnings
-        return;
-    }
-    originalWarn.apply(console, args);
-};
-
-const originalError = console.error;
-console.error = function(...args) {
-    const message = args.join(' ').toString();
-    if (message.includes('Cookie "_cf_bm"') || 
-        message.includes('Cookie "__cf_bm"') || 
-        message.includes('Cookie "cf_clearance"') ||
-        message.includes('Cookie "_cf_bm') ||
-        message.includes('Cookie "__cf_bm') ||
-        message.includes('has been rejected for invalid domain')) {
-        // Suppress Cloudflare cookie errors
-        return;
-    }
-    originalError.apply(console, args);
-};
 
 // Initialize immediately - don't wait for DOMContentLoaded
 // This ensures React initializes as soon as the script loads
