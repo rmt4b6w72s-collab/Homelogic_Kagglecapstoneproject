@@ -33,11 +33,26 @@ class SleepPatternController extends Controller
             ]);
 
         // Get or create sleep pattern for this month/year
-        $pattern = SleepPattern::where('resident_id', $residentId)
-            ->where('month', $month)
-            ->where('year', $year)
-            ->with(['resident', 'hourlyData'])
-            ->first();
+        // Check which schema is being used
+        $hasDateColumn = Schema::hasColumn('sleep_patterns', 'date');
+        $hasMonthYearColumns = Schema::hasColumn('sleep_patterns', 'month') && Schema::hasColumn('sleep_patterns', 'year');
+        
+        $pattern = null;
+        if ($hasDateColumn) {
+            // Use date-based query (production schema)
+            $patternDate = Carbon::create($year, $month, 1)->format('Y-m-d');
+            $pattern = SleepPattern::where('resident_id', $residentId)
+                ->where('date', $patternDate)
+                ->with(['resident', 'hourlyData'])
+                ->first();
+        } elseif ($hasMonthYearColumns) {
+            // Use month/year-based query (alternative schema)
+            $pattern = SleepPattern::where('resident_id', $residentId)
+                ->where('month', $month)
+                ->where('year', $year)
+                ->with(['resident', 'hourlyData'])
+                ->first();
+        }
 
         // Get daily sleep records for the chart first
         $startDate = Carbon::create($year, $month, 1)->startOfMonth();
@@ -230,24 +245,61 @@ class SleepPatternController extends Controller
             $branchId = $resident->branch_id ?? null;
         }
 
+        // Check if the table has a 'date' column (production schema) or 'month'/'year' (alternative schema)
+        $hasDateColumn = Schema::hasColumn('sleep_patterns', 'date');
+        $hasMonthYearColumns = Schema::hasColumn('sleep_patterns', 'month') && Schema::hasColumn('sleep_patterns', 'year');
+
+        // Prepare the data array
+        $patternData = [
+            'branch_id' => $branchId,
+        ];
+
+        // Add fields based on schema
+        if ($hasDateColumn) {
+            // Use first day of the month as the date
+            $patternData['date'] = Carbon::create($year, $month, 1)->format('Y-m-d');
+        }
+        
+        if ($hasMonthYearColumns) {
+            $patternData['month'] = $month;
+            $patternData['year'] = $year;
+        }
+
+        // Add calculated fields
+        $patternData['total_sleep_hours'] = round($totalSleepHours, 2);
+        $patternData['total_awake_hours'] = round($totalAwakeHours, 2);
+        $patternData['avg_sleep_hours'] = round($avgSleepHours, 2);
+        $patternData['days_with_records'] = $daysWithRecords;
+        
+        // Add time fields based on schema
+        if (Schema::hasColumn('sleep_patterns', 'common_sleep_time')) {
+            $patternData['common_sleep_time'] = $commonSleepTime;
+        }
+        if (Schema::hasColumn('sleep_patterns', 'common_wake_time')) {
+            $patternData['common_wake_time'] = $commonWakeTime;
+        }
+        if (Schema::hasColumn('sleep_patterns', 'bedtime')) {
+            $patternData['bedtime'] = $commonSleepTime;
+        }
+        if (Schema::hasColumn('sleep_patterns', 'wake_time')) {
+            $patternData['wake_time'] = $commonWakeTime;
+        }
+        
+        if (Schema::hasColumn('sleep_patterns', 'sleep_quality_score')) {
+            $patternData['sleep_quality_score'] = $sleepQualityScore;
+        }
+
+        // Determine unique key for updateOrCreate
+        $uniqueKey = ['resident_id' => $residentId];
+        if ($hasDateColumn) {
+            $uniqueKey['date'] = $patternData['date'];
+        } else {
+            $uniqueKey['month'] = $month;
+            $uniqueKey['year'] = $year;
+        }
+
         // Create or update pattern
-        $pattern = SleepPattern::updateOrCreate(
-            [
-                'resident_id' => $residentId,
-                'month' => $month,
-                'year' => $year,
-            ],
-            [
-                'branch_id' => $branchId,
-                'total_sleep_hours' => round($totalSleepHours, 2),
-                'total_awake_hours' => round($totalAwakeHours, 2),
-                'avg_sleep_hours' => round($avgSleepHours, 2),
-                'days_with_records' => $daysWithRecords,
-                'common_sleep_time' => $commonSleepTime,
-                'common_wake_time' => $commonWakeTime,
-                'sleep_quality_score' => $sleepQualityScore,
-            ]
-        );
+        $pattern = SleepPattern::updateOrCreate($uniqueKey, $patternData);
 
         return $pattern->load('resident');
     }

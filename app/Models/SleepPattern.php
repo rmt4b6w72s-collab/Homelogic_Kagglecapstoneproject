@@ -12,6 +12,7 @@ class SleepPattern extends Model
     protected $fillable = [
         'resident_id',
         'branch_id',
+        'date',
         'month',
         'year',
         'total_sleep_hours',
@@ -22,6 +23,10 @@ class SleepPattern extends Model
         'common_wake_time',
         'sleep_quality_score',
         'key_observations',
+        'bedtime',
+        'wake_time',
+        'sleep_interruptions',
+        'notes',
     ];
 
     protected $casts = [
