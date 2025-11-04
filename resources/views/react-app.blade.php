@@ -6,6 +6,45 @@
         <meta name="csrf-token" content="{{ csrf_token() }}">
         <title>{{ config('app.name', 'Healthcare Management System') }}</title>
         
+        {{-- Suppress Cloudflare cookie warnings IMMEDIATELY - before any other scripts --}}
+        <script>
+            (function() {
+                // Capture console methods before anything else
+                const originalWarn = console.warn;
+                const originalError = console.error;
+                
+                // Override console.warn
+                console.warn = function() {
+                    const message = Array.from(arguments).join(' ').toLowerCase();
+                    if (message.includes('cookie') && (
+                        message.includes('_cf_bm') || 
+                        message.includes('__cf_bm') || 
+                        message.includes('cf_clearance') ||
+                        message.includes('rejected for invalid domain')
+                    )) {
+                        // Suppress Cloudflare cookie warnings
+                        return;
+                    }
+                    originalWarn.apply(console, arguments);
+                };
+                
+                // Override console.error
+                console.error = function() {
+                    const message = Array.from(arguments).join(' ').toLowerCase();
+                    if (message.includes('cookie') && (
+                        message.includes('_cf_bm') || 
+                        message.includes('__cf_bm') || 
+                        message.includes('cf_clearance') ||
+                        message.includes('rejected for invalid domain')
+                    )) {
+                        // Suppress Cloudflare cookie errors
+                        return;
+                    }
+                    originalError.apply(console, arguments);
+                };
+            })();
+        </script>
+        
         @vite(['resources/css/app.css', 'resources/js/app.jsx'])
     </head>
     <body style="margin: 0; padding: 0;">
