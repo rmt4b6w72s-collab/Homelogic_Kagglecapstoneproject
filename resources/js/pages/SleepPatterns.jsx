@@ -94,6 +94,13 @@ export default function SleepPatterns() {
 
     const years = Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - i);
 
+    // Helper function to safely convert to number
+    const toNumber = (value) => {
+        if (value === null || value === undefined) return 0;
+        const num = typeof value === 'string' ? parseFloat(value) : Number(value);
+        return isNaN(num) ? 0 : num;
+    };
+
     // Prepare chart data
     const chartData = React.useMemo(() => {
         if (!patternData?.daily_data || patternData.daily_data.length === 0) {
@@ -421,14 +428,14 @@ export default function SleepPatterns() {
                                         <p className="text-sm text-gray-600 mb-1">Total Awake Hours</p>
                                         <p className="text-3xl font-bold text-blue-600">
                                             {patternData.pattern?.total_awake_hours ?? 
-                                                (patternData.daily_data ? patternData.daily_data.reduce((sum, d) => sum + d.awake_hours, 0).toFixed(1) : 0)}
+                                                (patternData.daily_data ? toNumber(patternData.daily_data.reduce((sum, d) => sum + toNumber(d.awake_hours), 0)).toFixed(1) : 0)}
                                         </p>
                                     </div>
                                     <div className="bg-white rounded-lg shadow p-6">
                                         <p className="text-sm text-gray-600 mb-1">Total Sleep Hours</p>
                                         <p className="text-3xl font-bold text-purple-600">
                                             {patternData.pattern?.total_sleep_hours ?? 
-                                                (patternData.daily_data ? patternData.daily_data.reduce((sum, d) => sum + d.sleep_hours, 0).toFixed(1) : 0)}
+                                                (patternData.daily_data ? toNumber(patternData.daily_data.reduce((sum, d) => sum + toNumber(d.sleep_hours), 0)).toFixed(1) : 0)}
                                         </p>
                                     </div>
                                     <div className="bg-white rounded-lg shadow p-6">
@@ -436,7 +443,7 @@ export default function SleepPatterns() {
                                         <p className="text-3xl font-bold text-green-600">
                                             {patternData.pattern?.avg_sleep_hours ?? 
                                                 (patternData.daily_data && patternData.daily_data.length > 0 
-                                                    ? (patternData.daily_data.reduce((sum, d) => sum + d.sleep_hours, 0) / patternData.daily_data.length).toFixed(1) 
+                                                    ? toNumber(patternData.daily_data.reduce((sum, d) => sum + toNumber(d.sleep_hours), 0) / patternData.daily_data.length).toFixed(1) 
                                                     : 0)}
                                         </p>
                                     </div>
@@ -456,9 +463,9 @@ export default function SleepPatterns() {
                                         <div className="flex items-center justify-between mb-2">
                                             <span className="text-sm text-gray-700">Healthy sleep pattern</span>
                                             <span className="text-sm font-medium text-gray-900">
-                                                {(patternData.pattern?.avg_sleep_hours ?? 
+                                                {toNumber(patternData.pattern?.avg_sleep_hours ?? 
                                                     (patternData.daily_data && patternData.daily_data.length > 0 
-                                                        ? (patternData.daily_data.reduce((sum, d) => sum + d.sleep_hours, 0) / patternData.daily_data.length) 
+                                                        ? (patternData.daily_data.reduce((sum, d) => sum + toNumber(d.sleep_hours), 0) / patternData.daily_data.length) 
                                                         : 0)).toFixed(1)} hrs
                                             </span>
                                         </div>
@@ -466,9 +473,9 @@ export default function SleepPatterns() {
                                             <div
                                                 className="bg-green-600 h-3 rounded-full transition-all"
                                                 style={{
-                                                    width: `${Math.min((patternData.pattern?.avg_sleep_hours ?? 
+                                                    width: `${Math.min(toNumber(patternData.pattern?.avg_sleep_hours ?? 
                                                         (patternData.daily_data && patternData.daily_data.length > 0 
-                                                            ? (patternData.daily_data.reduce((sum, d) => sum + d.sleep_hours, 0) / patternData.daily_data.length) 
+                                                            ? (patternData.daily_data.reduce((sum, d) => sum + toNumber(d.sleep_hours), 0) / patternData.daily_data.length) 
                                                             : 0)) / 10 * 100, 100)}%`
                                                 }}
                                             ></div>
@@ -479,7 +486,7 @@ export default function SleepPatterns() {
                                             <p className="text-sm text-gray-600">Most Sleep</p>
                                             <p className="text-xl font-bold text-purple-600">
                                                 {patternData.daily_data && patternData.daily_data.length > 0
-                                                    ? Math.max(...patternData.daily_data.map(d => d.sleep_hours)).toFixed(1)
+                                                    ? toNumber(Math.max(...patternData.daily_data.map(d => toNumber(d.sleep_hours)))).toFixed(1)
                                                     : '0'} hrs
                                             </p>
                                         </div>
@@ -487,7 +494,7 @@ export default function SleepPatterns() {
                                             <p className="text-sm text-gray-600">Least Sleep</p>
                                             <p className="text-xl font-bold text-purple-600">
                                                 {patternData.daily_data && patternData.daily_data.length > 0
-                                                    ? Math.min(...patternData.daily_data.map(d => d.sleep_hours)).toFixed(1)
+                                                    ? toNumber(Math.min(...patternData.daily_data.map(d => toNumber(d.sleep_hours)))).toFixed(1)
                                                     : '0'} hrs
                                             </p>
                                         </div>
