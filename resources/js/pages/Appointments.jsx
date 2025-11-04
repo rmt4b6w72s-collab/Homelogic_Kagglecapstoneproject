@@ -9,6 +9,7 @@ export default function Appointments() {
     const queryClient = useQueryClient();
     const [dateFilter, setDateFilter] = useState('upcoming');
     const [statusFilter, setStatusFilter] = useState('all');
+    const [residentFilter, setResidentFilter] = useState('');
     const [showForm, setShowForm] = useState(false);
     const [formData, setFormData] = useState({
         branch_id: '',
@@ -22,15 +23,17 @@ export default function Appointments() {
     });
 
     const { data, isLoading, refetch } = useQuery({
-        queryKey: ['appointments', dateFilter, statusFilter],
+        queryKey: ['appointments', dateFilter, statusFilter, residentFilter],
         queryFn: async () => {
-            const response = await api.get('/appointments', {
-                params: {
-                    date_filter: dateFilter,
-                    status: statusFilter,
-                    per_page: 15,
-                },
-            });
+            const params = {
+                date_filter: dateFilter,
+                status: statusFilter,
+                per_page: 15,
+            };
+            if (residentFilter) {
+                params.resident_id = residentFilter;
+            }
+            const response = await api.get('/appointments', { params });
             return response.data;
         },
     });
@@ -60,6 +63,14 @@ export default function Appointments() {
             return (await api.get('/residents', { params })).data;
         },
         enabled: true, // Always enabled, but filters by branch_id
+    });
+
+    // All residents for filter dropdown (not filtered by branch)
+    const { data: allResidentsData } = useQuery({
+        queryKey: ['all-residents-list'],
+        queryFn: async () => {
+            return (await api.get('/residents', { params: { per_page: 100 } })).data;
+        },
     });
 
     const createMutation = useMutation({
@@ -141,7 +152,7 @@ export default function Appointments() {
                     </button>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">Date:</label>
                         <div className="flex flex-wrap gap-2">
@@ -186,6 +197,33 @@ export default function Appointments() {
                             ))}
                         </div>
                     </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Resident:</label>
+                        <div className="relative">
+                            <User className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                            <select
+                                value={residentFilter}
+                                onChange={(e) => setResidentFilter(e.target.value)}
+                                className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2D5016] focus:border-transparent appearance-none bg-white"
+                            >
+                                <option value="">All Residents</option>
+                                {(allResidentsData?.data || []).map(r => (
+                                    <option key={r.id} value={r.id}>
+                                        {r.first_name} {r.last_name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                        {residentFilter && (
+                            <button
+                                onClick={() => setResidentFilter('')}
+                                className="mt-2 text-xs text-[#2D5016] hover:underline"
+                            >
+                                Clear filter
+                            </button>
+                        )}
+                    </div>
                 </div>
             </SectionCard>
 
@@ -199,7 +237,19 @@ export default function Appointments() {
             ) : (
                 <div>
                     {data?.data?.length > 0 ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div>
+                            {residentFilter && (
+                                <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                                    <p className="text-sm text-blue-800">
+                                        <strong>Showing appointment history for:</strong>{' '}
+                                        {(() => {
+                                            const resident = (allResidentsData?.data || []).find(r => r.id == residentFilter);
+                                            return resident ? `${resident.first_name} ${resident.last_name}` : 'Selected Resident';
+                                        })()}
+                                    </p>
+                                </div>
+                            )}
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {data.data.map((appointment) => (
                             <Card
                                 key={appointment.id}
@@ -311,6 +361,7 @@ export default function Appointments() {
                                 )}
                             </Card>
                         ))}
+                            </div>
                         </div>
                     ) : (
                         <div className="bg-white rounded-lg shadow p-12 text-center">
