@@ -164,8 +164,8 @@ class ResidentController extends Controller
             'emergency_contact_name' => 'nullable|string|max:255',
             'emergency_contact_phone' => 'nullable|string|max:50',
             'diagnosis' => 'nullable|string',
-            'allergies' => 'nullable|string',
-            'medical_conditions' => 'nullable|string',
+            'allergies' => 'nullable',
+            'medical_conditions' => 'nullable',
             'physician_name' => 'nullable|string|max:255',
             'status' => 'nullable|string|max:50',
             'is_active' => 'nullable|boolean',
@@ -185,16 +185,37 @@ class ResidentController extends Controller
             $validated['profile_image'] = $imagePath;
         }
 
-        // Handle array fields that come as strings - convert to arrays if needed
-        if (isset($validated['medical_conditions']) && is_string($validated['medical_conditions'])) {
-            $validated['medical_conditions'] = !empty(trim($validated['medical_conditions'])) 
-                ? [$validated['medical_conditions']] 
-                : null;
+        // Handle array fields - convert to arrays if they come as strings or ensure they're arrays
+        if (isset($validated['medical_conditions'])) {
+            if (is_string($validated['medical_conditions'])) {
+                $validated['medical_conditions'] = !empty(trim($validated['medical_conditions'])) 
+                    ? [$validated['medical_conditions']] 
+                    : null;
+            } elseif (is_array($validated['medical_conditions'])) {
+                // Filter out empty values and ensure it's a clean array
+                $validated['medical_conditions'] = array_filter($validated['medical_conditions'], function($item) {
+                    return !empty(trim($item));
+                });
+                $validated['medical_conditions'] = !empty($validated['medical_conditions']) 
+                    ? array_values($validated['medical_conditions']) 
+                    : null;
+            }
         }
-        if (isset($validated['allergies']) && is_string($validated['allergies'])) {
-            $validated['allergies'] = !empty(trim($validated['allergies'])) 
-                ? [$validated['allergies']] 
-                : null;
+        
+        if (isset($validated['allergies'])) {
+            if (is_string($validated['allergies'])) {
+                $validated['allergies'] = !empty(trim($validated['allergies'])) 
+                    ? [$validated['allergies']] 
+                    : null;
+            } elseif (is_array($validated['allergies'])) {
+                // Filter out empty values and ensure it's a clean array
+                $validated['allergies'] = array_filter($validated['allergies'], function($item) {
+                    return !empty(trim($item));
+                });
+                $validated['allergies'] = !empty($validated['allergies']) 
+                    ? array_values($validated['allergies']) 
+                    : null;
+            }
         }
 
         // Update name if first/last name changed
