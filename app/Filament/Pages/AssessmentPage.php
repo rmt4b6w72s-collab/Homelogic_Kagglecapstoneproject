@@ -12,7 +12,6 @@ use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Textarea;
-use Filament\Forms\Components\Radio;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Actions\Action;
@@ -93,7 +92,7 @@ class AssessmentPage extends Page implements HasForms, HasActions
                             ->disabled(fn (callable $get) => !$get('branch_id'))
                             ->placeholder('Choose a resident...'),
 
-                        Radio::make('assessment_type')
+                        Select::make('assessment_type')
                             ->label('Assessment Type')
                             ->options([
                                 'initial' => 'Initial Assessment',
@@ -101,7 +100,8 @@ class AssessmentPage extends Page implements HasForms, HasActions
                                 'focused' => 'Focused Assessment',
                                 'discharge' => 'Discharge Assessment',
                             ])
-                            ->default('initial'),
+                            ->default('initial')
+                            ->searchable(),
 
                         DatePicker::make('assessment_date')
                             ->label('Assessment Date')

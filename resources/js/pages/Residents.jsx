@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../services/api';
-import { Search, Users, Plus, Edit, Trash2, Filter } from 'lucide-react';
+import { Search, Users, Plus, Edit, XCircle, CheckCircle, Filter } from 'lucide-react';
 
 export default function Residents() {
     const queryClient = useQueryClient();
@@ -35,8 +35,10 @@ export default function Residents() {
         queryFn: async () => (await api.get('/branches', { params: { per_page: 100 } })).data,
     });
 
-    const deleteMutation = useMutation({
-        mutationFn: async (id) => api.delete(`/residents/${id}`),
+    const toggleActiveMutation = useMutation({
+        mutationFn: async ({ id, isActive }) => {
+            return await api.put(`/residents/${id}`, { is_active: !isActive });
+        },
         onSuccess: () => queryClient.invalidateQueries(['residents']),
     });
 
@@ -162,14 +164,23 @@ export default function Residents() {
                                     </button>
                                     <button
                                         onClick={() => {
-                                            if (window.confirm('Are you sure you want to delete this resident?')) {
-                                                deleteMutation.mutate(resident.id);
+                                            const action = resident.is_active ? 'deactivate' : 'activate';
+                                            if (window.confirm(`Are you sure you want to ${action} this resident?`)) {
+                                                toggleActiveMutation.mutate({ id: resident.id, isActive: resident.is_active });
                                             }
                                         }}
-                                        className="p-2 text-[#8B4513] hover:bg-amber-50 rounded-lg transition-colors"
-                                        title="Delete"
+                                        className={`p-2 rounded-lg transition-colors ${
+                                            resident.is_active 
+                                                ? 'text-[#8B4513] hover:bg-amber-50' 
+                                                : 'text-green-600 hover:bg-green-50'
+                                        }`}
+                                        title={resident.is_active ? 'Deactivate' : 'Activate'}
                                     >
-                                        <Trash2 className="w-4 h-4" />
+                                        {resident.is_active ? (
+                                            <XCircle className="w-4 h-4" />
+                                        ) : (
+                                            <CheckCircle className="w-4 h-4" />
+                                        )}
                                     </button>
                                 </div>
                             </div>

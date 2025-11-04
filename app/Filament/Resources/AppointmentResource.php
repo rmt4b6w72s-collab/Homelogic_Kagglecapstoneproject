@@ -288,10 +288,34 @@ class AppointmentResource extends Resource
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
                     ->visible(fn (Appointment $record): bool => in_array($record->status, ['scheduled', 'confirmed', 'in_progress']))
-                    ->action(function (Appointment $record) {
-                        $record->update(['status' => 'completed']);
+                    ->form([
+                        Forms\Components\Textarea::make('notes')
+                            ->label('Appointment Outcome / Notes')
+                            ->placeholder('Enter notes about the appointment outcome...')
+                            ->rows(4),
+                    ])
+                    ->action(function (Appointment $record, array $data) {
+                        $updateData = ['status' => 'completed'];
+                        if (!empty($data['notes'])) {
+                            $existingNotes = $record->notes ? $record->notes . "\n\n" : '';
+                            $updateData['notes'] = $existingNotes . "Completed on " . now()->format('Y-m-d H:i:s') . ": " . $data['notes'];
+                        }
+                        $record->update($updateData);
                     })
                     ->requiresConfirmation(),
+                
+                Tables\Actions\Action::make('cancel')
+                    ->label('Cancel')
+                    ->icon('heroicon-o-x-circle')
+                    ->color('danger')
+                    ->visible(fn (Appointment $record): bool => in_array($record->status, ['scheduled', 'confirmed', 'in_progress']))
+                    ->action(function (Appointment $record) {
+                        $record->update(['status' => 'cancelled']);
+                    })
+                    ->requiresConfirmation()
+                    ->modalHeading('Cancel Appointment')
+                    ->modalDescription('Are you sure you want to cancel this appointment? This action cannot be undone.')
+                    ->modalSubmitActionLabel('Yes, Cancel Appointment'),
                 
                 Tables\Actions\Action::make('reschedule')
                     ->label('Reschedule')

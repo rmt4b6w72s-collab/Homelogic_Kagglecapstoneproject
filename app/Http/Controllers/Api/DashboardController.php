@@ -224,7 +224,7 @@ class DashboardController extends Controller
             ->whereHas('resident.assignments', function($q) use ($userId) {
                 $q->where('caregiver_id', $userId)->where('is_active', true);
             })
-            ->where('appointment_date', '>=', now())
+            ->whereDate('appointment_date', '>=', today())
             ->where('status', '!=', 'cancelled')
             ->orderBy('appointment_date')
             ->limit(5)

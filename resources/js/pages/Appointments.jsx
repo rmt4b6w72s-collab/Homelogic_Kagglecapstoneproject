@@ -73,13 +73,32 @@ export default function Appointments() {
         },
     });
 
-    const handleStatusUpdate = async (id, status) => {
+    const [completingAppointment, setCompletingAppointment] = useState(null);
+    const [completionNotes, setCompletionNotes] = useState('');
+
+    const handleStatusUpdate = async (id, status, notes = null) => {
         try {
-            await api.patch(`/appointments/${id}/status`, { status });
+            const payload = { status };
+            if (notes !== null) {
+                payload.notes = notes;
+            }
+            await api.patch(`/appointments/${id}/status`, payload);
+            setCompletingAppointment(null);
+            setCompletionNotes('');
             refetch();
         } catch (error) {
             console.error('Failed to update appointment status:', error);
         }
+    };
+
+    const handleCancel = (id) => {
+        if (window.confirm('Are you sure you want to cancel this appointment?')) {
+            handleStatusUpdate(id, 'cancelled');
+        }
+    };
+
+    const handleComplete = (id) => {
+        setCompletingAppointment(id);
     };
 
     return (
@@ -195,14 +214,14 @@ export default function Appointments() {
                                 {appointment.status === 'scheduled' && (
                                     <div className="flex space-x-2 mt-4 pt-4 border-t">
                                         <button
-                                            onClick={() => handleStatusUpdate(appointment.id, 'completed')}
+                                            onClick={() => handleComplete(appointment.id)}
                                             className="flex-1 px-4 py-2 bg-[#2D5016] text-white rounded-lg hover:bg-[#1a3009] transition-colors flex items-center justify-center space-x-2"
                                         >
                                             <CheckCircle className="w-4 h-4" />
                                             <span>Complete</span>
                                         </button>
                                         <button
-                                            onClick={() => handleStatusUpdate(appointment.id, 'cancelled')}
+                                            onClick={() => handleCancel(appointment.id)}
                                             className="flex-1 px-4 py-2 bg-[#8B4513] text-white rounded-lg hover:bg-[#6b3410] transition-colors flex items-center justify-center space-x-2"
                                         >
                                             <XCircle className="w-4 h-4" />
@@ -237,6 +256,46 @@ export default function Appointments() {
                     isSubmitting={createMutation.isPending}
                     mutation={createMutation}
                 />
+            )}
+
+            {/* Completion Notes Modal */}
+            {completingAppointment && (
+                <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50 p-4" style={{ backgroundColor: 'rgba(0, 0, 0, 0.1)' }}>
+                    <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+                        <div className="p-6 border-b">
+                            <h3 className="text-xl font-semibold text-gray-900">Complete Appointment</h3>
+                        </div>
+                        <div className="p-6">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Appointment Outcome / Notes (Optional)
+                            </label>
+                            <textarea
+                                rows={4}
+                                value={completionNotes}
+                                onChange={(e) => setCompletionNotes(e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2D5016] focus:border-transparent"
+                                placeholder="Enter notes about the appointment outcome..."
+                            />
+                        </div>
+                        <div className="p-6 border-t flex items-center justify-end space-x-3">
+                            <button
+                                onClick={() => {
+                                    setCompletingAppointment(null);
+                                    setCompletionNotes('');
+                                }}
+                                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={() => handleStatusUpdate(completingAppointment, 'completed', completionNotes || null)}
+                                className="px-4 py-2 bg-[#2D5016] text-white rounded-lg hover:bg-[#1a3009] transition-colors"
+                            >
+                                Mark as Completed
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     );

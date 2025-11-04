@@ -26,7 +26,6 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Textarea;
-use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\Section;
 use Filament\Notifications\Notification;
 use Illuminate\Database\Eloquent\Builder;
@@ -128,7 +127,7 @@ class AssessmentResource extends Resource
                             ->searchable()
                             ->required(),
 
-                        Radio::make('assessment_type')
+                        Select::make('assessment_type')
                             ->label('Assessment Type')
                             ->options([
                                 'initial' => 'Initial Assessment',
@@ -136,7 +135,8 @@ class AssessmentResource extends Resource
                                 'focused' => 'Focused Assessment',
                                 'discharge' => 'Discharge Assessment',
                             ])
-                            ->required(),
+                            ->required()
+                            ->searchable(),
 
                         DatePicker::make('assessment_date')
                             ->label('Assessment Date')

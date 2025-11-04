@@ -17,9 +17,10 @@ class AppointmentController extends Controller
         if ($request->has('date_filter')) {
             $filter = $request->get('date_filter');
             if ($filter === 'upcoming') {
-                $query->where('appointment_date', '>=', now());
+                // Include today's appointments in upcoming
+                $query->whereDate('appointment_date', '>=', today());
             } elseif ($filter === 'past') {
-                $query->where('appointment_date', '<', now());
+                $query->whereDate('appointment_date', '<', today());
             }
         }
 
@@ -107,10 +108,21 @@ class AppointmentController extends Controller
     {
         $request->validate([
             'status' => 'required|in:scheduled,completed,cancelled',
+            'notes' => 'nullable|string',
         ]);
 
         $appointment = Appointment::findOrFail($id);
         $appointment->status = $request->get('status');
+        
+        // Update notes if provided (especially for completed appointments)
+        if ($request->has('notes')) {
+            $existingNotes = $appointment->notes ? $appointment->notes . "\n\n" : '';
+            $statusNote = $request->get('status') === 'completed' && $request->get('notes')
+                ? "Completed on " . now()->format('Y-m-d H:i:s') . ": " . $request->get('notes')
+                : '';
+            $appointment->notes = $existingNotes . $statusNote;
+        }
+        
         $appointment->save();
 
         return response()->json($appointment->load(['resident', 'healthcareProvider']));

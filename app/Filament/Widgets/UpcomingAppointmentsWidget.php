@@ -19,7 +19,9 @@ class UpcomingAppointmentsWidget extends BaseWidget
             ->query(
                 Appointment::with(['resident', 'healthcareProvider'])
                     ->whereDate('appointment_date', '>=', today())
+                    ->whereNotIn('status', ['cancelled', 'completed'])
                     ->orderBy('appointment_date')
+                    ->orderBy('appointment_time')
                     ->limit(10)
             )
             ->columns([
