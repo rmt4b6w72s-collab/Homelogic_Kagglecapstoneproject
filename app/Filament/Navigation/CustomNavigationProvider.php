@@ -135,6 +135,16 @@ class CustomNavigationProvider
                            $roleValueNormalized === 'caregiver' ||
                            (stripos($roleValue, 'care') !== false && stripos($roleValue, 'giver') !== false);
             
+            // DEBUG: Log for troubleshooting
+            \Log::info('Navigation Provider Debug', [
+                'user' => $user->name,
+                'role' => $user->role,
+                'role_normalized' => $roleValueNormalized,
+                'is_caregiver' => $isCaregiver,
+                'has_view_users' => $user->hasPermission('view_users'),
+                'has_view_facilities' => $user->hasPermission('view_facilities'),
+            ]);
+            
             // If user is NOT a caregiver AND has admin permissions, show menu
             if (!$isCaregiver && (
                 $user->hasPermission('view_users') ||
@@ -150,6 +160,7 @@ class CustomNavigationProvider
         }
         
         // Only add Administration menu if explicitly allowed
+        // For caregivers, this will ALWAYS be false
         if ($shouldAddAdminMenu) {
             $items[] = NavigationItem::make('Administration')
                     ->icon('heroicon-o-cog-6-tooth')
