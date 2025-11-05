@@ -203,6 +203,7 @@ export default function ViewVitals() {
     const chartOptions = {
         responsive: true,
         maintainAspectRatio: false,
+        backgroundColor: 'transparent', // Ensure no background color
         plugins: {
             legend: {
                 display: true,
@@ -214,6 +215,8 @@ export default function ViewVitals() {
                         size: 12,
                     },
                     color: '#000000', // Black text for legend
+                    boxWidth: 12,
+                    boxHeight: 12,
                 },
             },
             tooltip: {
@@ -224,6 +227,15 @@ export default function ViewVitals() {
                 bodyColor: '#000000',
                 borderColor: '#e5e7eb',
                 borderWidth: 1,
+                displayColors: true,
+                callbacks: {
+                    labelColor: function(context) {
+                        return {
+                            borderColor: context.dataset.borderColor,
+                            backgroundColor: context.dataset.borderColor,
+                        };
+                    },
+                },
             },
         },
         scales: {
@@ -238,6 +250,7 @@ export default function ViewVitals() {
                 grid: {
                     color: 'rgba(0, 0, 0, 0.1)',
                 },
+                backgroundColor: 'transparent',
             },
             x: {
                 ticks: {
@@ -245,6 +258,17 @@ export default function ViewVitals() {
                 },
                 grid: {
                     display: false,
+                },
+                backgroundColor: 'transparent',
+            },
+        },
+        elements: {
+            point: {
+                backgroundColor: function(context) {
+                    return context.dataset.borderColor;
+                },
+                borderColor: function(context) {
+                    return context.dataset.borderColor;
                 },
             },
         },
@@ -407,8 +431,8 @@ export default function ViewVitals() {
                 </div>
 
                 {/* Chart */}
-                <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-                    <div className="h-96">
+                <div className="bg-white rounded-lg shadow-lg p-6 mb-6" style={{ backgroundColor: '#ffffff' }}>
+                    <div className="h-96" style={{ backgroundColor: '#ffffff' }}>
                         {isLoading ? (
                             <div className="flex items-center justify-center h-full">
                                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#2D5016]"></div>
