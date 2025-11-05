@@ -331,18 +331,18 @@ export default function ViewVitals() {
     const totalPages = vitalsData?.last_page || 1;
 
     return (
-        <div className="min-h-screen bg-gray-900 text-white">
+        <div className="min-h-screen bg-gray-50">
             {/* Header */}
-            <div className="bg-gray-800 border-b border-gray-700 px-6 py-4">
+            <div className="bg-white border-b border-gray-200 px-6 py-4 shadow-sm">
                 <h1 className="text-3xl font-bold text-[#2D5016]">Resident Vitals</h1>
             </div>
 
             <div className="p-6">
                 {/* Filters */}
-                <div className="bg-gray-800 rounded-lg p-4 mb-6">
+                <div className="bg-white rounded-lg shadow p-4 mb-6">
                     <div className="flex flex-wrap items-center gap-4">
                         <div className="flex-1 min-w-[200px]">
-                            <label className="block text-sm text-gray-400 mb-1">Branch</label>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Branch</label>
                             <div className="relative">
                                 <Building2 className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                                 <select
@@ -352,7 +352,7 @@ export default function ViewVitals() {
                                         setResidentId(''); // Reset resident when branch changes
                                         setCurrentPage(1);
                                     }}
-                                    className="w-full pl-9 pr-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-[#2D5016] focus:border-transparent appearance-none"
+                                    className="w-full pl-9 pr-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-[#2D5016] focus:border-transparent appearance-none"
                                 >
                                     <option value="">All Branches</option>
                                     {branchesData?.map(b => (
@@ -363,7 +363,7 @@ export default function ViewVitals() {
                         </div>
 
                         <div className="flex-1 min-w-[200px]">
-                            <label className="block text-sm text-gray-400 mb-1">Resident</label>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Resident</label>
                             <div className="relative">
                                 <User className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                                 <select
@@ -372,7 +372,7 @@ export default function ViewVitals() {
                                         setResidentId(e.target.value);
                                         setCurrentPage(1);
                                     }}
-                                    className="w-full pl-9 pr-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-[#2D5016] focus:border-transparent appearance-none"
+                                    className="w-full pl-9 pr-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-[#2D5016] focus:border-transparent appearance-none"
                                 >
                                     <option value="">Select a Resident</option>
                                     {residentsData?.data?.map(r => (
@@ -391,7 +391,7 @@ export default function ViewVitals() {
                         </div>
 
                         <div className="flex-1 min-w-[120px]">
-                            <label className="block text-sm text-gray-400 mb-1">Year</label>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Year</label>
                             <div className="relative">
                                 <Calendar className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                                 <select
@@ -400,7 +400,7 @@ export default function ViewVitals() {
                                         setYear(parseInt(e.target.value));
                                         setCurrentPage(1);
                                     }}
-                                    className="w-full pl-9 pr-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-[#2D5016] focus:border-transparent appearance-none"
+                                    className="w-full pl-9 pr-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-[#2D5016] focus:border-transparent appearance-none"
                                 >
                                     {years.map(y => (
                                         <option key={y} value={y}>{y}</option>
@@ -410,7 +410,7 @@ export default function ViewVitals() {
                         </div>
 
                         <div className="flex-1 min-w-[140px]">
-                            <label className="block text-sm text-gray-400 mb-1">Month</label>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Month</label>
                             <div className="relative">
                                 <Calendar className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                                 <select
@@ -419,7 +419,7 @@ export default function ViewVitals() {
                                         setMonth(parseInt(e.target.value));
                                         setCurrentPage(1);
                                     }}
-                                    className="w-full pl-9 pr-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-[#2D5016] focus:border-transparent appearance-none"
+                                    className="w-full pl-9 pr-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-[#2D5016] focus:border-transparent appearance-none"
                                 >
                                     {months.map((m, idx) => (
                                         <option key={idx + 1} value={idx + 1}>{m}</option>
@@ -467,10 +467,10 @@ export default function ViewVitals() {
                 </div>
 
                 {/* Table */}
-                <div className="bg-gray-800 rounded-lg shadow-lg overflow-hidden">
+                <div className="bg-white rounded-lg shadow-lg overflow-hidden">
                     <div className="overflow-x-auto">
                         <table className="w-full">
-                            <thead className="bg-gray-700">
+                            <thead className="bg-gray-50">
                                 <tr>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-[#2D5016] uppercase tracking-wider">Date</th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-[#2D5016] uppercase tracking-wider">Blood Pressure</th>
@@ -483,7 +483,7 @@ export default function ViewVitals() {
                                     <th className="px-6 py-3 text-left text-xs font-medium text-[#2D5016] uppercase tracking-wider">Action</th>
                                 </tr>
                             </thead>
-                            <tbody className="bg-gray-800 divide-y divide-gray-700">
+                            <tbody className="bg-white divide-y divide-gray-200">
                                 {isLoading ? (
                                     <tr>
                                         <td colSpan="9" className="px-6 py-4 text-center">
@@ -492,32 +492,32 @@ export default function ViewVitals() {
                                             </div>
                                         </td>
                                     </tr>
-                                ) : vitalsData?.data && vitalsData.data.length > 0 ? (
-                                    vitalsData.data.map((vital) => {
-                                        const date = new Date(vital.measurement_date);
-                                        return (
-                                            <tr key={vital.id} className="hover:bg-gray-700">
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                                                    {date.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' })}
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                                                    {vital.systolic && vital.diastolic ? `${vital.systolic}/${vital.diastolic}` : '-'}
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                                                    {vital.temperature ? `${vital.temperature}°F` : '-'}
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                                                    {vital.pulse || '-'}
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                                                    {vital.oxygen_saturation ? `${vital.oxygen_saturation}%` : '-'}
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                                                    {vital.pain_level || '-'}
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                                                    {vital.reason_declined || '-'}
-                                                </td>
+                                        ) : vitalsData?.data && vitalsData.data.length > 0 ? (
+                                            vitalsData.data.map((vital) => {
+                                                const date = new Date(vital.measurement_date);
+                                                return (
+                                                    <tr key={vital.id} className="hover:bg-gray-50">
+                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                            {date.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' })}
+                                                        </td>
+                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                            {vital.systolic && vital.diastolic ? `${vital.systolic}/${vital.diastolic}` : '-'}
+                                                        </td>
+                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                            {vital.temperature ? `${vital.temperature}°F` : '-'}
+                                                        </td>
+                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                            {vital.pulse || '-'}
+                                                        </td>
+                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                            {vital.oxygen_saturation ? `${vital.oxygen_saturation}%` : '-'}
+                                                        </td>
+                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                            {vital.pain_level || '-'}
+                                                        </td>
+                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                            {vital.reason_declined || '-'}
+                                                        </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm">
                                                     <span className={`px-2 py-1 rounded-full text-xs ${
                                                         vital.status === 'approved' ? 'bg-green-900 text-green-300' :
@@ -528,49 +528,49 @@ export default function ViewVitals() {
                                                         {vital.status || 'approved'}
                                                     </span>
                                                 </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                                                    <button className="p-1 hover:bg-gray-600 rounded">
-                                                        <MoreVertical className="w-4 h-4" />
-                                                    </button>
+                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                            <button className="p-1 hover:bg-gray-100 rounded text-gray-600 hover:text-gray-900">
+                                                                <MoreVertical className="w-4 h-4" />
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })
+                                        ) : (
+                                            <tr>
+                                                <td colSpan="9" className="px-6 py-4 text-center text-gray-500">
+                                                    No vitals data found for the selected period
                                                 </td>
                                             </tr>
-                                        );
-                                    })
-                                ) : (
-                                    <tr>
-                                        <td colSpan="9" className="px-6 py-4 text-center text-gray-400">
-                                            No vitals data found for the selected period
-                                        </td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
 
-                    {/* Pagination */}
-                    {vitalsData && totalPages > 1 && (
-                        <div className="bg-gray-700 px-6 py-4 flex items-center justify-center gap-4">
-                            <button
-                                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                                disabled={currentPage === 1}
-                                className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                            >
-                                <ChevronLeft className="w-4 h-4" />
-                                Previous
-                            </button>
-                            <span className="text-gray-300">
-                                Page {currentPage} of {totalPages}
-                            </span>
-                            <button
-                                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                                disabled={currentPage === totalPages}
-                                className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                            >
-                                Next
-                                <ChevronRight className="w-4 h-4" />
-                            </button>
-                        </div>
-                    )}
+                            {/* Pagination */}
+                            {vitalsData && totalPages > 1 && (
+                                <div className="bg-gray-50 px-6 py-4 flex items-center justify-center gap-4 border-t border-gray-200">
+                                    <button
+                                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                                        disabled={currentPage === 1}
+                                        className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                                    >
+                                        <ChevronLeft className="w-4 h-4" />
+                                        Previous
+                                    </button>
+                                    <span className="text-gray-700">
+                                        Page {currentPage} of {totalPages}
+                                    </span>
+                                    <button
+                                        onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                                        disabled={currentPage === totalPages}
+                                        className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                                    >
+                                        Next
+                                        <ChevronRight className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            )}
                 </div>
             </div>
         </div>
