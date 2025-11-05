@@ -119,12 +119,17 @@ class CustomNavigationProvider
         if (auth()->check()) {
             $user = auth()->user();
             // Check for caregiver in multiple formats: 'caregiver', 'care_giver', 'care giver'
+            // Also check the roles relationship and the role column
             $roleValue = strtolower(trim($user->role ?? ''));
+            $roleValueNormalized = str_replace([' ', '_'], '', $roleValue); // Remove spaces and underscores
+            
             $isCaregiver = $user->hasRole('caregiver') || 
                            $user->hasRole('care_giver') || 
                            $roleValue === 'caregiver' || 
                            $roleValue === 'care_giver' || 
-                           $roleValue === 'care giver';
+                           $roleValue === 'care giver' ||
+                           $roleValueNormalized === 'caregiver' ||
+                           in_array($roleValueNormalized, ['caregiver', 'caregiver']);
             
             if (!$isCaregiver && (
                 $user->hasPermission('view_users') ||
