@@ -271,6 +271,7 @@ class AssessmentForm extends Page implements HasForms
                         ->default($defaultValue),
                     'date' => Forms\Components\DatePicker::make("sections.{$section->id}.questions.{$question->id}")
                         ->label($question->question_text)
+                        ->native(false)
                         ->default($defaultValue),
                     default => Forms\Components\TextInput::make("sections.{$section->id}.questions.{$question->id}")
                         ->label($question->question_text)

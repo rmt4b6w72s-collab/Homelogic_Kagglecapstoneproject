@@ -140,6 +140,7 @@ class AssessmentResource extends Resource
 
                         DatePicker::make('assessment_date')
                             ->label('Assessment Date')
+                            ->native(false)
                             ->required(),
 
                         Select::make('status')
@@ -176,13 +177,16 @@ class AssessmentResource extends Resource
                 Section::make('Timeline')
                     ->schema([
                         DatePicker::make('completed_at')
-                            ->label('Completed At'),
+                            ->label('Completed At')
+                            ->native(false),
 
                         DatePicker::make('reviewed_at')
-                            ->label('Reviewed At'),
+                            ->label('Reviewed At')
+                            ->native(false),
 
                         DatePicker::make('approved_at')
-                            ->label('Approved At'),
+                            ->label('Approved At')
+                            ->native(false),
                     ])
                     ->columns(3),
             ]);

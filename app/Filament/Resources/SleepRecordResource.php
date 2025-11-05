@@ -98,6 +98,7 @@ class SleepRecordResource extends Resource
                         Forms\Components\DatePicker::make('sleep_date')
                             ->label('Sleep Date')
                             ->required()
+                            ->native(false)
                             ->displayFormat('M j, Y')
                             ->default(now())
                             ->maxDate(now()),

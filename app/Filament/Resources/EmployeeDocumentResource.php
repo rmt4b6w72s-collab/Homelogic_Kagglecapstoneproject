@@ -148,6 +148,7 @@ class EmployeeDocumentResource extends Resource
 
                         DatePicker::make('expiration_date')
                             ->label('Expiration Date')
+                            ->native(false)
                             ->nullable()
                             ->after('today'),
 

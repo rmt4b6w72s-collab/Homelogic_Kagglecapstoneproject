@@ -160,6 +160,7 @@ class UserResource extends Resource
                         Forms\Components\DatePicker::make('date_of_birth')
                             ->label('Date of Birth')
                             ->required()
+                            ->native(false)
                             ->displayFormat('m/d/Y')
                             ->maxDate(now()->subYears(18))
                             ->helperText('Format: MM/DD/YYYY - Must be 18+ years old'),
@@ -187,6 +188,7 @@ class UserResource extends Resource
                             ->maxLength(255)
                             ->placeholder('Additional credential information (optional)'),
                         Forms\Components\DatePicker::make('date_employed')
+                            ->native(false)
                             ->label('Date Employed')
                             ->required()
                             ->displayFormat('m/d/Y')

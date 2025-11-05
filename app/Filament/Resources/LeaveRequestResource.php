@@ -112,12 +112,14 @@ class LeaveRequestResource extends Resource
                         Forms\Components\DatePicker::make('start_date')
                             ->label('Start Date')
                             ->required()
+                            ->native(false)
                             ->minDate(now())
                             ->displayFormat('m/d/Y')
                             ->placeholder('MM/DD/YYYY'),
                         Forms\Components\DatePicker::make('end_date')
                             ->label('End Date')
                             ->required()
+                            ->native(false)
                             ->minDate(fn ($get) => $get('start_date') ?: now())
                             ->displayFormat('m/d/Y')
                             ->placeholder('MM/DD/YYYY'),

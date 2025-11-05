@@ -105,6 +105,7 @@ class AssessmentPage extends Page implements HasForms, HasActions
 
                         DatePicker::make('assessment_date')
                             ->label('Assessment Date')
+                            ->native(false)
                             ->default(now()),
                     ])
                     ->columns(2),

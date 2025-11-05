@@ -153,9 +153,11 @@ class MedicationHistory extends Page implements HasTable
                     ->form([
                         DatePicker::make('start_date')
                             ->label('Start Date')
+                            ->native(false)
                             ->default(now()->subDays(30)),
                         DatePicker::make('end_date')
                             ->label('End Date')
+                            ->native(false)
                             ->default(now()),
                     ])
                     ->query(function (Builder $query, array $data): Builder {

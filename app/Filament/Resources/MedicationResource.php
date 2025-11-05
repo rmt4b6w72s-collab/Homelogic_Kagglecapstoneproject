@@ -231,15 +231,18 @@ class MedicationResource extends Resource
                             ->placeholder('Enter the medical condition or diagnosis...'),
                         Forms\Components\DatePicker::make('prescription_date')
                             ->label('Prescription Date')
+                            ->native(false)
                             ->displayFormat('M j, Y')
                             ->default(now())
                             ->required(),
                         Forms\Components\DatePicker::make('start_date')
                             ->label('Start Date')
+                            ->native(false)
                             ->displayFormat('M j, Y')
                             ->default(now()),
                         Forms\Components\DatePicker::make('end_date')
                             ->label('End Date')
+                            ->native(false)
                             ->displayFormat('M j, Y')
                             ->after('start_date'),
                     ])

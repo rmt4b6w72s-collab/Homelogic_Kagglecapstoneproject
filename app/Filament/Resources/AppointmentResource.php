@@ -116,6 +116,7 @@ class AppointmentResource extends Resource
                         Forms\Components\DatePicker::make('appointment_date')
                             ->label('Appointment Date')
                             ->required()
+                            ->native(false)
                             ->default(now())
                             ->live(),
                         
@@ -158,6 +159,7 @@ class AppointmentResource extends Resource
                         
                         Forms\Components\DatePicker::make('next_appointment_date')
                             ->label('Next Appointment Date')
+                            ->native(false)
                             ->nullable(),
                         
                         Forms\Components\Select::make('recurrence_pattern')

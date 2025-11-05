@@ -99,6 +99,7 @@ class VitalSignResource extends Resource
                         DatePicker::make('measurement_date')
                             ->label('Measurement Date')
                             ->required()
+                            ->native(false)
                             ->default(now())
                             ->displayFormat('m/d/Y'),
                     ])

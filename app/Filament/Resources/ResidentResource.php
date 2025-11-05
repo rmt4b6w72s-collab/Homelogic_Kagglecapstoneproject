@@ -105,6 +105,7 @@ class ResidentResource extends Resource
                         Forms\Components\DatePicker::make('date_of_birth')
                             ->label('Date of Birth')
                             ->required()
+                            ->native(false)
                             ->displayFormat('m/d/Y')
                             ->maxDate(now()->subYears(18))
                             ->helperText('Format: MM/DD/YYYY'),
@@ -125,6 +126,7 @@ class ResidentResource extends Resource
                         Forms\Components\DatePicker::make('admission_date')
                             ->label('Admission Date')
                             ->required()
+                            ->native(false)
                             ->displayFormat('M j, Y')
                             ->default(now()),
                     ])
