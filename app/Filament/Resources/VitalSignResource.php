@@ -45,7 +45,26 @@ class VitalSignResource extends Resource
     protected static ?string $pluralModelLabel = 'Vital Signs';
     protected static ?string $navigationGroup = 'Resident Care';
     protected static bool $shouldRegisterNavigation = false;
-    
+
+    public static function canViewAny(): bool
+    {
+        return auth()->user()->hasPermission('view_vital_signs');
+    }
+
+    public static function canCreate(): bool
+    {
+        return auth()->user()->hasPermission('create_vital_signs');
+    }
+
+    public static function canEdit($record): bool
+    {
+        return auth()->user()->hasPermission('edit_vital_signs');
+    }
+
+    public static function canDelete($record): bool
+    {
+        return auth()->user()->hasPermission('delete_vital_signs');
+    }
 
     public static function form(Form $form): Form
     {

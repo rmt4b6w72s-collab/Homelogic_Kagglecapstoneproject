@@ -30,6 +30,26 @@ class AppointmentResource extends Resource
     protected static ?string $navigationGroup = 'Resident Care';
     protected static bool $shouldRegisterNavigation = false;
 
+    public static function canViewAny(): bool
+    {
+        return auth()->user()->hasPermission('view_appointments');
+    }
+
+    public static function canCreate(): bool
+    {
+        return auth()->user()->hasPermission('create_appointments');
+    }
+
+    public static function canEdit($record): bool
+    {
+        return auth()->user()->hasPermission('edit_appointments');
+    }
+
+    public static function canDelete($record): bool
+    {
+        return auth()->user()->hasPermission('delete_appointments');
+    }
+
     public static function getEloquentQuery(): Builder
     {
         $query = parent::getEloquentQuery();

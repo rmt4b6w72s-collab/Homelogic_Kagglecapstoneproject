@@ -26,6 +26,26 @@ class MedicationResource extends Resource
     protected static ?int $navigationSort = 45;
     protected static bool $shouldRegisterNavigation = false;
 
+    public static function canViewAny(): bool
+    {
+        return auth()->user()->hasPermission('view_medications');
+    }
+
+    public static function canCreate(): bool
+    {
+        return auth()->user()->hasPermission('create_medications');
+    }
+
+    public static function canEdit($record): bool
+    {
+        return auth()->user()->hasPermission('edit_medications');
+    }
+
+    public static function canDelete($record): bool
+    {
+        return auth()->user()->hasPermission('delete_medications');
+    }
+
     public static function getEloquentQuery(): Builder
     {
         $query = parent::getEloquentQuery();

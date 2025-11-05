@@ -26,6 +26,27 @@ class SleepRecordResource extends Resource
     protected static bool $shouldRegisterNavigation = true;
     protected static ?int $navigationSort = 60;
 
+    public static function canViewAny(): bool
+    {
+        return auth()->user()->hasPermission('view_sleep_records');
+    }
+
+    public static function canCreate(): bool
+    {
+        return auth()->user()->hasPermission('create_sleep_records');
+    }
+
+    public static function canEdit($record): bool
+    {
+        $user = auth()->user();
+        return $user->hasPermission('edit_sleep_records') || $user->hasPermission('view_sleep_records');
+    }
+
+    public static function canDelete($record): bool
+    {
+        return auth()->user()->hasPermission('delete_sleep_records');
+    }
+
     public static function getEloquentQuery(): Builder
     {
         $query = parent::getEloquentQuery();
