@@ -120,6 +120,9 @@ class CustomNavigationProvider
                     ];
         
         // Only add Administration menu if user is NOT a caregiver
+        // ALWAYS check this - even if auth is not checked, we still don't want to add it
+        $shouldAddAdminMenu = false;
+        
         if (auth()->check()) {
             $user = auth()->user();
             // Check for caregiver in multiple formats: 'caregiver', 'care_giver', 'care giver'
@@ -131,8 +134,9 @@ class CustomNavigationProvider
             $isCaregiver = $user->hasRole('caregiver') || 
                            $user->hasRole('care_giver') || 
                            $roleValueNormalized === 'caregiver' ||
-                           stripos($roleValue, 'care') !== false && stripos($roleValue, 'giver') !== false;
+                           (stripos($roleValue, 'care') !== false && stripos($roleValue, 'giver') !== false);
             
+            // If user is NOT a caregiver AND has admin permissions, show menu
             if (!$isCaregiver && (
                 $user->hasPermission('view_users') ||
                 $user->hasPermission('view_facilities') ||
@@ -142,7 +146,13 @@ class CustomNavigationProvider
                 $user->hasRole('administrator') ||
                 $user->hasRole('super_admin')
             )) {
-                $items[] = NavigationItem::make('Administration')
+                $shouldAddAdminMenu = true;
+            }
+        }
+        
+        // Only add Administration menu if explicitly allowed
+        if ($shouldAddAdminMenu) {
+            $items[] = NavigationItem::make('Administration')
                     ->icon('heroicon-o-cog-6-tooth')
                     ->url('#')
                     ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.resources.facilities.*') || 
