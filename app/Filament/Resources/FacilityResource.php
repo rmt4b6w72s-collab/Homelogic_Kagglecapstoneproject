@@ -91,6 +91,23 @@ class FacilityResource extends Resource
                     ])
                     ->columns(2),
 
+                Forms\Components\Section::make('Contact Information')
+                    ->schema([
+                        Forms\Components\Textarea::make('address')
+                            ->label('Address')
+                            ->rows(3)
+                            ->placeholder('Enter full address...'),
+                        Forms\Components\TextInput::make('phone')
+                            ->label('Phone')
+                            ->tel()
+                            ->placeholder('(206) 555-0123'),
+                        Forms\Components\TextInput::make('email')
+                            ->label('Email')
+                            ->email()
+                            ->placeholder('info@example.com'),
+                    ])
+                    ->columns(2),
+
                 Forms\Components\Section::make('Marketing Information')
                     ->schema([
                         Forms\Components\TextInput::make('brochure_url')
