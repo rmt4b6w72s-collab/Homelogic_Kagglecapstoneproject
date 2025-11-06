@@ -70,10 +70,13 @@ class CustomNavigationProvider
                     ->sort(20),
 
                 // Appointment - Third item
-                NavigationItem::make('Appointment')
+                NavigationItem::make('Appointments')
                     ->icon('heroicon-o-calendar-days')
-                    ->url(route('filament.admin.resources.appointments.index'))
-                    ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.resources.appointments.*'))
+                    ->url(route('filament.admin.pages.appointment-history'))
+                    ->isActiveWhen(fn (): bool => 
+                        request()->routeIs('filament.admin.pages.appointment-history') ||
+                        request()->routeIs('filament.admin.resources.appointments.*')
+                    )
                     ->sort(30),
 
                 // Vitals - Fourth item
