@@ -75,35 +75,48 @@ export default function LeaveRequests() {
       {isLoading ? (
         <div className="text-center py-12"><div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#2D5016]"></div><p className="mt-4 text-gray-600">Loading leave requests...</p></div>
       ) : (
-        <div className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {data?.data?.length ? (
             data.data.map((lr) => (
-              <div key={lr.id} className="bg-white rounded-lg shadow p-6">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <div className="flex items-center space-x-3">
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-900">{lr.staff?.name || 'Staff'}</h3>
-                        <p className="text-sm text-gray-500">{new Date(lr.start_date).toLocaleDateString()} - {new Date(lr.end_date).toLocaleDateString()}</p>
-                        <span className={`inline-flex px-2 py-1 rounded text-xs font-medium mt-2 ${lr.status === 'approved' ? 'bg-green-50 text-[#2D5016]' : lr.status === 'pending' ? 'bg-amber-50 text-[#8B4513]' : 'bg-red-100 text-red-800'}`}>{lr.status}</span>
+              <div key={lr.id} className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6">
+                <div className="flex flex-col h-full">
+                  {/* Header */}
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex-1">
+                      <h3 className="text-lg font-bold text-gray-900 mb-1">{lr.staff?.name || 'Staff'}</h3>
+                      <div className="flex items-center space-x-2 text-sm text-gray-600 mb-2">
+                        <Calendar className="w-4 h-4" />
+                        <span>{new Date(lr.start_date).toLocaleDateString()} - {new Date(lr.end_date).toLocaleDateString()}</span>
                       </div>
+                      <span className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold ${lr.status === 'approved' ? 'bg-green-100 text-green-800' : lr.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'}`}>
+                        {lr.status.charAt(0).toUpperCase() + lr.status.slice(1)}
+                      </span>
                     </div>
-                    {lr.reason && <p className="text-sm text-gray-700 mt-3"><span className="font-medium">Reason:</span> {lr.reason}</p>}
-                  </div>
-                  <div className="flex space-x-2">
-                    {/* Caregivers can only edit/delete their own requests */}
+                    {/* Actions */}
                     {(!isCaregiver || lr.staff_id === currentUser?.id) && (
-                      <>
-                        <button onClick={() => { setEditing(lr); setShowForm(true); }} className="p-2 text-[#2D5016] hover:bg-green-50 rounded-lg" title="Edit"><Edit className="w-4 h-4" /></button>
-                        <button onClick={() => window.confirm('Delete leave request?') && deleteMutation.mutate(lr.id)} className="p-2 text-[#8B4513] hover:bg-amber-50 rounded-lg" title="Delete"><Trash2 className="w-4 h-4" /></button>
-                      </>
+                      <div className="flex space-x-1">
+                        <button onClick={() => { setEditing(lr); setShowForm(true); }} className="p-2 text-[#2D5016] hover:bg-green-50 rounded-lg transition-colors" title="Edit">
+                          <Edit className="w-4 h-4" />
+                        </button>
+                        <button onClick={() => window.confirm('Delete leave request?') && deleteMutation.mutate(lr.id)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Delete">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     )}
                   </div>
+                  
+                  {/* Reason */}
+                  {lr.reason && (
+                    <div className="mt-auto pt-4 border-t border-gray-100">
+                      <p className="text-xs font-medium text-gray-500 uppercase mb-1">Reason</p>
+                      <p className="text-sm text-gray-700 line-clamp-2">{lr.reason}</p>
+                    </div>
+                  )}
                 </div>
               </div>
             ))
           ) : (
-            <div className="bg-white rounded-lg shadow p-12 text-center">
+            <div className="col-span-2 bg-white rounded-lg shadow p-12 text-center">
               <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-4" />
               <p className="text-gray-600 text-lg font-medium">No leave requests found</p>
             </div>

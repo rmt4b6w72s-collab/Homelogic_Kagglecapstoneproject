@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../services/api';
-import { Building2, Plus, Search, Edit, Trash2 } from 'lucide-react';
+import { Building2, Plus, Search, Edit, Trash2, MapPin, Phone, Mail, Building } from 'lucide-react';
 
 export default function Branches() {
   const queryClient = useQueryClient();
@@ -76,33 +76,70 @@ export default function Branches() {
           <p className="mt-4 text-gray-600">Loading branches...</p>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {data?.data?.length ? (
             data.data.map((b) => (
-              <div key={b.id} className="bg-white rounded-lg shadow p-6">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <div className="flex items-center space-x-3">
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-900">{b.name}</h3>
-                        <p className="text-sm text-gray-500">{b.facility?.name}</p>
-                        {b.address && <p className="text-sm text-gray-600 mt-1">{b.address}</p>}
+              <div key={b.id} className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6">
+                <div className="flex flex-col h-full">
+                  {/* Header */}
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2 mb-2">
+                        <Building className="w-5 h-5 text-[#2D5016]" />
+                        <h3 className="text-lg font-bold text-gray-900">{b.name}</h3>
                       </div>
+                      {b.facility?.name && (
+                        <div className="flex items-center space-x-2 text-sm text-gray-500">
+                          <Building2 className="w-4 h-4" />
+                          <span>{b.facility.name}</span>
+                        </div>
+                      )}
+                    </div>
+                    {/* Actions */}
+                    <div className="flex space-x-1">
+                      <button
+                        onClick={() => { setEditing(b); setShowForm(true); }}
+                        className="p-2 text-[#2D5016] hover:bg-green-50 rounded-lg transition-colors"
+                        title="Edit"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => window.confirm('Delete branch?') && deleteMutation.mutate(b.id)}
+                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        title="Delete"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </div>
                   </div>
-                  <div className="flex space-x-2">
-                    <button onClick={() => { setEditing(b); setShowForm(true); }} className="p-2 text-[#2D5016] hover:bg-green-50 rounded-lg" title="Edit">
-                      <Edit className="w-4 h-4" />
-                    </button>
-                    <button onClick={() => window.confirm('Delete branch?') && deleteMutation.mutate(b.id)} className="p-2 text-[#8B4513] hover:bg-amber-50 rounded-lg" title="Delete">
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                  
+                  {/* Details */}
+                  <div className="space-y-2 flex-1">
+                    {b.address && (
+                      <div className="flex items-start space-x-2 text-sm text-gray-600">
+                        <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                        <span className="line-clamp-2">{b.address}</span>
+                      </div>
+                    )}
+                    {b.phone && (
+                      <div className="flex items-center space-x-2 text-sm text-gray-600">
+                        <Phone className="w-4 h-4 flex-shrink-0" />
+                        <span>{b.phone}</span>
+                      </div>
+                    )}
+                    {b.email && (
+                      <div className="flex items-center space-x-2 text-sm text-gray-600">
+                        <Mail className="w-4 h-4 flex-shrink-0" />
+                        <span className="truncate">{b.email}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
             ))
           ) : (
-            <div className="bg-white rounded-lg shadow p-12 text-center">
+            <div className="col-span-2 bg-white rounded-lg shadow p-12 text-center">
               <Building2 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
               <p className="text-gray-600 text-lg font-medium">No branches found</p>
             </div>

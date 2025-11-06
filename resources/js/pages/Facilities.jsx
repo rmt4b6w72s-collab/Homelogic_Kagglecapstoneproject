@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../services/api';
-import { Building2, Plus, Search, Edit, Trash2 } from 'lucide-react';
+import { Building2, Plus, Search, Edit, Trash2, MapPin, Phone, Mail } from 'lucide-react';
 
 export default function Facilities() {
   const queryClient = useQueryClient();
@@ -56,41 +56,64 @@ export default function Facilities() {
           <p className="mt-4 text-gray-600">Loading facilities...</p>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {data?.data?.length ? (
             data.data.map((f) => (
-              <div key={f.id} className="bg-white rounded-lg shadow p-6">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start space-x-3">
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900">{f.name}</h3>
-                      {f.address && <p className="text-sm text-gray-600">{f.address}</p>}
-                      {(f.phone || f.email) && (
-                        <p className="text-sm text-gray-500 mt-1">{f.phone}{f.phone && f.email ? ' • ' : ''}{f.email}</p>
-                      )}
+              <div key={f.id} className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6">
+                <div className="flex flex-col h-full">
+                  {/* Header */}
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2 mb-2">
+                        <Building2 className="w-5 h-5 text-[#2D5016]" />
+                        <h3 className="text-lg font-bold text-gray-900">{f.name}</h3>
+                      </div>
+                    </div>
+                    {/* Actions */}
+                    <div className="flex space-x-1">
+                      <button
+                        onClick={() => { setEditing(f); setShowForm(true); }}
+                        className="p-2 text-[#2D5016] hover:bg-green-50 rounded-lg transition-colors"
+                        title="Edit"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => window.confirm('Delete facility?') && deleteMutation.mutate(f.id)}
+                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        title="Delete"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </div>
                   </div>
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={() => { setEditing(f); setShowForm(true); }}
-                      className="p-2 text-[#2D5016] hover:bg-green-50 rounded-lg"
-                      title="Edit"
-                    >
-                      <Edit className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => window.confirm('Delete facility?') && deleteMutation.mutate(f.id)}
-                      className="p-2 text-[#8B4513] hover:bg-amber-50 rounded-lg"
-                      title="Delete"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                  
+                  {/* Details */}
+                  <div className="space-y-2 flex-1">
+                    {f.address && (
+                      <div className="flex items-start space-x-2 text-sm text-gray-600">
+                        <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                        <span className="line-clamp-2">{f.address}</span>
+                      </div>
+                    )}
+                    {f.phone && (
+                      <div className="flex items-center space-x-2 text-sm text-gray-600">
+                        <Phone className="w-4 h-4 flex-shrink-0" />
+                        <span>{f.phone}</span>
+                      </div>
+                    )}
+                    {f.email && (
+                      <div className="flex items-center space-x-2 text-sm text-gray-600">
+                        <Mail className="w-4 h-4 flex-shrink-0" />
+                        <span className="truncate">{f.email}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
             ))
           ) : (
-            <div className="bg-white rounded-lg shadow p-12 text-center">
+            <div className="col-span-2 bg-white rounded-lg shadow p-12 text-center">
               <Building2 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
               <p className="text-gray-600 text-lg font-medium">No facilities found</p>
             </div>
