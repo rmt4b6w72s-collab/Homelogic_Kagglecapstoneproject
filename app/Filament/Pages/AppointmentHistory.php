@@ -28,7 +28,7 @@ class AppointmentHistory extends Page implements HasTable
     protected static ?int $navigationSort = 30;
     protected static ?string $navigationGroup = null;
     protected static string $view = 'filament.pages.appointment-history';
-    protected static string $routePath = 'appointments';
+    protected static string $routePath = 'appointment-history';
 
     public ?int $selectedBranchId = null;
     public ?int $selectedResidentId = null;

@@ -72,10 +72,10 @@ class CustomNavigationProvider
                 // Appointment - Third item
                 NavigationItem::make('Appointments')
                     ->icon('heroicon-o-calendar-days')
-                    ->url('/admin/appointments')
+                    ->url('/admin/appointment-history')
                     ->isActiveWhen(fn (): bool => 
-                        request()->is('admin/appointments') ||
-                        request()->is('admin/appointments/*')
+                        request()->is('admin/appointment-history') ||
+                        request()->is('admin/appointment-history/*')
                     )
                     ->sort(30),
 
