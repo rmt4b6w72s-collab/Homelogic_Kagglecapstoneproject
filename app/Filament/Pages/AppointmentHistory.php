@@ -23,11 +23,12 @@ class AppointmentHistory extends Page implements HasTable
     use InteractsWithTable;
 
     protected static ?string $navigationIcon = 'heroicon-o-calendar-days';
-    protected static ?string $navigationLabel = 'Appointment History';
+    protected static ?string $navigationLabel = 'Appointments';
     protected static ?string $title = 'Appointment History';
-    protected static ?int $navigationSort = 35;
-    protected static ?string $navigationGroup = 'Resident Care';
+    protected static ?int $navigationSort = 30;
+    protected static ?string $navigationGroup = null;
     protected static string $view = 'filament.pages.appointment-history';
+    protected static string $routePath = 'appointments';
 
     public ?int $selectedBranchId = null;
     public ?int $selectedResidentId = null;

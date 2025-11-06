@@ -10,8 +10,8 @@ use Illuminate\Database\Eloquent\Collection;
 class CustomAppointments extends Page
 {
     protected static ?string $navigationIcon = 'heroicon-o-calendar-days';
-    protected static ?string $navigationLabel = 'Appointments';
-    protected static ?string $title = 'Appointments';
+    protected static ?string $navigationLabel = 'My Appointments';
+    protected static ?string $title = 'My Appointments';
     protected static ?int $navigationSort = 50;
     protected static string $view = 'filament.pages.custom-appointments';
 
@@ -22,7 +22,7 @@ class CustomAppointments extends Page
 
     public static function shouldRegisterNavigation(): bool
     {
-        return auth()->user()->hasRole('caregiver');
+        return false; // Hidden - caregivers will use main appointments page
     }
 
     public Collection $appointments;
