@@ -12,6 +12,16 @@ class VitalSignController extends Controller
     public function index(Request $request): JsonResponse
     {
         $query = VitalSign::with(['resident', 'takenBy']);
+        $user = $request->user();
+
+        if ($user && $user->hasRole('caregiver')) {
+            if ($user->assigned_branch_id) {
+                $query->where('branch_id', $user->assigned_branch_id);
+            } else {
+                // Caregivers without a branch assignment should not see any vitals
+                $query->whereRaw('1 = 0');
+            }
+        }
 
         // Filter by date
         if ($request->has('date_from')) {
@@ -24,7 +34,18 @@ class VitalSignController extends Controller
 
         // Filter by resident
         if ($request->has('resident_id')) {
-            $query->where('resident_id', $request->get('resident_id'));
+            $residentId = $request->get('resident_id');
+
+            if ($user && $user->hasRole('caregiver')) {
+                $residentBranch = \App\Models\Resident::where('id', $residentId)->value('branch_id');
+                if ($user->assigned_branch_id && (int) $residentBranch !== (int) $user->assigned_branch_id) {
+                    return response()->json([
+                        'message' => 'You do not have permission to view vitals for this resident.',
+                    ], 403);
+                }
+            }
+
+            $query->where('resident_id', $residentId);
         }
 
         // Filter by today
@@ -32,8 +53,11 @@ class VitalSignController extends Controller
             $query->whereDate('measurement_date', today());
         }
 
+        $perPage = (int) $request->get('per_page', 25);
+        $perPage = max(1, min(100, $perPage));
+
         $vitals = $query->orderBy('measurement_date', 'desc')
-            ->paginate($request->get('per_page', 15));
+            ->paginate($perPage);
 
         return response()->json($vitals);
     }

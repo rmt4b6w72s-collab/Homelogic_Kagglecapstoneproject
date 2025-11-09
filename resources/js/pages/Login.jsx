@@ -186,7 +186,7 @@ export default function Login() {
                         <div className="text-xs text-[#6F8276] leading-relaxed">
                             <p>
                                 Trouble signing in?{' '}
-                                <a href="/admin/login" className="text-[#25603E] font-semibold hover:underline">
+                                <a href="mailto:support@evergreenoasiscare.com" className="text-[#25603E] font-semibold hover:underline">
                                     Contact support
                                 </a>{' '}
                                 or access the Filament admin console directly.

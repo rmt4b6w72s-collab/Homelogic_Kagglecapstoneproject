@@ -14,6 +14,15 @@ class MedicationAdministrationController extends Controller
     public function index(Request $request): JsonResponse
     {
         $query = MedicationAdministration::with(['medication', 'resident', 'branch', 'administeredBy']);
+        $user = $request->user();
+
+        if ($user && $user->hasRole('caregiver')) {
+            if ($user->assigned_branch_id) {
+                $query->where('branch_id', $user->assigned_branch_id);
+            } else {
+                $query->whereRaw('1 = 0');
+            }
+        }
 
         // Filter by medication
         if ($request->has('medication_id')) {
@@ -22,7 +31,19 @@ class MedicationAdministrationController extends Controller
 
         // Filter by resident
         if ($request->has('resident_id')) {
-            $query->where('resident_id', $request->get('resident_id'));
+            $residentId = $request->get('resident_id');
+
+            if ($user && $user->hasRole('caregiver')) {
+                $residentBranch = \App\Models\Resident::where('id', $residentId)->value('branch_id');
+
+                if ($user->assigned_branch_id && (int) $residentBranch !== (int) $user->assigned_branch_id) {
+                    return response()->json([
+                        'message' => 'You do not have permission to view medication history for this resident.',
+                    ], 403);
+                }
+            }
+
+            $query->where('resident_id', $residentId);
         }
 
         // Filter by branch
@@ -49,8 +70,11 @@ class MedicationAdministrationController extends Controller
             $query->whereDate('administered_at', today());
         }
 
+        $perPage = (int) $request->get('per_page', 25);
+        $perPage = max(1, min(100, $perPage));
+
         $administrations = $query->orderBy('administered_at', 'desc')
-            ->paginate($request->get('per_page', 20));
+            ->paginate($perPage);
 
         return response()->json($administrations);
     }

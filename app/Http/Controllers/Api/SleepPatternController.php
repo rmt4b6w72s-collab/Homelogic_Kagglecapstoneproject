@@ -26,6 +26,24 @@ class SleepPatternController extends Controller
             $month = $request->get('month');
             $year = $request->get('year');
 
+            $user = $request->user();
+            if ($user && $user->hasRole('caregiver')) {
+                $resident = \App\Models\Resident::select('id', 'branch_id')->findOrFail($residentId);
+
+                if ($user->assigned_branch_id && $resident->branch_id !== (int) $user->assigned_branch_id) {
+                    \Log::warning('Caregiver attempted to access sleep pattern for resident outside their branch.', [
+                        'user_id' => $user->id,
+                        'resident_id' => $residentId,
+                        'caregiver_branch_id' => $user->assigned_branch_id,
+                        'resident_branch_id' => $resident->branch_id,
+                    ]);
+
+                    return response()->json([
+                        'message' => 'You do not have permission to view sleep data for this resident.',
+                    ], 403);
+                }
+            }
+
             \Log::info('Sleep Pattern API called', [
                 'resident_id' => $residentId,
                 'month' => $month,

@@ -49,8 +49,11 @@ class MedicationController extends Controller
             });
         }
 
+        $perPage = (int) $request->get('per_page', 20);
+        $perPage = max(1, min(100, $perPage));
+
         $medications = $query->orderBy('start_date', 'desc')
-            ->paginate($request->get('per_page', 15));
+            ->paginate($perPage);
 
         return response()->json($medications);
     }

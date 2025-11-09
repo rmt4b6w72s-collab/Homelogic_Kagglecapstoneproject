@@ -69,6 +69,33 @@ const navigation = [
     },
 ];
 
+const caregiverNavigation = [
+    { name: 'Dashboard', icon: LayoutDashboard, path: '/dashboard', children: null },
+    { name: 'My Residents', icon: Users, path: '/my-residents', children: null },
+    { name: 'Medication Log', icon: Pill, path: '/medications', children: null },
+    { name: 'Medication History', icon: ClipboardList, path: '/medication-history', children: null },
+    { 
+        name: 'Vitals', 
+        icon: Heart, 
+        path: '/vitals', 
+        children: [
+            { name: 'Vitals', path: '/vitals' },
+            { name: 'View Vitals', path: '/view-vitals' },
+        ]
+    },
+    { 
+        name: 'Sleep', 
+        icon: Moon, 
+        path: '/sleep', 
+        children: [
+            { name: 'Sleep Records', path: '/sleep' },
+            { name: 'Sleep Pattern', path: '/sleep-patterns' },
+        ]
+    },
+    { name: 'Upcoming Appointments', icon: Calendar, path: '/appointments', children: null },
+    { name: 'Leave Requests', icon: CalendarClock, path: '/leave-requests', children: null },
+];
+
 export default function Layout() {
     const location = useLocation();
     const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -88,6 +115,80 @@ export default function Layout() {
         };
         fetchUser();
     }, []);
+
+    const isCaregiver = React.useMemo(() => {
+        if (!currentUser) {
+            return false;
+        }
+
+        const truthyHints = [
+            currentUser.is_caregiver,
+            currentUser.isCaregiver,
+            currentUser.caregiver,
+            currentUser.is_care_giver,
+        ];
+
+        const isTruthy = (value) => {
+            if (typeof value === 'boolean') return value;
+            if (typeof value === 'number') return value === 1;
+            if (typeof value === 'string') {
+                const normalized = value.trim().toLowerCase();
+                return ['1', 'true', 'yes', 'y', 'caregiver', 'care_giver'].includes(normalized);
+            }
+            return false;
+        };
+
+        if (truthyHints.some(isTruthy)) {
+            return true;
+        }
+
+        const candidates = [];
+        const addCandidate = (value) => {
+            if (value !== null && value !== undefined) {
+                candidates.push(String(value));
+            }
+        };
+
+        addCandidate(currentUser.role);
+        addCandidate(currentUser.position);
+        addCandidate(currentUser.primary_role);
+        addCandidate(currentUser.job_title);
+
+        const roles = currentUser.roles;
+        if (Array.isArray(roles)) {
+            roles.forEach((roleItem) => {
+                if (typeof roleItem === 'string') {
+                    addCandidate(roleItem);
+                } else if (roleItem?.name) {
+                    addCandidate(roleItem.name);
+                }
+            });
+        } else if (roles?.data && Array.isArray(roles.data)) {
+            roles.data.forEach((roleItem) => {
+                if (typeof roleItem === 'string') {
+                    addCandidate(roleItem);
+                } else if (roleItem?.name) {
+                    addCandidate(roleItem.name);
+                }
+            });
+        }
+
+        return candidates.some((value) => {
+            const lower = value.toLowerCase().trim();
+            if (!lower) return false;
+            const normalized = lower.replace(/[\s_-]/g, '');
+            return normalized === 'caregiver' || (lower.includes('care') && lower.includes('giver'));
+        });
+    }, [currentUser]);
+
+    const navigationItems = React.useMemo(() => {
+        if (isCaregiver) {
+            return caregiverNavigation;
+        }
+        return navigation;
+    }, [isCaregiver]);
+
+    const leaveRequestsPath = isCaregiver ? '/leave-requests' : '/administration/leave-requests';
 
     return (
         <div className="flex h-screen bg-gray-50">
@@ -136,20 +237,7 @@ export default function Layout() {
 
                 {/* Navigation */}
                 <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-                    {navigation.filter(item => {
-                        // Hide Administration menu for caregivers
-                        if (item.name === 'Administration' && currentUser) {
-                            const role = currentUser.role?.toLowerCase().trim() || '';
-                            const roleNormalized = role.replace(/[\s_]/g, '');
-                            
-                            // Check if user is a caregiver
-                            const isCaregiver = roleNormalized === 'caregiver' || 
-                                               (role.includes('care') && role.includes('giver'));
-                            
-                            return !isCaregiver;
-                        }
-                        return true;
-                    }).map((item) => {
+                    {navigationItems.map((item) => {
                         const Icon = item.icon;
                         const isActive = location.pathname === item.path || 
                             location.pathname.startsWith(item.path + '/') ||
@@ -235,9 +323,29 @@ export default function Layout() {
                         <h1 className="text-lg md:text-xl font-semibold text-[#25603E]">Evergreen Oasis</h1>
                     </div>
                     <div className="flex items-center space-x-2 md:space-x-4">
+                        <Link
+                            to="/my-residents"
+                            className={`inline-flex sm:hidden items-center rounded-full border border-[#25603E] p-2 transition hover:bg-[#25603E] hover:text-white ${
+                                isCaregiver ? 'text-[#25603E]' : 'text-gray-300 pointer-events-none opacity-50'
+                            }`}
+                            title="My Residents"
+                        >
+                            <Users className="h-5 w-5" />
+                        </Link>
+                        <Link
+                            to="/my-residents"
+                            className={`hidden sm:inline-flex items-center space-x-2 rounded-full border px-4 py-2 text-sm font-semibold transition ${
+                                isCaregiver
+                                    ? 'border-[#25603E] text-[#25603E] hover:bg-[#25603E] hover:text-white'
+                                    : 'border-gray-200 text-gray-300 pointer-events-none opacity-60'
+                            }`}
+                        >
+                            <Users className="h-4 w-4" />
+                            <span>My Residents</span>
+                        </Link>
                         <NotificationDropdown />
                         <Link
-                            to="/administration/leave-requests"
+                            to={leaveRequestsPath}
                             className="p-2 rounded-full hover:bg-gray-100 transition-colors relative"
                             title="Leave Requests"
                         >

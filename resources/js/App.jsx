@@ -3,10 +3,13 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import Residents from './pages/Residents';
+import MyResidentsPage from './pages/caregiver/MyResidentsPage';
+import ResidentDetailPage from './pages/caregiver/ResidentDetailPage';
 import Appointments from './pages/Appointments';
 import CreateAppointment from './pages/CreateAppointment';
 import Vitals from './pages/Vitals';
 import Medications from './pages/Medications';
+import MedicationHistory from './pages/MedicationHistory';
 import Reports from './pages/Reports';
 import Login from './pages/Login';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -65,8 +68,12 @@ function App() {
                 <Route path="vitals" element={<Vitals />} />
                 <Route path="view-vitals" element={<ViewVitals />} />
                 <Route path="medications" element={<Medications />} />
+                <Route path="medication-history" element={<MedicationHistory />} />
                 <Route path="sleep" element={<Sleep />} />
                 <Route path="sleep-patterns" element={<SleepPatterns />} />
+                <Route path="leave-requests" element={<LeaveRequests />} />
+                <Route path="my-residents" element={<MyResidentsPage />} />
+                <Route path="my-residents/:residentId" element={<ResidentDetailPage />} />
                 
                 {/* Reports */}
                 <Route path="reports" element={<Reports />} />

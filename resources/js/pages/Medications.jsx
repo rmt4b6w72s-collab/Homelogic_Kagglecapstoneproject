@@ -237,26 +237,40 @@ export default function Medications() {
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                         {data?.data?.length > 0 ? (
-                            data.data.map((medication) => (
-                            <div key={medication.id} className="bg-white rounded-lg shadow p-6">
-                                <div className="flex items-start justify-between">
-                                    <div className="flex-1">
-                                        <div className="flex items-center space-x-3 mb-3">
-                                            <div>
-                                                <h3 className="text-lg font-semibold text-gray-900">
-                                                    {medication.name}
-                                                </h3>
-                                                <p className="text-base font-medium text-gray-700">
-                                                    {medication.resident?.first_name} {medication.resident?.last_name}
-                                                    {medication.branch && ` • ${medication.branch.name}`}
+                            data.data.map((medication) => {
+                                const residentName = [
+                                    medication.resident?.first_name,
+                                    medication.resident?.last_name,
+                                ]
+                                    .filter(Boolean)
+                                    .join(' ')
+                                    || medication.resident?.name
+                                    || 'Resident';
+                                const branchName = medication.branch?.name;
+
+                                return (
+                                    <div key={medication.id} className="bg-white rounded-lg shadow p-6">
+                                        <div className="flex items-start justify-between">
+                                            <div className="flex-1">
+                                                <div className="flex items-start justify-between gap-3 mb-2">
+                                                    <div>
+                                                        <h3 className="text-lg font-semibold text-gray-900">
+                                                            {residentName}
+                                                        </h3>
+                                                        <p className="text-sm text-gray-500">
+                                                            {branchName || 'No branch assigned'}
+                                                        </p>
+                                                    </div>
+                                                    {medication.is_active && (
+                                                        <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium self-start">
+                                                            Active
+                                                        </span>
+                                                    )}
+                                                </div>
+
+                                                <p className="text-lg font-semibold text-gray-900 mb-2">
+                                                    {medication.name || 'Medication'}
                                                 </p>
-                                            </div>
-                                            {medication.is_active && (
-                                                <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">
-                                                    Active
-                                                </span>
-                                            )}
-                                        </div>
 
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                                             {medication.instructions && (
@@ -343,18 +357,19 @@ export default function Medications() {
                                             </div>
                                         )}
 
-                                        {medication.notes && (
-                                            <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-                                                <p className="text-sm text-gray-700">
-                                                    <span className="font-medium">Notes: </span>
-                                                    {medication.notes}
-                                                </p>
+                                                {medication.notes && (
+                                                    <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+                                                        <p className="text-sm text-gray-700">
+                                                            <span className="font-medium">Notes: </span>
+                                                            {medication.notes}
+                                                        </p>
+                                                    </div>
+                                                )}
                                             </div>
-                                        )}
+                                        </div>
                                     </div>
-                                </div>
-                            </div>
-                            ))
+                                );
+                            })
                         ) : (
                             <div className="bg-white rounded-lg shadow p-12 text-center col-span-full">
                                 <Pill className="w-12 h-12 text-gray-400 mx-auto mb-4" />

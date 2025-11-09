@@ -10,15 +10,47 @@ export default function Residents() {
     const [statusFilter, setStatusFilter] = useState('');
     const [showForm, setShowForm] = useState(false);
     const [editing, setEditing] = useState(null);
-    
+    const [currentUser, setCurrentUser] = useState(null);
+
+    React.useEffect(() => {
+        const loadUser = async () => {
+            try {
+                const response = await api.get('/user');
+                setCurrentUser(response.data);
+            } catch (err) {
+                console.error('Failed to fetch current user for residents view:', err);
+            }
+        };
+
+        loadUser();
+    }, []);
+
+    const isCaregiver = React.useMemo(() => {
+        if (!currentUser?.role) {
+            return false;
+        }
+        const role = currentUser.role.toLowerCase().trim();
+        const normalized = role.replace(/[\s_]/g, '');
+        return normalized === 'caregiver' || (role.includes('care') && role.includes('giver'));
+    }, [currentUser]);
+
+    React.useEffect(() => {
+        if (isCaregiver && currentUser?.assigned_branch_id) {
+            setBranchFilter((prev) => prev || String(currentUser.assigned_branch_id));
+        }
+    }, [isCaregiver, currentUser?.assigned_branch_id]);
+
     const { data, isLoading, error } = useQuery({
         queryKey: ['residents', search, branchFilter, statusFilter],
         queryFn: async () => {
             try {
-                const params = { per_page: 50, show_all: true }; // Show all by default
+                const params = { per_page: 50 };
                 if (search) params.search = search;
                 if (branchFilter) params.branch_id = branchFilter;
                 if (statusFilter) params.status = statusFilter;
+                if (!isCaregiver) {
+                    params.show_all = true;
+                }
                 
                 const response = await api.get('/residents', { params });
                 console.log('Residents API Response:', response.data); // Debug log
@@ -34,6 +66,15 @@ export default function Residents() {
         queryKey: ['branches-options'],
         queryFn: async () => (await api.get('/branches', { params: { per_page: 100 } })).data,
     });
+
+    const branchOptions = React.useMemo(() => {
+        const options = branchesData?.data || [];
+        if (!isCaregiver || !currentUser?.assigned_branch_id) {
+            return options;
+        }
+
+        return options.filter((branch) => branch.id === currentUser.assigned_branch_id);
+    }, [branchesData?.data, isCaregiver, currentUser?.assigned_branch_id]);
 
     const toggleActiveMutation = useMutation({
         mutationFn: async ({ id, isActive }) => {
@@ -226,10 +267,11 @@ export default function Residents() {
                         <select
                             value={branchFilter}
                             onChange={(e) => setBranchFilter(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent appearance-none bg-white"
+                            disabled={isCaregiver}
+                            className={`w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent appearance-none ${isCaregiver ? 'bg-gray-100 cursor-not-allowed' : 'bg-white'}`}
                         >
-                            <option value="">All Branches</option>
-                            {branchesData?.data?.map(branch => (
+                            {!isCaregiver && <option value="">All Branches</option>}
+                            {branchOptions?.map(branch => (
                                 <option key={branch.id} value={branch.id}>{branch.name}</option>
                             ))}
                         </select>

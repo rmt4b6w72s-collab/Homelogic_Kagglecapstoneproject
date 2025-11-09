@@ -1,0 +1,300 @@
+import React, { useMemo, useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import api from '../services/api';
+import { Calendar, ClipboardList, Pill, User, ChevronLeft, ChevronRight } from 'lucide-react';
+
+const statusOptions = [
+    { value: '', label: 'All statuses' },
+    { value: 'completed', label: 'Completed' },
+    { value: 'missed', label: 'Missed' },
+    { value: 'refused', label: 'Refused' },
+];
+
+const statusStyles = {
+    completed: 'bg-green-100 text-green-800',
+    missed: 'bg-red-100 text-red-800',
+    refused: 'bg-yellow-100 text-yellow-800',
+};
+
+function formatDate(dateString) {
+    if (!dateString) return '—';
+    const date = new Date(dateString);
+    if (Number.isNaN(date.getTime())) return '—';
+    return date.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+    });
+}
+
+function formatTime(dateString) {
+    if (!dateString) return '—';
+    const date = new Date(dateString);
+    if (Number.isNaN(date.getTime())) return '—';
+    return date.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+    });
+}
+
+export default function MedicationHistory() {
+    const [residentId, setResidentId] = useState('');
+    const [status, setStatus] = useState('');
+    const [dateFrom, setDateFrom] = useState('');
+    const [dateTo, setDateTo] = useState('');
+    const [page, setPage] = useState(1);
+    const perPage = 25;
+
+    useEffect(() => {
+        setPage(1);
+    }, [residentId, status, dateFrom, dateTo]);
+
+    const { data: residentsResponse } = useQuery({
+        queryKey: ['medication-history-residents'],
+        queryFn: async () => {
+            const response = await api.get('/residents', {
+                params: {
+                    per_page: 100,
+                    show_all: true,
+                },
+            });
+            return response.data;
+        },
+    });
+
+    const residents = useMemo(() => {
+        if (!residentsResponse) return [];
+        return residentsResponse.data || residentsResponse;
+    }, [residentsResponse]);
+
+    const {
+        data: historyResponse,
+        isLoading,
+        error,
+        isFetching,
+    } = useQuery({
+        queryKey: ['medication-history', residentId, status, dateFrom, dateTo, page],
+        queryFn: async () => {
+            const params = {
+                per_page: perPage,
+                page,
+            };
+
+            if (residentId) params.resident_id = residentId;
+            if (status) params.status = status;
+            if (dateFrom) params.date_from = dateFrom;
+            if (dateTo) params.date_to = dateTo;
+
+            const response = await api.get('/medication-administrations', { params });
+            return response.data;
+        },
+        keepPreviousData: true,
+        retry: false,
+    });
+
+    const history = historyResponse?.data || [];
+    const totalPages = historyResponse?.last_page || 1;
+    const total = historyResponse?.total || 0;
+
+    return (
+        <div className="space-y-6">
+            <div className="bg-white rounded-lg shadow p-6">
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
+                    <div>
+                        <h2 className="text-xl font-semibold text-gray-900 mb-2">Medication Administration History</h2>
+                        <p className="text-gray-600 max-w-2xl">
+                            Review medication administrations captured in Evergreen. Filter by resident, status, and date range to
+                            audit medication compliance and follow-up on missed doses.
+                        </p>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Resident</label>
+                        <div className="relative">
+                            <User className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                            <select
+                                value={residentId}
+                                onChange={(event) => setResidentId(event.target.value)}
+                                className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent appearance-none bg-white"
+                            >
+                                <option value="">All residents</option>
+                                {residents.map((resident) => (
+                                    <option key={resident.id} value={resident.id}>
+                                        {resident.first_name} {resident.last_name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                        <div className="relative">
+                            <ClipboardList className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                            <select
+                                value={status}
+                                onChange={(event) => setStatus(event.target.value)}
+                                className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent appearance-none bg-white"
+                            >
+                                {statusOptions.map((option) => (
+                                    <option key={option.value} value={option.value}>
+                                        {option.label}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">From</label>
+                        <div className="relative">
+                            <Calendar className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                            <input
+                                type="date"
+                                value={dateFrom}
+                                onChange={(event) => setDateFrom(event.target.value)}
+                                className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                            />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">To</label>
+                        <div className="relative">
+                            <Calendar className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                            <input
+                                type="date"
+                                value={dateTo}
+                                onChange={(event) => setDateTo(event.target.value)}
+                                className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                            />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div className="bg-white rounded-lg shadow overflow-hidden">
+                {isLoading ? (
+                    <div className="py-12 text-center">
+                        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#25603E]"></div>
+                        <p className="mt-4 text-gray-600">Loading medication history…</p>
+                    </div>
+                ) : error ? (
+                    <div className="py-12 text-center text-red-600 text-sm">
+                        {error.message || 'Unable to load medication history.'}
+                    </div>
+                ) : history.length === 0 ? (
+                    <div className="py-12 text-center">
+                        <Pill className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                        <p className="text-gray-600 text-lg font-medium">No medication administrations found</p>
+                        <p className="text-gray-500 text-sm mt-2">
+                            Adjust the filters to broaden your search or verify that medication administrations have been recorded for
+                            this resident.
+                        </p>
+                    </div>
+                ) : (
+                    <>
+                        <div className="overflow-x-auto">
+                            <table className="min-w-full divide-y divide-gray-200">
+                                <thead className="bg-gray-50">
+                                    <tr>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Resident
+                                        </th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Medication
+                                        </th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Administered
+                                        </th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Status
+                                        </th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Dosage / Notes
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody className="bg-white divide-y divide-gray-200">
+                                    {history.map((administration) => {
+                                        const resident = administration.resident;
+                                        const medication = administration.medication;
+                                        const statusClass = statusStyles[administration.status] || 'bg-gray-100 text-gray-800';
+
+                                        return (
+                                            <tr key={administration.id} className="hover:bg-gray-50 transition-colors">
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                    <div className="font-medium">
+                                                        {resident?.first_name} {resident?.last_name}
+                                                    </div>
+                                                    <div className="text-xs text-gray-500">
+                                                        {resident?.branch?.name || 'Branch N/A'}
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                    <div className="font-medium">{medication?.name || 'Medication'}</div>
+                                                    <div className="text-xs text-gray-500">
+                                                        {medication?.instructions || 'Instructions not set'}
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                    <div className="font-medium">{formatDate(administration.administered_at)}</div>
+                                                    <div className="text-xs text-gray-500">{formatTime(administration.administered_at)}</div>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusClass}`}>
+                                                        {administration.status?.charAt(0).toUpperCase() + administration.status?.slice(1)}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4 text-sm text-gray-900">
+                                                    <div>{administration.dosage_given || 'Dose not recorded'}</div>
+                                                    {administration.notes && (
+                                                        <div className="text-xs text-gray-500 mt-1">{administration.notes}</div>
+                                                    )}
+                                                    {administration.administered_by?.name && (
+                                                        <div className="text-xs text-gray-400 mt-1">
+                                                            Recorded by {administration.administered_by.name}
+                                                        </div>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div className="bg-gray-50 px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-t border-gray-200">
+                            <div className="text-sm text-gray-600">
+                                Showing {history.length} of {total} medication administrations
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+                                    disabled={page === 1 || isFetching}
+                                    className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                                >
+                                    <ChevronLeft className="w-4 h-4" />
+                                    Previous
+                                </button>
+                                <span className="text-gray-700">
+                                    Page {page} of {totalPages}
+                                </span>
+                                <button
+                                    onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
+                                    disabled={page === totalPages || isFetching}
+                                    className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                                >
+                                    Next
+                                    <ChevronRight className="w-4 h-4" />
+                                </button>
+                            </div>
+                        </div>
+                    </>
+                )}
+            </div>
+        </div>
+    );
+}

@@ -47,9 +47,12 @@ class SleepRecordController extends Controller
             });
         }
 
+        $perPage = (int) $request->get('per_page', 25);
+        $perPage = max(1, min(100, $perPage));
+
         $sleepRecords = $query->orderBy('sleep_date', 'desc')
             ->orderBy('sleep_time', 'desc')
-            ->paginate($request->get('per_page', 15));
+            ->paginate($perPage);
 
         return response()->json($sleepRecords);
     }

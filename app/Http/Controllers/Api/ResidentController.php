@@ -12,6 +12,25 @@ class ResidentController extends Controller
     public function index(Request $request): JsonResponse
     {
         $query = Resident::with(['branch']);
+        $user = $request->user();
+        $caregiverBranchId = null;
+
+        if ($user && $user->hasRole('caregiver')) {
+            $caregiverBranchId = (int) ($user->assigned_branch_id ?? 0);
+
+            if ($caregiverBranchId === 0) {
+                // No branch assignment means the caregiver should not see any residents
+                $query->whereRaw('1 = 0');
+            } else {
+                if ($request->filled('branch_id') && (int) $request->get('branch_id') !== $caregiverBranchId) {
+                    return response()->json([
+                        'message' => 'You may only view residents in your assigned branch.',
+                    ], 403);
+                }
+
+                $query->where('branch_id', $caregiverBranchId);
+            }
+        }
 
         // Search
         if ($request->has('search') && !empty($request->get('search'))) {
@@ -46,7 +65,8 @@ class ResidentController extends Controller
             $query->where('is_active', true);
         }
 
-        $perPage = $request->get('per_page', 50);
+        $perPage = (int) $request->get('per_page', 50);
+        $perPage = max(1, min(100, $perPage));
         $residents = $query->orderBy('created_at', 'desc')->paginate($perPage);
 
         return response()->json($residents);
@@ -57,12 +77,32 @@ class ResidentController extends Controller
         $resident = Resident::with(['branch', 'appointments', 'vitalSigns'])
             ->findOrFail($id);
 
+        $user = request()->user();
+        if ($user && $user->hasRole('caregiver')) {
+            $caregiverBranchId = (int) ($user->assigned_branch_id ?? 0);
+            if ($caregiverBranchId === 0 || (int) $resident->branch_id !== $caregiverBranchId) {
+                return response()->json([
+                    'message' => 'You do not have permission to view this resident.',
+                ], 403);
+            }
+        }
+
         return response()->json($resident);
     }
 
     public function appointments($id): JsonResponse
     {
         $resident = Resident::findOrFail($id);
+        $user = request()->user();
+        if ($user && $user->hasRole('caregiver')) {
+            $caregiverBranchId = (int) ($user->assigned_branch_id ?? 0);
+            if ($caregiverBranchId === 0 || (int) $resident->branch_id !== $caregiverBranchId) {
+                return response()->json([
+                    'message' => 'You do not have permission to view appointments for this resident.',
+                ], 403);
+            }
+        }
+
         $appointments = $resident->appointments()
             ->with(['healthcareProvider'])
             ->orderBy('appointment_date', 'desc')
@@ -74,6 +114,16 @@ class ResidentController extends Controller
     public function vitals($id): JsonResponse
     {
         $resident = Resident::findOrFail($id);
+        $user = request()->user();
+        if ($user && $user->hasRole('caregiver')) {
+            $caregiverBranchId = (int) ($user->assigned_branch_id ?? 0);
+            if ($caregiverBranchId === 0 || (int) $resident->branch_id !== $caregiverBranchId) {
+                return response()->json([
+                    'message' => 'You do not have permission to view vitals for this resident.',
+                ], 403);
+            }
+        }
+
         $vitals = $resident->vitalSigns()
             ->orderBy('measurement_date', 'desc')
             ->paginate(15);

@@ -53,7 +53,7 @@ class User extends Authenticatable implements FilamentUser
      *
      * @var array<int, string>
      */
-    protected $appends = ['profile_image_url'];
+    protected $appends = ['profile_image_url', 'is_caregiver'];
 
     /**
      * The attributes that should be hidden for serialization.
@@ -258,9 +258,27 @@ class User extends Authenticatable implements FilamentUser
         return $this->attributes['name'] ?? $this->full_name ?: $this->email;
     }
 
-    public function getIsCaregiverAttribute()
+    public function getIsCaregiverAttribute(): bool
     {
-        return $this->role === 'caregiver' || $this->position === 'Caregiver';
+        $roleValue = $this->role ? strtolower(trim($this->role)) : null;
+        if ($roleValue) {
+            $normalized = str_replace([' ', '_'], '', $roleValue);
+            if ($normalized === 'caregiver') {
+                return true;
+            }
+        }
+
+        if ($this->position && strcasecmp(trim($this->position), 'caregiver') === 0) {
+            return true;
+        }
+
+        if (method_exists($this, 'hasAnyRole')) {
+            if ($this->hasAnyRole(['caregiver', 'care_giver', 'Care Giver'])) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     // Get pending leave requests count for notifications

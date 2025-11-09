@@ -84,10 +84,14 @@ export default function SleepPatterns() {
             } catch (err) {
                 console.error('Sleep Pattern API Error:', err);
                 console.error('Error details:', err.response?.data);
-                throw err;
+                const message = err.response?.status === 403
+                    ? err.response?.data?.message || 'You do not have access to this resident.'
+                    : err.response?.data?.message || err.message || 'Unable to load sleep pattern data.';
+                throw new Error(message);
             }
         },
         enabled: !!residentId && !!month && !!year,
+        retry: false,
     });
 
     const months = [

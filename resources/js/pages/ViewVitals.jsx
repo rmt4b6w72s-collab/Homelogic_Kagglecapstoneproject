@@ -68,16 +68,12 @@ export default function ViewVitals() {
     const endDate = new Date(year, month, 0).toISOString().split('T')[0]; // Last day of selected month
 
     // Fetch vitals data
-    const { data: vitalsData, isLoading } = useQuery({
+    const { data: vitalsData, isLoading, error } = useQuery({
         queryKey: ['vitals-view', branchId, residentId, year, month, currentPage, perPage],
         queryFn: async () => {
-            // When filtering by branch, we need to fetch all data first (not paginated)
-            // because we need to filter client-side, then paginate
-            const fetchAllData = branchId && !residentId;
-            
             const params = {
-                per_page: fetchAllData ? 1000 : perPage, // Fetch more if branch filtering
-                page: fetchAllData ? 1 : currentPage,
+                per_page: perPage,
+                page: currentPage,
                 date_from: startDate,
                 date_to: endDate,
             };
@@ -85,46 +81,15 @@ export default function ViewVitals() {
             if (residentId) {
                 params.resident_id = residentId;
             }
+            if (branchId) {
+                params.branch_id = branchId;
+            }
 
             const response = await api.get('/vitals', { params });
-            let data = response.data;
-            
-            // Filter by branch if selected (client-side filtering since API doesn't support branch_id directly)
-            if (branchId && data?.data) {
-                const allData = Array.isArray(data.data) ? data.data : [];
-                const filteredData = allData.filter(vital => {
-                    return vital.resident?.branch_id == branchId;
-                });
-                
-                // If we fetched all data, now paginate client-side
-                if (fetchAllData) {
-                    const total = filteredData.length;
-                    const start = (currentPage - 1) * perPage;
-                    const end = start + perPage;
-                    const paginatedData = filteredData.slice(start, end);
-                    
-                    return {
-                        ...data,
-                        data: paginatedData,
-                        total: total,
-                        last_page: Math.ceil(total / perPage),
-                        per_page: perPage,
-                        current_page: currentPage,
-                    };
-                } else {
-                    // If we already have paginated data, just filter and update totals
-                    return {
-                        ...data,
-                        data: filteredData,
-                        total: filteredData.length,
-                        last_page: Math.ceil(filteredData.length / perPage),
-                    };
-                }
-            }
-            
-            return data;
+            return response.data;
         },
-        enabled: true, // Always enabled - allow filtering by date/branch even without resident
+        enabled: true,
+        retry: false,
     });
 
     // Prepare chart data
@@ -385,25 +350,6 @@ export default function ViewVitals() {
                             </button>
                         </div>
 
-                        <div className="flex-1 min-w-[120px]">
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Year</label>
-                            <div className="relative">
-                                <Calendar className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                                <select
-                                    value={year}
-                                    onChange={(e) => {
-                                        setYear(parseInt(e.target.value));
-                                        setCurrentPage(1);
-                                    }}
-                                    className="w-full pl-9 pr-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-[#25603E] focus:border-transparent appearance-none"
-                                >
-                                    {years.map(y => (
-                                        <option key={y} value={y}>{y}</option>
-                                    ))}
-                                </select>
-                            </div>
-                        </div>
-
                         <div className="flex-1 min-w-[140px]">
                             <label className="block text-sm font-medium text-gray-700 mb-1">Month</label>
                             <div className="relative">
@@ -422,15 +368,38 @@ export default function ViewVitals() {
                                 </select>
                             </div>
                         </div>
+
+                        <div className="flex-1 min-w-[120px]">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Year</label>
+                            <div className="relative">
+                                <Calendar className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                                <select
+                                    value={year}
+                                    onChange={(e) => {
+                                        setYear(parseInt(e.target.value));
+                                        setCurrentPage(1);
+                                    }}
+                                    className="w-full pl-9 pr-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-[#25603E] focus:border-transparent appearance-none"
+                                >
+                                    {years.map(y => (
+                                        <option key={y} value={y}>{y}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
                 {/* Chart */}
                 <div className="bg-white rounded-lg shadow-lg p-6 mb-6" style={{ backgroundColor: '#ffffff' }}>
                     <div className="h-96" style={{ backgroundColor: '#ffffff' }}>
-                        {isLoading ? (
+                {isLoading ? (
                             <div className="flex items-center justify-center h-full">
                                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#25603E]"></div>
+                            </div>
+                        ) : error ? (
+                            <div className="flex items-center justify-center h-full text-red-600 text-sm text-center px-4">
+                                {error.message || 'Unable to load vitals data.'}
                             </div>
                         ) : chartData ? (
                             <Line data={chartData} options={chartOptions} />
@@ -487,6 +456,12 @@ export default function ViewVitals() {
                                             </div>
                                         </td>
                                     </tr>
+                                        ) : error ? (
+                                            <tr>
+                                                <td colSpan="9" className="px-6 py-4 text-center text-red-600 text-sm">
+                                                    {error.message || 'Unable to load vitals data.'}
+                                                </td>
+                                            </tr>
                                         ) : vitalsData?.data && vitalsData.data.length > 0 ? (
                                             vitalsData.data.map((vital) => {
                                                 const date = new Date(vital.measurement_date);
@@ -543,7 +518,7 @@ export default function ViewVitals() {
                             </div>
 
                             {/* Pagination */}
-                            {vitalsData && totalPages > 1 && (
+                            {vitalsData && totalPages > 1 && !error && (
                                 <div className="bg-gray-50 px-6 py-4 flex items-center justify-center gap-4 border-t border-gray-200">
                                     <button
                                         onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
