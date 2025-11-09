@@ -148,7 +148,57 @@ export default function ResidentDetailPage() {
     }, [resident?.allergies]);
 
     const appointments = resident?.appointments ?? [];
-    const vitalSigns = resident?.vital_signs ?? resident?.vitalSigns ?? [];
+    const vitalSigns = React.useMemo(() => {
+        return resident?.vital_signs ?? resident?.vitalSigns ?? [];
+    }, [resident]);
+
+    const vitalMetrics = React.useCallback((vital) => {
+        if (!vital) return [];
+        const metrics = [];
+
+        const hasBloodPressure = vital.systolic !== null && vital.systolic !== undefined && vital.diastolic !== null && vital.diastolic !== undefined;
+        if (hasBloodPressure) {
+            metrics.push({
+                label: 'Blood Pressure',
+                value: `${vital.systolic}/${vital.diastolic} mmHg`,
+            });
+        } else if (vital.systolic || vital.diastolic) {
+            metrics.push({
+                label: 'Blood Pressure',
+                value: `${vital.systolic ?? '-'} / ${vital.diastolic ?? '-'} mmHg`,
+            });
+        }
+
+        if (vital.temperature !== null && vital.temperature !== undefined) {
+            metrics.push({
+                label: 'Temperature',
+                value: `${parseFloat(vital.temperature).toFixed(1)} °F`,
+            });
+        }
+
+        if (vital.pulse !== null && vital.pulse !== undefined) {
+            metrics.push({
+                label: 'Pulse',
+                value: `${vital.pulse} bpm`,
+            });
+        }
+
+        if (vital.oxygen_saturation !== null && vital.oxygen_saturation !== undefined) {
+            metrics.push({
+                label: 'Oxygen Saturation',
+                value: `${vital.oxygen_saturation}%`,
+            });
+        }
+
+        if (vital.pain_level !== null && vital.pain_level !== undefined) {
+            metrics.push({
+                label: 'Pain Level',
+                value: vital.pain_level,
+            });
+        }
+
+        return metrics;
+    }, []);
 
     if (isLoading) {
         return (
@@ -397,18 +447,42 @@ export default function ResidentDetailPage() {
                                 {vitalSigns.slice(0, 6).map((vital) => (
                                     <div
                                         key={vital.id}
-                                        className="rounded-xl border border-emerald-100 bg-emerald-50/60 p-4 text-sm text-emerald-900"
+                                        className="rounded-xl border border-emerald-100 bg-emerald-50/60 p-4 text-sm text-emerald-900 space-y-2"
                                     >
                                         <p className="text-xs uppercase tracking-wide text-emerald-600">
                                             {vital.type || vital.measurement_type || 'Vital Reading'}
                                         </p>
-                                        <p className="mt-2 text-lg font-semibold">
-                                            {vital.value || vital.reading || 'N/A'}{' '}
-                                            {vital.unit || vital.units}
-                                        </p>
+                                        <div className="space-y-1">
+                                            {(() => {
+                                                const metrics = vitalMetrics(vital);
+                                                if (metrics.length === 0) {
+                                                    return (
+                                                        <p className="text-lg font-semibold">
+                                                            N/A
+                                                        </p>
+                                                    );
+                                                }
+                                                return metrics.map((metric, index) => (
+                                                    <div key={`${metric.label}-${index}`} className="flex justify-between gap-4 text-sm">
+                                                        <span className="font-medium text-emerald-800">{metric.label}</span>
+                                                        <span className="text-emerald-900">{metric.value}</span>
+                                                    </div>
+                                                ));
+                                            })()}
+                                        </div>
                                         <p className="mt-1 text-xs text-emerald-700">
                                             Recorded on {formatDate(vital.measurement_date || vital.created_at, { dateStyle: 'medium', timeStyle: 'short' })}
                                         </p>
+                                        {vital.status && (
+                                            <p className="text-xs text-emerald-600">
+                                                Status: <span className="font-medium">{vital.status.replace('_', ' ')}</span>
+                                            </p>
+                                        )}
+                                        {vital.notes && (
+                                            <p className="text-xs text-emerald-700">
+                                                Notes: {vital.notes}
+                                            </p>
+                                        )}
                                     </div>
                                 ))}
                             </div>

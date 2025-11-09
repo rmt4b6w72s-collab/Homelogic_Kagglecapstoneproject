@@ -60,10 +60,51 @@ export default function Medications() {
 
     // Check if user is a caregiver
     const isCaregiver = React.useMemo(() => {
-        if (!currentUser) return false;
-        const role = currentUser.role?.toLowerCase().trim() || '';
-        const roleNormalized = role.replace(/[\s_]/g, '');
-        return roleNormalized === 'caregiver' || (role.includes('care') && role.includes('giver'));
+        if (!currentUser) {
+            return false;
+        }
+
+        if (typeof currentUser.is_caregiver === 'boolean') {
+            return currentUser.is_caregiver;
+        }
+
+        const candidates = [];
+        const addCandidate = (value) => {
+            if (value !== null && value !== undefined) {
+                candidates.push(String(value));
+            }
+        };
+
+        addCandidate(currentUser.role);
+        addCandidate(currentUser.position);
+        addCandidate(currentUser.primary_role);
+        addCandidate(currentUser.job_title);
+
+        const roles = currentUser.roles;
+        if (Array.isArray(roles)) {
+            roles.forEach((roleItem) => {
+                if (typeof roleItem === 'string') {
+                    addCandidate(roleItem);
+                } else if (roleItem?.name) {
+                    addCandidate(roleItem.name);
+                }
+            });
+        } else if (roles?.data && Array.isArray(roles.data)) {
+            roles.data.forEach((roleItem) => {
+                if (typeof roleItem === 'string') {
+                    addCandidate(roleItem);
+                } else if (roleItem?.name) {
+                    addCandidate(roleItem.name);
+                }
+            });
+        }
+
+        return candidates.some((value) => {
+            const lower = value.toLowerCase().trim();
+            if (!lower) return false;
+            const normalized = lower.replace(/[\s_-]/g, '');
+            return normalized === 'caregiver' || (lower.includes('care') && lower.includes('giver'));
+        });
     }, [currentUser]);
 
     const { data, isLoading } = useQuery({
@@ -87,6 +128,13 @@ export default function Medications() {
     React.useEffect(() => {
         setCurrentPage(1);
     }, [activeOnly, search, residentFilter, branchFilter]);
+
+    React.useEffect(() => {
+        if (isCaregiver && showForm) {
+            setShowForm(false);
+            setEditing(null);
+        }
+    }, [isCaregiver, showForm]);
 
     // Fetch administrations for selected medication
     const { data: administrationsData } = useQuery({
@@ -157,13 +205,15 @@ export default function Medications() {
                         <h2 className="text-xl font-semibold text-gray-900 mb-2">Medication Management</h2>
                         <p className="text-gray-600">View and track resident medications.</p>
                     </div>
-                    <button
-                        onClick={() => { setEditing(null); setShowForm(true); }}
-                        className="w-full sm:w-auto px-4 py-2 bg-[#25603E] text-white rounded-lg hover:bg-[#1B402D] transition-colors flex items-center justify-center space-x-2 text-sm md:text-base"
-                    >
-                        <Plus className="w-4 h-4" />
-                        <span>Add Medication</span>
-                    </button>
+                    {!isCaregiver && (
+                        <button
+                            onClick={() => { setEditing(null); setShowForm(true); }}
+                            className="w-full sm:w-auto px-4 py-2 bg-[#25603E] text-white rounded-lg hover:bg-[#1B402D] transition-colors flex items-center justify-center space-x-2 text-sm md:text-base"
+                        >
+                            <Plus className="w-4 h-4" />
+                            <span>Add Medication</span>
+                        </button>
+                    )}
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
