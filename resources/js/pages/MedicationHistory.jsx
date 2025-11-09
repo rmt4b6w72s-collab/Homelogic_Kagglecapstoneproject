@@ -2,6 +2,7 @@ import React, { useMemo, useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import api from '../services/api';
 import { Calendar, ClipboardList, Pill, User, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
 
 const statusOptions = [
     { value: '', label: 'All statuses' },
@@ -38,15 +39,49 @@ function formatTime(dateString) {
 }
 
 export default function MedicationHistory() {
-    const [residentId, setResidentId] = useState('');
-    const [status, setStatus] = useState('');
-    const [dateFrom, setDateFrom] = useState('');
-    const [dateTo, setDateTo] = useState('');
-    const [page, setPage] = useState(1);
+    const [searchParams, setSearchParams] = useSearchParams();
+    const [residentId, setResidentId] = useState(() => searchParams.get('resident') || '');
+    const [status, setStatus] = useState(() => searchParams.get('status') || '');
+    const [dateFrom, setDateFrom] = useState(() => searchParams.get('date_from') || '');
+    const [dateTo, setDateTo] = useState(() => searchParams.get('date_to') || '');
+    const [page, setPage] = useState(() => {
+        const raw = parseInt(searchParams.get('page') || '1', 10);
+        return Number.isNaN(raw) || raw < 1 ? 1 : raw;
+    });
     const perPage = 25;
 
     useEffect(() => {
-        setPage(1);
+        const nextResident = searchParams.get('resident') || '';
+        const nextStatus = searchParams.get('status') || '';
+        const nextDateFrom = searchParams.get('date_from') || '';
+        const nextDateTo = searchParams.get('date_to') || '';
+        const parsedPage = parseInt(searchParams.get('page') || '1', 10);
+        const nextPage = Number.isNaN(parsedPage) || parsedPage < 1 ? 1 : parsedPage;
+
+        setResidentId((prev) => (prev === nextResident ? prev : nextResident));
+        setStatus((prev) => (prev === nextStatus ? prev : nextStatus));
+        setDateFrom((prev) => (prev === nextDateFrom ? prev : nextDateFrom));
+        setDateTo((prev) => (prev === nextDateTo ? prev : nextDateTo));
+        setPage((prev) => (prev === nextPage ? prev : nextPage));
+    }, [searchParams]);
+
+    useEffect(() => {
+        const nextParams = new URLSearchParams();
+        if (residentId) nextParams.set('resident', residentId);
+        if (status) nextParams.set('status', status);
+        if (dateFrom) nextParams.set('date_from', dateFrom);
+        if (dateTo) nextParams.set('date_to', dateTo);
+        if (page > 1) nextParams.set('page', String(page));
+
+        const current = searchParams.toString();
+        const next = nextParams.toString();
+        if (current !== next) {
+            setSearchParams(nextParams, { replace: true });
+        }
+    }, [residentId, status, dateFrom, dateTo, page, searchParams, setSearchParams]);
+
+    useEffect(() => {
+        setPage((prev) => (prev === 1 ? prev : 1));
     }, [residentId, status, dateFrom, dateTo]);
 
     const { data: residentsResponse } = useQuery({

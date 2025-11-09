@@ -11,14 +11,157 @@ export default function Sleep() {
     const [showForm, setShowForm] = useState(false);
     const [editingRecord, setEditingRecord] = useState(null);
 
+    const { data: currentUser } = useQuery({
+        queryKey: ['current-user'],
+        queryFn: async () => {
+            const response = await api.get('/user');
+            if (response?.data && typeof response.data === 'object') {
+                if (response.data.user) {
+                    return response.data.user;
+                }
+                if (response.data.data) {
+                    return response.data.data;
+                }
+                return response.data;
+            }
+            return null;
+        },
+        staleTime: 5 * 60 * 1000,
+    });
+
+    const isCaregiver = React.useMemo(() => {
+        if (!currentUser) {
+            return false;
+        }
+
+        const truthyValues = [
+            currentUser.is_caregiver,
+            currentUser.isCaregiver,
+            currentUser.caregiver,
+            currentUser.is_care_giver,
+        ];
+
+        const normalizeToBoolean = (value) => {
+            if (typeof value === 'boolean') return value;
+            if (typeof value === 'number') return value === 1;
+            if (typeof value === 'string') {
+                const normalized = value.trim().toLowerCase();
+                return ['1', 'true', 'yes', 'y', 'caregiver', 'care_giver'].includes(normalized);
+            }
+            return false;
+        };
+
+        if (truthyValues.some(normalizeToBoolean)) {
+            return true;
+        }
+
+        const candidateValues = [];
+        const collectCandidate = (value) => {
+            if (value !== null && value !== undefined && value !== '') {
+                candidateValues.push(String(value));
+            }
+        };
+
+        collectCandidate(currentUser.role);
+        collectCandidate(currentUser.position);
+        collectCandidate(currentUser.primary_role);
+        collectCandidate(currentUser.job_title);
+        collectCandidate(currentUser.primaryRole);
+        collectCandidate(currentUser.title);
+
+        const roles = currentUser.roles;
+        if (Array.isArray(roles)) {
+            roles.forEach((roleItem) => {
+                if (!roleItem) return;
+                if (typeof roleItem === 'string') {
+                    collectCandidate(roleItem);
+                } else {
+                    collectCandidate(roleItem.name);
+                    collectCandidate(roleItem.title);
+                    if (roleItem?.pivot?.role_name) {
+                        collectCandidate(roleItem.pivot.role_name);
+                    }
+                }
+            });
+        } else if (roles?.data && Array.isArray(roles.data)) {
+            roles.data.forEach((roleItem) => {
+                if (!roleItem) return;
+                if (typeof roleItem === 'string') {
+                    collectCandidate(roleItem);
+                } else {
+                    collectCandidate(roleItem.name);
+                    collectCandidate(roleItem.title);
+                    if (roleItem?.pivot?.role_name) {
+                        collectCandidate(roleItem.pivot.role_name);
+                    }
+                }
+            });
+        }
+
+        return candidateValues.some((value) => {
+            const lower = value.toLowerCase().trim();
+            if (!lower) {
+                return false;
+            }
+            const normalized = lower.replace(/[\s_-]/g, '');
+            if (normalized === 'caregiver') {
+                return true;
+            }
+            return lower.includes('care') && lower.includes('giver');
+        });
+    }, [currentUser]);
+
+    const caregiverBranchId = React.useMemo(() => {
+        if (!isCaregiver) {
+            return '';
+        }
+        const assignedId = currentUser?.assigned_branch_id;
+        return assignedId ? String(assignedId) : '';
+    }, [isCaregiver, currentUser?.assigned_branch_id]);
+
     // Fetch residents for filter
     const { data: residentsData } = useQuery({
-        queryKey: ['residents-list'],
+        queryKey: ['residents-list', isCaregiver ? caregiverBranchId || 'none' : 'all'],
         queryFn: async () => {
-            const response = await api.get('/residents', { params: { per_page: 100 } });
+            const params = { per_page: 100 };
+            if (isCaregiver && caregiverBranchId) {
+                params.branch_id = caregiverBranchId;
+            }
+            const response = await api.get('/residents', { params });
             return response.data;
         },
     });
+
+    const residentOptions = React.useMemo(() => {
+        const residents = residentsData?.data || [];
+        if (isCaregiver && caregiverBranchId) {
+            return residents.filter((resident) => String(resident.branch_id) === String(caregiverBranchId));
+        }
+        return residents;
+    }, [residentsData?.data, isCaregiver, caregiverBranchId]);
+
+    const caregiverBranchName = React.useMemo(() => {
+        if (!isCaregiver || !caregiverBranchId) {
+            return '';
+        }
+
+        const residentMatch = residentOptions.find(
+            (resident) => String(resident.branch_id) === String(caregiverBranchId)
+        );
+        if (residentMatch?.branch?.name) {
+            return residentMatch.branch.name;
+        }
+
+        if (currentUser?.assigned_branch?.name) {
+            return currentUser.assigned_branch.name;
+        }
+
+        if (currentUser?.assigned_branch_name) {
+            return currentUser.assigned_branch_name;
+        }
+
+        return '';
+    }, [isCaregiver, caregiverBranchId, residentOptions, currentUser]);
 
     // Fetch sleep records
     const { data, isLoading } = useQuery({
@@ -42,6 +185,10 @@ export default function Sleep() {
 
             if (search) {
                 params.search = search;
+            }
+
+            if (isCaregiver && caregiverBranchId) {
+                params.branch_id = caregiverBranchId;
             }
 
             const response = await api.get('/sleep-records', { params });
@@ -143,7 +290,7 @@ export default function Sleep() {
                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
                         >
                             <option value="">All Residents</option>
-                            {residentsData?.data?.map((resident) => (
+                            {residentOptions.map((resident) => (
                                 <option key={resident.id} value={resident.id}>
                                     {resident.first_name} {resident.last_name}
                                 </option>
@@ -310,7 +457,10 @@ export default function Sleep() {
             {showForm && (
                 <SleepRecordForm
                     record={editingRecord}
-                    residents={residentsData?.data || []}
+                    residents={residentOptions}
+                    isCaregiver={isCaregiver}
+                    caregiverBranchId={caregiverBranchId}
+                    caregiverBranchName={caregiverBranchName}
                     onClose={() => {
                         setShowForm(false);
                         setEditingRecord(null);
@@ -327,10 +477,10 @@ export default function Sleep() {
 }
 
 // Sleep Record Form Component
-function SleepRecordForm({ record, residents, onClose, onSuccess }) {
+function SleepRecordForm({ record, residents, isCaregiver, caregiverBranchId, caregiverBranchName, onClose, onSuccess }) {
     const [formData, setFormData] = useState({
         resident_id: record?.resident_id || '',
-        branch_id: record?.branch_id || '',
+        branch_id: record?.branch_id || caregiverBranchId || '',
         sleep_date: record?.sleep_date || new Date().toISOString().split('T')[0],
         sleep_time: record?.sleep_time || '',
         wake_time: record?.wake_time || '',
@@ -354,11 +504,23 @@ function SleepRecordForm({ record, residents, onClose, onSuccess }) {
         return Array.from(branchMap.values());
     }, [residents]);
 
+    React.useEffect(() => {
+        if (isCaregiver && caregiverBranchId && formData.branch_id !== caregiverBranchId) {
+            setFormData((prev) => ({
+                ...prev,
+                branch_id: caregiverBranchId,
+            }));
+        }
+    }, [isCaregiver, caregiverBranchId, formData.branch_id]);
+
     // Filter residents by selected branch
     const filteredResidents = React.useMemo(() => {
+        if (isCaregiver && caregiverBranchId) {
+            return residents.filter(r => String(r.branch_id) === String(caregiverBranchId));
+        }
         if (!formData.branch_id) return residents;
         return residents.filter(r => r.branch_id == formData.branch_id);
-    }, [formData.branch_id, residents]);
+    }, [isCaregiver, caregiverBranchId, formData.branch_id, residents]);
 
     React.useEffect(() => {
         if (formData.sleep_time && formData.wake_time) {
@@ -386,7 +548,7 @@ function SleepRecordForm({ record, residents, onClose, onSuccess }) {
             const payload = {
                 ...formData,
                 resident_id: parseInt(formData.resident_id),
-                branch_id: parseInt(formData.branch_id),
+                branch_id: formData.branch_id ? parseInt(formData.branch_id) : null,
             };
 
             if (record) {
@@ -434,17 +596,26 @@ function SleepRecordForm({ record, residents, onClose, onSuccess }) {
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
                                     Branch *
                                 </label>
-                                <select
-                                    value={formData.branch_id}
-                                    onChange={(e) => setFormData({...formData, branch_id: e.target.value, resident_id: ''})}
-                                    required
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
-                                >
-                                    <option value="">Select Branch</option>
-                                    {branches.map(branch => (
-                                        <option key={branch.id} value={branch.id}>{branch.name}</option>
-                                    ))}
-                                </select>
+                                {isCaregiver ? (
+                                    <>
+                                        <div className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-900 min-h-[42px] flex items-center">
+                                            <span>{caregiverBranchName || 'No branch assigned'}</span>
+                                        </div>
+                                        <input type="hidden" value={formData.branch_id} />
+                                    </>
+                                ) : (
+                                    <select
+                                        value={formData.branch_id}
+                                        onChange={(e) => setFormData({...formData, branch_id: e.target.value, resident_id: ''})}
+                                        required
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                    >
+                                        <option value="">Select Branch</option>
+                                        {branches.map(branch => (
+                                            <option key={branch.id} value={branch.id}>{branch.name}</option>
+                                        ))}
+                                    </select>
+                                )}
                                 {errors.branch_id && <p className="text-xs text-red-600 mt-1">{errors.branch_id[0]}</p>}
                             </div>
 

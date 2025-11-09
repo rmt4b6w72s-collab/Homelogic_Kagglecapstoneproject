@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { Pill, Clock, User, Calendar, CheckCircle, XCircle, AlertCircle, Plus, Edit, Trash2, Download, ChevronDown } from 'lucide-react';
 
@@ -33,13 +34,13 @@ const formatInstructionDisplay = (value) => {
 
 export default function Medications() {
     const queryClient = useQueryClient();
+    const navigate = useNavigate();
     const [activeOnly, setActiveOnly] = useState(true);
     const [search, setSearch] = useState('');
     const [residentFilter, setResidentFilter] = useState('');
     const [branchFilter, setBranchFilter] = useState('');
     const [selectedMedication, setSelectedMedication] = useState(null);
     const [showAdminForm, setShowAdminForm] = useState(false);
-    const [showHistory, setShowHistory] = useState(null);
     const [showForm, setShowForm] = useState(false);
     const [editing, setEditing] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
@@ -388,13 +389,18 @@ export default function Medications() {
                                                     queryClient.invalidateQueries(['medication-administrations-today-check', medication.id]);
                                                 }} />
 
-                                                <button onClick={()=> setShowHistory(showHistory === medication.id ? null : medication.id)} className="mt-2 text-xs text-[#25603E] hover:underline">
-                                                    {showHistory === medication.id ? 'Hide History' : 'View History'}
+                                                <button
+                                                    onClick={() => {
+                                                        if (medication?.resident_id) {
+                                                            navigate(`/medication-history?resident=${medication.resident_id}`);
+                                                        } else {
+                                                            navigate('/medication-history');
+                                                        }
+                                                    }}
+                                                    className="mt-2 text-xs text-[#25603E] hover:underline"
+                                                >
+                                                    Medication History
                                                 </button>
-
-                                                {showHistory === medication.id && (
-                                                    <MedicationAdministrationHistory medicationId={medication.id} />
-                                                )}
                                             </div>
                                         )}
 
@@ -539,140 +545,6 @@ export default function Medications() {
                         queryClient.invalidateQueries(['medications']);
                     }}
                 />
-            )}
-        </div>
-    );
-}
-
-// Medication Administration History Component
-function MedicationAdministrationHistory({ medicationId }) {
-    const [statusFilter, setStatusFilter] = useState('');
-    const [dateFrom, setDateFrom] = useState('');
-    const [dateTo, setDateTo] = useState('');
-
-    const { data, isLoading } = useQuery({
-        queryKey: ['medication-administrations', medicationId, statusFilter, dateFrom, dateTo],
-        queryFn: async () => {
-            const response = await api.get('/medication-administrations', {
-                params: {
-                    medication_id: medicationId,
-                    status: statusFilter || undefined,
-                    date_from: dateFrom || undefined,
-                    date_to: dateTo || undefined,
-                    per_page: 100,
-                },
-            });
-            return response.data;
-        },
-    });
-
-    const getStatusIcon = (status) => {
-        switch (status) {
-            case 'completed':
-                return <CheckCircle className="w-4 h-4 text-green-600" />;
-            case 'missed':
-                return <XCircle className="w-4 h-4 text-red-600" />;
-            case 'refused':
-                return <AlertCircle className="w-4 h-4 text-yellow-600" />;
-            default:
-                return null;
-        }
-    };
-
-    const getStatusColor = (status) => {
-        switch (status) {
-            case 'completed':
-                return 'bg-green-100 text-green-800';
-            case 'missed':
-                return 'bg-red-100 text-red-800';
-            case 'refused':
-                return 'bg-yellow-100 text-yellow-800';
-            default:
-                return 'bg-gray-100 text-gray-800';
-        }
-    };
-
-    const exportCsv = async () => {
-        // Fetch a larger set for export
-        const resp = await api.get('/medication-administrations', {
-            params: {
-                medication_id: medicationId,
-                status: statusFilter || undefined,
-                date_from: dateFrom || undefined,
-                date_to: dateTo || undefined,
-                per_page: 1000,
-            },
-        });
-        const rows = resp.data?.data || [];
-        const header = ['Date', 'Time', 'Status', 'Dosage', 'Administered By'];
-        const csvLines = [header.join(',')].concat(
-            rows.map(r => [
-                new Date(r.administered_at).toLocaleDateString(),
-                new Date(r.administered_at).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'}),
-                r.status,
-                (r.dosage_given || '').toString().replace(/,/g, ';'),
-                (r.administered_by?.name || '').replace(/,/g, ';'),
-            ].join(','))
-        );
-        const blob = new Blob(["\uFEFF" + csvLines.join('\n')], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'medication_administration_history.csv';
-        a.click();
-        URL.revokeObjectURL(url);
-    };
-
-    return (
-        <div className="mt-3">
-            <div className="flex flex-wrap gap-3 items-end mb-3">
-                <div>
-                    <label className="block text-xs text-gray-600 mb-1">Status</label>
-                    <select
-                        value={statusFilter}
-                        onChange={(e) => setStatusFilter(e.target.value)}
-                        className="px-2 py-1 text-xs border rounded"
-                    >
-                        <option value="">All</option>
-                        <option value="completed">Completed</option>
-                        <option value="missed">Missed</option>
-                        <option value="refused">Refused</option>
-                    </select>
-                </div>
-                <div>
-                    <label className="block text-xs text-gray-600 mb-1">From</label>
-                    <input type="date" value={dateFrom} onChange={(e)=>setDateFrom(e.target.value)} className="px-2 py-1 text-xs border rounded" />
-                </div>
-                <div>
-                    <label className="block text-xs text-gray-600 mb-1">To</label>
-                    <input type="date" value={dateTo} onChange={(e)=>setDateTo(e.target.value)} className="px-2 py-1 text-xs border rounded" />
-                </div>
-                <button onClick={exportCsv} className="ml-auto px-3 py-1 bg-[#25603E] text-white rounded text-xs hover:bg-[#1B402D]">Export CSV</button>
-            </div>
-
-            {isLoading ? (
-                <div className="mt-3 text-xs text-gray-500">Loading history...</div>
-            ) : !data?.data?.length ? (
-                <div className="mt-3 text-xs text-gray-500">No administration history found.</div>
-            ) : (
-                <div className="mt-3 border-t pt-3 space-y-2 max-h-48 overflow-y-auto">
-                    {data.data.map((admin) => (
-                        <div key={admin.id} className="flex items-center justify-between text-xs p-2 bg-white rounded border">
-                            <div className="flex items-center space-x-2">
-                                {getStatusIcon(admin.status)}
-                                <span>
-                                    {new Date(admin.administered_at).toLocaleDateString()} {new Date(admin.administered_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
-                                </span>
-                                <span className={`px-2 py-0.5 rounded text-xs ${getStatusColor(admin.status)}`}>
-                                    {admin.status}
-                                </span>
-                            </div>
-                            {admin.administered_by?.name && (
-                                <span className="text-gray-500">by {admin.administered_by.name}</span>
-                            )}
-                        </div>
-                    ))}
-                </div>
             )}
         </div>
     );
@@ -1248,48 +1120,57 @@ function MedicationTimeBadges({ medication }) {
     });
 
     // Helper to get the status of a time (completed, missed, refused, or null if not administered)
-    const getTimeStatus = (timeValue) => {
-        if (!timeValue || !todayAdminData?.data || todayAdminData.data.length === 0) return null;
-        
-        const timeStr = formatTime(timeValue);
-        if (!timeStr) return null;
-
-        // Parse the scheduled time from the medication time value
-        let scheduledTime = new Date();
+    const parseScheduledTime = (timeValue) => {
         try {
+            const now = new Date();
+            const scheduled = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
             if (typeof timeValue === 'string') {
                 if (timeValue.includes('T') || timeValue.includes(' ')) {
                     const parsed = new Date(timeValue);
-                    scheduledTime.setHours(parsed.getHours(), parsed.getMinutes(), 0, 0);
+                    scheduled.setHours(parsed.getHours(), parsed.getMinutes(), 0, 0);
                 } else if (timeValue.match(/^\d{2}:\d{2}/)) {
                     const [hours, minutes] = timeValue.split(':').map(Number);
-                    scheduledTime.setHours(hours, minutes, 0, 0);
+                    scheduled.setHours(hours, minutes, 0, 0);
                 } else {
                     const parsed = new Date(timeValue);
-                    scheduledTime.setHours(parsed.getHours(), parsed.getMinutes(), 0, 0);
+                    scheduled.setHours(parsed.getHours(), parsed.getMinutes(), 0, 0);
                 }
             } else {
                 const parsed = new Date(timeValue);
-                scheduledTime.setHours(parsed.getHours(), parsed.getMinutes(), 0, 0);
+                scheduled.setHours(parsed.getHours(), parsed.getMinutes(), 0, 0);
             }
+
+            return isNaN(scheduled.getTime()) ? null : scheduled;
         } catch {
             return null;
         }
+    };
 
-        // Find the administration that matches this time (within 30 minutes)
-        const matchingAdmin = todayAdminData.data.find(admin => {
+    const getTimeStatus = (timeValue) => {
+        if (!timeValue) return null;
+
+        const scheduledTime = parseScheduledTime(timeValue);
+        if (!scheduledTime) return null;
+
+        const toleranceMinutes = 30;
+        const toleranceMs = toleranceMinutes * 60 * 1000;
+
+        const matchingAdmin = todayAdminData?.data?.find((admin) => {
             const adminTime = new Date(admin.administered_at);
-            
-            // Calculate time difference in minutes
-            const adminMinutes = adminTime.getHours() * 60 + adminTime.getMinutes();
-            const scheduledMinutes = scheduledTime.getHours() * 60 + scheduledTime.getMinutes();
-            const diffMinutes = Math.abs(adminMinutes - scheduledMinutes);
-            
-            // Allow up to 30 minutes difference
-            return diffMinutes <= 30;
+            return Math.abs(adminTime.getTime() - scheduledTime.getTime()) <= toleranceMs;
         });
 
-        return matchingAdmin ? matchingAdmin.status : null;
+        if (matchingAdmin) {
+            return matchingAdmin.status;
+        }
+
+        const now = new Date();
+        if (now.getTime() - scheduledTime.getTime() >= toleranceMs) {
+            return 'missed';
+        }
+
+        return null;
     };
 
     const times = [
@@ -1393,7 +1274,7 @@ function QuickAdminister({ medication, onSuccess }) {
     // Calculate daily limit based on instructions
     const getDailyLimit = () => {
         const instruction = (medication.instructions || '').toLowerCase().trim();
-        if (instruction === 'prn') return null; // unlimited
+        if (instruction.includes('prn')) return null; // unlimited
         if (['b.i.d', 'bid', 'b.i.d.'].includes(instruction)) return 2;
         if (['t.i.d', 'tid', 't.i.d.'].includes(instruction)) return 3;
         if (['q.i.d', 'qid', 'q.i.d.'].includes(instruction)) return 4;
@@ -1411,49 +1292,65 @@ function QuickAdminister({ medication, onSuccess }) {
 
         const countToday = todayAdminData?.data?.length || 0;
         setIsDailyLimitReached(countToday >= dailyLimit);
-    }, [todayAdminData, medication.instructions]);
+    }, [todayAdminData, isPrnMedication]);
 
-    // Helper function to parse time and convert to today's date
-    const parseTimeToToday = (timeValue) => {
+    // Helper function to parse time and convert to today's date with an optional day offset
+    const parseTimeToToday = React.useCallback((timeValue, dayOffset = 0) => {
         if (!timeValue) return null;
         try {
-            let date;
             const now = new Date();
-            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const base = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
             if (typeof timeValue === 'string') {
-                // If it's a full datetime string
                 if (timeValue.includes('T') || timeValue.includes(' ')) {
                     const parsed = new Date(timeValue);
-                    // Extract just the time part and apply to today
-                    today.setHours(parsed.getHours(), parsed.getMinutes(), 0, 0);
-                    date = today;
+                    base.setHours(parsed.getHours(), parsed.getMinutes(), 0, 0);
                 } else if (timeValue.match(/^\d{2}:\d{2}/)) {
-                    // If it's just a time string (e.g., "08:00")
                     const [hours, minutes] = timeValue.split(':').map(Number);
-                    today.setHours(hours, minutes, 0, 0);
-                    date = today;
+                    base.setHours(hours, minutes, 0, 0);
                 } else {
-                    date = new Date(timeValue);
-                    // Apply time to today's date
-                    today.setHours(date.getHours(), date.getMinutes(), 0, 0);
-                    date = today;
+                    const parsed = new Date(timeValue);
+                    base.setHours(parsed.getHours(), parsed.getMinutes(), 0, 0);
                 }
             } else {
-                date = new Date(timeValue);
-                today.setHours(date.getHours(), date.getMinutes(), 0, 0);
-                date = today;
+                const parsed = new Date(timeValue);
+                base.setHours(parsed.getHours(), parsed.getMinutes(), 0, 0);
             }
-            
-            return isNaN(date.getTime()) ? null : date;
+
+            base.setDate(base.getDate() + dayOffset);
+            return isNaN(base.getTime()) ? null : base;
         } catch {
             return null;
         }
-    };
+    }, []);
+
+    const formatScheduledTime = React.useCallback(
+        (timeValue) => {
+            if (!timeValue) {
+                return '';
+            }
+
+            const parsed = parseTimeToToday(timeValue, 0);
+            if (parsed) {
+                return parsed.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            }
+
+            try {
+                const fallback = new Date(timeValue);
+                if (!isNaN(fallback.getTime())) {
+                    return fallback.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                }
+            } catch {
+                // ignore parse errors
+            }
+
+            return '';
+        },
+        [parseTimeToToday]
+    );
 
     // Check if current time is within 30 minutes of any scheduled time
-    const checkTimeWindow = () => {
-        const now = new Date();
+    const checkTimeWindow = React.useCallback(() => {
         const windowMinutes = 30;
         const times = [
             medication.time_1,
@@ -1462,96 +1359,153 @@ function QuickAdminister({ medication, onSuccess }) {
             medication.time_4,
         ].filter(Boolean);
 
-        if (times.length === 0) {
-            // If no scheduled times (PRN medication), allow recording anytime
+        if (isPrnMedication || times.length === 0) {
             setIsWithinTimeWindow(true);
             setTimeMessage('');
+            setNextWindowStart(null);
+            setNextWindowCountdown('');
+            setUpcomingScheduledDisplay('');
             return;
         }
 
-        let closestTime = null;
-        let minDiff = Infinity;
+        const now = new Date();
 
-        for (const timeValue of times) {
-            const scheduledTime = parseTimeToToday(timeValue);
-            if (!scheduledTime) continue;
+        const windows = times
+            .flatMap((timeValue) => {
+                const scheduledToday = parseTimeToToday(timeValue, 0);
+                const scheduledTomorrow = parseTimeToToday(timeValue, 1);
+                return [scheduledToday, scheduledTomorrow]
+                    .filter(Boolean)
+                    .map((scheduledDate) => {
+                        const start = new Date(scheduledDate);
+                        start.setMinutes(start.getMinutes() - windowMinutes);
+                        const end = new Date(scheduledDate);
+                        end.setMinutes(end.getMinutes() + windowMinutes);
+                        const label =
+                            formatScheduledTime(timeValue) ||
+                            scheduledDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                        return { scheduledDate, start, end, label };
+                    });
+            })
+            .sort((a, b) => a.start - b.start);
 
-            // Check the scheduled time for today
-            const diffMs = Math.abs(now - scheduledTime);
-            const diffMinutes = diffMs / (1000 * 60);
-
-            // Also check for tomorrow's scheduled time (in case it's late at night)
-            const tomorrowTime = new Date(scheduledTime);
-            tomorrowTime.setDate(tomorrowTime.getDate() + 1);
-            const diffTomorrowMs = Math.abs(now - tomorrowTime);
-            const diffTomorrowMinutes = diffTomorrowMs / (1000 * 60);
-
-            // Find the closest scheduled time
-            if (diffMinutes < minDiff) {
-                minDiff = diffMinutes;
-                closestTime = scheduledTime;
-            }
-            if (diffTomorrowMinutes < minDiff) {
-                minDiff = diffTomorrowMinutes;
-                closestTime = tomorrowTime;
-            }
-
-            // Check if within 30 minutes window
-            if (diffMinutes <= windowMinutes || diffTomorrowMinutes <= windowMinutes) {
+        for (const window of windows) {
+            if (now >= window.start && now <= window.end) {
                 setIsWithinTimeWindow(true);
                 setTimeMessage('');
+                setNextWindowStart(null);
+                setNextWindowCountdown('');
+                setUpcomingScheduledDisplay(window.label || '');
+                return;
+            }
+
+            if (now < window.start) {
+                const sameDay = window.scheduledDate.toDateString() === now.toDateString();
+                const dateLabel = sameDay
+                    ? 'today'
+                    : window.scheduledDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+                setIsWithinTimeWindow(false);
+                setTimeMessage(
+                    `Next scheduled dose ${sameDay ? 'today' : `on ${dateLabel}`} at ${window.label}`
+                );
+                setNextWindowStart(window.start);
+                setUpcomingScheduledDisplay(
+                    sameDay ? `Today · ${window.label}` : `${dateLabel} · ${window.label}`
+                );
                 return;
             }
         }
 
-        // Not within window - calculate when next time window opens
-        if (closestTime) {
-            const nextWindowStart = new Date(closestTime);
-            nextWindowStart.setMinutes(nextWindowStart.getMinutes() - windowMinutes);
-            
-            // If next window is in the past, check tomorrow's times
-            if (nextWindowStart < now) {
-                const tomorrowWindowStart = new Date(nextWindowStart);
-                tomorrowWindowStart.setDate(tomorrowWindowStart.getDate() + 1);
-                const timeUntil = Math.ceil((tomorrowWindowStart - now) / (1000 * 60));
-                if (timeUntil < 1440) { // Less than 24 hours
-                    const hours = Math.floor(timeUntil / 60);
-                    const mins = timeUntil % 60;
-                    setTimeMessage(`Available in ${hours}h ${mins}m`);
-                } else {
-                    setTimeMessage('Not within 30 minutes of scheduled time');
-                }
-            } else {
-                const timeUntil = Math.ceil((nextWindowStart - now) / (1000 * 60));
-                const hours = Math.floor(timeUntil / 60);
-                const mins = timeUntil % 60;
-                if (hours > 0) {
-                    setTimeMessage(`Available in ${hours}h ${mins}m`);
-                } else {
-                    setTimeMessage(`Available in ${mins} minutes`);
-                }
-            }
-            setIsWithinTimeWindow(false);
-        } else {
-            setIsWithinTimeWindow(false);
-            setTimeMessage('No scheduled times found');
-        }
-    };
+        setIsWithinTimeWindow(false);
+        setTimeMessage('No upcoming scheduled times found.');
+        setNextWindowStart(null);
+        setNextWindowCountdown('');
+        setUpcomingScheduledDisplay('');
+    }, [
+        formatScheduledTime,
+        isPrnMedication,
+        medication.time_1,
+        medication.time_2,
+        medication.time_3,
+        medication.time_4,
+        parseTimeToToday,
+    ]);
 
     // Check time window on mount and update every minute
     React.useEffect(() => {
         checkTimeWindow();
-        const interval = setInterval(() => {
-            checkTimeWindow();
-        }, 60000); // Check every minute
+        const interval = setInterval(checkTimeWindow, 60000);
         return () => clearInterval(interval);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [medication.time_1, medication.time_2, medication.time_3, medication.time_4]);
+    }, [checkTimeWindow]);
+
+    React.useEffect(() => {
+        if (!successMessage) {
+            return;
+        }
+        const timeout = setTimeout(() => setSuccessMessage(''), 5000);
+        return () => clearTimeout(timeout);
+    }, [successMessage]);
+
+    React.useEffect(() => {
+        if (!nextWindowStart) {
+            setNextWindowCountdown('');
+            return;
+        }
+
+        const updateCountdown = () => {
+            const diffMs = nextWindowStart - new Date();
+            if (diffMs <= 0) {
+                setNextWindowCountdown('');
+                checkTimeWindow();
+                return true;
+            }
+
+            const totalSeconds = Math.max(0, Math.floor(diffMs / 1000));
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+
+            const parts = [];
+            if (hours > 0) {
+                parts.push(`${hours}h`);
+            }
+            parts.push(`${minutes.toString().padStart(2, '0')}m`);
+            parts.push(`${seconds.toString().padStart(2, '0')}s`);
+            setNextWindowCountdown(parts.join(' '));
+            return false;
+        };
+
+        if (updateCountdown()) {
+            return;
+        }
+
+        const interval = setInterval(() => {
+            if (updateCountdown()) {
+                clearInterval(interval);
+            }
+        }, 1000);
+
+        return () => clearInterval(interval);
+    }, [nextWindowStart, checkTimeWindow]);
 
     const handleRecord = async () => {
-        if (!isWithinTimeWindow && !medication.instructions?.includes('PRN')) {
+        if (!isWithinTimeWindow && !isPrnMedication) {
             setError('Can only record within 30 minutes of scheduled medication time');
             return;
+        }
+
+        setSuccessMessage('');
+
+        const medicationName = medication.name || medication.drug?.name || 'this medication';
+        const statusLabel = status.charAt(0).toUpperCase() + status.slice(1);
+
+        if (typeof window !== 'undefined' && typeof window.confirm === 'function') {
+            const confirmed = window.confirm(
+                `Confirm marking ${medicationName} as ${statusLabel.toLowerCase()}?`
+            );
+            if (!confirmed) {
+                return;
+            }
         }
 
         try {
@@ -1567,6 +1521,12 @@ function QuickAdminister({ medication, onSuccess }) {
             queryClient.invalidateQueries(['medication-administrations']);
             queryClient.invalidateQueries(['medication-administrations-today', medication.id]);
             queryClient.invalidateQueries(['medication-administrations-today-check', medication.id]);
+            const successText = `Medication ${statusLabel} recorded successfully.`;
+            setSuccessMessage(successText);
+            if (typeof window !== 'undefined' && typeof window.alert === 'function') {
+                window.alert(successText);
+            }
+            checkTimeWindow();
             onSuccess?.();
         } catch (e) {
             const msg = e?.response?.data?.message || 'Unable to record administration.';
@@ -1576,7 +1536,8 @@ function QuickAdminister({ medication, onSuccess }) {
         }
     };
 
-    const isButtonDisabled = submitting || isDailyLimitReached || (!isWithinTimeWindow && !medication.instructions?.includes('PRN'));
+    const isButtonDisabled =
+        submitting || isDailyLimitReached || (!isWithinTimeWindow && !isPrnMedication);
 
     return (
         <div className="mt-3">
@@ -1593,20 +1554,29 @@ function QuickAdminister({ medication, onSuccess }) {
                     title={
                         isDailyLimitReached 
                             ? 'Daily administration limit reached for this medication'
-                            : (!isWithinTimeWindow && !medication.instructions?.includes('PRN') ? timeMessage : '')
+                            : (!isWithinTimeWindow && !isPrnMedication
+                                ? (timeMessage || (nextWindowCountdown ? `Next window in ${nextWindowCountdown}` : 'Outside scheduled window'))
+                                : '')
                     }
                 >
                     {submitting ? 'Administering...' : 'Administer'}
                 </button>
             </div>
+            {successMessage && (
+                <p className="mt-2 text-xs text-green-600">{successMessage}</p>
+            )}
             {error && (
                 <p className="mt-2 text-xs text-red-600">{error}</p>
             )}
             {isDailyLimitReached && (
                 <p className="mt-2 text-xs text-red-600">Daily administration limit reached for this medication.</p>
             )}
-            {!isWithinTimeWindow && !medication.instructions?.includes('PRN') && timeMessage && !isDailyLimitReached && (
-                <p className="mt-1 text-xs text-amber-600">{timeMessage}</p>
+            {!isWithinTimeWindow && !isPrnMedication && !isDailyLimitReached && (timeMessage || nextWindowCountdown) && (
+                <p className="mt-1 text-xs text-amber-600">
+                    {timeMessage}
+                    {upcomingScheduledDisplay && timeMessage ? ` (${upcomingScheduledDisplay})` : upcomingScheduledDisplay}
+                    {nextWindowCountdown && ` • Next window in ${nextWindowCountdown}`}
+                </p>
             )}
         </div>
     );

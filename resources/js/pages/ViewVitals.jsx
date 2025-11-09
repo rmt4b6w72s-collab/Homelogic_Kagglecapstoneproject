@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
@@ -40,6 +40,133 @@ export default function ViewVitals() {
     const [currentPage, setCurrentPage] = useState(1);
     const [perPage] = useState(10);
 
+    const { data: currentUser } = useQuery({
+        queryKey: ['current-user'],
+        queryFn: async () => {
+            const response = await api.get('/user');
+            if (response?.data && typeof response.data === 'object') {
+                if (response.data.user) {
+                    return response.data.user;
+                }
+                if (response.data.data) {
+                    return response.data.data;
+                }
+                return response.data;
+            }
+            return null;
+        },
+        staleTime: 5 * 60 * 1000,
+    });
+
+    const isCaregiver = React.useMemo(() => {
+        if (!currentUser) {
+            return false;
+        }
+
+        const truthyValues = [
+            currentUser.is_caregiver,
+            currentUser.isCaregiver,
+            currentUser.caregiver,
+            currentUser.is_care_giver,
+        ];
+
+        const normalizeToBoolean = (value) => {
+            if (typeof value === 'boolean') return value;
+            if (typeof value === 'number') return value === 1;
+            if (typeof value === 'string') {
+                const normalized = value.trim().toLowerCase();
+                return ['1', 'true', 'yes', 'y', 'caregiver', 'care_giver'].includes(normalized);
+            }
+            return false;
+        };
+
+        if (truthyValues.some(normalizeToBoolean)) {
+            return true;
+        }
+
+        const candidateValues = [];
+        const collectCandidate = (value) => {
+            if (value !== null && value !== undefined && value !== '') {
+                candidateValues.push(String(value));
+            }
+        };
+
+        collectCandidate(currentUser.role);
+        collectCandidate(currentUser.position);
+        collectCandidate(currentUser.primary_role);
+        collectCandidate(currentUser.job_title);
+        collectCandidate(currentUser.primaryRole);
+        collectCandidate(currentUser.title);
+
+        const roles = currentUser.roles;
+        if (Array.isArray(roles)) {
+            roles.forEach((roleItem) => {
+                if (!roleItem) return;
+                if (typeof roleItem === 'string') {
+                    collectCandidate(roleItem);
+                } else {
+                    collectCandidate(roleItem.name);
+                    collectCandidate(roleItem.title);
+                    if (roleItem?.pivot?.role_name) {
+                        collectCandidate(roleItem.pivot.role_name);
+                    }
+                }
+            });
+        } else if (roles?.data && Array.isArray(roles.data)) {
+            roles.data.forEach((roleItem) => {
+                if (!roleItem) return;
+                if (typeof roleItem === 'string') {
+                    collectCandidate(roleItem);
+                } else {
+                    collectCandidate(roleItem.name);
+                    collectCandidate(roleItem.title);
+                    if (roleItem?.pivot?.role_name) {
+                        collectCandidate(roleItem.pivot.role_name);
+                    }
+                }
+            });
+        }
+
+        return candidateValues.some((value) => {
+            const lower = value.toLowerCase().trim();
+            if (!lower) {
+                return false;
+            }
+            const normalized = lower.replace(/[\s_-]/g, '');
+            if (normalized === 'caregiver') {
+                return true;
+            }
+            return lower.includes('care') && lower.includes('giver');
+        });
+    }, [currentUser]);
+
+    const caregiverBranchId = React.useMemo(() => {
+        if (!isCaregiver) {
+            return '';
+        }
+
+        const assignedId = currentUser?.assigned_branch_id;
+        return assignedId ? String(assignedId) : '';
+    }, [isCaregiver, currentUser?.assigned_branch_id]);
+
+    useEffect(() => {
+        if (!isCaregiver) {
+            return;
+        }
+
+        if (caregiverBranchId && branchId !== caregiverBranchId) {
+            setBranchId(caregiverBranchId);
+            setResidentId('');
+            setCurrentPage(1);
+        }
+
+        if (!caregiverBranchId && branchId !== '') {
+            setBranchId('');
+            setResidentId('');
+            setCurrentPage(1);
+        }
+    }, [isCaregiver, caregiverBranchId, branchId]);
+
     // Fetch branches
     const { data: branchesData } = useQuery({
         queryKey: ['branches-list'],
@@ -49,6 +176,55 @@ export default function ViewVitals() {
             return branches.filter(b => b.is_active !== false);
         },
     });
+
+    const branchOptions = React.useMemo(() => {
+        if (!branchesData) {
+            return [];
+        }
+        if (Array.isArray(branchesData)) {
+            return branchesData;
+        }
+        if (Array.isArray(branchesData?.data)) {
+            return branchesData.data;
+        }
+        return [];
+    }, [branchesData]);
+
+    const filteredBranchOptions = React.useMemo(() => {
+        if (!isCaregiver) {
+            return branchOptions;
+        }
+
+        if (caregiverBranchId) {
+            return branchOptions.filter((branch) => String(branch.id) === String(caregiverBranchId));
+        }
+
+        return branchOptions;
+    }, [branchOptions, isCaregiver, caregiverBranchId]);
+
+    const caregiverBranchName = React.useMemo(() => {
+        if (!isCaregiver || !caregiverBranchId) {
+            return '';
+        }
+
+        const matchingBranch = branchOptions.find(
+            (branch) => String(branch.id) === String(caregiverBranchId)
+        );
+
+        if (matchingBranch) {
+            return matchingBranch.name;
+        }
+
+        if (currentUser?.assigned_branch?.name) {
+            return currentUser.assigned_branch.name;
+        }
+
+        if (currentUser?.assigned_branch_name) {
+            return currentUser.assigned_branch_name;
+        }
+
+        return '';
+    }, [isCaregiver, caregiverBranchId, branchOptions, currentUser]);
 
     // Fetch residents filtered by branch
     const { data: residentsData } = useQuery({
@@ -305,20 +481,28 @@ export default function ViewVitals() {
                             <label className="block text-sm font-medium text-gray-700 mb-1">Branch</label>
                             <div className="relative">
                                 <Building2 className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                                <select
-                                    value={branchId}
-                                    onChange={(e) => {
-                                        setBranchId(e.target.value);
-                                        setResidentId(''); // Reset resident when branch changes
-                                        setCurrentPage(1);
-                                    }}
-                                    className="w-full pl-9 pr-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-[#25603E] focus:border-transparent appearance-none"
-                                >
-                                    <option value="">All Branches</option>
-                                    {branchesData?.map(b => (
-                                        <option key={b.id} value={b.id}>{b.name}</option>
-                                    ))}
-                                </select>
+                                {isCaregiver ? (
+                                    <div className="w-full pl-9 pr-3 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-900 min-h-[40px] flex items-center">
+                                        <span>
+                                            {caregiverBranchName || 'No branch assigned'}
+                                        </span>
+                                    </div>
+                                ) : (
+                                    <select
+                                        value={branchId}
+                                        onChange={(e) => {
+                                            setBranchId(e.target.value);
+                                            setResidentId(''); // Reset resident when branch changes
+                                            setCurrentPage(1);
+                                        }}
+                                        className="w-full pl-9 pr-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-[#25603E] focus:border-transparent appearance-none"
+                                    >
+                                        <option value="">All Branches</option>
+                                        {filteredBranchOptions.map(b => (
+                                            <option key={b.id} value={b.id}>{b.name}</option>
+                                        ))}
+                                    </select>
+                                )}
                             </div>
                         </div>
 
