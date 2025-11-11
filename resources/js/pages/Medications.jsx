@@ -32,32 +32,184 @@ const formatInstructionDisplay = (value) => {
     return INSTRUCTION_DISPLAY_MAP[normalized] ?? value;
 };
 
+const PACIFIC_TIMEZONE = 'America/Los_Angeles';
+
+const pacificDateTimeFormatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: PACIFIC_TIMEZONE,
+    year: 'numeric',
+    month: 'numeric',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: 'numeric',
+    second: 'numeric',
+    hourCycle: 'h23',
+});
+
+const pacificDateFormatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: PACIFIC_TIMEZONE,
+    year: 'numeric',
+    month: 'numeric',
+    day: 'numeric',
+});
+
+const pacificTimeFormatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: PACIFIC_TIMEZONE,
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true,
+});
+
+const pacificOffsetFormatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: PACIFIC_TIMEZONE,
+    timeZoneName: 'shortOffset',
+    hour: '2-digit',
+    minute: '2-digit',
+});
+
+const getPacificParts = (date = new Date()) => {
+    const parts = pacificDateTimeFormatter.formatToParts(date);
+    const lookup = {};
+    parts.forEach(({ type, value }) => {
+        if (type !== 'literal') {
+            lookup[type] = Number(value);
+        }
+    });
+    return lookup;
+};
+
+const getPacificDate = (date = new Date()) => {
+    const { year, month, day, hour = 0, minute = 0, second = 0 } = getPacificParts(date);
+    return new Date(Date.UTC(year, month - 1, day, hour, minute, second));
+};
+
+const getPacificStartOfDay = (date = new Date()) => {
+    const { year, month, day } = getPacificParts(date);
+    return new Date(Date.UTC(year, month - 1, day, 0, 0, 0));
+};
+
+const getPacificISODate = (date = new Date()) => {
+    const { year, month, day } = getPacificParts(date);
+    return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+};
+
+const formatPacificTime = (date) => pacificTimeFormatter.format(date);
+const formatPacificDate = (date) => pacificDateFormatter.format(date);
+const getPacificNow = () => getPacificDate(new Date());
+
+const toLocalISOStringFromPacific = (pacificDate) => {
+    if (!pacificDate || Number.isNaN(pacificDate.getTime())) return '';
+    const localEquivalent = new Date(pacificDate.getTime() - pacificDate.getTimezoneOffset() * 60000);
+    return localEquivalent.toISOString();
+};
+
+const getPacificDateTimeLocalString = (date = new Date()) =>
+    toLocalISOStringFromPacific(getPacificDate(date)).slice(0, 16);
+
+const getPacificISODateTime = (date = new Date()) => getPacificDate(date).toISOString();
+
+const getPacificOffsetMinutes = (date) => {
+    const parts = pacificOffsetFormatter.formatToParts(date);
+    const tzPart = parts.find(({ type }) => type === 'timeZoneName')?.value || 'GMT-8';
+    const match = tzPart.match(/GMT([+-]\d{1,2})(?::?(\d{2}))?/i);
+    if (!match) return -480;
+    const hours = Number(match[1]);
+    const minutes = match[2] ? Number(match[2]) : 0;
+    return hours * 60 + Math.sign(hours) * minutes;
+};
+
+const createPacificInstant = (year, month, day, hour = 0, minute = 0, second = 0) => {
+    const utcGuess = Date.UTC(year, month - 1, day, hour, minute, second);
+    const offsetMinutes = getPacificOffsetMinutes(new Date(utcGuess));
+    return new Date(utcGuess - offsetMinutes * 60 * 1000);
+};
+
+const convertPacificLocalInputToISO = (value) => {
+    if (!value) return value;
+    const [datePart, timePart = ''] = value.split('T');
+    if (!datePart) return value;
+    const [year, month, day] = datePart.split('-').map(Number);
+    const [hour = 0, minute = 0] = timePart.split(':').map(Number);
+    if ([year, month, day].some((n) => Number.isNaN(n)) || Number.isNaN(hour) || Number.isNaN(minute)) {
+        return value;
+    }
+    return createPacificInstant(year, month, day, hour, minute).toISOString();
+};
+
+const toPacificDateFromTime = (timeValue, { referenceDate = getPacificNow(), dayOffset = 0 } = {}) => {
+    if (!timeValue) return null;
+
+    const adjustDay = (date) => {
+        if (dayOffset) {
+            date.setUTCDate(date.getUTCDate() + dayOffset);
+        }
+        return date;
+    };
+
+    if (typeof timeValue === 'string') {
+        if (timeValue.includes('T') || timeValue.includes(' ')) {
+            const parsed = new Date(timeValue);
+            if (Number.isNaN(parsed.getTime())) return null;
+            return adjustDay(getPacificDate(parsed));
+        }
+
+        const timeMatch = timeValue.match(/^(\d{2}):(\d{2})/);
+        if (timeMatch) {
+            const [_, hoursStr, minutesStr] = timeMatch;
+            const hours = Number(hoursStr);
+            const minutes = Number(minutesStr);
+
+            if (Number.isNaN(hours) || Number.isNaN(minutes)) return null;
+
+            const base = getPacificStartOfDay(referenceDate);
+            base.setUTCHours(hours, minutes, 0, 0);
+            return adjustDay(base);
+        }
+    }
+
+    const parsed = new Date(timeValue);
+    if (Number.isNaN(parsed.getTime())) return null;
+    return adjustDay(getPacificDate(parsed));
+};
+
+const formatPacificTimeValue = (timeValue) => {
+    const pacificDate = toPacificDateFromTime(timeValue);
+    return pacificDate ? formatPacificTime(pacificDate) : null;
+};
+
+const getPacificDayIdentifier = (date = new Date()) => {
+    const { year, month, day } = getPacificParts(date);
+    return { year, month, day };
+};
+
 const isMedicationPeriodActiveNow = (medication, referenceDate = new Date()) => {
-    if (!medication || !(referenceDate instanceof Date) || Number.isNaN(referenceDate.getTime())) {
+    if (!medication) {
         return false;
     }
 
-    const parseDate = (value) => {
-        if (!value) return null;
-        const date = new Date(value);
-        return Number.isNaN(date.getTime()) ? null : date;
-    };
-
-    const startDate = parseDate(medication.start_date);
-    const endDate = parseDate(medication.end_date);
-
-    if (startDate) {
-        const startBoundary = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate(), 0, 0, 0, 0);
-        if (referenceDate < startBoundary) {
-            return false;
-        }
+    const reference = getPacificDate(referenceDate);
+    if (!(reference instanceof Date) || Number.isNaN(reference.getTime())) {
+        return false;
     }
 
-    if (endDate) {
-        const endBoundary = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate(), 23, 59, 59, 999);
-        if (referenceDate > endBoundary) {
-            return false;
+    const buildBoundary = (value, endOfDay = false) => {
+        if (!value) return null;
+        const base = getPacificDate(new Date(value));
+        if (Number.isNaN(base.getTime())) return null;
+        const { year, month, day } = getPacificParts(base);
+        if (endOfDay) {
+            return new Date(Date.UTC(year, month - 1, day, 23, 59, 59, 999));
         }
+        return new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
+    };
+
+    const startBoundary = buildBoundary(medication.start_date, false);
+    if (startBoundary && reference < startBoundary) {
+        return false;
+    }
+
+    const endBoundary = buildBoundary(medication.end_date, true);
+    if (endBoundary && reference > endBoundary) {
+        return false;
     }
 
     return true;
@@ -158,7 +310,7 @@ export default function Medications() {
 
     const medicationsList = React.useMemo(() => data?.data ?? [], [data?.data]);
     const { activePeriodMedications, endedPeriodMedications } = React.useMemo(() => {
-        const now = new Date();
+        const now = getPacificNow();
         const active = [];
         const ended = [];
 
@@ -250,7 +402,7 @@ export default function Medications() {
                                     <div>
                                         <p className="text-xs text-gray-500">Start Date</p>
                                         <p className="text-sm font-medium text-gray-900">
-                                            {new Date(medication.start_date).toLocaleDateString()}
+                                            {formatPacificDate(new Date(medication.start_date))}
                                         </p>
                                     </div>
                                 </div>
@@ -262,7 +414,7 @@ export default function Medications() {
                                     <div>
                                         <p className="text-xs text-gray-500">End Date</p>
                                         <p className={`text-sm font-medium ${periodActive ? 'text-gray-900' : 'text-amber-700'}`}>
-                                            {new Date(medication.end_date).toLocaleDateString()}
+                                            {formatPacificDate(new Date(medication.end_date))}
                                         </p>
                                     </div>
                                 </div>
@@ -326,7 +478,7 @@ export default function Medications() {
                         {!periodActive && medication.end_date && (
                             <div className="mt-4 p-3 bg-amber-50 rounded-lg border border-amber-200">
                                 <p className="text-sm text-amber-700">
-                                    Medication period ended on {new Date(medication.end_date).toLocaleDateString()}.
+                                    Medication period ended on {formatPacificDate(new Date(medication.end_date))}.
                                 </p>
                                 {medication.is_active && (
                                     <p className="text-xs text-amber-700 mt-1">
@@ -384,35 +536,7 @@ export default function Medications() {
         onSuccess: () => queryClient.invalidateQueries(['medications']),
     });
 
-    const formatTime = (timeValue) => {
-        if (!timeValue) return null;
-        try {
-            // Handle different formats: datetime string, time string, or Date object
-            let date;
-            if (typeof timeValue === 'string') {
-                // If it's a full datetime string (e.g., "2025-10-31 08:00:00" or ISO format)
-                if (timeValue.includes('T') || timeValue.includes(' ')) {
-                    date = new Date(timeValue);
-                } else if (timeValue.match(/^\d{2}:\d{2}/)) {
-                    // If it's just a time string (e.g., "08:00")
-                    date = new Date(`2000-01-01T${timeValue}`);
-                } else {
-                    date = new Date(timeValue);
-                }
-            } else {
-                date = new Date(timeValue);
-            }
-            
-            // Check if date is valid
-            if (isNaN(date.getTime())) {
-                return null;
-            }
-            
-            return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
-        } catch {
-            return null;
-        }
-    };
+    const formatTime = (timeValue) => formatPacificTimeValue(timeValue);
 
     return (
         <div>
@@ -665,7 +789,7 @@ function MedicationAdministrationForm({ medication, onClose, onSuccess }) {
         medication_id: medication?.id || '',
         resident_id: medication?.resident_id || '',
         branch_id: medication?.branch_id || '',
-        administered_at: new Date().toISOString().slice(0, 16),
+        administered_at: getPacificDateTimeLocalString(),
         status: 'completed',
         dosage_given: '',
         notes: '',
@@ -685,6 +809,7 @@ function MedicationAdministrationForm({ medication, onClose, onSuccess }) {
                 medication_id: parseInt(formData.medication_id),
                 resident_id: parseInt(formData.resident_id),
                 branch_id: parseInt(formData.branch_id),
+                administered_at: convertPacificLocalInputToISO(formData.administered_at),
             };
 
             await api.post('/medication-administrations', payload);
@@ -754,7 +879,7 @@ function MedicationAdministrationForm({ medication, onClose, onSuccess }) {
                                 value={formData.administered_at}
                                 onChange={(e) => setFormData({...formData, administered_at: e.target.value})}
                                 required
-                                max={new Date().toISOString().slice(0, 16)}
+                                max={getPacificDateTimeLocalString()}
                                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
                             />
                             {errors.administered_at && <p className="text-xs text-red-600 mt-1">{errors.administered_at[0]}</p>}
@@ -862,7 +987,7 @@ function MedicationForm({ record, residents, branches, currentUser, isCaregiver,
         quantity: record?.quantity || '',
         diagnosis: record?.diagnosis || '',
         prescription_date: record?.prescription_date || '',
-        start_date: record?.start_date || new Date().toISOString().split('T')[0],
+        start_date: record?.start_date || getPacificISODate(),
         end_date: record?.end_date || '',
         notes: record?.notes || '',
         is_active: record?.is_active ?? true,
@@ -1185,37 +1310,13 @@ function MedicationForm({ record, residents, branches, currentUser, isCaregiver,
 
 // Medication Time Badges Component
 function MedicationTimeBadges({ medication }) {
-    const formatTime = (timeValue) => {
-        if (!timeValue) return null;
-        try {
-            let date;
-            if (typeof timeValue === 'string') {
-                if (timeValue.includes('T') || timeValue.includes(' ')) {
-                    date = new Date(timeValue);
-                } else if (timeValue.match(/^\d{2}:\d{2}/)) {
-                    date = new Date(`2000-01-01T${timeValue}`);
-                } else {
-                    date = new Date(timeValue);
-                }
-            } else {
-                date = new Date(timeValue);
-            }
-            
-            if (isNaN(date.getTime())) {
-                return null;
-            }
-            
-            return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
-        } catch {
-            return null;
-        }
-    };
+    const formatTime = (timeValue) => formatPacificTimeValue(timeValue);
 
     // Fetch today's administrations for this medication
     const { data: todayAdminData } = useQuery({
         queryKey: ['medication-administrations-today', medication.id],
         queryFn: async () => {
-            const today = new Date().toISOString().split('T')[0];
+            const today = getPacificISODate();
             const response = await api.get('/medication-administrations', {
                 params: {
                     medication_id: medication.id,
@@ -1229,32 +1330,7 @@ function MedicationTimeBadges({ medication }) {
     });
 
     // Helper to get the status of a time (completed, missed, refused, or null if not administered)
-    const parseScheduledTime = (timeValue) => {
-        try {
-            const now = new Date();
-            const scheduled = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
-            if (typeof timeValue === 'string') {
-                if (timeValue.includes('T') || timeValue.includes(' ')) {
-                    const parsed = new Date(timeValue);
-                    scheduled.setHours(parsed.getHours(), parsed.getMinutes(), 0, 0);
-                } else if (timeValue.match(/^\d{2}:\d{2}/)) {
-                    const [hours, minutes] = timeValue.split(':').map(Number);
-                    scheduled.setHours(hours, minutes, 0, 0);
-                } else {
-                    const parsed = new Date(timeValue);
-                    scheduled.setHours(parsed.getHours(), parsed.getMinutes(), 0, 0);
-                }
-            } else {
-                const parsed = new Date(timeValue);
-                scheduled.setHours(parsed.getHours(), parsed.getMinutes(), 0, 0);
-            }
-
-            return isNaN(scheduled.getTime()) ? null : scheduled;
-        } catch {
-            return null;
-        }
-    };
+    const parseScheduledTime = (timeValue) => toPacificDateFromTime(timeValue, { referenceDate: getPacificNow() });
 
     const getTimeStatus = (timeValue) => {
         if (!timeValue) return null;
@@ -1266,7 +1342,7 @@ function MedicationTimeBadges({ medication }) {
         const toleranceMs = toleranceMinutes * 60 * 1000;
 
         const matchingAdmin = todayAdminData?.data?.find((admin) => {
-            const adminTime = new Date(admin.administered_at);
+            const adminTime = getPacificDate(new Date(admin.administered_at));
             return Math.abs(adminTime.getTime() - scheduledTime.getTime()) <= toleranceMs;
         });
 
@@ -1274,7 +1350,7 @@ function MedicationTimeBadges({ medication }) {
             return matchingAdmin.status;
         }
 
-        const now = new Date();
+        const now = getPacificNow();
         if (now.getTime() - scheduledTime.getTime() >= toleranceMs) {
             return 'missed';
         }
@@ -1397,7 +1473,7 @@ function QuickAdminister({ medication, onSuccess }) {
     const { data: todayAdminData } = useQuery({
         queryKey: ['medication-administrations-today-check', medication.id],
         queryFn: async () => {
-            const today = new Date().toISOString().split('T')[0];
+            const today = getPacificISODate();
             const response = await api.get('/medication-administrations', {
                 params: {
                     medication_id: medication.id,
@@ -1434,34 +1510,11 @@ function QuickAdminister({ medication, onSuccess }) {
     }, [todayAdminData, isPrnMedication]);
 
     // Helper function to parse time and convert to today's date with an optional day offset
-    const parseTimeToToday = React.useCallback((timeValue, dayOffset = 0) => {
-        if (!timeValue) return null;
-        try {
-            const now = new Date();
-            const base = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
-            if (typeof timeValue === 'string') {
-                if (timeValue.includes('T') || timeValue.includes(' ')) {
-                    const parsed = new Date(timeValue);
-                    base.setHours(parsed.getHours(), parsed.getMinutes(), 0, 0);
-                } else if (timeValue.match(/^\d{2}:\d{2}/)) {
-                    const [hours, minutes] = timeValue.split(':').map(Number);
-                    base.setHours(hours, minutes, 0, 0);
-                } else {
-                    const parsed = new Date(timeValue);
-                    base.setHours(parsed.getHours(), parsed.getMinutes(), 0, 0);
-                }
-            } else {
-                const parsed = new Date(timeValue);
-                base.setHours(parsed.getHours(), parsed.getMinutes(), 0, 0);
-            }
-
-            base.setDate(base.getDate() + dayOffset);
-            return isNaN(base.getTime()) ? null : base;
-        } catch {
-            return null;
-        }
-    }, []);
+    const parseTimeToToday = React.useCallback(
+        (timeValue, dayOffset = 0) =>
+            toPacificDateFromTime(timeValue, { referenceDate: getPacificNow(), dayOffset }),
+        []
+    );
 
     const formatScheduledTime = React.useCallback(
         (timeValue) => {
@@ -1470,20 +1523,7 @@ function QuickAdminister({ medication, onSuccess }) {
             }
 
             const parsed = parseTimeToToday(timeValue, 0);
-            if (parsed) {
-                return parsed.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            }
-
-            try {
-                const fallback = new Date(timeValue);
-                if (!isNaN(fallback.getTime())) {
-                    return fallback.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                }
-            } catch {
-                // ignore parse errors
-            }
-
-            return '';
+            return parsed ? formatPacificTime(parsed) : '';
         },
         [parseTimeToToday]
     );
@@ -1527,7 +1567,7 @@ function QuickAdminister({ medication, onSuccess }) {
             return;
         }
 
-        const now = new Date();
+        const now = getPacificNow();
 
         const windows = times
             .flatMap((timeValue) => {
@@ -1536,13 +1576,10 @@ function QuickAdminister({ medication, onSuccess }) {
                 return [scheduledToday, scheduledTomorrow]
                     .filter(Boolean)
                     .map((scheduledDate) => {
-                        const start = new Date(scheduledDate);
-                        start.setMinutes(start.getMinutes() - windowBeforeMinutes);
-                        const end = new Date(scheduledDate);
-                        end.setMinutes(end.getMinutes() + windowAfterMinutes);
+                        const start = new Date(scheduledDate.getTime() - windowBeforeMinutes * 60 * 1000);
+                        const end = new Date(scheduledDate.getTime() + windowAfterMinutes * 60 * 1000);
                         const label =
-                            formatScheduledTime(timeValue) ||
-                            scheduledDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                            formatPacificTime(scheduledDate);
                         return { scheduledDate, start, end, label };
                     });
             })
@@ -1563,17 +1600,21 @@ function QuickAdminister({ medication, onSuccess }) {
             }
 
             if (now < window.start) {
-                const sameDay = window.scheduledDate.toDateString() === now.toDateString();
-                const dateLabel = sameDay
-                    ? 'today'
-                    : window.scheduledDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+                const nowDay = getPacificDayIdentifier(now);
+                const scheduledDay = getPacificDayIdentifier(window.scheduledDate);
+                const sameDay =
+                    nowDay.year === scheduledDay.year &&
+                    nowDay.month === scheduledDay.month &&
+                    nowDay.day === scheduledDay.day;
+                const formattedDate = formatPacificDate(window.scheduledDate);
+                const datePhrase = sameDay ? 'today' : `on ${formattedDate}`;
                 setIsWithinTimeWindow(false);
                 setTimeMessage(
-                    `Next scheduled dose ${sameDay ? 'today' : `on ${dateLabel}`} at ${window.label}`
+                    `Next scheduled dose ${datePhrase} at ${window.label}`
                 );
                 setNextWindowStart(window.start);
                 setUpcomingScheduledDisplay(
-                    sameDay ? `Today · ${window.label}` : `${dateLabel} · ${window.label}`
+                    sameDay ? `Today · ${window.label}` : `${formattedDate} · ${window.label}`
                 );
                 return;
             }
@@ -1618,7 +1659,7 @@ function QuickAdminister({ medication, onSuccess }) {
         }
 
         const updateCountdown = () => {
-            const diffMs = nextWindowStart - new Date();
+            const diffMs = nextWindowStart - getPacificNow();
             if (diffMs <= 0) {
                 setNextWindowCountdown('');
                 checkTimeWindow();
@@ -1835,7 +1876,7 @@ function QuickAdminister({ medication, onSuccess }) {
                                             medication_id: medication.id,
                                             resident_id: medication.resident_id,
                                             branch_id: medication.branch_id,
-                                            administered_at: new Date().toISOString().slice(0,16),
+                                            administered_at: getPacificISODateTime(),
                                             status,
                                             dosage_given: trimmedDosage,
                                             notes: finalNotes,

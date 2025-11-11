@@ -4,6 +4,40 @@ import api from '../services/api';
 import { Calendar, ClipboardList, Pill, User, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 
+const PACIFIC_TIMEZONE = 'America/Los_Angeles';
+
+const pacificDisplayDateFormatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: PACIFIC_TIMEZONE,
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+});
+
+const pacificDisplayTimeFormatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: PACIFIC_TIMEZONE,
+    hour: '2-digit',
+    minute: '2-digit',
+});
+
+const toPacificDate = (value) => {
+    if (!value) return null;
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return null;
+    return date;
+};
+
+function formatDate(dateString) {
+    const date = toPacificDate(dateString);
+    if (!date) return '—';
+    return pacificDisplayDateFormatter.format(date);
+}
+
+function formatTime(dateString) {
+    const date = toPacificDate(dateString);
+    if (!date) return '—';
+    return pacificDisplayTimeFormatter.format(date);
+}
+
 const statusOptions = [
     { value: '', label: 'All statuses' },
     { value: 'completed', label: 'Completed' },
@@ -16,27 +50,6 @@ const statusStyles = {
     missed: 'bg-red-100 text-red-800',
     refused: 'bg-yellow-100 text-yellow-800',
 };
-
-function formatDate(dateString) {
-    if (!dateString) return '—';
-    const date = new Date(dateString);
-    if (Number.isNaN(date.getTime())) return '—';
-    return date.toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-    });
-}
-
-function formatTime(dateString) {
-    if (!dateString) return '—';
-    const date = new Date(dateString);
-    if (Number.isNaN(date.getTime())) return '—';
-    return date.toLocaleTimeString('en-US', {
-        hour: '2-digit',
-        minute: '2-digit',
-    });
-}
 
 export default function MedicationHistory() {
     const [searchParams, setSearchParams] = useSearchParams();
