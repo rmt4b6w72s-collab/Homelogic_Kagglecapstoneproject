@@ -81,33 +81,48 @@ const isMedicationPeriodActiveNow = (medication, referenceDate = getPacificNow()
         return false;
     }
 
-    const reference = getPacificDate(referenceDate);
-    if (!(reference instanceof Date) || Number.isNaN(reference.getTime())) {
-        return false;
-    }
-
-    const buildBoundary = (value, endOfDay = false) => {
+    // Get reference date components - parse it the same way we parse medication dates
+    // This ensures consistent comparison (both use UTC components = Pacific components)
+    const referenceDateParsed = referenceDate instanceof Date 
+        ? referenceDate 
+        : parsePacificDateString(getPacificISODate(referenceDate)) || getPacificNow();
+    
+    // Extract UTC components directly (treating UTC = Pacific in our system)
+    const referenceDateOnly = {
+        year: referenceDateParsed.getUTCFullYear(),
+        month: referenceDateParsed.getUTCMonth() + 1,
+        day: referenceDateParsed.getUTCDate(),
+    };
+    
+    const buildBoundary = (value) => {
         if (!value) return null;
         // Parse the date string as a Pacific date directly (not through UTC conversion)
         const base = parsePacificDateString(value);
-        if (!base || Number.isNaN(base.getTime())) return null;
-        // Extract UTC components directly (since parsePacificDateString creates UTC = Pacific)
-        const year = base.getUTCFullYear();
-        const month = base.getUTCMonth() + 1;
-        const day = base.getUTCDate();
-        if (endOfDay) {
-            return new Date(Date.UTC(year, month - 1, day, 23, 59, 59, 999));
+        if (!base || Number.isNaN(base.getTime())) {
+            return null;
         }
-        return new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
+        // Extract UTC components directly (since parsePacificDateString creates UTC = Pacific)
+        // createPacificInstant creates a UTC date where UTC components = Pacific components
+        return {
+            year: base.getUTCFullYear(),
+            month: base.getUTCMonth() + 1,
+            day: base.getUTCDate(),
+        };
     };
 
-    const startBoundary = buildBoundary(medication.start_date, false);
-    if (startBoundary && reference < startBoundary) {
+    const compareDates = (date1, date2) => {
+        if (date1.year !== date2.year) return date1.year - date2.year;
+        if (date1.month !== date2.month) return date1.month - date2.month;
+        return date1.day - date2.day;
+    };
+
+    const startBoundary = buildBoundary(medication.start_date);
+    if (startBoundary && compareDates(referenceDateOnly, startBoundary) < 0) {
         return false;
     }
 
-    const endBoundary = buildBoundary(medication.end_date, true);
-    if (endBoundary && reference > endBoundary) {
+    const endBoundary = buildBoundary(medication.end_date);
+    if (endBoundary && compareDates(referenceDateOnly, endBoundary) > 0) {
         return false;
     }
 
@@ -197,6 +212,13 @@ export default function Medications() {
         });
     }, [currentUser]);
 
+    // Redirect caregivers to the residents page
+    React.useEffect(() => {
+        if (isCaregiver && currentUser) {
+            navigate('/medications/residents', { replace: true });
+        }
+    }, [isCaregiver, currentUser, navigate]);
+
     const { data, isLoading } = useQuery({
         queryKey: ['medications', activeOnly, search, residentFilter, branchFilter, currentPage],
         queryFn: async () => {
@@ -212,6 +234,7 @@ export default function Medications() {
             });
             return response.data;
         },
+        enabled: !isCaregiver, // Skip query for caregivers (they'll be redirected)
     });
 
     const medicationsList = React.useMemo(() => data?.data ?? [], [data?.data]);
@@ -308,7 +331,7 @@ export default function Medications() {
                                     <div>
                                         <p className="text-xs text-gray-500">Start Date</p>
                                         <p className="text-sm font-medium text-gray-900">
-                                            {formatPacificDate(new Date(medication.start_date))}
+                                            {formatPacificDate(parsePacificDateString(medication.start_date))}
                                         </p>
                                     </div>
                                 </div>
@@ -320,7 +343,7 @@ export default function Medications() {
                                     <div>
                                         <p className="text-xs text-gray-500">End Date</p>
                                         <p className={`text-sm font-medium ${periodActive ? 'text-gray-900' : 'text-amber-700'}`}>
-                                            {formatPacificDate(new Date(medication.end_date))}
+                                            {formatPacificDate(parsePacificDateString(medication.end_date))}
                                         </p>
                                     </div>
                                 </div>
@@ -384,13 +407,41 @@ export default function Medications() {
                         {!periodActive && medication.end_date && (
                             <div className="mt-4 p-3 bg-amber-50 rounded-lg border border-amber-200">
                                 <p className="text-sm text-amber-700">
-                                    Medication period ended on {formatPacificDate(new Date(medication.end_date))}.
+                                    Medication period ended on {formatPacificDate(parsePacificDateString(medication.end_date))}.
                                 </p>
                                 {medication.is_active && (
                                     <p className="text-xs text-amber-700 mt-1">
                                         Medication is still marked Active; review status if this period should remain closed.
                                     </p>
                                 )}
+                            </div>
+                        )}
+
+                        {/* Admin Actions */}
+                        {!isCaregiver && (
+                            <div className="mt-4 pt-4 border-t border-gray-200 flex items-center justify-end gap-2">
+                                <button
+                                    onClick={() => {
+                                        setEditing(medication);
+                                        setShowForm(true);
+                                    }}
+                                    className="px-3 py-1.5 text-sm text-[#25603E] border border-[#25603E] rounded-lg hover:bg-[#25603E] hover:text-white transition-colors flex items-center gap-1.5"
+                                >
+                                    <Edit className="w-4 h-4" />
+                                    <span>Edit</span>
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        if (window.confirm(`Are you sure you want to delete the medication "${medication.name}" for ${residentName}? This action cannot be undone.`)) {
+                                            deleteMutation.mutate(medication.id);
+                                        }
+                                    }}
+                                    disabled={deleteMutation.isPending}
+                                    className="px-3 py-1.5 text-sm text-red-600 border border-red-600 rounded-lg hover:bg-red-600 hover:text-white transition-colors flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    <Trash2 className="w-4 h-4" />
+                                    <span>{deleteMutation.isPending ? 'Deleting...' : 'Delete'}</span>
+                                </button>
                             </div>
                         )}
                     </div>
@@ -443,6 +494,16 @@ export default function Medications() {
     });
 
     const formatTime = (timeValue) => formatPacificTimeValue(timeValue);
+
+    // Don't render for caregivers (they'll be redirected)
+    if (isCaregiver) {
+        return (
+            <div className="text-center py-12">
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#25603E]"></div>
+                <p className="mt-4 text-gray-600">Redirecting...</p>
+            </div>
+        );
+    }
 
     return (
         <div>
@@ -535,23 +596,23 @@ export default function Medications() {
                     {medicationsList.length > 0 ? (
                         <div className="space-y-8">
                             {activePeriodMedications.length > 0 && (
-                                <div>
+                                                    <div>
                                     <div className="flex items-center justify-between mb-3">
                                         <h3 className="text-base font-semibold text-gray-900">
                                             Active Medication Periods
-                                        </h3>
+                                                        </h3>
                                         <span className="text-xs text-gray-500">
                                             Showing {formatNumberUS(activePeriodMedications.length)} medication{activePeriodMedications.length === 1 ? '' : 's'}
-                                        </span>
-                                    </div>
+                                                        </span>
+                                                </div>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         {activePeriodMedications.map(renderMedicationCard)}
-                                    </div>
-                                </div>
-                            )}
-
+                                                    </div>
+                                                </div>
+                                            )}
+                                            
                             {endedPeriodMedications.length > 0 && (
-                                <div>
+                                                    <div>
                                     <div className="flex items-center justify-between mb-3">
                                         <h3 className="text-base font-semibold text-gray-900">
                                             Completed Medication Periods
@@ -559,24 +620,24 @@ export default function Medications() {
                                         <span className="text-xs text-gray-500">
                                             Showing {formatNumberUS(endedPeriodMedications.length)} medication{endedPeriodMedications.length === 1 ? '' : 's'}
                                         </span>
-                                    </div>
+                                                    </div>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         {endedPeriodMedications.map(renderMedicationCard)}
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    ) : (
-                        <div className="bg-white rounded-lg shadow p-12 text-center col-span-full">
-                            <Pill className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                            <p className="text-gray-600 text-lg font-medium">No medications found</p>
-                            <p className="text-gray-500 text-sm mt-2">
-                                {activeOnly 
-                                    ? 'No active medications found.' 
-                                    : 'Try adjusting your search or filters.'}
-                            </p>
-                        </div>
-                    )}
+                                                    </div>
+                                                </div>
+                                            )}
+                                                    </div>
+                        ) : (
+                            <div className="bg-white rounded-lg shadow p-12 text-center col-span-full">
+                                <Pill className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                                <p className="text-gray-600 text-lg font-medium">No medications found</p>
+                                <p className="text-gray-500 text-sm mt-2">
+                                    {activeOnly 
+                                        ? 'No active medications found.' 
+                                        : 'Try adjusting your search or filters.'}
+                                </p>
+                            </div>
+                        )}
 
                     {/* Pagination */}
                     {data?.data?.length > 0 && data?.meta && (
@@ -884,6 +945,19 @@ function MedicationForm({ record, residents, branches, currentUser, isCaregiver,
         return residents.filter(r => r.branch_id === currentUser.assigned_branch_id);
     }, [residents, isCaregiver, currentUser]);
 
+    // Helper to convert date to YYYY-MM-DD format for date inputs
+    const formatDateForInput = (dateValue) => {
+        if (!dateValue) return '';
+        // If it's already in YYYY-MM-DD format, return as is
+        if (typeof dateValue === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
+            return dateValue;
+        }
+        // Parse and extract date part
+        const parsed = parsePacificDateString(dateValue);
+        if (!parsed) return '';
+        return getPacificISODate(parsed);
+    };
+
     const [formData, setFormData] = useState({
         resident_id: record?.resident_id || '',
         branch_id: record?.branch_id || (isCaregiver && currentUser?.assigned_branch_id ? currentUser.assigned_branch_id : ''),
@@ -892,9 +966,9 @@ function MedicationForm({ record, residents, branches, currentUser, isCaregiver,
         instructions: record?.instructions || '',
         quantity: record?.quantity || '',
         diagnosis: record?.diagnosis || '',
-        prescription_date: record?.prescription_date || '',
-        start_date: record?.start_date || getPacificISODate(),
-        end_date: record?.end_date || '',
+        prescription_date: formatDateForInput(record?.prescription_date) || '',
+        start_date: formatDateForInput(record?.start_date) || getPacificISODate(),
+        end_date: formatDateForInput(record?.end_date) || '',
         notes: record?.notes || '',
         is_active: record?.is_active ?? true,
         time_1: record?.time_1 || '',
@@ -970,12 +1044,17 @@ function MedicationForm({ record, residents, branches, currentUser, isCaregiver,
         setIsSubmitting(true);
 
         try {
+            // Ensure dates are sent in YYYY-MM-DD format (no time component to avoid timezone shifts)
             const payload = {
                 ...formData,
                 resident_id: parseInt(formData.resident_id),
                 branch_id: parseInt(formData.branch_id),
                 drug_id: formData.drug_id ? parseInt(formData.drug_id) : null,
                 is_active: Boolean(formData.is_active),
+                // Ensure dates are in YYYY-MM-DD format (date inputs already provide this)
+                start_date: formData.start_date ? formData.start_date.split('T')[0] : formData.start_date,
+                end_date: formData.end_date ? formData.end_date.split('T')[0] : formData.end_date,
+                prescription_date: formData.prescription_date ? formData.prescription_date.split('T')[0] : formData.prescription_date,
             };
 
             if (record) {
@@ -1619,7 +1698,7 @@ function QuickAdminister({ medication, onSuccess }) {
         setDosageGiven('');
         setDosageNotes('');
         setDosageValidationError('');
-        setError('');
+            setError('');
         setSuccessMessage('');
         setIsDosageModalOpen(true);
     };
@@ -1650,7 +1729,7 @@ function QuickAdminister({ medication, onSuccess }) {
                             ? 'Daily administration limit reached for this medication'
                             : (!isMedicationPeriodActive
                                 ? 'Medication administration period has ended.'
-                                : (!isWithinTimeWindow && !isPrnMedication
+                            : (!isWithinTimeWindow && !isPrnMedication
                                 ? (timeMessage || (nextWindowCountdown ? `Next window in ${nextWindowCountdown}` : 'Outside scheduled window'))
                                 : ''))
                     }

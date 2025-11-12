@@ -79,7 +79,7 @@ const navigation = [
 const caregiverNavigation = [
     { name: 'Dashboard', icon: LayoutDashboard, path: '/dashboard', children: null },
     { name: 'My Residents', icon: Users, path: '/my-residents', children: null },
-    { name: 'Medication Log', icon: Pill, path: '/medications', children: null },
+    { name: 'Medication Log', icon: Pill, path: '/medications/residents', children: null },
     { name: 'Medication History', icon: ClipboardList, path: '/medication-history', children: null },
     { 
         name: 'Vitals', 

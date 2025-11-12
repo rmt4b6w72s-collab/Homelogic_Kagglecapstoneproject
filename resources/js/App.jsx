@@ -10,6 +10,8 @@ import CreateAppointment from './pages/CreateAppointment';
 import Vitals from './pages/Vitals';
 import Medications from './pages/Medications';
 import MedicationHistory from './pages/MedicationHistory';
+import CaregiverMedicationsResidents from './pages/caregiver/CaregiverMedicationsResidents';
+import ResidentMedicationsPage from './pages/caregiver/ResidentMedicationsPage';
 import Reports from './pages/Reports';
 import Login from './pages/Login';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -68,6 +70,8 @@ function App() {
                 <Route path="vitals" element={<Vitals />} />
                 <Route path="view-vitals" element={<ViewVitals />} />
                 <Route path="medications" element={<Medications />} />
+                <Route path="medications/residents" element={<CaregiverMedicationsResidents />} />
+                <Route path="medications/residents/:residentId" element={<ResidentMedicationsPage />} />
                 <Route path="medication-history" element={<MedicationHistory />} />
                 <Route path="sleep" element={<Sleep />} />
                 <Route path="sleep-patterns" element={<SleepPatterns />} />
