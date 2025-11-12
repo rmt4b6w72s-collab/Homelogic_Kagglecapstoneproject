@@ -143,6 +143,35 @@ export const getPacificISODate = (date) => {
     return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 };
 
+// Parse a date string (YYYY-MM-DD) and treat it as a Pacific date directly
+export const parsePacificDateString = (dateString) => {
+    if (!dateString) return null;
+    
+    // If it's already a Date object, use it
+    if (dateString instanceof Date) {
+        return getPacificDate(dateString);
+    }
+    
+    // Parse YYYY-MM-DD format
+    const match = dateString.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (!match) {
+        // Fallback to regular parsing
+        return getPacificDate(new Date(dateString));
+    }
+    
+    const [, yearStr, monthStr, dayStr] = match;
+    const year = Number(yearStr);
+    const month = Number(monthStr);
+    const day = Number(dayStr);
+    
+    if (Number.isNaN(year) || Number.isNaN(month) || Number.isNaN(day)) {
+        return null;
+    }
+    
+    // Create a Pacific date directly (treating the date string as Pacific time)
+    return createPacificInstant(year, month, day, 0, 0, 0);
+};
+
 const resolveDateInput = (date) => {
     if (date instanceof Date) {
         return date;
@@ -190,9 +219,8 @@ export const formatPacificTime = (date) => {
 export const getPacificNow = () => getPacificDate();
 
 const createPacificInstant = (year, month, day, hour = 0, minute = 0, second = 0) => {
-    const utcGuess = Date.UTC(year, month - 1, day, hour, minute, second);
-    const offsetMinutes = parseOffsetMinutes('-08:00') ?? -480;
-    return new Date(utcGuess - offsetMinutes * 60 * 1000);
+    // Create a UTC date directly - in our system, UTC components = Pacific components
+    return new Date(Date.UTC(year, month - 1, day, hour, minute, second));
 };
 
 export const getPacificDateTimeLocalString = (date) => {

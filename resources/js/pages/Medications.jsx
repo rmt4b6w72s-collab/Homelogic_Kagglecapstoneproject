@@ -17,6 +17,7 @@ import {
     formatPacificTimeValue,
     getPacificDayIdentifier,
     getPacificParts,
+    parsePacificDateString,
 } from '../utils/pacificTime';
 import {
     Pill,
@@ -87,9 +88,13 @@ const isMedicationPeriodActiveNow = (medication, referenceDate = getPacificNow()
 
     const buildBoundary = (value, endOfDay = false) => {
         if (!value) return null;
-        const base = getPacificDate(new Date(value));
-        if (Number.isNaN(base.getTime())) return null;
-        const { year, month, day } = getPacificParts(base);
+        // Parse the date string as a Pacific date directly (not through UTC conversion)
+        const base = parsePacificDateString(value);
+        if (!base || Number.isNaN(base.getTime())) return null;
+        // Extract UTC components directly (since parsePacificDateString creates UTC = Pacific)
+        const year = base.getUTCFullYear();
+        const month = base.getUTCMonth() + 1;
+        const day = base.getUTCDate();
         if (endOfDay) {
             return new Date(Date.UTC(year, month - 1, day, 23, 59, 59, 999));
         }
