@@ -43,6 +43,85 @@ class Medication extends Model
         'time_4' => 'string',
     ];
 
+    /**
+     * Serialize dates to YYYY-MM-DD format to prevent timezone shifts
+     */
+    protected function serializeDate(\DateTimeInterface $date)
+    {
+        return $date->format('Y-m-d');
+    }
+
+    // Mutators to ensure dates are stored correctly (as date-only, no time component)
+    // This prevents timezone shifts when dates are sent as YYYY-MM-DD strings
+    public function setStartDateAttribute($value)
+    {
+        if ($value) {
+            // If it's already a date string in YYYY-MM-DD format, use it directly
+            if (is_string($value) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $value)) {
+                // Store directly as string to avoid any Carbon timezone conversion
+                $this->attributes['start_date'] = $value;
+            } else {
+                // Parse the date and extract date part only (treat as date in app timezone)
+                try {
+                    $date = \Carbon\Carbon::createFromFormat('Y-m-d', is_string($value) ? substr($value, 0, 10) : $value, config('app.timezone'));
+                    $this->attributes['start_date'] = $date->format('Y-m-d');
+                } catch (\Exception $e) {
+                    // Fallback: parse and format
+                    $parsed = \Carbon\Carbon::parse($value)->setTimezone(config('app.timezone'));
+                    $this->attributes['start_date'] = $parsed->format('Y-m-d');
+                }
+            }
+        } else {
+            $this->attributes['start_date'] = $value;
+        }
+    }
+
+    public function setEndDateAttribute($value)
+    {
+        if ($value) {
+            // If it's already a date string in YYYY-MM-DD format, use it directly
+            if (is_string($value) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $value)) {
+                // Store directly as string to avoid any Carbon timezone conversion
+                $this->attributes['end_date'] = $value;
+            } else {
+                // Parse the date and extract date part only (treat as date in app timezone)
+                try {
+                    $date = \Carbon\Carbon::createFromFormat('Y-m-d', is_string($value) ? substr($value, 0, 10) : $value, config('app.timezone'));
+                    $this->attributes['end_date'] = $date->format('Y-m-d');
+                } catch (\Exception $e) {
+                    // Fallback: parse and format
+                    $parsed = \Carbon\Carbon::parse($value)->setTimezone(config('app.timezone'));
+                    $this->attributes['end_date'] = $parsed->format('Y-m-d');
+                }
+            }
+        } else {
+            $this->attributes['end_date'] = $value;
+        }
+    }
+
+    public function setPrescriptionDateAttribute($value)
+    {
+        if ($value) {
+            // If it's already a date string in YYYY-MM-DD format, use it directly
+            if (is_string($value) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $value)) {
+                // Store directly as string to avoid any Carbon timezone conversion
+                $this->attributes['prescription_date'] = $value;
+            } else {
+                // Parse the date and extract date part only (treat as date in app timezone)
+                try {
+                    $date = \Carbon\Carbon::createFromFormat('Y-m-d', is_string($value) ? substr($value, 0, 10) : $value, config('app.timezone'));
+                    $this->attributes['prescription_date'] = $date->format('Y-m-d');
+                } catch (\Exception $e) {
+                    // Fallback: parse and format
+                    $parsed = \Carbon\Carbon::parse($value)->setTimezone(config('app.timezone'));
+                    $this->attributes['prescription_date'] = $parsed->format('Y-m-d');
+                }
+            }
+        } else {
+            $this->attributes['prescription_date'] = $value;
+        }
+    }
+
     // Relationships
     public function resident()
     {
@@ -79,6 +158,7 @@ class Medication extends Model
     {
         return $query->where('resident_id', $residentId);
     }
+
 
     // Accessors
     public function getInstructionDisplayAttribute()

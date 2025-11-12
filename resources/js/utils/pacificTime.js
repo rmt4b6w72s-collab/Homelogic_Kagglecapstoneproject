@@ -139,6 +139,16 @@ export const getPacificStartOfDay = (date) => {
 };
 
 export const getPacificISODate = (date) => {
+    // If no date provided and we have a server reference, extract directly
+    if (!date && pacificServerReference && pacificReferencePerformance !== null) {
+        const referenceDate = getReferenceDate();
+        const year = referenceDate.getUTCFullYear();
+        const month = referenceDate.getUTCMonth() + 1;
+        const day = referenceDate.getUTCDate();
+        return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    }
+    
+    // Otherwise, use getPacificParts
     const { year, month, day } = getPacificParts(date);
     return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 };
@@ -147,16 +157,31 @@ export const getPacificISODate = (date) => {
 export const parsePacificDateString = (dateString) => {
     if (!dateString) return null;
     
-    // If it's already a Date object, use it
+    // If it's already a Date object, extract components directly
     if (dateString instanceof Date) {
-        return getPacificDate(dateString);
+        if (Number.isNaN(dateString.getTime())) return null;
+        // Extract UTC components and treat as Pacific (no conversion)
+        const year = dateString.getUTCFullYear();
+        const month = dateString.getUTCMonth() + 1;
+        const day = dateString.getUTCDate();
+        return createPacificInstant(year, month, day, 0, 0, 0);
     }
     
-    // Parse YYYY-MM-DD format
+    // Handle string formats
+    if (typeof dateString !== 'string') {
+        return null;
+    }
+    
+    // Parse YYYY-MM-DD format (may have time part like "2025-12-12T00:00:00.000000Z")
     const match = dateString.match(/^(\d{4})-(\d{2})-(\d{2})/);
     if (!match) {
-        // Fallback to regular parsing
-        return getPacificDate(new Date(dateString));
+        // Try parsing as full date string and extract date part
+        const parsed = new Date(dateString);
+        if (Number.isNaN(parsed.getTime())) return null;
+        const year = parsed.getUTCFullYear();
+        const month = parsed.getUTCMonth() + 1;
+        const day = parsed.getUTCDate();
+        return createPacificInstant(year, month, day, 0, 0, 0);
     }
     
     const [, yearStr, monthStr, dayStr] = match;
@@ -279,8 +304,51 @@ export const toPacificDateFromTime = (timeValue, { referenceDate, dayOffset = 0 
 };
 
 export const formatPacificTimeValue = (timeValue) => {
+    if (!timeValue) return null;
+    
+    // If it's a time string like "03:00:00" or "03:00", parse it directly
+    if (typeof timeValue === 'string') {
+        // Try to match time pattern at the start or extract from datetime string
+        // Pattern 1: Simple time "03:00" or "03:00:00"
+        // Pattern 2: Time in datetime string "2025-11-12T03:00:00" - extract time part
+        let timeMatch = timeValue.match(/^(\d{1,2}):(\d{2})(?::\d{2})?/);
+        if (!timeMatch && timeValue.includes('T')) {
+            // Try to extract time from ISO datetime string
+            const timePart = timeValue.split('T')[1];
+            if (timePart) {
+                timeMatch = timePart.match(/^(\d{1,2}):(\d{2})(?::\d{2})?/);
+            }
+        }
+        
+        if (timeMatch) {
+            const [, hoursStr, minutesStr] = timeMatch;
+            const hours = Number(hoursStr);
+            const minutes = Number(minutesStr);
+            if (!Number.isNaN(hours) && !Number.isNaN(minutes) && hours >= 0 && hours < 24 && minutes >= 0 && minutes < 60) {
+                // Format directly without timezone conversion
+                const hour12 = hours % 12 || 12;
+                const ampm = hours < 12 ? 'AM' : 'PM';
+                const minutesPadded = String(minutes).padStart(2, '0');
+                return `${hour12}:${minutesPadded} ${ampm}`;
+            }
+        }
+    }
+    
+    // Fallback to the original method for datetime strings
     const pacificDate = toPacificDateFromTime(timeValue);
-    return pacificDate ? formatPacificTime(pacificDate) : null;
+    if (!pacificDate) return null;
+    
+    // If we have a server reference, format directly from UTC components (no conversion)
+    if (pacificServerReference && pacificReferencePerformance !== null) {
+        const hours = pacificDate.getUTCHours();
+        const minutes = pacificDate.getUTCMinutes();
+        const hour12 = hours % 12 || 12;
+        const ampm = hours < 12 ? 'AM' : 'PM';
+        const minutesPadded = String(minutes).padStart(2, '0');
+        return `${hour12}:${minutesPadded} ${ampm}`;
+    }
+    
+    return formatPacificTime(pacificDate);
 };
 
 export const getPacificDayIdentifier = (date) => {
