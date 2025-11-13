@@ -1312,7 +1312,7 @@ function MedicationTimeBadges({ medication }) {
     const formatTime = (timeValue) => formatPacificTimeValue(timeValue);
 
     // Fetch today's administrations for this medication
-    const { data: todayAdminData } = useQuery({
+    const { data: todayAdminData, refetch: refetchTodayAdmins } = useQuery({
         queryKey: ['medication-administrations-today', medication.id],
         queryFn: async () => {
             const today = getPacificISODate();
@@ -1343,6 +1343,9 @@ function MedicationTimeBadges({ medication }) {
 
     const getTimeStatus = (timeValue) => {
         if (!timeValue) return null;
+        
+        // Debug: Log when getTimeStatus is called
+        console.log('getTimeStatus called for', timeValue, 'with', todayAdminData?.data?.length || 0, 'administrations');
 
         const now = getPacificNow();
         
@@ -1357,44 +1360,110 @@ function MedicationTimeBadges({ medication }) {
         const windowAfterMinutes = 60;
         const windowAfterMs = windowAfterMinutes * 60 * 1000;
         
-        // Tolerance for matching administrations (30 minutes)
-        const toleranceMinutes = 30;
+        // Tolerance for matching administrations (60 minutes to match the administration window)
+        // This ensures administrations within the 60-minute window are matched correctly
+        const toleranceMinutes = 60;
         const toleranceMs = toleranceMinutes * 60 * 1000;
 
-        // Check if there's a matching administration within tolerance for today's scheduled time
-        const matchingAdmin = todayAdminData?.data?.find((admin) => {
-            // Parse the administered_at time - it comes from the API as an ISO string
-            // The API stores it in Pacific timezone, but Laravel serializes it as UTC
-            // So we need to parse it correctly
-            const adminTime = getPacificDate(new Date(admin.administered_at));
-            
-            // Check against both today and yesterday's scheduled times
-            const matchToday = scheduledTimeToday && Math.abs(adminTime.getTime() - scheduledTimeToday.getTime()) <= toleranceMs;
-            const matchYesterday = scheduledTimeYesterday && Math.abs(adminTime.getTime() - scheduledTimeYesterday.getTime()) <= toleranceMs;
-            
-            // Debug logging
-            if (matchToday || matchYesterday) {
-                console.log('Found matching administration:', {
+        // Find the administration that matches this scheduled time
+        // We need to check all administrations and find the one closest to this scheduled time
+        let matchingAdmin = null;
+        let closestTimeDiff = Infinity;
+        
+        if (todayAdminData?.data && scheduledTimeToday) {
+            todayAdminData.data.forEach((admin) => {
+                // Parse the administered_at time - Laravel returns it as UTC ISO string
+                // The backend stores it in Pacific timezone, but Laravel serializes as UTC
+                // We need to convert the UTC time back to Pacific for comparison
+                const adminTimeRaw = new Date(admin.administered_at);
+                
+                // Convert UTC time to Pacific time components
+                // Laravel stores Pacific time but serializes as UTC, so we need to extract Pacific components
+                const pacificFormatter = new Intl.DateTimeFormat('en-US', {
+                    timeZone: 'America/Los_Angeles',
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                    hour12: false,
+                });
+                
+                const parts = pacificFormatter.formatToParts(adminTimeRaw);
+                const partsMap = {};
+                parts.forEach(({ type, value }) => {
+                    if (type !== 'literal') {
+                        partsMap[type] = parseInt(value, 10);
+                    }
+                });
+                
+                // Create a date where UTC components = Pacific components (for comparison with scheduledTimeToday)
+                const adminTime = new Date(Date.UTC(
+                    partsMap.year,
+                    partsMap.month - 1,
+                    partsMap.day,
+                    partsMap.hour,
+                    partsMap.minute,
+                    partsMap.second || 0
+                ));
+                
+                // Check against both today and yesterday's scheduled times
+                const timeDiffToday = scheduledTimeToday ? Math.abs(adminTime.getTime() - scheduledTimeToday.getTime()) : Infinity;
+                const timeDiffYesterday = scheduledTimeYesterday ? Math.abs(adminTime.getTime() - scheduledTimeYesterday.getTime()) : Infinity;
+                const minTimeDiff = Math.min(timeDiffToday, timeDiffYesterday);
+                
+                // Check if within tolerance and is the closest match so far
+                if (minTimeDiff <= toleranceMs && minTimeDiff < closestTimeDiff) {
+                    matchingAdmin = admin;
+                    closestTimeDiff = minTimeDiff;
+                }
+                
+                // Debug logging
+                console.log('Checking administration match:', {
                     timeValue,
                     adminId: admin.id,
                     adminStatus: admin.status,
-                    adminAdministeredAt: admin.administered_at,
+                    adminAdministeredAtRaw: admin.administered_at,
+                    adminTimeRawISO: adminTimeRaw.toISOString(),
                     adminTimeISO: adminTime.toISOString(),
                     adminTimeFormatted: formatPacificTime(adminTime),
                     scheduledTimeTodayISO: scheduledTimeToday?.toISOString(),
                     scheduledTimeTodayFormatted: scheduledTimeToday ? formatPacificTime(scheduledTimeToday) : null,
-                    matchToday,
-                    matchYesterday,
-                    timeDiff: scheduledTimeToday ? Math.abs(adminTime.getTime() - scheduledTimeToday.getTime()) / (60 * 1000) + ' minutes' : null,
+                    scheduledTimeYesterdayISO: scheduledTimeYesterday?.toISOString(),
+                    scheduledTimeYesterdayFormatted: scheduledTimeYesterday ? formatPacificTime(scheduledTimeYesterday) : null,
+                    timeDiffTodayMinutes: scheduledTimeToday ? (timeDiffToday / (60 * 1000)).toFixed(2) : null,
+                    timeDiffYesterdayMinutes: scheduledTimeYesterday ? (timeDiffYesterday / (60 * 1000)).toFixed(2) : null,
+                    minTimeDiffMinutes: (minTimeDiff / (60 * 1000)).toFixed(2),
+                    toleranceMinutes,
+                    withinTolerance: minTimeDiff <= toleranceMs,
+                    isClosest: minTimeDiff < closestTimeDiff,
                 });
-            }
-            
-            return matchToday || matchYesterday;
-        });
+            });
+        }
+        
+        // Debug: Log the final result with clear markers
+        if (todayAdminData?.data && todayAdminData.data.length > 0) {
+            console.log('🔍 FINAL MATCHING RESULT for', timeValue, ':', {
+                matchingAdmin: matchingAdmin ? {
+                    id: matchingAdmin.id,
+                    status: matchingAdmin.status,
+                    administered_at: matchingAdmin.administered_at,
+                } : '❌ NO MATCH FOUND',
+                closestTimeDiffMinutes: closestTimeDiff !== Infinity ? (closestTimeDiff / (60 * 1000)).toFixed(2) + ' minutes' : 'N/A',
+                totalAdministrations: todayAdminData.data.length,
+                scheduledTime: scheduledTimeToday ? formatPacificTime(scheduledTimeToday) : 'N/A',
+            });
+        } else {
+            console.log('⚠️ NO ADMINISTRATIONS FOUND for', timeValue, '- todayAdminData is empty or undefined');
+        }
 
         if (matchingAdmin) {
+            console.log('✅ RETURNING STATUS:', matchingAdmin.status, 'for', timeValue);
             return matchingAdmin.status;
         }
+        
+        console.log('❌ NO MATCH - returning null for', timeValue);
 
         // Only mark as missed if today's scheduled time has passed and its window has closed
         // Don't mark future times as missed
@@ -1959,9 +2028,19 @@ function QuickAdminister({ medication, onSuccess }) {
                                             dosage_given: trimmedDosage,
                                             notes: finalNotes,
                                         });
-                                        queryClient.invalidateQueries(['medication-administrations']);
-                                        queryClient.invalidateQueries(['medication-administrations-today', medication.id]);
-                                        queryClient.invalidateQueries(['medication-administrations-today-check', medication.id]);
+                                        
+                                        // Invalidate and refetch queries to update the UI immediately
+                                        console.log('🔄 Invalidating and refetching queries after administration...');
+                                        await Promise.all([
+                                            queryClient.invalidateQueries(['medication-administrations']),
+                                            queryClient.invalidateQueries(['medication-administrations-today', medication.id]),
+                                            queryClient.invalidateQueries(['medication-administrations-today-check', medication.id]),
+                                        ]);
+                                        console.log('✅ Queries invalidated, waiting for refetch...');
+                                        // Force refetch
+                                        await queryClient.refetchQueries(['medication-administrations-today', medication.id]);
+                                        console.log('✅ Refetch completed');
+                                        
                                         const statusLabel = status.charAt(0).toUpperCase() + status.slice(1);
                                         const successText = isLateMode
                                             ? `Late administration (${statusLabel}) recorded successfully.`
