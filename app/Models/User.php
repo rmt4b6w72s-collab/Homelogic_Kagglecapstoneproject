@@ -98,11 +98,14 @@ class User extends Authenticatable implements FilamentUser
      */
     public function getProfileImageUrlAttribute()
     {
-        if (!$this->attributes['profile_image'] ?? null) {
+        // Use null coalescing with explicit parentheses to avoid PHP notices
+        // when the key isn't selected in lightweight queries (e.g., select id,name).
+        $raw = ($this->attributes['profile_image'] ?? null);
+        if (!$raw) {
             return null;
         }
 
-        $value = $this->attributes['profile_image'];
+        $value = $raw;
 
         // If already a full URL, return as is
         if (filter_var($value, FILTER_VALIDATE_URL)) {
