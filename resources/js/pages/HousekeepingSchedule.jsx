@@ -293,17 +293,17 @@ const closeAssignmentModal = () => {
                                                     {[area.shift_label, area.location].filter(Boolean).join(' • ') || 'On-site'}
                                                 </p>
                                             </button>
-                                            <div className="flex items-center gap-1">
+                                            <div className="flex items-center gap-2">
                                                 <button
                                                     type="button"
                                                     onClick={() => {
                                                         setEditingArea(area);
                                                         setIsAreaModalOpen(true);
                                                     }}
-                                                    className="inline-flex items-center gap-1 rounded-lg border border-gray-200 px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50"
+                                                    className="inline-flex items-center rounded-lg border border-gray-200 p-2 text-gray-700 hover:bg-gray-50"
+                                                    aria-label="Edit area"
                                                 >
-                                                    <Edit3 className="h-3 w-3" />
-                                                    Edit
+                                                    <Edit3 className="h-5 w-5" />
                                                 </button>
                                                 <button
                                                     type="button"
@@ -321,10 +321,10 @@ const closeAssignmentModal = () => {
                                                             window.alert(err?.response?.data?.message || err.message);
                                                         }
                                                     }}
-                                                    className="inline-flex items-center gap-1 rounded-lg border border-red-200 px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-50"
+                                                    className="inline-flex items-center rounded-lg border border-red-200 p-2 text-red-600 hover:bg-red-50"
+                                                    aria-label="Delete area"
                                                 >
-                                                    <Trash2 className="h-3 w-3" />
-                                                    Delete
+                                                    <Trash2 className="h-5 w-5" />
                                                 </button>
                                             </div>
                                         </div>
