@@ -16,15 +16,15 @@ class HousekeepingSeeder extends Seeder
     {
         $this->command?->info('🏠 Starting housekeeping seeder...');
         
-        $branch = Branch::first();
+        $branches = Branch::all();
 
-        if (!$branch) {
+        if ($branches->isEmpty()) {
             $this->command?->error('❌ No branches found. Skipping housekeeping seeder.');
-            $this->command?->warn('Please create a branch first, then run this seeder again.');
+            $this->command?->warn('Please create at least one branch first, then run this seeder again.');
             return;
         }
 
-        $this->command?->info("📍 Using branch: {$branch->name} (ID: {$branch->id})");
+        $this->command?->info("📍 Found {$branches->count()} branch(es). Seeding housekeeping data for each.");
 
         $areas = [
             [
@@ -146,47 +146,51 @@ class HousekeepingSeeder extends Seeder
         $areaCount = 0;
         $taskCount = 0;
 
-        foreach ($areas as $areaData) {
-            $tasks = $areaData['tasks'] ?? [];
-            unset($areaData['tasks']);
+        foreach ($branches as $branch) {
+            $this->command?->info("➡️  Seeding housekeeping data for branch: {$branch->name} (ID: {$branch->id})");
 
-            $this->command?->info("  Creating area: {$areaData['name']}");
+            foreach ($areas as $areaData) {
+                $tasks = $areaData['tasks'] ?? [];
+                unset($areaData['tasks']);
 
-            $area = CleaningArea::updateOrCreate(
-                [
-                    'branch_id' => $branch->id,
-                    'name' => $areaData['name'],
-                ],
-                array_merge($areaData, [
-                    'branch_id' => $branch->id,
-                    'is_active' => true,
-                ])
-            );
+                $this->command?->info("  • Creating area: {$areaData['name']}");
 
-            $areaCount++;
-
-            foreach ($tasks as $taskData) {
-                CleaningTask::updateOrCreate(
+                $area = CleaningArea::updateOrCreate(
                     [
-                        'cleaning_area_id' => $area->id,
-                        'title' => $taskData['title'],
+                        'branch_id' => $branch->id,
+                        'name' => $areaData['name'],
                     ],
-                    [
-                        'cleaning_area_id' => $area->id,
-                        'instructions' => $taskData['instructions'] ?? null,
-                        'frequency' => $taskData['frequency'] ?? 'daily',
-                        'days_of_week' => isset($taskData['days_of_week']) ? json_encode($taskData['days_of_week']) : null,
-                        'is_required' => $taskData['is_required'] ?? false,
-                        'display_order' => $taskData['display_order'] ?? 0,
-                        'estimated_minutes' => $taskData['estimated_minutes'] ?? null,
+                    array_merge($areaData, [
+                        'branch_id' => $branch->id,
                         'is_active' => true,
-                    ]
+                    ])
                 );
-                $taskCount++;
+
+                $areaCount++;
+
+                foreach ($tasks as $taskData) {
+                    CleaningTask::updateOrCreate(
+                        [
+                            'cleaning_area_id' => $area->id,
+                            'title' => $taskData['title'],
+                        ],
+                        [
+                            'cleaning_area_id' => $area->id,
+                            'instructions' => $taskData['instructions'] ?? null,
+                            'frequency' => $taskData['frequency'] ?? 'daily',
+                            'days_of_week' => isset($taskData['days_of_week']) ? json_encode($taskData['days_of_week']) : null,
+                            'is_required' => $taskData['is_required'] ?? false,
+                            'display_order' => $taskData['display_order'] ?? 0,
+                            'estimated_minutes' => $taskData['estimated_minutes'] ?? null,
+                            'is_active' => true,
+                        ]
+                    );
+                    $taskCount++;
+                }
             }
         }
 
-        $this->command?->info("✅ Housekeeping seeder completed successfully!");
-        $this->command?->info("   Created/updated {$areaCount} areas and {$taskCount} tasks.");
+        $this->command?->info("✅ Housekeeping seeder completed successfully for all branches!");
+        $this->command?->info("   Created/updated {$areaCount} areas and {$taskCount} tasks across {$branches->count()} branch(es).");
     }
 }
