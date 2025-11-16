@@ -227,12 +227,18 @@ export default function MyResidentsPage() {
                             <dd className="mt-3 text-2xl font-semibold text-white">{value}</dd>
                         </div>
                     ))}
+                    {branchName ? (
+                        <div className="rounded-2xl border border-white/10 bg-white/15 p-4 shadow-sm backdrop-blur transition hover:bg-white/20">
+                            <div className="flex items-center justify-between">
+                                <dt className="text-sm font-medium text-emerald-50">Branch</dt>
+                                <span className="rounded-full bg-white/20 p-2">
+                                    <MapPin className="h-4 w-4 text-white" />
+                                </span>
+                            </div>
+                            <dd className="mt-3 text-xl font-semibold text-white">{branchName}</dd>
+                        </div>
+                    ) : null}
                 </div>
-                {branchName ? (
-                    <p className="mt-3 text-sm text-emerald-100">
-                        Branch: <span className="font-semibold text-white">{branchName}</span>
-                    </p>
-                ) : null}
             </header>
 
             <section className="rounded-2xl bg-white p-6 shadow-sm">
