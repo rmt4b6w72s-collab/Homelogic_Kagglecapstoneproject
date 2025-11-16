@@ -321,7 +321,7 @@ const closeAssignmentModal = () => {
                                                             window.alert(err?.response?.data?.message || err.message);
                                                         }
                                                     }}
-                                                    className="inline-flex items-center rounded-lg border border-red-200 p-2 text-red-600 hover:bg-red-50"
+                                                    className="inline-flex items-center rounded-lg border border-emerald-200 p-2 text-emerald-600 hover:bg-emerald-50"
                                                     aria-label="Delete area"
                                                 >
                                                     <Trash2 className="h-5 w-5" />
@@ -455,7 +455,7 @@ const closeAssignmentModal = () => {
                                                         }
                                                     }
                                                 }}
-                                                className="inline-flex items-center gap-1 rounded-lg border border-red-200 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
+                                                className="inline-flex items-center gap-1 rounded-lg border border-emerald-200 px-3 py-2 text-sm font-medium text-emerald-600 hover:bg-emerald-50"
                                             >
                                                 <Trash2 className="h-4 w-4" />
                                                 Delete
@@ -1021,7 +1021,7 @@ function AssignmentModal({ task, date, caregivers, onAssign, onRemove, isSaving,
                                                 await onRemove(id);
                                             }}
                                             disabled={isSaving}
-                                            className="rounded-lg border border-red-200 px-3 py-1 text-xs font-semibold text-red-600 hover:bg-red-50 disabled:cursor-not-allowed"
+                                            className="rounded-lg border border-emerald-200 px-3 py-1 text-xs font-semibold text-emerald-600 hover:bg-emerald-50 disabled:cursor-not-allowed"
                                         >
                                             Remove
                                         </button>
