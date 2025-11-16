@@ -149,7 +149,7 @@ class HousekeepingSeeder extends Seeder
                 ],
                 array_merge($areaData, [
                     'branch_id' => $branch->id,
-                    'is_active' => $areaData['is_active'] ?? true,
+                    'is_active' => true,
                 ])
             );
 
@@ -159,16 +159,16 @@ class HousekeepingSeeder extends Seeder
                         'cleaning_area_id' => $area->id,
                         'title' => $taskData['title'],
                     ],
-                    array_merge([
+                    [
                         'cleaning_area_id' => $area->id,
                         'instructions' => $taskData['instructions'] ?? null,
                         'frequency' => $taskData['frequency'] ?? 'daily',
-                        'days_of_week' => $taskData['days_of_week'] ?? null,
-                        'is_required' => $taskData['is_required'] ?? true,
+                        'days_of_week' => isset($taskData['days_of_week']) ? json_encode($taskData['days_of_week']) : null,
+                        'is_required' => $taskData['is_required'] ?? false,
                         'display_order' => $taskData['display_order'] ?? 0,
                         'estimated_minutes' => $taskData['estimated_minutes'] ?? null,
-                        'is_active' => $taskData['is_active'] ?? true,
-                    ])
+                        'is_active' => true,
+                    ]
                 );
             }
         }
