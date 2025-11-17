@@ -174,6 +174,7 @@ class HousekeepingReportController extends Controller
                 ] : null,
                 'initials' => $log->initials,
                 'completed_at' => $log->completed_at ? $log->completed_at->toDateTimeString() : null,
+                'skipped_at' => $log->status === 'skipped' && $log->updated_at ? $log->updated_at->toDateTimeString() : null,
                 'notes' => $log->notes,
             ];
         });

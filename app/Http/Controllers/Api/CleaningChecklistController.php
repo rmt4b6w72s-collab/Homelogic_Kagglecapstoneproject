@@ -128,6 +128,7 @@ class CleaningChecklistController extends Controller
                 'initials' => $initials,
                 'notes' => $data['notes'] ?? null,
                 'completed_at' => $status === 'completed' ? now() : null,
+                'updated_at' => now(), // Ensure updated_at is set for skipped tasks
             ]
         );
 

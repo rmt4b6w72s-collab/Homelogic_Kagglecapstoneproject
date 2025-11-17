@@ -297,7 +297,14 @@ export default function HousekeepingDashboard() {
                                                     )}
                                                 </td>
                                                 <td className="px-4 py-3 text-gray-700">
-                                                    {record.completed_at
+                                                    {record.status === 'skipped' && record.skipped_at
+                                                        ? new Date(record.skipped_at).toLocaleString([], {
+                                                              month: 'short',
+                                                              day: 'numeric',
+                                                              hour: '2-digit',
+                                                              minute: '2-digit',
+                                                          })
+                                                        : record.completed_at
                                                         ? new Date(record.completed_at).toLocaleString([], {
                                                               month: 'short',
                                                               day: 'numeric',
