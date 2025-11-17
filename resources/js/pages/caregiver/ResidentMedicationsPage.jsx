@@ -944,38 +944,125 @@ function QuickAdminister({ medication, onSuccess }) {
                                         return;
                                     }
 
+                                    const lateNoteMarker = '[Late Administration]';
+                                    const trimmedNotes = dosageNotes.trim();
+                                    const finalNotes = isLateMode
+                                        ? `${trimmedNotes ? `${trimmedNotes}\n` : ''}${lateNoteMarker}`
+                                        : trimmedNotes || undefined;
+
+                                    const administeredAt = getPacificISODateTime();
+                                    const statusLabel = status.charAt(0).toUpperCase() + status.slice(1);
+                                    
+                                    // Optimistically update the cache immediately
+                                    const queryKey = ['medication-administrations-today', medication.id];
+                                    const checkQueryKey = ['medication-administrations-today-check', medication.id];
+                                    
+                                    // Get current cache data
+                                    const currentData = queryClient.getQueryData(queryKey);
+                                    const currentCheckData = queryClient.getQueryData(checkQueryKey);
+                                    
+                                    // Create optimistic administration record
+                                    const optimisticAdmin = {
+                                        id: `temp-${Date.now()}`,
+                                        medication_id: medication.id,
+                                        resident_id: medication.resident_id,
+                                        branch_id: medication.branch_id,
+                                        administered_at: administeredAt,
+                                        status,
+                                        dosage_given: trimmedDosage,
+                                        notes: finalNotes,
+                                        created_at: administeredAt,
+                                        updated_at: administeredAt,
+                                    };
+                                    
+                                    // Optimistically update cache
+                                    queryClient.setQueryData(queryKey, (old) => {
+                                        if (!old) {
+                                            return {
+                                                data: [optimisticAdmin],
+                                                total: 1,
+                                            };
+                                        }
+                                        return {
+                                            ...old,
+                                            data: [...(old.data || []), optimisticAdmin],
+                                            total: (old.total || 0) + 1,
+                                        };
+                                    });
+                                    
+                                    queryClient.setQueryData(checkQueryKey, (old) => {
+                                        if (!old) {
+                                            return {
+                                                data: [optimisticAdmin],
+                                                total: 1,
+                                            };
+                                        }
+                                        return {
+                                            ...old,
+                                            data: [...(old.data || []), optimisticAdmin],
+                                            total: (old.total || 0) + 1,
+                                        };
+                                    });
+                                    
+                                    // Close modal immediately
+                                    closeDosageModal();
+                                    checkTimeWindow();
+                                    
+                                    // Show success message
+                                    const successText = isLateMode
+                                        ? `Late administration (${statusLabel}) recorded successfully.`
+                                        : `Medication ${statusLabel} recorded successfully.`;
+                                    setSuccessMessage(successText);
+                                    
+                                    // Make API call in background
                                     try {
                                         setSubmitting(true);
                                         setError('');
-                                        const lateNoteMarker = '[Late Administration]';
-                                        const trimmedNotes = dosageNotes.trim();
-                                        const finalNotes = isLateMode
-                                            ? `${trimmedNotes ? `${trimmedNotes}\n` : ''}${lateNoteMarker}`
-                                            : trimmedNotes || undefined;
-
-                                        await api.post('/medication-administrations', {
+                                        
+                                        const response = await api.post('/medication-administrations', {
                                             medication_id: medication.id,
                                             resident_id: medication.resident_id,
                                             branch_id: medication.branch_id,
-                                            administered_at: getPacificISODateTime(),
+                                            administered_at: administeredAt,
                                             status,
                                             dosage_given: trimmedDosage,
                                             notes: finalNotes,
                                         });
+                                        
+                                        // Replace optimistic update with real data
+                                        const realAdmin = response.data?.data || response.data;
+                                        
+                                        queryClient.setQueryData(queryKey, (old) => {
+                                            if (!old) return old;
+                                            const filtered = (old.data || []).filter(a => a.id !== optimisticAdmin.id);
+                                            return {
+                                                ...old,
+                                                data: [...filtered, realAdmin],
+                                            };
+                                        });
+                                        
+                                        queryClient.setQueryData(checkQueryKey, (old) => {
+                                            if (!old) return old;
+                                            const filtered = (old.data || []).filter(a => a.id !== optimisticAdmin.id);
+                                            return {
+                                                ...old,
+                                                data: [...filtered, realAdmin],
+                                            };
+                                        });
+                                        
+                                        // Invalidate other related queries
                                         queryClient.invalidateQueries(['medication-administrations']);
-                                        queryClient.invalidateQueries(['medication-administrations-today', medication.id]);
-                                        queryClient.invalidateQueries(['medication-administrations-today-check', medication.id]);
-                                        const statusLabel = status.charAt(0).toUpperCase() + status.slice(1);
-                                        const successText = isLateMode
-                                            ? `Late administration (${statusLabel}) recorded successfully.`
-                                            : `Medication ${statusLabel} recorded successfully.`;
-                                        setSuccessMessage(successText);
-                                        closeDosageModal();
-                                        checkTimeWindow();
+                                        
                                         onSuccess?.();
                                     } catch (e) {
+                                        // Revert optimistic update on error
+                                        queryClient.setQueryData(queryKey, currentData);
+                                        queryClient.setQueryData(checkQueryKey, currentCheckData);
+                                        
                                         const msg = e?.response?.data?.message || 'Unable to record administration.';
                                         setError(msg);
+                                        // Re-open modal to show error
+                                        setIsDosageModalOpen(true);
                                     } finally {
                                         setSubmitting(false);
                                     }
