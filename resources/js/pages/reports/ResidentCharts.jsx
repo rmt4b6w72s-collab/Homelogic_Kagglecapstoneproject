@@ -3,77 +3,217 @@ import { useQuery } from '@tanstack/react-query';
 import api from '../../services/api';
 import { Bar, Doughnut, Line } from 'react-chartjs-2';
 import { defaultOptions, colors } from '../../utils/chartConfig';
+import { 
+    Users, 
+    RefreshCcw,
+    Download,
+    Building2,
+    CheckCircle2,
+    UserCheck,
+    BarChart3,
+    PieChart,
+    TrendingUp
+} from 'lucide-react';
 
 export default function ResidentCharts() {
-    const { data, isLoading } = useQuery({
+    const { data, isLoading, refetch } = useQuery({
         queryKey: ['charts-residents'],
         queryFn: async () => (await api.get('/charts/residents')).data,
     });
 
+    const handleExport = () => {
+        if (!data) return;
+        let csv = 'Category,Value\n';
+        csv += `Total Residents,${data.total_residents || 0}\n`;
+        csv += `Active Residents,${data.active_residents || 0}\n`;
+        if (data.by_branch) {
+            data.by_branch.forEach(b => {
+                csv += `${b.branch_name},${b.count}\n`;
+            });
+        }
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'resident-charts.csv';
+        a.click();
+        window.URL.revokeObjectURL(url);
+    };
+
     if (isLoading) {
         return (
-            <div className="text-center py-12">
-                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#25603E]"></div>
-                <p className="mt-4 text-gray-600">Loading resident charts...</p>
+            <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+                <div className="max-w-7xl mx-auto px-4 py-8">
+                    <div className="text-center py-12">
+                        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#25603E]"></div>
+                        <p className="mt-4 text-gray-600">Loading resident charts...</p>
+                    </div>
+                </div>
             </div>
         );
     }
 
     return (
-        <div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                <div className="bg-white rounded-lg shadow p-6">
-                    <h2 className="text-xl font-semibold text-gray-900 mb-4">Residents by Branch</h2>
-                    <div className="h-64">
-                        {data?.by_branch?.length ? (
-                            <Bar
-                                data={{
-                                    labels: data.by_branch.map(b => b.branch_name),
-                                    datasets: [{
-                                        label: 'Residents',
-                                        data: data.by_branch.map(b => b.count),
-                                        backgroundColor: [colors.primary, colors.info, colors.success, colors.warning, colors.danger],
-                                    }],
-                                }}
-                                options={defaultOptions}
-                            />
-                        ) : (
-                            <div className="h-64 flex items-center justify-center text-gray-500">No data available</div>
-                        )}
+        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+            <div className="max-w-7xl mx-auto px-4 py-8">
+                {/* Header */}
+                <div className="mb-8">
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+                        <div>
+                            <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+                                <Users className="h-8 w-8 text-emerald-600" />
+                                Resident Analytics Dashboard
+                            </h1>
+                            <p className="mt-2 text-gray-600">Comprehensive resident statistics and distribution</p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <button
+                                onClick={handleExport}
+                                className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition"
+                            >
+                                <Download className="h-4 w-4" />
+                                Export
+                            </button>
+                            <button
+                                onClick={() => refetch()}
+                                className="inline-flex items-center gap-2 px-4 py-2 bg-[#25603E] text-white rounded-lg text-sm font-medium hover:bg-[#1B402D] transition"
+                            >
+                                <RefreshCcw className="h-4 w-4" />
+                                Refresh
+                            </button>
+                        </div>
                     </div>
                 </div>
 
-                <div className="bg-white rounded-lg shadow p-6">
-                    <h2 className="text-xl font-semibold text-gray-900 mb-4">Residents by Status</h2>
-                    <div className="h-64">
-                        {data?.by_status?.length ? (
-                            <Doughnut
-                                data={{
-                                    labels: data.by_status.map(s => s.status || 'Unknown'),
-                                    datasets: [{
-                                        data: data.by_status.map(s => s.count),
-                                        backgroundColor: [colors.primary, colors.success, colors.warning, colors.danger],
-                                    }],
-                                }}
-                                options={defaultOptions}
-                            />
-                        ) : (
-                            <div className="h-64 flex items-center justify-center text-gray-500">No data available</div>
-                        )}
+                {/* Statistics Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-gray-600 text-sm font-medium">Total Residents</p>
+                                <p className="text-3xl font-bold text-gray-900 mt-2">{data?.total_residents || 0}</p>
+                            </div>
+                            <div className="p-3 bg-emerald-50 rounded-lg">
+                                <Users className="h-6 w-6 text-emerald-600" />
+                            </div>
+                        </div>
+                    </div>
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-gray-600 text-sm font-medium">Active Residents</p>
+                                <p className="text-3xl font-bold text-gray-900 mt-2">{data?.active_residents || 0}</p>
+                            </div>
+                            <div className="p-3 bg-blue-50 rounded-lg">
+                                <CheckCircle2 className="h-6 w-6 text-blue-600" />
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <div className="bg-white rounded-lg shadow p-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">Summary Statistics</h2>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="text-center">
-                        <p className="text-3xl font-bold text-gray-900">{data?.total_residents || 0}</p>
-                        <p className="text-sm text-gray-600 mt-1">Total Residents</p>
+                {/* Charts Grid */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                    {/* Residents by Branch */}
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <div className="flex items-center justify-between mb-4">
+                            <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+                                <Building2 className="h-5 w-5 text-emerald-600" />
+                                Residents by Branch
+                            </h2>
+                        </div>
+                        <div className="h-80">
+                            {data?.by_branch?.length ? (
+                                <Bar
+                                    data={{
+                                        labels: data.by_branch.map(b => b.branch_name),
+                                        datasets: [{
+                                            label: 'Residents',
+                                            data: data.by_branch.map(b => b.count),
+                                            backgroundColor: [
+                                                colors.primary + '80',
+                                                colors.info + '80',
+                                                colors.success + '80',
+                                                colors.warning + '80',
+                                                colors.danger + '80',
+                                            ],
+                                            borderColor: [
+                                                colors.primary,
+                                                colors.info,
+                                                colors.success,
+                                                colors.warning,
+                                                colors.danger,
+                                            ],
+                                            borderWidth: 2,
+                                        }],
+                                    }}
+                                    options={{
+                                        ...defaultOptions,
+                                        scales: {
+                                            y: {
+                                                beginAtZero: true,
+                                                title: {
+                                                    display: true,
+                                                    text: 'Number of Residents'
+                                                }
+                                            }
+                                        }
+                                    }}
+                                />
+                            ) : (
+                                <div className="h-80 flex items-center justify-center text-gray-500">
+                                    <div className="text-center">
+                                        <Building2 className="h-12 w-12 text-gray-300 mx-auto mb-2" />
+                                        <p>No data available</p>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                     </div>
-                    <div className="text-center">
-                        <p className="text-3xl font-bold text-gray-900">{data?.active_residents || 0}</p>
-                        <p className="text-sm text-gray-600 mt-1">Active Residents</p>
+
+                    {/* Residents by Status */}
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <div className="flex items-center justify-between mb-4">
+                            <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+                                <PieChart className="h-5 w-5 text-purple-600" />
+                                Residents by Status
+                            </h2>
+                        </div>
+                        <div className="h-80">
+                            {data?.by_status?.length ? (
+                                <Doughnut
+                                    data={{
+                                        labels: data.by_status.map(s => s.status || 'Unknown'),
+                                        datasets: [{
+                                            data: data.by_status.map(s => s.count),
+                                            backgroundColor: [
+                                                colors.primary + '80',
+                                                colors.success + '80',
+                                                colors.warning + '80',
+                                                colors.danger + '80',
+                                            ],
+                                            borderColor: [
+                                                colors.primary,
+                                                colors.success,
+                                                colors.warning,
+                                                colors.danger,
+                                            ],
+                                            borderWidth: 2,
+                                        }],
+                                    }}
+                                    options={{
+                                        ...defaultOptions,
+                                        maintainAspectRatio: false,
+                                    }}
+                                />
+                            ) : (
+                                <div className="h-80 flex items-center justify-center text-gray-500">
+                                    <div className="text-center">
+                                        <PieChart className="h-12 w-12 text-gray-300 mx-auto mb-2" />
+                                        <p>No data available</p>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>
