@@ -166,6 +166,20 @@ function LeaveForm({ record, currentUser, isCaregiver, onClose, onSuccess }) {
     e.preventDefault();
     setSubmitting(true);
     setErrors({});
+    
+    // Client-side validation
+    if (!form.start_date || !form.end_date) {
+      setErrors({ general: 'Please select both start and end dates.' });
+      setSubmitting(false);
+      return;
+    }
+    
+    if (!form.reason || form.reason.trim().length < 10) {
+      setErrors({ general: 'Reason must be at least 10 characters long.' });
+      setSubmitting(false);
+      return;
+    }
+    
     try {
       if (record) {
         await api.put(`/leave-requests/${record.id}`, form);
@@ -174,7 +188,13 @@ function LeaveForm({ record, currentUser, isCaregiver, onClose, onSuccess }) {
       }
       onSuccess();
     } catch (e) {
-      setErrors(e.response?.data?.errors || { general: e.response?.data?.message || 'Failed to save request' });
+      console.error('Leave request error:', e);
+      const errorData = e.response?.data;
+      if (errorData?.errors) {
+        setErrors(errorData.errors);
+      } else {
+        setErrors({ general: errorData?.message || 'Failed to save request. Please try again.' });
+      }
     } finally {
       setSubmitting(false);
     }
@@ -188,7 +208,21 @@ function LeaveForm({ record, currentUser, isCaregiver, onClose, onSuccess }) {
             <h2 className="text-2xl font-bold text-gray-900">{record ? 'Edit Leave Request' : 'New Leave Request'}</h2>
             <button onClick={onClose} className="text-gray-400 hover:text-gray-600">×</button>
           </div>
-          {errors.general && <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg"><p className="text-sm text-red-800">{errors.general}</p></div>}
+          {errors.general && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-sm text-red-800 font-medium">{errors.general}</p>
+            </div>
+          )}
+          {Object.keys(errors).filter(key => key !== 'general').length > 0 && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-sm text-red-800 font-medium mb-2">Please fix the following errors:</p>
+              <ul className="list-disc list-inside text-sm text-red-700">
+                {Object.entries(errors).filter(([key]) => key !== 'general').map(([key, value]) => (
+                  <li key={key}>{Array.isArray(value) ? value[0] : value}</li>
+                ))}
+              </ul>
+            </div>
+          )}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
