@@ -20,7 +20,15 @@ import {
     Heart,
     ClipboardList,
     Info,
-    UserCheck
+    UserCheck,
+    Lock,
+    Eye,
+    EyeOff,
+    CheckCircle2,
+    AlertCircle,
+    TrendingUp,
+    FileText,
+    Star
 } from 'lucide-react';
 
 export default function Profile() {
@@ -30,6 +38,19 @@ export default function Profile() {
     const [profileImage, setProfileImage] = useState(null);
     const [profileImagePreview, setProfileImagePreview] = useState(null);
     const [isImageErrored, setIsImageErrored] = useState(false);
+    const [showPasswordChange, setShowPasswordChange] = useState(false);
+    const [passwordData, setPasswordData] = useState({
+        current_password: '',
+        password: '',
+        password_confirmation: ''
+    });
+    const [showPasswords, setShowPasswords] = useState({
+        current: false,
+        new: false,
+        confirm: false
+    });
+    const [successMessage, setSuccessMessage] = useState(null);
+    const [errorMessage, setErrorMessage] = useState(null);
     
     // Get current user from local storage or API
     const { data: user, isLoading, error } = useQuery({
@@ -88,6 +109,37 @@ export default function Profile() {
             queryClient.invalidateQueries(['current-user']);
             setIsEditing(false);
             setProfileImage(null);
+            setSuccessMessage('Profile updated successfully!');
+            setTimeout(() => setSuccessMessage(null), 5000);
+        },
+        onError: (error) => {
+            setErrorMessage(error.response?.data?.message || 'Failed to update profile. Please try again.');
+            setTimeout(() => setErrorMessage(null), 5000);
+        },
+    });
+
+    const passwordMutation = useMutation({
+        mutationFn: async (data) => {
+            const response = await api.put('/v1/user/password', {
+                current_password: data.current_password,
+                password: data.password,
+                password_confirmation: data.password_confirmation
+            });
+            return response.data;
+        },
+        onSuccess: () => {
+            setPasswordData({
+                current_password: '',
+                password: '',
+                password_confirmation: ''
+            });
+            setShowPasswordChange(false);
+            setSuccessMessage('Password changed successfully!');
+            setTimeout(() => setSuccessMessage(null), 5000);
+        },
+        onError: (error) => {
+            setErrorMessage(error.response?.data?.message || 'Failed to change password. Please check your current password.');
+            setTimeout(() => setErrorMessage(null), 5000);
         },
     });
 
@@ -137,6 +189,26 @@ export default function Profile() {
             (user?.profile_image ? `/storage/${user.profile_image}` : null)
         );
         setIsImageErrored(false);
+        setErrorMessage(null);
+        setSuccessMessage(null);
+    };
+
+    const handlePasswordChange = async () => {
+        if (passwordData.password !== passwordData.password_confirmation) {
+            setErrorMessage('New passwords do not match');
+            setTimeout(() => setErrorMessage(null), 5000);
+            return;
+        }
+        if (passwordData.password.length < 8) {
+            setErrorMessage('Password must be at least 8 characters long');
+            setTimeout(() => setErrorMessage(null), 5000);
+            return;
+        }
+        try {
+            await passwordMutation.mutateAsync(passwordData);
+        } catch (error) {
+            // Error handled in mutation
+        }
     };
 
     if (isLoading) {
@@ -178,8 +250,139 @@ export default function Profile() {
         (user.profile_image ? `/storage/${user.profile_image}` : null);
 
     return (
-        <div className="max-w-5xl mx-auto">
-            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4 md:mb-6">My Profile</h1>
+        <div className="max-w-6xl mx-auto">
+            {/* Success/Error Messages */}
+            {successMessage && (
+                <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center gap-3 animate-in slide-in-from-top">
+                    <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" />
+                    <p className="text-sm font-medium text-green-800">{successMessage}</p>
+                    <button
+                        onClick={() => setSuccessMessage(null)}
+                        className="ml-auto text-green-600 hover:text-green-800"
+                    >
+                        <X className="w-4 h-4" />
+                    </button>
+                </div>
+            )}
+            {errorMessage && (
+                <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3 animate-in slide-in-from-top">
+                    <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
+                    <p className="text-sm font-medium text-red-800">{errorMessage}</p>
+                    <button
+                        onClick={() => setErrorMessage(null)}
+                        className="ml-auto text-red-600 hover:text-red-800"
+                    >
+                        <X className="w-4 h-4" />
+                    </button>
+                </div>
+            )}
+
+            <div className="flex items-center justify-between mb-6">
+                <h1 className="text-2xl md:text-3xl font-bold text-gray-900">My Profile</h1>
+                {!isEditing && (
+                    <button
+                        onClick={() => setShowPasswordChange(!showPasswordChange)}
+                        className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                    >
+                        <Lock className="w-4 h-4" />
+                        <span>{showPasswordChange ? 'Cancel Password Change' : 'Change Password'}</span>
+                    </button>
+                )}
+            </div>
+
+            {/* Password Change Section */}
+            {showPasswordChange && !isEditing && (
+                <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden border-l-4 border-l-blue-500 mb-6">
+                    <div className="p-6">
+                        <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
+                            <Lock className="w-5 h-5 mr-2 text-blue-600" />
+                            Change Password
+                        </h3>
+                        <div className="space-y-4 max-w-md">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Current Password</label>
+                                <div className="relative">
+                                    <input
+                                        type={showPasswords.current ? 'text' : 'password'}
+                                        value={passwordData.current_password}
+                                        onChange={(e) => setPasswordData({...passwordData, current_password: e.target.value})}
+                                        className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                        placeholder="Enter current password"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPasswords({...showPasswords, current: !showPasswords.current})}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                    >
+                                        {showPasswords.current ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                    </button>
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+                                <div className="relative">
+                                    <input
+                                        type={showPasswords.new ? 'text' : 'password'}
+                                        value={passwordData.password}
+                                        onChange={(e) => setPasswordData({...passwordData, password: e.target.value})}
+                                        className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                        placeholder="Enter new password (min. 8 characters)"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPasswords({...showPasswords, new: !showPasswords.new})}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                    >
+                                        {showPasswords.new ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                    </button>
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label>
+                                <div className="relative">
+                                    <input
+                                        type={showPasswords.confirm ? 'text' : 'password'}
+                                        value={passwordData.password_confirmation}
+                                        onChange={(e) => setPasswordData({...passwordData, password_confirmation: e.target.value})}
+                                        className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                        placeholder="Confirm new password"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPasswords({...showPasswords, confirm: !showPasswords.confirm})}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                    >
+                                        {showPasswords.confirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                    </button>
+                                </div>
+                            </div>
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={handlePasswordChange}
+                                    disabled={passwordMutation.isLoading}
+                                    className="flex items-center gap-2 px-4 py-2 bg-[#25603E] text-white rounded-lg hover:bg-[#1B402D] transition-colors font-medium disabled:opacity-70 disabled:cursor-not-allowed"
+                                >
+                                    <Lock className="w-4 h-4" />
+                                    <span>{passwordMutation.isLoading ? 'Changing...' : 'Change Password'}</span>
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        setShowPasswordChange(false);
+                                        setPasswordData({
+                                            current_password: '',
+                                            password: '',
+                                            password_confirmation: ''
+                                        });
+                                    }}
+                                    className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+                                >
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Profile Header */}
             <div className="bg-gradient-to-br from-[#25603E] via-[#2f6c3a] to-[#1B402D] rounded-2xl shadow-xl p-6 md:p-8 mb-6 text-white">
@@ -310,9 +513,9 @@ export default function Profile() {
             </div>
 
             {/* Profile Content */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
                 {/* Personal Information */}
-                <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden border-l-4 border-l-[#25603E]">
+                <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden border-l-4 border-l-[#25603E] hover:shadow-xl transition-shadow">
                     <div className="p-6">
                         <h3 className="text-lg font-bold text-[#25603E] mb-4 flex items-center">
                             <UserIcon className="w-5 h-5 mr-2" />
@@ -329,7 +532,7 @@ export default function Profile() {
                 </div>
 
                 {/* Employment Details */}
-                <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden border-l-4 border-l-[#8B4513]">
+                <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden border-l-4 border-l-[#8B4513] hover:shadow-xl transition-shadow">
                     <div className="p-6">
                         <h3 className="text-lg font-bold text-[#25603E] mb-4 flex items-center">
                             <Briefcase className="w-5 h-5 mr-2" />
@@ -346,7 +549,7 @@ export default function Profile() {
                 </div>
 
                 {/* Contact Information */}
-                <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden border-l-4 border-l-[#4a7a2a]">
+                <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden border-l-4 border-l-[#4a7a2a] hover:shadow-xl transition-shadow">
                     <div className="p-6">
                         <h3 className="text-lg font-bold text-[#25603E] mb-4 flex items-center">
                             <Phone className="w-5 h-5 mr-2" />
@@ -363,25 +566,29 @@ export default function Profile() {
                 </div>
 
                 {/* Additional Information */}
-                {user.notes && (
-                    <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden border-l-4 border-l-[#a0522d]">
-                        <div className="p-6">
-                            <h3 className="text-lg font-bold text-[#25603E] mb-4">Additional Notes</h3>
-                            <div className="bg-gray-50 rounded-lg p-4">
-                                {isEditing ? (
-                                    <textarea
-                                        value={editedUser?.notes || ''}
-                                        onChange={(e) => setEditedUser({...editedUser, notes: e.target.value})}
-                                        rows={5}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
-                                    />
-                                ) : (
-                                    <p className="text-gray-700 whitespace-pre-wrap">{user.notes}</p>
-                                )}
-                            </div>
+                <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden border-l-4 border-l-[#a0522d] hover:shadow-xl transition-shadow">
+                    <div className="p-6">
+                        <h3 className="text-lg font-bold text-[#25603E] mb-4 flex items-center">
+                            <FileText className="w-5 h-5 mr-2" />
+                            Additional Notes
+                        </h3>
+                        <div className="bg-gray-50 rounded-lg p-4 min-h-[120px]">
+                            {isEditing ? (
+                                <textarea
+                                    value={editedUser?.notes || ''}
+                                    onChange={(e) => setEditedUser({...editedUser, notes: e.target.value})}
+                                    rows={5}
+                                    placeholder="Add any additional notes or information..."
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent resize-none"
+                                />
+                            ) : (
+                                <p className="text-gray-700 whitespace-pre-wrap">
+                                    {user.notes || <span className="text-gray-400 italic">No additional notes</span>}
+                                </p>
+                            )}
                         </div>
                     </div>
-                )}
+                </div>
             </div>
         </div>
     );
@@ -390,32 +597,32 @@ export default function Profile() {
 // View Components
 function ViewPersonalInfo({ user }) {
     return (
-        <>
+        <div className="space-y-4">
             {user.first_name && (
-                <div>
-                    <p className="text-sm text-gray-600 mb-1">First Name</p>
-                    <p className="font-semibold text-gray-900">{user.first_name}</p>
+                <div className="pb-3 border-b border-gray-100 last:border-0">
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">First Name</p>
+                    <p className="text-base font-semibold text-gray-900">{user.first_name}</p>
                 </div>
             )}
             {user.middle_names && (
-                <div>
-                    <p className="text-sm text-gray-600 mb-1">Middle Names</p>
-                    <p className="font-semibold text-gray-900">{user.middle_names}</p>
+                <div className="pb-3 border-b border-gray-100 last:border-0">
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Middle Names</p>
+                    <p className="text-base font-semibold text-gray-900">{user.middle_names}</p>
                 </div>
             )}
             {user.last_name && (
-                <div>
-                    <p className="text-sm text-gray-600 mb-1">Last Name</p>
-                    <p className="font-semibold text-gray-900">{user.last_name}</p>
+                <div className="pb-3 border-b border-gray-100 last:border-0">
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Last Name</p>
+                    <p className="text-base font-semibold text-gray-900">{user.last_name}</p>
                 </div>
             )}
             {user.date_of_birth && (
-                <div>
-                    <p className="text-sm text-gray-600 mb-1 flex items-center">
-                        <Calendar className="w-4 h-4 mr-1" />
+                <div className="pb-3 border-b border-gray-100 last:border-0">
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1 flex items-center">
+                        <Calendar className="w-3.5 h-3.5 mr-1.5" />
                         Date of Birth
                     </p>
-                    <p className="font-semibold text-gray-900">
+                    <p className="text-base font-semibold text-gray-900">
                         {new Date(user.date_of_birth).toLocaleDateString('en-US', { 
                             month: 'long', day: 'numeric', year: 'numeric' 
                         })}
@@ -423,43 +630,43 @@ function ViewPersonalInfo({ user }) {
                 </div>
             )}
             {user.marital_status && (
-                <div>
-                    <p className="text-sm text-gray-600 mb-1">Marital Status</p>
-                    <p className="font-semibold text-gray-900 capitalize">{user.marital_status}</p>
+                <div className="pb-3 border-b border-gray-100 last:border-0">
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Marital Status</p>
+                    <p className="text-base font-semibold text-gray-900 capitalize">{user.marital_status}</p>
                 </div>
             )}
             {user.sex && (
-                <div>
-                    <p className="text-sm text-gray-600 mb-1">Sex</p>
-                    <p className="font-semibold text-gray-900 capitalize">{user.sex}</p>
+                <div className="pb-3 border-b border-gray-100 last:border-0">
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Sex</p>
+                    <p className="text-base font-semibold text-gray-900 capitalize">{user.sex}</p>
                 </div>
             )}
-        </>
+        </div>
     );
 }
 
 function ViewEmploymentInfo({ user }) {
     return (
-        <>
+        <div className="space-y-4">
             {user.role && (
-                <div>
-                    <p className="text-sm text-gray-600 mb-1 flex items-center">
-                        <Shield className="w-4 h-4 mr-1" />
+                <div className="pb-3 border-b border-gray-100 last:border-0">
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1 flex items-center">
+                        <Shield className="w-3.5 h-3.5 mr-1.5" />
                         Role
                     </p>
-                    <p className="font-semibold text-gray-900 capitalize">{user.role.replace('_', ' ')}</p>
+                    <p className="text-base font-semibold text-gray-900 capitalize">{user.role.replace(/_/g, ' ')}</p>
                 </div>
             )}
             {user.assigned_branch && (
-                <div>
-                    <p className="text-sm text-gray-600 mb-1 flex items-center">
-                        <MapPin className="w-4 h-4 mr-1" />
+                <div className="pb-3 border-b border-gray-100 last:border-0">
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1 flex items-center">
+                        <MapPin className="w-3.5 h-3.5 mr-1.5" />
                         Assigned Branch
                     </p>
-                    <p className="font-semibold text-gray-900">
+                    <p className="text-base font-semibold text-gray-900">
                         {user.assigned_branch.name}
                         {user.assigned_branch.facility?.name && (
-                            <span className="block text-sm text-gray-500">
+                            <span className="block text-sm text-gray-500 mt-1">
                                 {user.assigned_branch.facility.name}
                             </span>
                         )}
@@ -467,27 +674,27 @@ function ViewEmploymentInfo({ user }) {
                 </div>
             )}
             {user.credentials && (
-                <div>
-                    <p className="text-sm text-gray-600 mb-1 flex items-center">
-                        <Award className="w-4 h-4 mr-1" />
+                <div className="pb-3 border-b border-gray-100 last:border-0">
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1 flex items-center">
+                        <Award className="w-3.5 h-3.5 mr-1.5" />
                         Credentials
                     </p>
-                    <p className="font-semibold text-gray-900">{user.credentials}</p>
+                    <p className="text-base font-semibold text-gray-900">{user.credentials}</p>
                 </div>
             )}
             {user.credential_details && (
-                <div>
-                    <p className="text-sm text-gray-600 mb-1">Credential Details</p>
-                    <p className="font-semibold text-gray-900">{user.credential_details}</p>
+                <div className="pb-3 border-b border-gray-100 last:border-0">
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Credential Details</p>
+                    <p className="text-base font-semibold text-gray-900">{user.credential_details}</p>
                 </div>
             )}
             {user.date_employed && (
-                <div>
-                    <p className="text-sm text-gray-600 mb-1 flex items-center">
-                        <Clock className="w-4 h-4 mr-1" />
+                <div className="pb-3 border-b border-gray-100 last:border-0">
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1 flex items-center">
+                        <Clock className="w-3.5 h-3.5 mr-1.5" />
                         Date Employed
                     </p>
-                    <p className="font-semibold text-gray-900">
+                    <p className="text-base font-semibold text-gray-900">
                         {new Date(user.date_employed).toLocaleDateString('en-US', { 
                             month: 'long', day: 'numeric', year: 'numeric' 
                         })}
@@ -495,53 +702,64 @@ function ViewEmploymentInfo({ user }) {
                 </div>
             )}
             {user.supervisor_name && (
-                <div>
-                    <p className="text-sm text-gray-600 mb-1">Supervisor</p>
-                    <p className="font-semibold text-gray-900">{user.supervisor_name}</p>
+                <div className="pb-3 border-b border-gray-100 last:border-0">
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Supervisor</p>
+                    <p className="text-base font-semibold text-gray-900">{user.supervisor_name}</p>
                 </div>
             )}
             {user.provider_name && (
-                <div>
-                    <p className="text-sm text-gray-600 mb-1">Provider</p>
-                    <p className="font-semibold text-gray-900">{user.provider_name}</p>
+                <div className="pb-3 border-b border-gray-100 last:border-0">
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Provider</p>
+                    <p className="text-base font-semibold text-gray-900">{user.provider_name}</p>
                 </div>
             )}
-            <div>
-                <p className="text-sm text-gray-600 mb-1">Status</p>
-                <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${
+            <div className="pt-1">
+                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Status</p>
+                <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium ${
                     user.is_active 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-red-100 text-red-800'
+                        ? 'bg-green-100 text-green-800 border border-green-200' 
+                        : 'bg-red-100 text-red-800 border border-red-200'
                 }`}>
+                    <Activity className={`w-3.5 h-3.5 ${user.is_active ? 'text-green-600' : 'text-red-600'}`} />
                     {user.is_active ? 'Active' : 'Inactive'}
                 </span>
             </div>
-        </>
+        </div>
     );
 }
 
 function ViewContactInfo({ user }) {
     return (
-        <>
+        <div className="space-y-4">
             {user.email && (
-                <div>
-                    <p className="text-sm text-gray-600 mb-1 flex items-center">
-                        <Mail className="w-4 h-4 mr-1" />
+                <div className="pb-3 border-b border-gray-100 last:border-0">
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1 flex items-center">
+                        <Mail className="w-3.5 h-3.5 mr-1.5" />
                         Email
                     </p>
-                    <p className="font-semibold text-gray-900">{user.email}</p>
+                    <a 
+                        href={`mailto:${user.email}`}
+                        className="text-base font-semibold text-[#25603E] hover:text-[#1B402D] transition-colors break-all"
+                    >
+                        {user.email}
+                    </a>
                 </div>
             )}
             {user.phone_number && (
-                <div>
-                    <p className="text-sm text-gray-600 mb-1 flex items-center">
-                        <Phone className="w-4 h-4 mr-1" />
+                <div className="pb-3 border-b border-gray-100 last:border-0">
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1 flex items-center">
+                        <Phone className="w-3.5 h-3.5 mr-1.5" />
                         Phone Number
                     </p>
-                    <p className="font-semibold text-gray-900">{user.phone_number}</p>
+                    <a 
+                        href={`tel:${user.phone_number}`}
+                        className="text-base font-semibold text-[#25603E] hover:text-[#1B402D] transition-colors"
+                    >
+                        {user.phone_number}
+                    </a>
                 </div>
             )}
-        </>
+        </div>
     );
 }
 

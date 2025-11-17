@@ -125,14 +125,18 @@ export default function VitalsCharts() {
                         value={dateFrom}
                         onChange={(e) => {
                             e.stopPropagation();
-                            e.stopImmediatePropagation();
+                            if (e.nativeEvent && typeof e.nativeEvent.stopImmediatePropagation === 'function') {
+                                e.nativeEvent.stopImmediatePropagation();
+                            }
                             setDateFrom(e.target.value);
                         }}
                         onKeyDown={(e) => {
                             if (e.key === 'Enter') {
                                 e.preventDefault();
                                 e.stopPropagation();
-                                e.stopImmediatePropagation();
+                                if (e.nativeEvent && typeof e.nativeEvent.stopImmediatePropagation === 'function') {
+                                    e.nativeEvent.stopImmediatePropagation();
+                                }
                                 return false;
                             }
                         }}
@@ -151,14 +155,18 @@ export default function VitalsCharts() {
                         value={dateTo}
                         onChange={(e) => {
                             e.stopPropagation();
-                            e.stopImmediatePropagation();
+                            if (e.nativeEvent && typeof e.nativeEvent.stopImmediatePropagation === 'function') {
+                                e.nativeEvent.stopImmediatePropagation();
+                            }
                             setDateTo(e.target.value);
                         }}
                         onKeyDown={(e) => {
                             if (e.key === 'Enter') {
                                 e.preventDefault();
                                 e.stopPropagation();
-                                e.stopImmediatePropagation();
+                                if (e.nativeEvent && typeof e.nativeEvent.stopImmediatePropagation === 'function') {
+                                    e.nativeEvent.stopImmediatePropagation();
+                                }
                                 return false;
                             }
                         }}

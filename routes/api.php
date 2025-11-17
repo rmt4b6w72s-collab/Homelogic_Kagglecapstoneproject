@@ -41,6 +41,7 @@ Route::prefix('v1')->group(function () {
         ]);
     Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
     Route::get('/user', [AuthController::class, 'user'])->middleware('auth:sanctum');
+    Route::put('/user/password', [AuthController::class, 'changePassword'])->middleware('auth:sanctum');
 
     // Dashboard
     Route::get('/dashboard/stats', [DashboardController::class, 'stats'])->middleware('auth:sanctum');
