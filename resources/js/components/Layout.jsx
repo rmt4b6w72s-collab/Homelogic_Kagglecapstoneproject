@@ -243,19 +243,6 @@ export default function Layout() {
         };
     }, []);
 
-    // Command palette keyboard shortcut (Cmd+K or Ctrl+K)
-    useEffect(() => {
-        const handleKeyDown = (e) => {
-            if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-                e.preventDefault();
-                setCommandPaletteOpen(true);
-            }
-        };
-
-        window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
-    }, []);
-
     const isCaregiver = React.useMemo(() => {
         if (!currentUser) {
             return false;
@@ -320,6 +307,21 @@ export default function Layout() {
             return normalized === 'caregiver' || (lower.includes('care') && lower.includes('giver'));
         });
     }, [currentUser]);
+
+    // Command palette keyboard shortcut (Cmd+K or Ctrl+K) - disabled for caregivers
+    useEffect(() => {
+        if (isCaregiver) return; // Don't enable keyboard shortcut for caregivers
+        
+        const handleKeyDown = (e) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+                e.preventDefault();
+                setCommandPaletteOpen(true);
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [isCaregiver]);
 
     const navigationItems = React.useMemo(() => {
         if (isCaregiver) {
@@ -489,15 +491,17 @@ export default function Layout() {
                                 </span>
                             </div>
                         )}
-                        <button
-                            onClick={() => setCommandPaletteOpen(true)}
-                            className="hidden md:flex items-center space-x-2 px-3 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors border border-gray-300"
-                            title="Open command palette (Cmd+K)"
-                        >
-                            <Command className="w-4 h-4" />
-                            <span className="hidden lg:inline">Search</span>
-                            <kbd className="hidden lg:inline px-1.5 py-0.5 text-xs bg-gray-200 rounded">⌘K</kbd>
-                        </button>
+                        {!isCaregiver && (
+                            <button
+                                onClick={() => setCommandPaletteOpen(true)}
+                                className="hidden md:flex items-center space-x-2 px-3 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors border border-gray-300"
+                                title="Open command palette (Cmd+K)"
+                            >
+                                <Command className="w-4 h-4" />
+                                <span className="hidden lg:inline">Search</span>
+                                <kbd className="hidden lg:inline px-1.5 py-0.5 text-xs bg-gray-200 rounded">⌘K</kbd>
+                            </button>
+                        )}
                         <NotificationDropdown />
                         <Link
                             to={leaveRequestsPath}

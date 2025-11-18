@@ -9,7 +9,7 @@ export default function AssessmentDetail() {
     const navigate = useNavigate();
     const queryClient = useQueryClient();
 
-    const { data, isLoading, error } = useQuery({
+    const { data, isLoading, error, isSuccess } = useQuery({
         queryKey: ['assessment-detail', id],
         queryFn: async () => (await api.get(`/assessments/${id}`)).data,
     });
@@ -59,6 +59,205 @@ export default function AssessmentDetail() {
         },
     });
 
+    // Pre-fill demographic and medical history questions from resident data
+    const hasPrefilledRef = React.useRef(new Set()); // Track which assessment IDs have been pre-filled
+    
+    React.useEffect(() => {
+        // Only run if query is successful and data is loaded
+        if (isLoading || !isSuccess) {
+            console.log('AssessmentDetail: Waiting for data to load', { isLoading, isSuccess });
+            return;
+        }
+
+        if (!data || !data.resident || !data.sections) {
+            console.log('AssessmentDetail: Missing data, resident, or sections', { 
+                hasData: !!data, 
+                hasResident: !!data?.resident, 
+                hasSections: !!data?.sections,
+                dataKeys: data ? Object.keys(data) : []
+            });
+            return;
+        }
+
+        // Skip if we've already pre-filled this assessment
+        if (hasPrefilledRef.current.has(data.id)) {
+            console.log('AssessmentDetail: Already pre-filled assessment', data.id);
+            return;
+        }
+
+        console.log('AssessmentDetail: Starting pre-fill for assessment', data.id, 'resident:', data.resident);
+        const resident = data.resident;
+        const questionsToPrefill = [];
+
+        // Helper function to normalize question text for matching
+        const normalizeQuestionText = (text) => {
+            if (!text) return '';
+            return String(text).toLowerCase().trim().replace(/[?]/g, '').replace(/\s+/g, ' ');
+        };
+
+        // Helper function to get resident value for a question
+        const getResidentValue = (questionText, questionType) => {
+            if (!questionText) return null;
+            const normalized = normalizeQuestionText(questionText);
+            console.log('AssessmentDetail: Matching question text:', questionText, 'normalized:', normalized);
+            
+            // Demographic Information mappings - handle multiple question text variations
+            if ((normalized.includes('what is the resident') && normalized.includes('full name')) ||
+                (normalized.includes('resident') && normalized.includes('name') && !normalized.includes('emergency'))) {
+                return resident.name || `${resident.first_name || ''} ${resident.last_name || ''}`.trim() || null;
+            }
+            if (normalized.includes('date of birth') || normalized.includes('birth date')) {
+                if (resident.date_of_birth) {
+                    const date = new Date(resident.date_of_birth);
+                    return date.toISOString().split('T')[0];
+                }
+                return null;
+            }
+            if ((normalized.includes('gender') && !normalized.includes('marital')) ||
+                (normalized.includes('what is the resident') && normalized.includes('gender'))) {
+                return resident.gender || null;
+            }
+            if (normalized.includes('emergency contact name') || 
+                (normalized.includes('emergency') && normalized.includes('name'))) {
+                return resident.emergency_contact_name || null;
+            }
+            if (normalized.includes('emergency contact phone') || 
+                (normalized.includes('emergency') && normalized.includes('phone'))) {
+                return resident.emergency_contact_phone || null;
+            }
+
+            // Medical History mappings - handle multiple question text variations
+            if (normalized.includes('primary diagnosis') || 
+                (normalized.includes('diagnosis') && !normalized.includes('secondary'))) {
+                return resident.diagnosis || null;
+            }
+            if (normalized.includes('known allergies') || 
+                (normalized.includes('allergies') && !normalized.includes('present'))) {
+                if (resident.allergies) {
+                    if (Array.isArray(resident.allergies)) {
+                        return resident.allergies.join(', ');
+                    }
+                    return String(resident.allergies);
+                }
+                return null;
+            }
+            if (normalized.includes('current medications') || 
+                normalized.includes('list current medications') ||
+                (normalized.includes('medications') && !normalized.includes('allergies'))) {
+                if (resident.medications) {
+                    if (Array.isArray(resident.medications)) {
+                        return resident.medications.join(', ');
+                    }
+                    return String(resident.medications);
+                }
+                return null;
+            }
+            if (normalized.includes('physician name') || 
+                (normalized.includes('physician') && normalized.includes('name'))) {
+                return resident.physician_name || null;
+            }
+            if (normalized.includes('physician phone') || 
+                (normalized.includes('physician') && normalized.includes('phone'))) {
+                return resident.pep_or_doctor || null;
+            }
+
+            return null;
+        };
+
+        // Process each section
+        console.log('AssessmentDetail: Processing sections', data.sections.map(s => ({ 
+            type: s.section_type, 
+            title: s.title || s.section_title, 
+            questionCount: s.questions?.length || 0 
+        })));
+        
+        data.sections.forEach((section) => {
+            // Only process demographic and medical_history sections
+            if (!section.questions || (section.section_type !== 'demographic' && section.section_type !== 'medical_history')) {
+                console.log('AssessmentDetail: Skipping section', section.section_type, 'questions:', section.questions?.length);
+                return;
+            }
+
+            console.log('AssessmentDetail: Processing section', section.section_type, 'with', section.questions.length, 'questions');
+            
+            section.questions.forEach((question) => {
+                const currentValue = question.response_value;
+                const isEmpty = !currentValue || 
+                    currentValue === null || 
+                    currentValue === undefined || 
+                    String(currentValue).trim() === '' ||
+                    String(currentValue).trim() === 'null' ||
+                    String(currentValue).trim() === 'undefined';
+                
+                console.log('AssessmentDetail: Checking question', question.id, question.question_text, 'current value:', currentValue, 'isEmpty:', isEmpty);
+                
+                // Only pre-fill if question doesn't have a response value yet
+                if (isEmpty) {
+                    const residentValue = getResidentValue(question.question_text, question.response_type);
+                    console.log('AssessmentDetail: Resident value for question', question.id, ':', residentValue, 'resident data:', {
+                        name: resident.name || `${resident.first_name} ${resident.last_name}`,
+                        date_of_birth: resident.date_of_birth,
+                        gender: resident.gender,
+                        emergency_contact_name: resident.emergency_contact_name,
+                        emergency_contact_phone: resident.emergency_contact_phone,
+                        diagnosis: resident.diagnosis,
+                        allergies: resident.allergies,
+                        medications: resident.medications,
+                        physician_name: resident.physician_name,
+                        pep_or_doctor: resident.pep_or_doctor,
+                    });
+                    
+                    if (residentValue !== null && residentValue !== undefined && String(residentValue).trim() !== '') {
+                        questionsToPrefill.push({
+                            questionId: question.id,
+                            value: String(residentValue).trim(),
+                        });
+                        console.log('AssessmentDetail: Added question to pre-fill list', question.id, question.question_text, 'with value:', residentValue);
+                    } else {
+                        console.log('AssessmentDetail: No resident value found for question', question.id, question.question_text, 'normalized text:', normalizeQuestionText(question.question_text));
+                    }
+                } else {
+                    console.log('AssessmentDetail: Question already has value, skipping', question.id, currentValue);
+                }
+            });
+        });
+
+        // Save all pre-filled questions
+        if (questionsToPrefill.length > 0) {
+            console.log('AssessmentDetail: Pre-filling', questionsToPrefill.length, 'questions', questionsToPrefill);
+            hasPrefilledRef.current.add(data.id); // Mark as pre-filled to prevent re-running
+            
+            // Save questions sequentially to avoid race conditions
+            const saveQuestions = async () => {
+                for (const { questionId, value } of questionsToPrefill) {
+                    try {
+                        console.log(`AssessmentDetail: Pre-filling question ${questionId} with value:`, value);
+                        await saveMutation.mutateAsync({ questionId, value });
+                        console.log(`AssessmentDetail: Successfully saved question ${questionId}`);
+                    } catch (err) {
+                        console.error(`AssessmentDetail: Failed to pre-fill question ${questionId}:`, err);
+                        // Continue with other questions even if one fails
+                    }
+                }
+                
+                // Wait a bit for all saves to propagate, then refresh
+                setTimeout(() => {
+                    console.log('AssessmentDetail: Refreshing assessment data after pre-fill');
+                    queryClient.invalidateQueries(['assessment-detail', id]);
+                }, 500);
+            };
+            
+            saveQuestions().catch(err => {
+                console.error('AssessmentDetail: Error in pre-fill process:', err);
+                // Remove from set so it can retry
+                hasPrefilledRef.current.delete(data.id);
+            });
+        } else {
+            console.log('AssessmentDetail: No questions to pre-fill');
+            // If no questions to pre-fill, mark as done anyway
+            hasPrefilledRef.current.add(data.id);
+        }
+    }, [data, isLoading, isSuccess, saveMutation, queryClient, id]); // Dependencies - include isSuccess to ensure data is loaded
 
     // Calculate section progress
     const getSectionProgress = (section) => {

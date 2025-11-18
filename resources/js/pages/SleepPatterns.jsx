@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
-import { BarChart3, LineChart, Grid, Download, Edit, Moon, Calendar, User, Filter, HelpCircle, Eye, TrendingUp } from 'lucide-react';
+import { BarChart3, LineChart, Grid, Download, Edit, Moon, Calendar, User, Filter, HelpCircle, Eye, TrendingUp, List } from 'lucide-react';
 import { Bar, Line } from 'react-chartjs-2';
 import CalendarComponent from '../components/ui/Calendar';
 import {
@@ -43,6 +43,7 @@ export default function SleepPatterns() {
     const [currentUser, setCurrentUser] = useState(null);
     const [isCaregiver, setIsCaregiver] = useState(false);
     const [selectedCalendarDate, setSelectedCalendarDate] = useState(null);
+    const [showCalendar, setShowCalendar] = useState(false); // Hidden by default
     React.useEffect(() => {
         const fetchUser = async () => {
             try {
@@ -369,48 +370,7 @@ export default function SleepPatterns() {
         },
     };
 
-    // Hourly distribution chart
-    const hourlyChartData = React.useMemo(() => {
-        if (!patternData?.hourly_distribution || patternData.hourly_distribution.length === 0) {
-            return null;
-        }
-
-        const labels = patternData.hourly_distribution.map(h => h.hour);
-        const percentages = patternData.hourly_distribution.map(h => h.percentage);
-
-        return {
-            labels,
-            datasets: [
-                {
-                    label: 'Sleep Distribution (%)',
-                    data: percentages,
-                    backgroundColor: 'rgba(147, 51, 234, 0.8)',
-                    borderColor: 'rgba(147, 51, 234, 1)',
-                    borderWidth: 1,
-                },
-            ],
-        };
-    }, [patternData]);
-
-    const hourlyChartOptions = {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: {
-                display: false,
-            },
-        },
-        scales: {
-            y: {
-                beginAtZero: true,
-                max: 100,
-                title: {
-                    display: true,
-                    text: 'Percentage (%)',
-                },
-            },
-        },
-    };
+    // Hourly distribution chart - Removed due to incorrect data
 
     const selectedResident = residentsData?.data?.find(r => r.id == residentId);
 
@@ -419,27 +379,28 @@ export default function SleepPatterns() {
             <SectionCard>
                 <h1 className="text-3xl font-bold text-[#25603E] mb-6">Sleep Pattern Management</h1>
                 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-                    {/* Calendar Widget */}
-                    <div className="lg:col-span-1">
-                        <CalendarComponent
-                            selectedDate={selectedCalendarDate}
-                            onDateSelect={handleCalendarDateSelect}
-                            calendarData={calendarData}
-                            showIndicators={true}
-                        />
-                        {selectedCalendarDate && (
-                            <button
-                                onClick={() => setSelectedCalendarDate(null)}
-                                className="mt-2 w-full px-3 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
-                            >
-                                Clear Date Filter
-                            </button>
-                        )}
-                    </div>
-
+                <div className="mb-6">
                     {/* Filters Section */}
-                    <div className="lg:col-span-2">
+                    <div>
+                        <div className="flex items-center justify-between mb-4">
+                            <div />
+                            <button
+                                onClick={() => setShowCalendar(!showCalendar)}
+                                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2 text-sm font-medium"
+                            >
+                                {showCalendar ? (
+                                    <>
+                                        <List className="w-4 h-4" />
+                                        Hide Calendar
+                                    </>
+                                ) : (
+                                    <>
+                                        <Grid className="w-4 h-4" />
+                                        Show Calendar
+                                    </>
+                                )}
+                            </button>
+                        </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">Select Branch</label>
@@ -523,6 +484,26 @@ export default function SleepPatterns() {
                     </div>
                 </div>
                     </div>
+
+                    {/* Calendar Widget - Hidden by default, shows below filters */}
+                    {showCalendar && (
+                        <div className="mt-6">
+                            <CalendarComponent
+                                selectedDate={selectedCalendarDate}
+                                onDateSelect={handleCalendarDateSelect}
+                                calendarData={calendarData}
+                                showIndicators={true}
+                            />
+                            {selectedCalendarDate && (
+                                <button
+                                    onClick={() => setSelectedCalendarDate(null)}
+                                    className="mt-2 w-full px-3 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                                >
+                                    Clear Date Filter
+                                </button>
+                            )}
+                        </div>
+                    )}
                 </div>
 
                 {/* Empty State */}
@@ -857,16 +838,6 @@ export default function SleepPatterns() {
                                         </p>
                                     </div>
                                 </div>
-
-                                {/* Hourly Sleep Distribution */}
-                                {hourlyChartData && (
-                                    <div className="bg-white rounded-lg shadow p-6 mb-6">
-                                        <h3 className="text-lg font-semibold text-gray-900 mb-4">Hourly Sleep Distribution</h3>
-                                        <div className="h-64">
-                                            <Bar data={hourlyChartData} options={hourlyChartOptions} />
-                                        </div>
-                                    </div>
-                                )}
 
                                 {/* Key Observations */}
                                 {patternData.key_observations && patternData.key_observations.length > 0 && (

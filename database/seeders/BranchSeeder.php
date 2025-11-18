@@ -108,6 +108,30 @@ class BranchSeeder extends Seeder
                 'email' => 'filbert@evergreenoasis.com',
                 'is_active' => true,
             ],
+            [
+                'name' => 'Maple Grove Care Center',
+                'address' => '258 Maple Grove Ave, Seattle, WA 98101',
+                'facility_id' => $evergreenFacility->id,
+                'phone' => '(206) 555-0108',
+                'email' => 'maplegrove@evergreenoasis.com',
+                'is_active' => true,
+            ],
+            [
+                'name' => 'Riverside Wellness Home',
+                'address' => '369 Riverside Dr, Renton, WA 98055',
+                'facility_id' => $bothellFacility->id,
+                'phone' => '(425) 555-0109',
+                'email' => 'riverside@bothellserenity.com',
+                'is_active' => true,
+            ],
+            [
+                'name' => 'Pine Valley Assisted Living',
+                'address' => '741 Pine Valley Blvd, Bellevue, WA 98004',
+                'facility_id' => $evergreenFacility->id,
+                'phone' => '(425) 555-0110',
+                'email' => 'pinevalley@evergreenoasis.com',
+                'is_active' => true,
+            ],
         ];
 
         foreach ($branches as $branchData) {

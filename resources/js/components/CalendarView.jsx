@@ -29,6 +29,31 @@ export default function CalendarView({ events, onSelectEvent, onSelectSlot, defa
 
     return (
         <div style={{ height, width: '100%' }} className="bg-white rounded-lg shadow-sm p-4 w-full">
+            <style>{`
+                .rbc-calendar {
+                    font-size: 11px;
+                }
+                .rbc-event {
+                    font-size: 10px;
+                    line-height: 1.2;
+                    padding: 1px 3px;
+                }
+                .rbc-event-label {
+                    font-size: 9px;
+                }
+                .rbc-day-slot .rbc-event {
+                    font-size: 10px;
+                    padding: 1px 2px;
+                }
+                .rbc-month-view .rbc-event {
+                    font-size: 9px;
+                    padding: 1px 2px;
+                    min-height: 16px;
+                }
+                .rbc-agenda-view .rbc-event {
+                    font-size: 11px;
+                }
+            `}</style>
             <Calendar
                 localizer={localizer}
                 events={formattedEvents}
@@ -47,10 +72,13 @@ export default function CalendarView({ events, onSelectEvent, onSelectSlot, defa
                         style: {
                             backgroundColor,
                             borderColor,
-                            borderWidth: '2px',
-                            borderRadius: '4px',
+                            borderWidth: '1px',
+                            borderRadius: '3px',
                             color: event.textColor || '#ffffff',
-                            padding: '2px 4px',
+                            padding: '1px 3px',
+                            fontSize: '9px',
+                            lineHeight: '1.2',
+                            minHeight: '16px',
                         },
                     };
                 }}
