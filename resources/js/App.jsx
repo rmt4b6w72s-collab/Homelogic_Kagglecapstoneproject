@@ -37,6 +37,9 @@ import DeactivatedRecords from './pages/DeactivatedRecords';
 import Housekeeping from './pages/Housekeeping';
 import HousekeepingSchedule from './pages/HousekeepingSchedule';
 import HousekeepingDashboard from './pages/HousekeepingDashboard';
+import MedicationDeliveries from './pages/MedicationDeliveries';
+import GroceryStatus from './pages/GroceryStatus';
+import FireDrills from './pages/FireDrills';
 
 // Report sub-pages
 import ChartReports from './pages/reports/ChartReports';
@@ -77,6 +80,9 @@ function App() {
                 <Route path="medications/residents" element={<CaregiverMedicationsResidents />} />
                 <Route path="medications/residents/:residentId" element={<ResidentMedicationsPage />} />
                 <Route path="medication-history" element={<MedicationHistory />} />
+                <Route path="medication-deliveries" element={<MedicationDeliveries />} />
+                <Route path="grocery-status" element={<GroceryStatus />} />
+                <Route path="fire-drills" element={<FireDrills />} />
                 <Route path="housekeeping" element={<Housekeeping />} />
                 <Route path="housekeeping/dashboard" element={<HousekeepingDashboard />} />
                 <Route path="housekeeping/schedule" element={<HousekeepingSchedule />} />

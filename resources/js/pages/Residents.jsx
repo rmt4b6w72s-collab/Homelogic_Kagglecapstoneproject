@@ -387,6 +387,8 @@ function ResidentForm({ record, branches, onClose, onSuccess }) {
         allergies: record?.allergies || '',
         medical_conditions: record?.medical_conditions || '',
         physician_name: record?.physician_name || '',
+        medicare_number: record?.medicare_number || '',
+        primary_care_doctor: record?.primary_care_doctor || '',
         is_active: record?.is_active ?? true,
     });
 
@@ -447,6 +449,8 @@ function ResidentForm({ record, branches, onClose, onSuccess }) {
                 allergies: allergiesValue,
                 medical_conditions: medicalConditionsValue,
                 physician_name: record.physician_name || '',
+                medicare_number: record.medicare_number || '',
+                primary_care_doctor: record.primary_care_doctor || '',
                 is_active: record.is_active ?? true,
             });
         } else {
@@ -468,6 +472,8 @@ function ResidentForm({ record, branches, onClose, onSuccess }) {
                 allergies: '',
                 medical_conditions: '',
                 physician_name: '',
+                medicare_number: '',
+                primary_care_doctor: '',
                 is_active: true,
             });
         }
@@ -593,7 +599,7 @@ function ResidentForm({ record, branches, onClose, onSuccess }) {
                 const optionalFields = [
                     'middle_names', 'gender', 'phone', 'room', 'room_number',
                     'emergency_contact_name', 'emergency_contact_phone',
-                    'diagnosis', 'allergies', 'medical_conditions', 'physician_name', 'status'
+                    'diagnosis', 'allergies', 'medical_conditions', 'physician_name', 'medicare_number', 'primary_care_doctor', 'status'
                 ];
                 
                 optionalFields.forEach(key => {
@@ -967,6 +973,32 @@ function ResidentForm({ record, branches, onClose, onSuccess }) {
                                         value={formData.physician_name}
                                         onChange={(e) => setFormData({...formData, physician_name: e.target.value})}
                                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Medicare Number
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={formData.medicare_number}
+                                        onChange={(e) => setFormData({...formData, medicare_number: e.target.value})}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                        placeholder="Enter Medicare number (optional)"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Primary Care Doctor
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={formData.primary_care_doctor}
+                                        onChange={(e) => setFormData({...formData, primary_care_doctor: e.target.value})}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                        placeholder="Enter primary care doctor name (optional)"
                                     />
                                 </div>
 

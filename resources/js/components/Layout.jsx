@@ -24,7 +24,10 @@ import {
     X,
     CalendarClock,
     Sparkles,
-    Command
+    Command,
+    ShoppingCart,
+    Truck,
+    Flame
 } from 'lucide-react';
 import NotificationDropdown from './NotificationDropdown';
 import { useToastContext } from '../contexts/ToastContext';
@@ -50,7 +53,15 @@ const navigation = [
             { name: 'View Vitals', path: '/view-vitals' },
         ]
     },
-    { name: 'Medication', icon: Pill, path: '/medications', children: null },
+    { 
+        name: 'Medication', 
+        icon: Pill, 
+        path: '/medications', 
+        children: [
+            { name: 'Medications', path: '/medications' },
+            { name: 'Medication Deliveries', path: '/medication-deliveries' },
+        ]
+    },
     { 
         name: 'Sleep', 
         icon: Moon, 
@@ -70,6 +81,8 @@ const navigation = [
             { name: 'Schedule Builder', path: '/housekeeping/schedule' },
         ]
     },
+    { name: 'Grocery Status', icon: ShoppingCart, path: '/grocery-status', children: null },
+    { name: 'Fire Drills', icon: Flame, path: '/fire-drills', children: null },
     { name: 'Reports', icon: FileText, path: '/reports', children: null },
     { 
         name: 'Administration', 
@@ -115,6 +128,8 @@ const caregiverNavigation = [
         ]
     },
     { name: 'Housekeeping', icon: Sparkles, path: '/housekeeping', children: null },
+    { name: 'Grocery Status', icon: ShoppingCart, path: '/grocery-status', children: null },
+    { name: 'Fire Drills', icon: Flame, path: '/fire-drills', children: null },
     { name: 'Appointments', icon: Calendar, path: '/appointments', children: null },
     { name: 'Leave Requests', icon: CalendarClock, path: '/leave-requests', children: null },
 ];

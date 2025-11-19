@@ -45,8 +45,7 @@ class AssessmentResource extends Resource
     public static function canViewAny(): bool
     {
         return auth()->user()->hasRole('administrator')
-            || auth()->user()->hasRole('super_admin')
-            || auth()->user()->hasRole('caregiver');
+            || auth()->user()->hasRole('super_admin');
     }
 
     public static function canCreate(): bool

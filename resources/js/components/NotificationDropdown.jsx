@@ -70,6 +70,18 @@ export default function NotificationDropdown() {
         // Helper function to normalize URLs (remove /app/ prefix since BrowserRouter has basename="/app")
         const normalizeUrl = (url) => {
             if (!url) return '/dashboard';
+            
+            // Convert Filament admin routes to React frontend routes
+            if (url.startsWith('/admin/fire-drills')) {
+                return '/fire-drills';
+            }
+            if (url.startsWith('/admin/medication-deliveries')) {
+                return '/medication-deliveries';
+            }
+            if (url.startsWith('/admin/grocery-status-updates')) {
+                return '/grocery-status';
+            }
+            
             // Remove /app/ prefix if present (since React Router already adds it via basename)
             if (url.startsWith('/app/')) {
                 return url.substring(5); // Remove '/app'
@@ -188,6 +200,15 @@ export default function NotificationDropdown() {
             case 'housekeeping_task_completed':
             case 'housekeeping_task_skipped':
                 navUrl = '/housekeeping/dashboard';
+                break;
+            case 'fire_drill_scheduled':
+            case 'fire_drill_today':
+            case 'fire_drill_reminder':
+                if (metadata.fire_drill_id) {
+                    navUrl = `/fire-drills?fire_drill_id=${metadata.fire_drill_id}`;
+                } else {
+                    navUrl = '/fire-drills';
+                }
                 break;
             default:
                 navUrl = '/dashboard';

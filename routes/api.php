@@ -74,6 +74,15 @@ Route::prefix('v1')->group(function () {
     // Medication Administrations
     Route::apiResource('medication-administrations', MedicationAdministrationController::class)->middleware('auth:sanctum');
 
+    // Medication Deliveries
+    Route::apiResource('medication-deliveries', \App\Http\Controllers\Api\MedicationDeliveryController::class)->middleware('auth:sanctum');
+
+    // Grocery Status Updates
+    Route::apiResource('grocery-status-updates', \App\Http\Controllers\Api\GroceryStatusUpdateController::class)->middleware('auth:sanctum');
+
+    // Fire Drills
+    Route::apiResource('fire-drills', \App\Http\Controllers\Api\FireDrillController::class)->middleware('auth:sanctum');
+
     // Sleep Records
     Route::apiResource('sleep-records', SleepRecordController::class)->middleware('auth:sanctum');
     Route::get('sleep-patterns', [\App\Http\Controllers\Api\SleepPatternController::class, 'getPattern'])->middleware('auth:sanctum');

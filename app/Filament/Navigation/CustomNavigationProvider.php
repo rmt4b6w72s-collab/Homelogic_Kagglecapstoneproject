@@ -62,11 +62,18 @@ class CustomNavigationProvider
                     ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.pages.dashboard'))
                     ->sort(10),
 
-                // Assessments - Second item
+                // Assessments - Second item (Admin only)
                 NavigationItem::make('Assessments')
                     ->icon('heroicon-o-clipboard-document-list')
                     ->url(route('filament.admin.resources.assessments.index'))
                     ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.resources.assessments.*'))
+                    ->visible(function (): bool {
+                        if (!auth()->check()) {
+                            return false;
+                        }
+                        $user = auth()->user();
+                        return $user->hasRole('administrator') || $user->hasRole('super_admin');
+                    })
                     ->sort(20),
 
                 // Appointment - Third item
@@ -140,6 +147,21 @@ class CustomNavigationProvider
                     })
                     ->sort(65),
 
+                // Fire Drills - Eighth item
+                NavigationItem::make('Fire Drills')
+                    ->icon('heroicon-o-fire')
+                    ->url(route('filament.admin.resources.fire-drills.index'))
+                    ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.resources.fire-drills.*'))
+                    ->visible(function (): bool {
+                        if (!auth()->check()) {
+                            return false;
+                        }
+                        $user = auth()->user();
+                        // Show to all authenticated users (admins, managers, staff)
+                        return true;
+                    })
+                    ->sort(66),
+
                 // Reports (with dropdown)
                 NavigationItem::make('Reports')
                     ->icon('heroicon-o-chart-bar-square')
@@ -170,7 +192,14 @@ class CustomNavigationProvider
                         NavigationItem::make('Assessment Charts')
                             ->icon('heroicon-o-chart-bar')
                             ->url(route('filament.admin.pages.assessment-charts'))
-                            ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.pages.assessment-charts')),
+                            ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.pages.assessment-charts'))
+                            ->visible(function (): bool {
+                                if (!auth()->check()) {
+                                    return false;
+                                }
+                                $user = auth()->user();
+                                return $user->hasRole('administrator') || $user->hasRole('super_admin');
+                            }),
                         
                         NavigationItem::make('Appointments Charts')
                             ->icon('heroicon-o-chart-bar')

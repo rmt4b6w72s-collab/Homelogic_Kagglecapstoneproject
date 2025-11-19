@@ -28,6 +28,8 @@ use App\Observers\ResidentObserver;
 use App\Observers\UserObserver;
 use App\Observers\FacilityObserver;
 use App\Observers\BranchObserver;
+use App\Observers\FireDrillObserver;
+use App\Models\FireDrill;
 use App\Listeners\LogAuthentication;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Logout;
@@ -60,6 +62,7 @@ class AppServiceProvider extends ServiceProvider
         User::observe(UserObserver::class);
         Facility::observe(FacilityObserver::class);
         Branch::observe(BranchObserver::class);
+        FireDrill::observe(FireDrillObserver::class);
         
         // Register authentication event listeners
         Event::listen(Login::class, LogAuthentication::class);

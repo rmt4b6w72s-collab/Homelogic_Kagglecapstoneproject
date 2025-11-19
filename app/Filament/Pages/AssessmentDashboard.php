@@ -19,8 +19,7 @@ class AssessmentDashboard extends Page
     {
         return Auth::check() && (
             Auth::user()->hasRole('administrator') || 
-            Auth::user()->hasRole('super_admin') ||
-            Auth::user()->hasRole('caregiver')
+            Auth::user()->hasRole('super_admin')
         );
     }
 

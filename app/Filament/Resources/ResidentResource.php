@@ -146,6 +146,14 @@ class ResidentResource extends Resource
                             ->label('Physician Name')
                             ->maxLength(255)
                             ->placeholder('Enter primary physician name'),
+                        Forms\Components\TextInput::make('medicare_number')
+                            ->label('Medicare Number')
+                            ->maxLength(255)
+                            ->placeholder('Enter Medicare number (optional)'),
+                        Forms\Components\TextInput::make('primary_care_doctor')
+                            ->label('Primary Care Doctor')
+                            ->maxLength(255)
+                            ->placeholder('Enter primary care doctor name (optional)'),
                         Forms\Components\TextInput::make('pep_or_doctor')
                             ->label('PEP or Doctor')
                             ->maxLength(255)
@@ -239,6 +247,16 @@ class ResidentResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('physician_name')
                     ->label('Physician')
+                    ->searchable()
+                    ->limit(20)
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('medicare_number')
+                    ->label('Medicare #')
+                    ->searchable()
+                    ->limit(20)
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('primary_care_doctor')
+                    ->label('Primary Care Doctor')
                     ->searchable()
                     ->limit(20)
                     ->toggleable(isToggledHiddenByDefault: true),

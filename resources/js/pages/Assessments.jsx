@@ -39,6 +39,13 @@ export default function Assessments() {
         return roleNormalized === 'caregiver' || (role.includes('care') && role.includes('giver'));
     }, [currentUser]);
 
+    // Check if user is an admin
+    const isAdmin = React.useMemo(() => {
+        if (!currentUser) return false;
+        const role = currentUser.role?.toLowerCase().trim() || '';
+        return role === 'administrator' || role === 'admin' || role === 'super_admin';
+    }, [currentUser]);
+
     // Fetch residents for form
     const { data: residentsData } = useQuery({
         queryKey: ['residents-list'],
@@ -201,6 +208,21 @@ export default function Assessments() {
         }
     };
 
+    // If user is not an admin, show access denied message
+    if (currentUser && !isAdmin) {
+        return (
+            <div>
+                <SectionCard>
+                    <div className="text-center py-12">
+                        <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                        <h2 className="text-xl font-semibold text-gray-900 mb-2">Access Restricted</h2>
+                        <p className="text-gray-600">Assessments can only be created and viewed by administrators.</p>
+                    </div>
+                </SectionCard>
+            </div>
+        );
+    }
+
     return (
         <div>
             <SectionCard>
@@ -209,7 +231,7 @@ export default function Assessments() {
                         <h2 className="text-xl font-semibold text-gray-900 mb-2">Assessment Management</h2>
                         <p className="text-gray-600">View and manage resident assessments.</p>
                     </div>
-                    {!isCaregiver && (
+                    {isAdmin && (
                     <button
                         onClick={() => {
                             setEditing(null);

@@ -7,6 +7,8 @@ use App\Models\Notification;
 use App\Models\Appointment;
 use App\Models\Medication;
 use App\Models\MedicationAdministration;
+use App\Models\FireDrill;
+use App\Models\Resident;
 use App\Models\User;
 use Carbon\Carbon;
 
@@ -40,6 +42,14 @@ class GenerateNotifications extends Command
         // Generate medication notifications
         $medicationsCreated = $this->generateMedicationNotifications();
         $this->info("Created {$medicationsCreated} medication notifications");
+
+        // Generate fire drill notifications
+        $fireDrillsCreated = $this->generateFireDrillNotifications();
+        $this->info("Created {$fireDrillsCreated} fire drill notifications");
+
+        // Check for late medications and vital signs
+        $this->checkLateMedications();
+        $this->checkLateVitalSigns();
 
         $this->info('Notification generation complete!');
 
@@ -249,5 +259,241 @@ class GenerateNotifications extends Command
         }
 
         return $times;
+    }
+
+    /**
+     * Generate notifications for fire drills (1 day before and on the day)
+     */
+    private function generateFireDrillNotifications(): int
+    {
+        $count = 0;
+        $now = now();
+
+        // Get fire drills scheduled for tomorrow (1 day before)
+        $drillsOneDayBefore = FireDrill::with(['branch'])
+            ->oneDayBefore()
+            ->get();
+
+        // Get fire drills scheduled for today
+        $drillsToday = FireDrill::with(['branch'])
+            ->today()
+            ->get();
+
+        // Combine and process
+        $allDrills = $drillsOneDayBefore->merge($drillsToday);
+
+        foreach ($allDrills as $drill) {
+            // Get all staff in the branch and admins
+            $users = User::where(function($query) use ($drill) {
+                $query->where('assigned_branch_id', $drill->branch_id)
+                    ->orWhereIn('role', ['administrator', 'admin', 'manager', 'super_admin']);
+            })
+            ->where('is_active', true)
+            ->get();
+
+            $drillDate = Carbon::parse($drill->scheduled_date)->format('M d, Y');
+            $drillTime = $drill->scheduled_time ? Carbon::parse($drill->scheduled_time)->format('g:i A') : 'TBD';
+            $isToday = $drill->scheduled_date->isToday();
+            $title = $isToday ? 'Fire Drill Today' : 'Fire Drill Tomorrow';
+            $type = $isToday ? 'fire_drill_today' : 'fire_drill_reminder';
+
+            foreach ($users as $user) {
+                // Check if notification already exists (avoid duplicates)
+                $exists = \App\Models\Notification::where('user_id', $user->id)
+                    ->where('type', $type)
+                    ->whereJsonContains('metadata->fire_drill_id', $drill->id)
+                    ->whereDate('created_at', $now->toDateString())
+                    ->exists();
+
+                if (!$exists) {
+                    \App\Models\Notification::create([
+                        'user_id' => $user->id,
+                        'type' => $type,
+                        'title' => $title,
+                        'message' => "Fire drill scheduled for {$drill->branch->name} on {$drillDate} at {$drillTime}",
+                        'icon' => 'alert-triangle',
+                        'icon_color' => 'text-orange-600',
+                        'action_url' => '/fire-drills',
+                        'metadata' => [
+                            'fire_drill_id' => $drill->id,
+                            'branch_id' => $drill->branch_id,
+                            'scheduled_date' => $drill->scheduled_date->toDateString(),
+                        ],
+                    ]);
+                    $count++;
+                }
+            }
+        }
+
+        return $count;
+    }
+
+    /**
+     * Check for late medications and send email notifications
+     */
+    private function checkLateMedications(): void
+    {
+        $service = new \App\Services\NotificationService();
+        $now = now();
+
+        // Get active medications with scheduled times
+        $medications = Medication::with(['resident.assignments.caregiver', 'drug'])
+            ->where('is_active', true)
+            ->where(function($query) use ($now) {
+                $query->whereNull('start_date')
+                      ->orWhere('start_date', '<=', $now);
+            })
+            ->where(function($query) use ($now) {
+                $query->whereNull('end_date')
+                      ->orWhere('end_date', '>=', $now);
+            })
+            ->get();
+
+        foreach ($medications as $medication) {
+            $adminTimes = $this->getScheduledAdminTimes($medication);
+            
+            foreach ($adminTimes as $adminTime) {
+                try {
+                    // Parse scheduled time
+                    $scheduledTime = Carbon::parse($adminTime);
+                    $currentTime = Carbon::now();
+                    
+                    // Check if medication is 30+ minutes late
+                    if ($scheduledTime->isPast() && $currentTime->diffInMinutes($scheduledTime) >= 30) {
+                        // Check if not administered yet today
+                        $alreadyAdministered = MedicationAdministration::where('medication_id', $medication->id)
+                            ->whereDate('administered_at', $now->toDateString())
+                            ->where('status', 'completed')
+                            ->where(function($q) use ($adminTime) {
+                                // Check if administered within 30 minutes of scheduled time
+                                $scheduledTime = Carbon::parse($adminTime);
+                                $q->whereTime('administered_at', '>=', $scheduledTime->copy()->subMinutes(30)->toTimeString())
+                                  ->whereTime('administered_at', '<=', $scheduledTime->copy()->addMinutes(30)->toTimeString());
+                            })
+                            ->exists();
+
+                        if (!$alreadyAdministered) {
+                            // Check if we already sent notification today for this medication/time
+                            $notificationSent = \App\Models\Notification::where('type', 'late_medication_email')
+                                ->whereJsonContains('metadata->medication_id', $medication->id)
+                                ->whereJsonContains('metadata->scheduled_time', $adminTime)
+                                ->whereDate('created_at', $now->toDateString())
+                                ->exists();
+
+                            if (!$notificationSent) {
+                                // Get assigned caregivers
+                                $caregivers = $medication->resident?->assignments
+                                    ->where('is_active', true)
+                                    ->pluck('caregiver')
+                                    ->filter();
+                                
+                                if ($caregivers->isEmpty()) {
+                                    $caregivers = User::whereIn('role', ['administrator', 'admin', 'manager', 'super_admin'])
+                                        ->where('is_active', true)
+                                        ->get();
+                                }
+
+                                // Send email notification
+                                $service->sendLateMedicationEmail($medication, $medication->resident, $caregivers);
+
+                                // Create notification record
+                                foreach ($caregivers as $caregiver) {
+                                    \App\Models\Notification::create([
+                                        'user_id' => $caregiver->id,
+                                        'type' => 'late_medication_email',
+                                        'title' => 'Late Medication Alert',
+                                        'message' => ($medication->drug?->name ?? $medication->name) . " for " . 
+                                                   trim(($medication->resident->first_name ?? '') . ' ' . ($medication->resident->last_name ?? '')) . 
+                                                   " was scheduled for {$adminTime} but has not been administered",
+                                        'icon' => 'alert-circle',
+                                        'icon_color' => 'text-red-600',
+                                        'action_url' => '/medications',
+                                        'metadata' => [
+                                            'medication_id' => $medication->id,
+                                            'resident_id' => $medication->resident_id,
+                                            'scheduled_time' => $adminTime,
+                                        ],
+                                    ]);
+                                }
+                            }
+                        }
+                    }
+                } catch (\Exception $e) {
+                    // Skip invalid time formats
+                    continue;
+                }
+            }
+        }
+    }
+
+    /**
+     * Check for late vital signs and send email notifications
+     */
+    private function checkLateVitalSigns(): void
+    {
+        $service = new \App\Services\NotificationService();
+        $now = now();
+
+        // Get all active residents
+        $residents = Resident::with(['assignments.caregiver', 'vitalSigns'])
+            ->where('is_active', true)
+            ->get();
+
+        foreach ($residents as $resident) {
+            // Get last vital sign
+            $lastVitalSign = $resident->vitalSigns()
+                ->orderBy('measurement_date', 'desc')
+                ->orderBy('created_at', 'desc')
+                ->first();
+
+            // Check if last vital sign is 24+ hours old
+            if (!$lastVitalSign || $now->diffInHours($lastVitalSign->measurement_date) >= 24) {
+                $hoursOverdue = $lastVitalSign 
+                    ? $now->diffInHours($lastVitalSign->measurement_date) 
+                    : 999; // No vital signs ever recorded
+
+                // Check if we already sent notification today for this resident
+                $notificationSent = \App\Models\Notification::where('type', 'late_vital_sign_email')
+                    ->whereJsonContains('metadata->resident_id', $resident->id)
+                    ->whereDate('created_at', $now->toDateString())
+                    ->exists();
+
+                if (!$notificationSent) {
+                    // Get assigned caregivers
+                    $caregivers = $resident->assignments
+                        ->where('is_active', true)
+                        ->pluck('caregiver')
+                        ->filter();
+                    
+                    if ($caregivers->isEmpty()) {
+                        $caregivers = User::whereIn('role', ['administrator', 'admin', 'manager', 'super_admin'])
+                            ->where('is_active', true)
+                            ->get();
+                    }
+
+                    // Send email notification
+                    $service->sendLateVitalSignEmail($resident, $caregivers, $hoursOverdue);
+
+                    // Create notification record
+                    foreach ($caregivers as $caregiver) {
+                        \App\Models\Notification::create([
+                            'user_id' => $caregiver->id,
+                            'type' => 'late_vital_sign_email',
+                            'title' => 'Late Vital Sign Alert',
+                            'message' => "Vital signs for " . 
+                                       trim(($resident->first_name ?? '') . ' ' . ($resident->last_name ?? '')) . 
+                                       " are overdue by {$hoursOverdue} hours",
+                            'icon' => 'activity',
+                            'icon_color' => 'text-red-600',
+                            'action_url' => '/vitals',
+                            'metadata' => [
+                                'resident_id' => $resident->id,
+                                'hours_overdue' => $hoursOverdue,
+                            ],
+                        ]);
+                    }
+                }
+            }
+        }
     }
 }

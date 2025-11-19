@@ -32,6 +32,8 @@ class Resident extends Model
         'medications',
         'diagnosis',
         'physician_name',
+        'medicare_number',
+        'primary_care_doctor',
         'pep_or_doctor',
         'dietary_restrictions',
         'mobility_notes',
