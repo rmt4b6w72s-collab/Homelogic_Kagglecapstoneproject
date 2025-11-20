@@ -221,43 +221,43 @@ export default function NotificationDropdown() {
     const getNotificationIcon = (type) => {
         switch (type) {
             case 'appointment_reminder':
-                return { Icon: Calendar, color: 'text-[#25603E]' };
+                return { Icon: Calendar, color: 'text-[var(--theme-primary)]' };
             case 'appointment_upcoming':
-                return { Icon: Calendar, color: 'text-[#25603E]' };
+                return { Icon: Calendar, color: 'text-[var(--theme-primary)]' };
             case 'vital_due':
-                return { Icon: Activity, color: 'text-[#25603E]' };
+                return { Icon: Activity, color: 'text-[var(--theme-primary)]' };
             case 'assessment_due':
-                return { Icon: ClipboardList, color: 'text-[#8B4513]' };
+                return { Icon: ClipboardList, color: 'text-[var(--theme-secondary)]' };
             case 'assessment_created':
-                return { Icon: ClipboardList, color: 'text-[#8B4513]' };
+                return { Icon: ClipboardList, color: 'text-[var(--theme-secondary)]' };
             case 'assessment_completed':
                 return { Icon: ClipboardList, color: 'text-green-600' };
             case 'leave_request':
-                return { Icon: UserCheck, color: 'text-[#8B4513]' };
+                return { Icon: UserCheck, color: 'text-[var(--theme-secondary)]' };
             case 'leave_approved':
-                return { Icon: Check, color: 'text-[#25603E]' };
+                return { Icon: Check, color: 'text-[var(--theme-primary)]' };
             case 'leave_rejected':
                 return { Icon: X, color: 'text-red-600' };
             case 'vital_recorded':
-                return { Icon: Activity, color: 'text-[#25603E]' };
+                return { Icon: Activity, color: 'text-[var(--theme-primary)]' };
             case 'vital_critical':
                 return { Icon: AlertCircle, color: 'text-red-600' };
             case 'incident_reported':
                 return { Icon: AlertCircle, color: 'text-red-600' };
             case 'sleep_record':
-                return { Icon: Moon, color: 'text-[#25603E]' };
+                return { Icon: Moon, color: 'text-[var(--theme-primary)]' };
             case 'resident_created':
-                return { Icon: User, color: 'text-[#25603E]' };
+                return { Icon: User, color: 'text-[var(--theme-primary)]' };
             case 'user_created':
-                return { Icon: User, color: 'text-[#25603E]' };
+                return { Icon: User, color: 'text-[var(--theme-primary)]' };
             case 'facility_created':
-                return { Icon: Building2, color: 'text-[#25603E]' };
+                return { Icon: Building2, color: 'text-[var(--theme-primary)]' };
             case 'branch_created':
-                return { Icon: Building2, color: 'text-[#25603E]' };
+                return { Icon: Building2, color: 'text-[var(--theme-primary)]' };
             case 'medication_due':
-                return { Icon: Pill, color: 'text-[#8B4513]' };
+                return { Icon: Pill, color: 'text-[var(--theme-secondary)]' };
             case 'medication_created':
-                return { Icon: Pill, color: 'text-[#8B4513]' };
+                return { Icon: Pill, color: 'text-[var(--theme-secondary)]' };
             case 'medication_administered':
                 return { Icon: Pill, color: 'text-green-600' };
             case 'housekeeping_task_completed':
@@ -315,7 +315,7 @@ export default function NotificationDropdown() {
                             {unreadCount > 0 && (
                                 <button
                                     onClick={() => markAllAsReadMutation.mutate()}
-                                    className="text-sm text-[#25603E] hover:text-[#1B402D] font-medium flex items-center space-x-1"
+                                    className="text-sm text-[var(--theme-primary)] hover:text-[var(--theme-primary-hover)] font-medium flex items-center space-x-1"
                                 >
                                     <CheckCheck className="w-4 h-4" />
                                     <span>Mark all as read</span>
@@ -327,7 +327,7 @@ export default function NotificationDropdown() {
                         <div className="overflow-y-auto flex-1">
                             {isLoading ? (
                                 <div className="p-4 text-center">
-                                    <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-[#25603E]"></div>
+                                    <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-[var(--theme-primary)]"></div>
                                     <p className="mt-2 text-sm text-gray-600">Loading...</p>
                                 </div>
                             ) : notifications.length > 0 ? (
@@ -343,7 +343,7 @@ export default function NotificationDropdown() {
                                                 }`}
                                             >
                                                 <div className="flex items-start space-x-3">
-                                                    <div className={`p-2 rounded-lg ${color.includes('text-[#25603E]') ? 'bg-green-50' : 'bg-amber-50'}`}>
+                                                    <div className={`p-2 rounded-lg ${color.includes('text-[var(--theme-primary)]') ? 'bg-green-50' : 'bg-amber-50'}`}>
                                                         <Icon className={`w-5 h-5 ${color}`} />
                                                     </div>
                                                     <div className="flex-1 min-w-0">
@@ -354,7 +354,7 @@ export default function NotificationDropdown() {
                                                                 {notification.title}
                                                             </p>
                                                             {!notification.is_read && (
-                                                                <span className="ml-2 w-2 h-2 bg-[#25603E] rounded-full flex-shrink-0"></span>
+                                                                <span className="ml-2 w-2 h-2 bg-[var(--theme-primary)] rounded-full flex-shrink-0"></span>
                                                             )}
                                                         </div>
                                                         <p className="mt-1 text-sm text-gray-600 truncate">

@@ -27,3 +27,65 @@
 .animate-slide-in-right {
     animation: slide-in-right 0.3s ease-out;
 }
+
+/* Global theme utility classes using CSS variables */
+/* These can be used in Tailwind classes or regular CSS */
+
+/* Focus ring colors */
+.focus-ring-primary:focus {
+    outline: 2px solid var(--theme-primary);
+    outline-offset: 2px;
+}
+
+/* Link colors */
+.link-primary {
+    color: var(--theme-primary);
+}
+
+.link-primary:hover {
+    color: var(--theme-primary-hover);
+}
+
+.link-secondary {
+    color: var(--theme-secondary);
+}
+
+.link-secondary:hover {
+    color: var(--theme-secondary-hover);
+}
+
+/* Button hover states */
+.hover-primary:hover {
+    background-color: var(--theme-primary-hover);
+}
+
+.hover-secondary:hover {
+    background-color: var(--theme-secondary-hover);
+}
+
+/* Form input focus states */
+.input-focus-primary:focus {
+    border-color: var(--theme-primary);
+    box-shadow: 0 0 0 3px var(--theme-focus-ring, rgba(37, 96, 62, 0.3));
+}
+
+/* Status colors (maintain semantic meaning while using theme where appropriate) */
+.status-success {
+    background-color: #10b981;
+    color: white;
+}
+
+.status-warning {
+    background-color: #f59e0b;
+    color: white;
+}
+
+.status-error {
+    background-color: #ef4444;
+    color: white;
+}
+
+.status-info {
+    background-color: var(--theme-primary);
+    color: var(--theme-text-on-primary);
+}

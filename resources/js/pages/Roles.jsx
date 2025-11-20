@@ -31,7 +31,7 @@ export default function Roles() {
             <h2 className="text-xl font-semibold text-gray-900 mb-2">Roles & Permissions Management</h2>
             <p className="text-gray-600">View and manage user roles and permissions.</p>
           </div>
-          <button onClick={() => { setEditing(null); setShowForm(true); }} className="w-full sm:w-auto px-4 py-2 bg-[#25603E] text-white rounded-lg hover:bg-[#1B402D] transition-colors flex items-center justify-center space-x-2 text-sm md:text-base">
+          <button onClick={() => { setEditing(null); setShowForm(true); }} className="w-full sm:w-auto px-4 py-2 bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] rounded-lg hover:bg-[var(--theme-primary-hover)] transition-colors flex items-center justify-center space-x-2 text-sm md:text-base">
             <Plus className="w-4 h-4" />
             <span>Add Role</span>
           </button>
@@ -39,7 +39,7 @@ export default function Roles() {
       </div>
 
       {isLoading ? (
-        <div className="text-center py-12"><div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#25603E]"></div><p className="mt-4 text-gray-600">Loading roles...</p></div>
+        <div className="text-center py-12"><div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--theme-primary)]"></div><p className="mt-4 text-gray-600">Loading roles...</p></div>
       ) : (
         <div className="space-y-4">
           {rolesData?.data?.length ? (
@@ -53,8 +53,8 @@ export default function Roles() {
                     </div>
                   </div>
                   <div className="flex space-x-2">
-                    <button onClick={() => { setEditing(role); setShowForm(true); }} className="p-2 text-[#25603E] hover:bg-green-50 rounded-lg" title="Edit"><Edit className="w-4 h-4" /></button>
-                    <button onClick={() => window.confirm('Delete role?') && deleteMutation.mutate(role.id)} className="p-2 text-[#8B4513] hover:bg-amber-50 rounded-lg" title="Delete"><Trash2 className="w-4 h-4" /></button>
+                    <button onClick={() => { setEditing(role); setShowForm(true); }} className="p-2 text-[var(--theme-primary)] hover:bg-green-50 rounded-lg" title="Edit"><Edit className="w-4 h-4" /></button>
+                    <button onClick={() => window.confirm('Delete role?') && deleteMutation.mutate(role.id)} className="p-2 text-[var(--theme-secondary)] hover:bg-amber-50 rounded-lg" title="Delete"><Trash2 className="w-4 h-4" /></button>
                   </div>
                 </div>
               </div>
@@ -127,7 +127,7 @@ function RoleForm({ record, permissions, onClose, onSuccess }) {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Role Name *</label>
-              <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent" />
+              <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent" />
               {errors.name && <p className="text-xs text-red-600 mt-1">{errors.name[0]}</p>}
             </div>
             <div>
@@ -147,7 +147,7 @@ function RoleForm({ record, permissions, onClose, onSuccess }) {
             </div>
             <div className="flex items-center justify-end space-x-3 pt-4 border-t">
               <button type="button" onClick={onClose} className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</button>
-              <button type="submit" disabled={submitting} className="w-full sm:w-auto px-4 py-2 bg-[#25603E] text-white rounded-lg hover:bg-[#1B402D] disabled:opacity-50">{submitting ? 'Saving...' : (record ? 'Update' : 'Create')}</button>
+              <button type="submit" disabled={submitting} className="w-full sm:w-auto px-4 py-2 bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] rounded-lg hover:bg-[var(--theme-primary-hover)] disabled:opacity-50">{submitting ? 'Saving...' : (record ? 'Update' : 'Create')}</button>
             </div>
           </form>
         </div>

@@ -33,7 +33,7 @@ export default function ChartFilters({
     return (
         <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden mb-6">
             <div className="p-4 md:p-6">
-                <h2 className="text-lg font-semibold text-[#25603E] mb-4">Filters</h2>
+                <h2 className="text-lg font-semibold text-[var(--theme-primary)] mb-4">Filters</h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     {/* Branch Filter */}
                     <div>
@@ -46,7 +46,7 @@ export default function ChartFilters({
                                 setBranchId(e.target.value || null);
                                 setResidentId(null); // Reset resident when branch changes
                             }}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                         >
                             <option value="">All Branches</option>
                             {branchesData?.data?.map((branch) => (
@@ -65,7 +65,7 @@ export default function ChartFilters({
                         <select
                             value={residentId || ''}
                             onChange={(e) => setResidentId(e.target.value || null)}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                             disabled={branchId && !residentsData?.data?.length}
                         >
                             <option value="">All Residents</option>
@@ -91,7 +91,7 @@ export default function ChartFilters({
                                         onClick={() => setDateRange(range)}
                                         className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors capitalize ${
                                             dateRange === range
-                                                ? 'bg-[#25603E] text-white'
+                                                ? 'bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)]'
                                                 : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
                                         }`}
                                     >

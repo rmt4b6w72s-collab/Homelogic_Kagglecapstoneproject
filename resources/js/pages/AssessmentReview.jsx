@@ -79,7 +79,7 @@ export default function AssessmentReview() {
     if (isLoading) {
         return (
             <div className="text-center py-12">
-                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#25603E]"></div>
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--theme-primary)]"></div>
                 <p className="mt-4 text-gray-600">Loading assessment...</p>
             </div>
         );
@@ -102,7 +102,7 @@ export default function AssessmentReview() {
             : 'bg-emerald-50 text-emerald-800 border-emerald-200';
     };
 
-    // Single brand palette: deep green (#25603E) and emerald accents
+    // Single brand palette: deep green (var(--theme-primary)) and emerald accents
     const sectionColors = [
         { bg: 'bg-emerald-50', border: 'border-emerald-200', icon: 'text-emerald-700' },
     ];
@@ -121,7 +121,7 @@ export default function AssessmentReview() {
                             <span>Back to Assessments</span>
                         </Link>
                         <div>
-                            <h1 className="text-3xl font-bold text-[#25603E]">
+                            <h1 className="text-3xl font-bold text-[var(--theme-primary)]">
                                 Assessment Review
                             </h1>
                             <div className="flex items-center space-x-3 mt-2">
@@ -145,7 +145,7 @@ export default function AssessmentReview() {
             <div className="px-6 pb-6">
                 {/* Stats Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                    <div className="bg-[#25603E] rounded-xl shadow p-5 text-white">
+                    <div className="bg-[var(--theme-primary)] rounded-xl shadow p-5 text-[var(--theme-text-on-primary)]">
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-emerald-100 text-sm font-medium">Assessment Type</p>
@@ -304,7 +304,7 @@ export default function AssessmentReview() {
                                                                         }`}>
                                                                             Q{qIndex + 1}
                                                                         </span>
-                                                                        <span className="px-2 py-1 rounded text-xs font-medium bg-green-50 text-[#25603E]">
+                                                                        <span className="px-2 py-1 rounded text-xs font-medium bg-green-50 text-[var(--theme-primary)]">
                                                                             {q.response_type}
                                                                         </span>
                                                                     </div>
@@ -364,7 +364,7 @@ export default function AssessmentReview() {
                                         }
                                     }}
                                     disabled={markCompleteMutation.isPending || assessment.status === 'completed'}
-                                    className="px-6 py-3 bg-[#25603E] text-white rounded-lg hover:bg-[#1B402D] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 font-medium"
+                                    className="px-6 py-3 bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] rounded-lg hover:bg-[var(--theme-primary-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 font-medium"
                                 >
                                     <CheckCircle className="w-5 h-5" />
                                     <span>{markCompleteMutation.isPending ? 'Marking...' : assessment.status === 'completed' ? 'Already Completed' : 'Mark as Complete'}</span>

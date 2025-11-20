@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Carbon\Carbon;
 
-class GroceryStatusUpdateController extends Controller
+class GroceryStatusUpdateController extends BaseApiController
 {
     /**
      * Display a listing of the resource.
@@ -138,6 +138,31 @@ class GroceryStatusUpdateController extends Controller
         }
 
         $update->update($validated);
+
+        return response()->json($update->load(['branch', 'updatedBy']));
+    }
+
+    /**
+     * Update status only (quick status update).
+     */
+    public function updateStatus(Request $request, string $id): JsonResponse
+    {
+        $update = GroceryStatusUpdate::findOrFail($id);
+
+        $validated = $request->validate([
+            'status' => 'required|in:pending,in_progress,completed,needs_attention',
+        ]);
+
+        $update->status = $validated['status'];
+        
+        // Set completed_at if status is completed
+        if ($validated['status'] === 'completed' && !$update->completed_at) {
+            $update->completed_at = now();
+        } elseif ($validated['status'] !== 'completed') {
+            $update->completed_at = null;
+        }
+
+        $update->save();
 
         return response()->json($update->load(['branch', 'updatedBy']));
     }

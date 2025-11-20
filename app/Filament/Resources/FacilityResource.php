@@ -50,22 +50,26 @@ class FacilityResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return auth()->user()->hasPermission('view_facilities');
+        $user = auth()->user();
+        return $user->role === 'super_admin' || $user->hasPermission('view_facilities');
     }
 
     public static function canCreate(): bool
     {
-        return auth()->user()->hasPermission('create_facilities');
+        $user = auth()->user();
+        return $user->role === 'super_admin' || $user->hasPermission('create_facilities');
     }
 
     public static function canEdit($record): bool
     {
-        return auth()->user()->hasPermission('edit_facilities');
+        $user = auth()->user();
+        return $user->role === 'super_admin' || $user->hasPermission('edit_facilities');
     }
 
     public static function canDelete($record): bool
     {
-        return auth()->user()->hasPermission('delete_facilities');
+        $user = auth()->user();
+        return $user->role === 'super_admin' || $user->hasPermission('delete_facilities');
     }
 
     public static function form(Form $form): Form
@@ -130,6 +134,33 @@ class FacilityResource extends Resource
                             ->helperText('Enable this facility for use'),
                     ])
                     ->columns(2),
+
+                Forms\Components\Section::make('Branding & Customization')
+                    ->schema([
+                        Forms\Components\FileUpload::make('logo')
+                            ->label('Facility Logo')
+                            ->image()
+                            ->directory('facilities/logos')
+                            ->disk('public')
+                            ->imageEditor()
+                            ->helperText('Upload a logo for this facility. Will be displayed in the admin panel.'),
+                        Forms\Components\TextInput::make('subdomain')
+                            ->label('Subdomain')
+                            ->maxLength(255)
+                            ->unique(ignoreRecord: true)
+                            ->helperText('Optional subdomain for facility-specific URL (e.g., evergreen.yourapp.com)'),
+                        Forms\Components\ColorPicker::make('primary_color')
+                            ->label('Primary Color')
+                            ->helperText('Main brand color for the admin panel'),
+                        Forms\Components\ColorPicker::make('secondary_color')
+                            ->label('Secondary Color')
+                            ->helperText('Secondary brand color'),
+                        Forms\Components\ColorPicker::make('accent_color')
+                            ->label('Accent Color')
+                            ->helperText('Accent color for highlights'),
+                    ])
+                    ->columns(2)
+                    ->visible(fn () => auth()->user()->role === 'super_admin'),
             ]);
     }
 

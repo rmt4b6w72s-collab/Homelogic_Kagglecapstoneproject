@@ -156,7 +156,7 @@ export default function Reports() {
             <div className="max-w-7xl mx-auto px-4 md:px-6 py-4 md:py-8">
                 {/* Page Title */}
                 <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-[#25603E] mb-2">Chart Reports</h1>
+                    <h1 className="text-3xl font-bold text-[var(--theme-primary)] mb-2">Chart Reports</h1>
                     <p className="text-gray-600">Access and view detailed analytics across all report categories</p>
                 </div>
 
@@ -164,7 +164,7 @@ export default function Reports() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {isLoading ? (
                         <div className="col-span-full text-center py-12">
-                            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#25603E]"></div>
+                            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--theme-primary)]"></div>
                             <p className="mt-4 text-gray-600">Loading statistics...</p>
                         </div>
                     ) : (
@@ -177,17 +177,17 @@ export default function Reports() {
                                     className="group relative bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden cursor-pointer border border-gray-100"
                                 >
                                     {/* Gradient decoration */}
-                                    <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#25603E] to-[#4a7a2a]"></div>
+                                    <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[var(--theme-primary)] to-[#4a7a2a]"></div>
                                     
                                     {/* Content */}
                                     <div className="p-6">
                                         <div className="flex items-start justify-between mb-4">
                                             <div className="flex-1">
-                                                <p className="text-[#8B4513] text-sm font-semibold uppercase tracking-wide mb-1">
+                                                <p className="text-[var(--theme-secondary)] text-sm font-semibold uppercase tracking-wide mb-1">
                                                     {page.title}
                                                 </p>
                                                 <div className="flex items-baseline space-x-2">
-                                                    <p className="text-4xl font-bold text-[#25603E]">
+                                                    <p className="text-4xl font-bold text-[var(--theme-primary)]">
                                                         {page.value}
                                                     </p>
                                                 </div>
@@ -199,12 +199,12 @@ export default function Reports() {
                                                 )}
                                             </div>
                                             <div className="bg-green-50 p-3 rounded-xl group-hover:scale-110 transition-transform duration-300">
-                                                <Icon className="w-6 h-6 text-[#25603E]" />
+                                                <Icon className="w-6 h-6 text-[var(--theme-primary)]" />
                                             </div>
                                         </div>
                                         
                                         {/* Hover effect */}
-                                        <div className="flex items-center text-[#25603E] text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                        <div className="flex items-center text-[var(--theme-primary)] text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                                             <span>View details</span>
                                             <ArrowRight className="w-4 h-4 ml-2 transform group-hover:translate-x-1 transition-transform" />
                                         </div>

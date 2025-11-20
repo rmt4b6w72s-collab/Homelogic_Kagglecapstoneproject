@@ -2,12 +2,16 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
+use App\Constants\UserRoles;
+use App\Http\Requests\Api\Resident\StoreResidentRequest;
+use App\Http\Requests\Api\Resident\UpdateResidentRequest;
+use App\Http\Resources\Api\ResidentResource;
 use App\Models\Resident;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Storage;
 
-class ResidentController extends Controller
+class ResidentController extends BaseApiController
 {
     public function index(Request $request): JsonResponse
     {
@@ -15,8 +19,8 @@ class ResidentController extends Controller
         $user = $request->user();
         $caregiverBranchId = null;
 
-        // Check if user is a caregiver (including all caregiver-related roles)
-        $isCaregiver = $user && in_array($user->role, ['caregiver', 'care_giver', 'nurse', 'registered_nurse', 'licensed_nurse']);
+        // Check if user is a caregiver
+        $isCaregiver = $this->isCaregiver($user);
         
         if ($isCaregiver) {
             $caregiverBranchId = (int) ($user->assigned_branch_id ?? 0);
@@ -26,9 +30,7 @@ class ResidentController extends Controller
                 $query->whereRaw('1 = 0');
             } else {
                 if ($request->filled('branch_id') && (int) $request->get('branch_id') !== $caregiverBranchId) {
-                    return response()->json([
-                        'message' => 'You may only view residents in your assigned branch.',
-                    ], 403);
+                    return $this->error('You may only view residents in your assigned branch.', 403);
                 }
 
                 $query->where('branch_id', $caregiverBranchId);
@@ -68,11 +70,21 @@ class ResidentController extends Controller
             $query->where('is_active', true);
         }
 
+        $query->orderBy('created_at', 'desc');
+        
         $perPage = (int) $request->get('per_page', 50);
         $perPage = max(1, min(100, $perPage));
-        $residents = $query->orderBy('created_at', 'desc')->paginate($perPage);
+        $residents = $query->paginate($perPage);
 
-        return response()->json($residents);
+        return response()->json([
+            'data' => ResidentResource::collection($residents->items()),
+            'current_page' => $residents->currentPage(),
+            'per_page' => $residents->perPage(),
+            'total' => $residents->total(),
+            'last_page' => $residents->lastPage(),
+            'from' => $residents->firstItem(),
+            'to' => $residents->lastItem(),
+        ]);
     }
 
     public function show($id): JsonResponse
@@ -87,17 +99,14 @@ class ResidentController extends Controller
             ->findOrFail($id);
 
         $user = request()->user();
-        $isCaregiver = $user && in_array($user->role, ['caregiver', 'care_giver', 'nurse', 'registered_nurse', 'licensed_nurse']);
-        if ($isCaregiver) {
+        if ($this->isCaregiver($user)) {
             $caregiverBranchId = (int) ($user->assigned_branch_id ?? 0);
             if ($caregiverBranchId === 0 || (int) $resident->branch_id !== $caregiverBranchId) {
-                return response()->json([
-                    'message' => 'You do not have permission to view this resident.',
-                ], 403);
+                return $this->error('You do not have permission to view this resident.', 403);
             }
         }
 
-        return response()->json($resident);
+        return $this->success(new ResidentResource($resident));
     }
 
     public function appointments($id): JsonResponse
@@ -143,36 +152,9 @@ class ResidentController extends Controller
         return response()->json($vitals);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StoreResidentRequest $request): JsonResponse
     {
-        // Convert is_active from FormData string to boolean if present
-        if ($request->has('is_active')) {
-            $request->merge(['is_active' => filter_var($request->is_active, FILTER_VALIDATE_BOOLEAN)]);
-        }
-
-        $validated = $request->validate([
-            'first_name' => 'required|string|max:255',
-            'last_name' => 'required|string|max:255',
-            'middle_names' => 'nullable|string|max:255',
-            'date_of_birth' => 'required|date',
-            'gender' => 'nullable|string|max:50',
-            'phone' => 'nullable|string|max:50',
-            'room' => 'nullable|string|max:50',
-            'room_number' => 'nullable|string|max:50',
-            'branch_id' => 'required|exists:branches,id',
-            'admission_date' => 'required|date',
-            'emergency_contact_name' => 'nullable|string|max:255',
-            'emergency_contact_phone' => 'nullable|string|max:50',
-            'diagnosis' => 'nullable|string',
-            'allergies' => 'nullable|string',
-            'medical_conditions' => 'nullable|string',
-            'physician_name' => 'nullable|string|max:255',
-            'medicare_number' => 'nullable|string|max:255',
-            'primary_care_doctor' => 'nullable|string|max:255',
-            'status' => 'nullable|string|max:50',
-            'is_active' => 'nullable|boolean',
-            'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-        ]);
+        $validated = $request->validated();
 
         // Handle profile image upload
         if ($request->hasFile('profile_image')) {
@@ -182,67 +164,25 @@ class ResidentController extends Controller
             $validated['profile_image'] = $imagePath;
         }
 
-        // Handle array fields that come as strings - convert to arrays if needed
-        if (isset($validated['medical_conditions']) && is_string($validated['medical_conditions'])) {
-            $validated['medical_conditions'] = !empty(trim($validated['medical_conditions'])) 
-                ? [$validated['medical_conditions']] 
-                : null;
-        }
-        if (isset($validated['allergies']) && is_string($validated['allergies'])) {
-            $validated['allergies'] = !empty(trim($validated['allergies'])) 
-                ? [$validated['allergies']] 
-                : null;
-        }
-
-        // Auto-generate name if not provided
-        if (!isset($validated['name'])) {
-            $parts = array_filter([$validated['first_name'], $validated['middle_names'] ?? null, $validated['last_name']]);
-            $validated['name'] = implode(' ', $parts);
-        }
-
         $resident = Resident::create($validated);
 
-        return response()->json($resident->load(['branch']), 201);
+        return $this->success(
+            new ResidentResource($resident->load(['branch'])),
+            'Resident created successfully',
+            201
+        );
     }
 
-    public function update(Request $request, $id): JsonResponse
+    public function update(UpdateResidentRequest $request, $id): JsonResponse
     {
         $resident = Resident::findOrFail($id);
-
-        // Convert is_active from FormData string to boolean if present
-        if ($request->has('is_active')) {
-            $request->merge(['is_active' => filter_var($request->is_active, FILTER_VALIDATE_BOOLEAN)]);
-        }
-
-        $validated = $request->validate([
-            'first_name' => 'sometimes|required|string|max:255',
-            'last_name' => 'sometimes|required|string|max:255',
-            'middle_names' => 'nullable|string|max:255',
-            'date_of_birth' => 'sometimes|required|date',
-            'gender' => 'nullable|string|max:50',
-            'phone' => 'nullable|string|max:50',
-            'room' => 'nullable|string|max:50',
-            'room_number' => 'nullable|string|max:50',
-            'branch_id' => 'sometimes|exists:branches,id',
-            'admission_date' => 'sometimes|required|date',
-            'emergency_contact_name' => 'nullable|string|max:255',
-            'emergency_contact_phone' => 'nullable|string|max:50',
-            'diagnosis' => 'nullable|string',
-            'allergies' => 'nullable',
-            'medical_conditions' => 'nullable',
-            'physician_name' => 'nullable|string|max:255',
-            'medicare_number' => 'nullable|string|max:255',
-            'primary_care_doctor' => 'nullable|string|max:255',
-            'status' => 'nullable|string|max:50',
-            'is_active' => 'nullable|boolean',
-            'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-        ]);
+        $validated = $request->validated();
 
         // Handle profile image upload
         if ($request->hasFile('profile_image')) {
             // Delete old image if it exists
-            if ($resident->profile_image && \Storage::disk('public')->exists($resident->profile_image)) {
-                \Storage::disk('public')->delete($resident->profile_image);
+            if ($resident->profile_image && Storage::disk('public')->exists($resident->profile_image)) {
+                Storage::disk('public')->delete($resident->profile_image);
             }
             
             $image = $request->file('profile_image');
@@ -258,7 +198,6 @@ class ResidentController extends Controller
                     ? [$validated['medical_conditions']] 
                     : null;
             } elseif (is_array($validated['medical_conditions'])) {
-                // Filter out empty values and ensure it's a clean array
                 $validated['medical_conditions'] = array_filter($validated['medical_conditions'], function($item) {
                     return !empty(trim($item));
                 });
@@ -274,7 +213,6 @@ class ResidentController extends Controller
                     ? [$validated['allergies']] 
                     : null;
             } elseif (is_array($validated['allergies'])) {
-                // Filter out empty values and ensure it's a clean array
                 $validated['allergies'] = array_filter($validated['allergies'], function($item) {
                     return !empty(trim($item));
                 });
@@ -295,7 +233,10 @@ class ResidentController extends Controller
 
         $resident->update($validated);
 
-        return response()->json($resident->load(['branch']));
+        return $this->success(
+            new ResidentResource($resident->load(['branch'])),
+            'Resident updated successfully'
+        );
     }
 
     public function destroy($id): JsonResponse
@@ -303,7 +244,7 @@ class ResidentController extends Controller
         $resident = Resident::findOrFail($id);
         $resident->delete();
 
-        return response()->json(['message' => 'Resident deleted successfully']);
+        return $this->success(null, 'Resident deleted successfully');
     }
 }
 

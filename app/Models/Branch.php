@@ -8,11 +8,17 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Traits\Loggable;
 use App\Traits\FormatsPhoneNumbers;
+use App\Models\Scopes\FacilityScope;
 
 class Branch extends Model
 {
     use HasFactory, SoftDeletes, Loggable;
     use FormatsPhoneNumbers;
+
+    protected static function booted()
+    {
+        static::addGlobalScope(new FacilityScope);
+    }
 
     protected $fillable = [
         'name',

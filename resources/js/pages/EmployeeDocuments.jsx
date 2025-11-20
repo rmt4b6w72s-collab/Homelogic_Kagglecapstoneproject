@@ -60,13 +60,13 @@ export default function EmployeeDocuments() {
 
     const getDocumentTypeColor = (type) => {
         const colors = {
-            contract: 'bg-amber-50 text-[#8B4513]',
-            id: 'bg-green-50 text-[#25603E]',
-            license: 'bg-amber-50 text-[#8B4513]',
-            certification: 'bg-green-50 text-[#25603E]',
+            contract: 'bg-amber-50 text-[var(--theme-secondary)]',
+            id: 'bg-green-50 text-[var(--theme-primary)]',
+            license: 'bg-amber-50 text-[var(--theme-secondary)]',
+            certification: 'bg-green-50 text-[var(--theme-primary)]',
             background_check: 'bg-red-100 text-red-800',
-            medical: 'bg-green-50 text-[#25603E]',
-            training: 'bg-amber-50 text-[#8B4513]',
+            medical: 'bg-green-50 text-[var(--theme-primary)]',
+            training: 'bg-amber-50 text-[var(--theme-secondary)]',
             other: 'bg-gray-100 text-gray-800',
         };
         return colors[type] || colors.other;
@@ -93,7 +93,7 @@ export default function EmployeeDocuments() {
                             setEditing(null);
                             setShowForm(true);
                         }}
-                        className="w-full sm:w-auto px-4 py-2 bg-[#25603E] text-white rounded-lg hover:bg-[#1B402D] transition-colors flex items-center justify-center space-x-2 text-sm md:text-base"
+                        className="w-full sm:w-auto px-4 py-2 bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] rounded-lg hover:bg-[var(--theme-primary-hover)] transition-colors flex items-center justify-center space-x-2 text-sm md:text-base"
                     >
                         <Plus className="w-4 h-4" />
                         <span>Add Document</span>
@@ -109,7 +109,7 @@ export default function EmployeeDocuments() {
                             placeholder="Search documents..."
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                         />
                     </div>
 
@@ -119,7 +119,7 @@ export default function EmployeeDocuments() {
                         <select
                             value={employeeFilter}
                             onChange={(e) => setEmployeeFilter(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent appearance-none bg-white"
+                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent appearance-none bg-white"
                         >
                             <option value="">All Employees</option>
                             {usersData?.data?.map(user => (
@@ -134,7 +134,7 @@ export default function EmployeeDocuments() {
                         <select
                             value={typeFilter}
                             onChange={(e) => setTypeFilter(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent appearance-none bg-white"
+                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent appearance-none bg-white"
                         >
                             <option value="">All Types</option>
                             {Object.entries(documentTypeOptions).map(([value, label]) => (
@@ -148,7 +148,7 @@ export default function EmployeeDocuments() {
                         <select
                             value={expiredFilter}
                             onChange={(e) => setExpiredFilter(e.target.value)}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent appearance-none bg-white"
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent appearance-none bg-white"
                         >
                             <option value="all">All Documents</option>
                             <option value="expired">Expired</option>
@@ -161,7 +161,7 @@ export default function EmployeeDocuments() {
                         <select
                             value={activeFilter}
                             onChange={(e) => setActiveFilter(e.target.value)}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent appearance-none bg-white"
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent appearance-none bg-white"
                         >
                             <option value="all">All Status</option>
                             <option value="active">Active</option>
@@ -173,7 +173,7 @@ export default function EmployeeDocuments() {
 
             {isLoading ? (
                 <div className="text-center py-12">
-                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#25603E]"></div>
+                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--theme-primary)]"></div>
                     <p className="mt-4 text-gray-600">Loading documents...</p>
                 </div>
             ) : (
@@ -269,7 +269,7 @@ export default function EmployeeDocuments() {
                                                             href={`/storage/${document.file_path}`}
                                                             target="_blank"
                                                             rel="noopener noreferrer"
-                                                            className="text-[#25603E] hover:text-[#1B402D]"
+                                                            className="text-[var(--theme-primary)] hover:text-[var(--theme-primary-hover)]"
                                                             title="Download"
                                                         >
                                                             <Download className="w-4 h-4" />
@@ -280,7 +280,7 @@ export default function EmployeeDocuments() {
                                                             setEditing(document);
                                                             setShowForm(true);
                                                         }}
-                                                        className="text-[#25603E] hover:text-[#1B402D]"
+                                                        className="text-[var(--theme-primary)] hover:text-[var(--theme-primary-hover)]"
                                                         title="Edit"
                                                     >
                                                         <Edit className="w-4 h-4" />
@@ -291,7 +291,7 @@ export default function EmployeeDocuments() {
                                                                 deleteMutation.mutate(document.id);
                                                             }
                                                         }}
-                                                        className="text-[#8B4513] hover:text-[#6b3410]"
+                                                        className="text-[var(--theme-secondary)] hover:text-[var(--theme-secondary-hover)]"
                                                         title="Delete"
                                                     >
                                                         <Trash2 className="w-4 h-4" />
@@ -465,7 +465,7 @@ function EmployeeDocumentForm({ record, users, onClose, onSuccess }) {
                                         value={formData.user_id}
                                         onChange={(e) => setFormData({...formData, user_id: e.target.value})}
                                         required
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                     >
                                         <option value="">Select Employee</option>
                                         {users.map(user => (
@@ -487,7 +487,7 @@ function EmployeeDocumentForm({ record, users, onClose, onSuccess }) {
                                         onChange={(e) => setFormData({...formData, document_name: e.target.value})}
                                         required
                                         maxLength={255}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                     />
                                     {errors.document_name && <p className="text-xs text-red-600 mt-1">{errors.document_name[0]}</p>}
                                 </div>
@@ -500,7 +500,7 @@ function EmployeeDocumentForm({ record, users, onClose, onSuccess }) {
                                         value={formData.document_type}
                                         onChange={(e) => setFormData({...formData, document_type: e.target.value})}
                                         required
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                     >
                                         <option value="">Select Type</option>
                                         {Object.entries(documentTypeOptions).map(([value, label]) => (
@@ -519,7 +519,7 @@ function EmployeeDocumentForm({ record, users, onClose, onSuccess }) {
                                         value={formData.expiration_date}
                                         onChange={(e) => setFormData({...formData, expiration_date: e.target.value})}
                                         min={new Date().toISOString().split('T')[0]}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                     />
                                     {errors.expiration_date && <p className="text-xs text-red-600 mt-1">{errors.expiration_date[0]}</p>}
                                 </div>
@@ -533,7 +533,7 @@ function EmployeeDocumentForm({ record, users, onClose, onSuccess }) {
                                         onChange={handleFileChange}
                                         accept=".pdf,.jpg,.jpeg,.png,.gif,.doc,.docx"
                                         required={!record}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                     />
                                     <p className="text-xs text-gray-500 mt-1">
                                         Accepted: PDF, Images (JPG, PNG, GIF), Word Docs (DOC, DOCX). Max size: 10MB
@@ -555,7 +555,7 @@ function EmployeeDocumentForm({ record, users, onClose, onSuccess }) {
                                         onChange={(e) => setFormData({...formData, notes: e.target.value})}
                                         rows={3}
                                         placeholder="Any additional notes about this document..."
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                     />
                                 </div>
 
@@ -565,7 +565,7 @@ function EmployeeDocumentForm({ record, users, onClose, onSuccess }) {
                                             type="checkbox"
                                             checked={formData.is_active}
                                             onChange={(e) => setFormData({...formData, is_active: e.target.checked})}
-                                            className="w-4 h-4 text-[#25603E] border-gray-300 rounded focus:ring-[#25603E]"
+                                            className="w-4 h-4 text-[var(--theme-primary)] border-gray-300 rounded focus:ring-[var(--theme-primary)]"
                                         />
                                         <span className="text-sm font-medium text-gray-700">Active</span>
                                     </label>
@@ -584,7 +584,7 @@ function EmployeeDocumentForm({ record, users, onClose, onSuccess }) {
                             <button
                                 type="submit"
                                 disabled={isSubmitting}
-                                className="px-4 py-2 bg-[#25603E] text-white rounded-lg hover:bg-[#1B402D] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="px-4 py-2 bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] rounded-lg hover:bg-[var(--theme-primary-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {isSubmitting ? 'Saving...' : (record ? 'Update' : 'Create')}
                             </button>

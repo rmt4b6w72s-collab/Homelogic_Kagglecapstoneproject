@@ -106,11 +106,11 @@ export default function Calendar({
         
         // Selected date
         if (day.isSelected) {
-            classes += 'bg-[#25603E] text-white border-[#25603E] shadow-2xl transform scale-105 ';
+            classes += 'bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] border-[var(--theme-primary)] shadow-2xl transform scale-105 ';
         }
         // Today (if not selected)
         else if (day.isToday) {
-            classes += 'bg-[#25603E]/10 text-[#25603E] border-[#25603E] shadow-lg font-bold ';
+            classes += 'bg-[var(--theme-primary-bg)] text-[var(--theme-primary)] border-[var(--theme-primary)] shadow-lg font-bold ';
         }
         // Not current month
         else if (!day.isCurrentMonth) {
@@ -160,7 +160,7 @@ export default function Calendar({
                     </button>
                     <button
                         onClick={handleToday}
-                        className="px-3 md:px-4 py-2 text-sm font-medium bg-[#25603E] text-white rounded-lg hover:bg-[#1B402D] transition-colors"
+                        className="px-3 md:px-4 py-2 text-sm font-medium bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] rounded-lg hover:bg-[var(--theme-primary-hover)] transition-colors"
                     >
                         Today
                     </button>

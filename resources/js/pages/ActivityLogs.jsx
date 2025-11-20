@@ -148,7 +148,7 @@ export default function ActivityLogsPage() {
                         placeholder="Search logs by description, event, or user..."
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                     />
                 </div>
 
@@ -160,7 +160,7 @@ export default function ActivityLogsPage() {
                             <select
                                 value={logTypeFilter}
                                 onChange={(e) => setLogTypeFilter(e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                             >
                                 <option value="">All Types</option>
                                 <option value="activity">Activity</option>
@@ -175,7 +175,7 @@ export default function ActivityLogsPage() {
                             <select
                                 value={eventFilter}
                                 onChange={(e) => setEventFilter(e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                             >
                                 <option value="">All Events</option>
                                 <option value="created">Created</option>
@@ -192,7 +192,7 @@ export default function ActivityLogsPage() {
                             <select
                                 value={userFilter}
                                 onChange={(e) => setUserFilter(e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                             >
                                 <option value="">All Users</option>
                                 {usersData?.data?.map(user => (
@@ -206,7 +206,7 @@ export default function ActivityLogsPage() {
                             <select
                                 value={branchFilter}
                                 onChange={(e) => setBranchFilter(e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                             >
                                 <option value="">All Branches</option>
                                 {branchesData?.data?.map(branch => (
@@ -221,7 +221,7 @@ export default function ActivityLogsPage() {
                                 type="date"
                                 value={dateFrom}
                                 onChange={(e) => setDateFrom(e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                             />
                         </div>
 
@@ -231,7 +231,7 @@ export default function ActivityLogsPage() {
                                 type="date"
                                 value={dateUntil}
                                 onChange={(e) => setDateUntil(e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                             />
                         </div>
 
@@ -249,7 +249,7 @@ export default function ActivityLogsPage() {
                 {/* Logs Table */}
                 {isLoading ? (
                     <div className="text-center py-12">
-                        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#25603E]"></div>
+                        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--theme-primary)]"></div>
                         <p className="mt-4 text-gray-600">Loading activity logs...</p>
                     </div>
                 ) : (
@@ -295,7 +295,7 @@ export default function ActivityLogsPage() {
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                                 {log.user?.role ? (
-                                                    <span className="px-2 py-1 text-xs font-medium rounded-full bg-[#25603E]/10 text-[#25603E]">
+                                                    <span className="px-2 py-1 text-xs font-medium rounded-full bg-[var(--theme-primary)]/10 text-[var(--theme-primary)]">
                                                         {formatRole(log.user.role)}
                                                     </span>
                                                 ) : (
@@ -325,7 +325,7 @@ export default function ActivityLogsPage() {
                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                                 <button
                                                     onClick={() => setExpandedLog(expandedLog === log.id ? null : log.id)}
-                                                    className="text-[#25603E] hover:text-[#1B402D] flex items-center"
+                                                    className="text-[var(--theme-primary)] hover:text-[var(--theme-primary-hover)] flex items-center"
                                                 >
                                                     <Eye className="w-4 h-4 mr-1" />
                                                     {expandedLog === log.id ? 'Hide' : 'View'}

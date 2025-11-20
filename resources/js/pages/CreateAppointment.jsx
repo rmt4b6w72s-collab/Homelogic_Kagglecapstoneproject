@@ -141,7 +141,7 @@ export default function CreateAppointment() {
         return (
             <div className="flex items-center justify-center min-h-screen">
                 <div className="text-center">
-                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#25603E]"></div>
+                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--theme-primary)]"></div>
                     <p className="mt-4 text-gray-600">Loading...</p>
                 </div>
             </div>
@@ -191,7 +191,7 @@ export default function CreateAppointment() {
                                         setErrors({ ...errors, appointment_date: null });
                                     }}
                                     required
-                                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent ${
+                                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent ${
                                         errors.appointment_date ? 'border-red-300' : 'border-gray-300'
                                     }`}
                                 />
@@ -212,7 +212,7 @@ export default function CreateAppointment() {
                                         setErrors({ ...errors, appointment_time: null });
                                     }}
                                     required
-                                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent ${
+                                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent ${
                                         errors.appointment_time ? 'border-red-300' : 'border-gray-300'
                                     }`}
                                 />
@@ -231,7 +231,7 @@ export default function CreateAppointment() {
                                         type="text"
                                         value={formData.provider_name}
                                         onChange={(e) => setFormData({ ...formData, provider_name: e.target.value })}
-                                        className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                        className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                         placeholder="Dr. Smith"
                                     />
                                 </div>
@@ -247,7 +247,7 @@ export default function CreateAppointment() {
                                         type="text"
                                         value={formData.location}
                                         onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                                        className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                        className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                         placeholder="Clinic / Room"
                                     />
                                 </div>
@@ -263,7 +263,7 @@ export default function CreateAppointment() {
                                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                                 placeholder="Enter any additional details..."
                                 rows={4}
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent resize-none"
+                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent resize-none"
                             />
                         </div>
                         
@@ -287,7 +287,7 @@ export default function CreateAppointment() {
                         <button
                             type="submit"
                             disabled={submitMutation.isPending || !formData.appointment_date || !formData.appointment_time}
-                            className="px-6 py-2 bg-[#25603E] text-white font-bold rounded-lg hover:bg-[#1B402D] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="px-6 py-2 bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] font-bold rounded-lg hover:bg-[var(--theme-primary-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {submitMutation.isPending ? 'Creating...' : 'Create Appointment'}
                         </button>
@@ -305,7 +305,7 @@ export default function CreateAppointment() {
                                 onClick={() => setViewMode('list')}
                                 className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
                                     viewMode === 'list'
-                                        ? 'bg-[#25603E] text-white'
+                                        ? 'bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)]'
                                         : 'text-gray-700 hover:bg-gray-50'
                                 }`}
                             >
@@ -316,7 +316,7 @@ export default function CreateAppointment() {
                                 onClick={() => setViewMode('calendar')}
                                 className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
                                     viewMode === 'calendar'
-                                        ? 'bg-[#25603E] text-white'
+                                        ? 'bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)]'
                                         : 'text-gray-700 hover:bg-gray-50'
                                 }`}
                             >
@@ -329,7 +329,7 @@ export default function CreateAppointment() {
                 <div className="p-6">
                     {appointmentsLoading ? (
                         <div className="text-center py-12">
-                            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#25603E]"></div>
+                            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--theme-primary)]"></div>
                             <p className="mt-4 text-gray-600">Loading appointments...</p>
                         </div>
                     ) : appointmentsData?.data?.length > 0 ? (
@@ -356,7 +356,7 @@ export default function CreateAppointment() {
                                         }
 
                                         const statusColors = {
-                                            scheduled: '#25603E',
+                                            scheduled: 'var(--theme-primary)',
                                             confirmed: '#10b981',
                                             completed: '#059669',
                                             cancelled: '#ef4444',
@@ -368,8 +368,8 @@ export default function CreateAppointment() {
                                             title: `${apt.resident?.first_name || ''} ${apt.resident?.last_name || ''} - ${apt.appointment_type?.name || apt.appointmentType?.name || apt.description || 'Appointment'}`,
                                             start,
                                             end,
-                                            color: statusColors[apt.status] || '#25603E',
-                                            borderColor: statusColors[apt.status] || '#25603E',
+                                            color: statusColors[apt.status] || 'var(--theme-primary)',
+                                            borderColor: statusColors[apt.status] || 'var(--theme-primary)',
                                             textColor: '#ffffff',
                                             resource: apt,
                                         };
@@ -480,7 +480,7 @@ export default function CreateAppointment() {
                                                     // Navigate to edit appointment or open modal
                                                     navigate(`/appointments?edit=${appointment.id}`);
                                                 }}
-                                                className="text-[#25603E] hover:text-[#1B402D] p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                                                className="text-[var(--theme-primary)] hover:text-[var(--theme-primary-hover)] p-2 hover:bg-gray-100 rounded-lg transition-colors"
                                                 title="Edit"
                                             >
                                                 <Edit className="w-5 h-5" />
@@ -538,7 +538,7 @@ export default function CreateAppointment() {
                                     onChange={(e) => setCompletionNotes(e.target.value)}
                                     placeholder="Enter notes about the appointment outcome..."
                                     rows={4}
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent resize-none"
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent resize-none"
                                 />
                             </div>
                         </div>

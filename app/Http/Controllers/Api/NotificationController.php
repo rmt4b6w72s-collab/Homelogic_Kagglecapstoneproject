@@ -7,7 +7,7 @@ use App\Models\Notification;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-class NotificationController extends Controller
+class NotificationController extends BaseApiController
 {
     /**
      * Get all notifications for the authenticated user

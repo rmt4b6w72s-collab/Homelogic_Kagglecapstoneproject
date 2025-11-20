@@ -12,6 +12,7 @@ export default function MedicationDeliveries() {
     const [typeFilter, setTypeFilter] = useState('');
     const [statusFilter, setStatusFilter] = useState('');
     const [showForm, setShowForm] = useState(false);
+    const [formMode, setFormMode] = useState('full'); // 'full', 'quick', or 'bulk'
     const [editing, setEditing] = useState(null);
     const [currentUser, setCurrentUser] = useState(null);
 
@@ -144,16 +145,41 @@ export default function MedicationDeliveries() {
                         <h2 className="text-xl font-semibold text-gray-900 mb-2">Medication Deliveries</h2>
                         <p className="text-gray-600">Track medication deliveries from pharmacy.</p>
                     </div>
-                    <button
-                        onClick={() => {
-                            setEditing(null);
-                            setShowForm(true);
-                        }}
-                        className="w-full sm:w-auto px-4 py-2 bg-[#25603E] text-white rounded-lg hover:bg-[#1B402D] transition-colors flex items-center justify-center space-x-2"
-                    >
-                        <Plus className="w-4 h-4" />
-                        <span>Add Delivery</span>
-                    </button>
+                    <div className="flex flex-col sm:flex-row gap-2">
+                        <button
+                            onClick={() => {
+                                setEditing(null);
+                                setShowForm(true);
+                                setFormMode('full');
+                            }}
+                            className="w-full sm:w-auto px-4 py-2 bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] rounded-lg hover:bg-[var(--theme-primary-hover)] transition-colors flex items-center justify-center space-x-2"
+                        >
+                            <Plus className="w-4 h-4" />
+                            <span>Add Delivery</span>
+                        </button>
+                        <button
+                            onClick={() => {
+                                setEditing(null);
+                                setShowForm(true);
+                                setFormMode('quick');
+                            }}
+                            className="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2"
+                        >
+                            <Plus className="w-4 h-4" />
+                            <span>Quick Entry</span>
+                        </button>
+                        <button
+                            onClick={() => {
+                                setEditing(null);
+                                setShowForm(true);
+                                setFormMode('bulk');
+                            }}
+                            className="w-full sm:w-auto px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center space-x-2"
+                        >
+                            <Package className="w-4 h-4" />
+                            <span>Bulk Entry</span>
+                        </button>
+                    </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -164,7 +190,7 @@ export default function MedicationDeliveries() {
                             placeholder="Search deliveries..."
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                         />
                     </div>
 
@@ -172,7 +198,7 @@ export default function MedicationDeliveries() {
                         <select
                             value={branchFilter}
                             onChange={(e) => setBranchFilter(e.target.value)}
-                            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                         >
                             <option value="">All Branches</option>
                             {branches.map(branch => (
@@ -184,7 +210,7 @@ export default function MedicationDeliveries() {
                     <select
                         value={typeFilter}
                         onChange={(e) => setTypeFilter(e.target.value)}
-                        className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                        className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                     >
                         <option value="">All Types</option>
                         <option value="individual">Individual</option>
@@ -194,7 +220,7 @@ export default function MedicationDeliveries() {
                     <select
                         value={statusFilter}
                         onChange={(e) => setStatusFilter(e.target.value)}
-                        className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                        className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                     >
                         <option value="">All Status</option>
                         <option value="received">Received</option>
@@ -213,13 +239,109 @@ export default function MedicationDeliveries() {
                         <p className="text-gray-500">No medication deliveries found.</p>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 gap-4">
-                        {filteredDeliveries.map((delivery) => (
+                    <>
+                        {/* Summary Cards */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                            <Card className="p-4 bg-blue-50 border-blue-200">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm text-gray-600">Total Today</p>
+                                        <p className="text-2xl font-bold text-gray-900">
+                                            {filteredDeliveries.filter(d => {
+                                                const today = new Date().toDateString();
+                                                return new Date(d.received_date).toDateString() === today;
+                                            }).length}
+                                        </p>
+                                    </div>
+                                    <Calendar className="w-8 h-8 text-blue-600" />
+                                </div>
+                            </Card>
+                            <Card className="p-4 bg-yellow-50 border-yellow-200">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm text-gray-600">Pending Verification</p>
+                                        <p className="text-2xl font-bold text-gray-900">
+                                            {filteredDeliveries.filter(d => d.status === 'received').length}
+                                        </p>
+                                    </div>
+                                    <Package className="w-8 h-8 text-yellow-600" />
+                                </div>
+                            </Card>
+                            <Card className="p-4 bg-green-50 border-green-200">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm text-gray-600">Stored</p>
+                                        <p className="text-2xl font-bold text-gray-900">
+                                            {filteredDeliveries.filter(d => d.status === 'stored').length}
+                                        </p>
+                                    </div>
+                                    <Truck className="w-8 h-8 text-green-600" />
+                                </div>
+                            </Card>
+                        </div>
+
+                        {/* Grouped Deliveries */}
+                        {(() => {
+                            const grouped = filteredDeliveries.reduce((acc, delivery) => {
+                                const date = new Date(delivery.received_date).toDateString();
+                                const today = new Date().toDateString();
+                                const yesterday = new Date(Date.now() - 86400000).toDateString();
+                                
+                                let groupKey;
+                                if (date === today) {
+                                    groupKey = 'Today';
+                                } else if (date === yesterday) {
+                                    groupKey = 'Yesterday';
+                                } else {
+                                    const weekAgo = new Date(Date.now() - 7 * 86400000);
+                                    if (new Date(delivery.received_date) >= weekAgo) {
+                                        groupKey = 'This Week';
+                                    } else {
+                                        groupKey = new Date(delivery.received_date).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+                                    }
+                                }
+                                
+                                if (!acc[groupKey]) {
+                                    acc[groupKey] = {};
+                                }
+                                
+                                const pharmacy = delivery.pharmacy_name || 'Unknown Pharmacy';
+                                if (!acc[groupKey][pharmacy]) {
+                                    acc[groupKey][pharmacy] = [];
+                                }
+                                
+                                acc[groupKey][pharmacy].push(delivery);
+                                return acc;
+                            }, {});
+                            
+                            const sortedGroups = Object.keys(grouped).sort((a, b) => {
+                                const order = { 'Today': 0, 'Yesterday': 1, 'This Week': 2 };
+                                return (order[a] ?? 99) - (order[b] ?? 99);
+                            });
+                            
+                            return (
+                                <div className="space-y-6">
+                                    {sortedGroups.map((groupKey) => (
+                                        <div key={groupKey}>
+                                            <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                                                <Calendar className="w-5 h-5 text-[var(--theme-primary)]" />
+                                                {groupKey}
+                                                <span className="text-sm font-normal text-gray-500">
+                                                    ({Object.values(grouped[groupKey]).flat().length} delivery{Object.values(grouped[groupKey]).flat().length !== 1 ? 'ies' : ''})
+                                                </span>
+                                            </h3>
+                                            {Object.entries(grouped[groupKey]).map(([pharmacy, deliveries]) => (
+                                                <div key={pharmacy} className="mb-4">
+                                                    <h4 className="text-sm font-medium text-gray-700 mb-2 ml-2">
+                                                        {pharmacy} ({deliveries.length})
+                                                    </h4>
+                                                    <div className="grid grid-cols-1 gap-3">
+                                                        {deliveries.map((delivery) => (
                             <Card key={delivery.id} className="p-4">
                                 <div className="flex items-start justify-between">
                                     <div className="flex-1">
                                         <div className="flex items-center gap-2 mb-2">
-                                            <Truck className="w-5 h-5 text-[#25603E]" />
+                                            <Truck className="w-5 h-5 text-[var(--theme-primary)]" />
                                             <h3 className="font-semibold text-gray-900">{delivery.pharmacy_name}</h3>
                                             {getTypeBadge(delivery.delivery_type)}
                                             {getStatusBadge(delivery.status)}
@@ -257,7 +379,7 @@ export default function MedicationDeliveries() {
                                     <div className="flex items-center gap-2 ml-4">
                                         <button
                                             onClick={() => handleEdit(delivery)}
-                                            className="p-2 text-gray-600 hover:text-[#25603E] transition-colors"
+                                            className="p-2 text-gray-600 hover:text-[var(--theme-primary)] transition-colors"
                                             title="Edit"
                                         >
                                             <Edit className="w-4 h-4" />
@@ -272,14 +394,21 @@ export default function MedicationDeliveries() {
                                     </div>
                                 </div>
                             </Card>
-                        ))}
-                    </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ))}
+                                </div>
+                            );
+                        })()}
+                    </>
                 )}
             </SectionCard>
 
-            {showForm && (
-                <MedicationDeliveryForm
-                    record={editing}
+            {showForm && formMode === 'bulk' ? (
+                <BulkMedicationDeliveryForm
                     branches={branches}
                     residents={residents}
                     medications={medications}
@@ -291,15 +420,30 @@ export default function MedicationDeliveries() {
                         handleCloseForm();
                     }}
                 />
-            )}
+            ) : showForm ? (
+                <MedicationDeliveryForm
+                    record={editing}
+                    branches={branches}
+                    residents={residents}
+                    medications={medications}
+                    isCaregiver={isCaregiver}
+                    caregiverBranchId={currentUser?.assigned_branch_id}
+                    formMode={formMode}
+                    onClose={handleCloseForm}
+                    onSuccess={() => {
+                        queryClient.invalidateQueries(['medication-deliveries']);
+                        handleCloseForm();
+                    }}
+                />
+            ) : null}
         </div>
     );
 }
 
-function MedicationDeliveryForm({ record, branches, residents, medications, isCaregiver, caregiverBranchId, onClose, onSuccess }) {
+function MedicationDeliveryForm({ record, branches, residents, medications, isCaregiver, caregiverBranchId, formMode = 'full', onClose, onSuccess }) {
     const [formData, setFormData] = useState({
         branch_id: record?.branch_id || caregiverBranchId || '',
-        delivery_type: record?.delivery_type || 'individual',
+        delivery_type: record?.delivery_type || (formMode === 'quick' ? 'batch' : 'individual'),
         resident_id: record?.resident_id || '',
         medication_id: record?.medication_id || '',
         pharmacy_name: record?.pharmacy_name || '',
@@ -336,6 +480,21 @@ function MedicationDeliveryForm({ record, branches, residents, medications, isCa
             return response.data;
         },
         enabled: formData.delivery_type === 'individual' && !!formData.branch_id && !!formData.resident_id,
+    });
+
+    // Fetch pharmacy templates
+    const { data: pharmacyTemplatesData } = useQuery({
+        queryKey: ['pharmacy-templates', formData.branch_id],
+        queryFn: async () => {
+            if (!formData.branch_id) {
+                return { data: [] };
+            }
+            const response = await api.get('/pharmacy-templates', {
+                params: { branch_id: formData.branch_id, per_page: 100 }
+            });
+            return response.data;
+        },
+        enabled: !!formData.branch_id,
     });
 
     // Use dynamically fetched medications or fallback to passed medications
@@ -387,7 +546,7 @@ function MedicationDeliveryForm({ record, branches, residents, medications, isCa
                 <div className="p-6">
                     <div className="flex items-center justify-between mb-6">
                         <h2 className="text-xl font-semibold text-gray-900">
-                            {record ? 'Edit Medication Delivery' : 'Add Medication Delivery'}
+                            {record ? 'Edit Medication Delivery' : formMode === 'quick' ? 'Quick Entry' : 'Add Medication Delivery'}
                         </h2>
                         <button
                             onClick={onClose}
@@ -412,7 +571,7 @@ function MedicationDeliveryForm({ record, branches, residents, medications, isCa
                                     onChange={(e) => setFormData({ ...formData, branch_id: e.target.value, resident_id: '', medication_id: '' })}
                                     required
                                     disabled={isCaregiver}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                 >
                                     <option value="">Select Branch</option>
                                     {branches.map(branch => (
@@ -422,28 +581,30 @@ function MedicationDeliveryForm({ record, branches, residents, medications, isCa
                                 {errors.branch_id && <p className="text-xs text-red-600 mt-1">{errors.branch_id[0]}</p>}
                             </div>
 
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Delivery Type *</label>
-                                <select
-                                    value={formData.delivery_type}
-                                    onChange={(e) => setFormData({ ...formData, delivery_type: e.target.value, resident_id: '', medication_id: '' })}
-                                    required
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
-                                >
-                                    <option value="individual">Individual Medication</option>
-                                    <option value="batch">Batch Delivery</option>
-                                </select>
-                                {errors.delivery_type && <p className="text-xs text-red-600 mt-1">{errors.delivery_type[0]}</p>}
-                            </div>
+                            {formMode === 'full' && (
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Delivery Type *</label>
+                                    <select
+                                        value={formData.delivery_type}
+                                        onChange={(e) => setFormData({ ...formData, delivery_type: e.target.value, resident_id: '', medication_id: '' })}
+                                        required
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                    >
+                                        <option value="individual">Individual Medication</option>
+                                        <option value="batch">Batch Delivery</option>
+                                    </select>
+                                    {errors.delivery_type && <p className="text-xs text-red-600 mt-1">{errors.delivery_type[0]}</p>}
+                                </div>
+                            )}
 
-                            {formData.delivery_type === 'individual' && (
+                            {formData.delivery_type === 'individual' && formMode === 'full' && (
                                 <>
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Resident</label>
                                         <select
                                             value={formData.resident_id}
                                             onChange={(e) => setFormData({ ...formData, resident_id: e.target.value, medication_id: '' })}
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                         >
                                             <option value="">Select Resident</option>
                                             {filteredResidents.map(resident => (
@@ -460,7 +621,7 @@ function MedicationDeliveryForm({ record, branches, residents, medications, isCa
                                             onChange={(e) => setFormData({ ...formData, medication_id: e.target.value })}
                                             required
                                             disabled={!formData.resident_id}
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                                         >
                                             <option value="">
                                                 {!formData.resident_id ? 'Select Resident First' : filteredMedications.length === 0 ? 'No medications found' : 'Select Medication'}
@@ -481,13 +642,39 @@ function MedicationDeliveryForm({ record, branches, residents, medications, isCa
                             )}
 
                             <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Pharmacy Template (Optional)</label>
+                                <select
+                                    value=""
+                                    onChange={(e) => {
+                                        if (e.target.value) {
+                                            const template = pharmacyTemplatesData?.data?.find(t => t.id == e.target.value);
+                                            if (template) {
+                                                setFormData({
+                                                    ...formData,
+                                                    pharmacy_name: template.name,
+                                                    notes: template.default_notes || formData.notes,
+                                                });
+                                            }
+                                        }
+                                    }}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent mb-2"
+                                >
+                                    <option value="">Select a saved pharmacy...</option>
+                                    {pharmacyTemplatesData?.data?.map(template => (
+                                        <option key={template.id} value={template.id}>
+                                            {template.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Pharmacy Name *</label>
                                 <input
                                     type="text"
                                     value={formData.pharmacy_name}
                                     onChange={(e) => setFormData({ ...formData, pharmacy_name: e.target.value })}
                                     required
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                 />
                                 {errors.pharmacy_name && <p className="text-xs text-red-600 mt-1">{errors.pharmacy_name[0]}</p>}
                             </div>
@@ -500,7 +687,7 @@ function MedicationDeliveryForm({ record, branches, residents, medications, isCa
                                     onChange={(e) => setFormData({ ...formData, quantity_received: e.target.value })}
                                     required
                                     placeholder="e.g., 30 tablets, 2 bottles"
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                 />
                                 {errors.quantity_received && <p className="text-xs text-red-600 mt-1">{errors.quantity_received[0]}</p>}
                             </div>
@@ -512,7 +699,7 @@ function MedicationDeliveryForm({ record, branches, residents, medications, isCa
                                     value={formData.received_date}
                                     onChange={(e) => setFormData({ ...formData, received_date: e.target.value })}
                                     required
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                 />
                                 {errors.received_date && <p className="text-xs text-red-600 mt-1">{errors.received_date[0]}</p>}
                             </div>
@@ -524,7 +711,7 @@ function MedicationDeliveryForm({ record, branches, residents, medications, isCa
                                     value={formData.received_time}
                                     onChange={(e) => setFormData({ ...formData, received_time: e.target.value })}
                                     required
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                 />
                                 {errors.received_time && <p className="text-xs text-red-600 mt-1">{errors.received_time[0]}</p>}
                             </div>
@@ -535,7 +722,7 @@ function MedicationDeliveryForm({ record, branches, residents, medications, isCa
                                     value={formData.status}
                                     onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                                     required
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                 >
                                     <option value="received">Received</option>
                                     <option value="verified">Verified</option>
@@ -551,7 +738,7 @@ function MedicationDeliveryForm({ record, branches, residents, medications, isCa
                                 value={formData.notes}
                                 onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                                 rows={3}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                 placeholder="Enter any additional notes..."
                             />
                             {errors.notes && <p className="text-xs text-red-600 mt-1">{errors.notes[0]}</p>}
@@ -568,9 +755,353 @@ function MedicationDeliveryForm({ record, branches, residents, medications, isCa
                             <button
                                 type="submit"
                                 disabled={isSubmitting}
-                                className="px-4 py-2 bg-[#25603E] text-white rounded-lg hover:bg-[#1B402D] disabled:opacity-50"
+                                className="px-4 py-2 bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] rounded-lg hover:bg-[var(--theme-primary-hover)] disabled:opacity-50"
                             >
                                 {isSubmitting ? 'Saving...' : (record ? 'Update' : 'Create')}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function BulkMedicationDeliveryForm({ branches, residents, medications, isCaregiver, caregiverBranchId, onClose, onSuccess }) {
+    const [commonFields, setCommonFields] = useState({
+        branch_id: caregiverBranchId || '',
+        pharmacy_name: '',
+        received_date: new Date().toISOString().split('T')[0],
+        received_time: new Date().toTimeString().slice(0, 5),
+        status: 'received',
+    });
+    const [deliveries, setDeliveries] = useState([
+        {
+            delivery_type: 'individual',
+            resident_id: '',
+            medication_id: '',
+            quantity_received: '',
+            notes: '',
+        }
+    ]);
+    const [errors, setErrors] = useState({});
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [filteredResidents, setFilteredResidents] = React.useState([]);
+    const [filteredMedications, setFilteredMedications] = React.useState({});
+
+    // Filter residents by branch
+    React.useEffect(() => {
+        if (commonFields.branch_id && residents?.data) {
+            setFilteredResidents(residents.data.filter(r => r.branch_id == commonFields.branch_id));
+        } else {
+            setFilteredResidents(residents?.data || []);
+        }
+    }, [commonFields.branch_id, residents]);
+
+    // Fetch medications for each resident
+    React.useEffect(() => {
+        const fetchMedications = async () => {
+            const medsMap = {};
+            for (const delivery of deliveries) {
+                if (delivery.delivery_type === 'individual' && delivery.resident_id && commonFields.branch_id) {
+                    try {
+                        const response = await api.get('/medications', {
+                            params: {
+                                branch_id: commonFields.branch_id,
+                                resident_id: delivery.resident_id,
+                                active_only: 'true',
+                                per_page: 1000
+                            }
+                        });
+                        medsMap[delivery.resident_id] = response.data.data || [];
+                    } catch (err) {
+                        console.error('Failed to fetch medications:', err);
+                        medsMap[delivery.resident_id] = [];
+                    }
+                }
+            }
+            setFilteredMedications(medsMap);
+        };
+        fetchMedications();
+    }, [deliveries.map(d => `${d.resident_id}-${d.delivery_type}`).join(','), commonFields.branch_id]);
+
+    const addRow = () => {
+        setDeliveries([...deliveries, {
+            delivery_type: 'individual',
+            resident_id: '',
+            medication_id: '',
+            quantity_received: '',
+            notes: '',
+        }]);
+    };
+
+    const removeRow = (index) => {
+        if (deliveries.length > 1) {
+            setDeliveries(deliveries.filter((_, i) => i !== index));
+        }
+    };
+
+    const updateDelivery = (index, field, value) => {
+        const updated = [...deliveries];
+        updated[index] = { ...updated[index], [field]: value };
+        if (field === 'delivery_type' || field === 'resident_id') {
+            updated[index].medication_id = '';
+        }
+        setDeliveries(updated);
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setErrors({});
+        setIsSubmitting(true);
+
+        try {
+            const payload = deliveries.map(delivery => ({
+                ...commonFields,
+                ...delivery,
+                // Clear resident/medication for batch deliveries
+                resident_id: delivery.delivery_type === 'batch' ? null : delivery.resident_id,
+                medication_id: delivery.delivery_type === 'batch' ? null : delivery.medication_id,
+            }));
+
+            const response = await api.post('/medication-deliveries/bulk', { deliveries: payload });
+            
+            if (response.data.error_count > 0) {
+                alert(`${response.data.success_count} deliveries created, ${response.data.error_count} failed. Check console for details.`);
+                console.error('Bulk creation errors:', response.data.errors);
+            } else {
+                alert(`Successfully created ${response.data.success_count} delivery(ies)!`);
+            }
+            
+            onSuccess();
+        } catch (error) {
+            console.error('Bulk creation error:', error);
+            if (error.response?.data?.errors) {
+                setErrors(error.response.data.errors);
+            } else {
+                alert('Failed to create deliveries: ' + (error.response?.data?.message || error.message));
+            }
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg shadow-xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
+                <div className="p-6">
+                    <div className="flex items-center justify-between mb-6">
+                        <h2 className="text-2xl font-semibold text-gray-900">Bulk Medication Delivery Entry</h2>
+                        <button
+                            onClick={onClose}
+                            className="text-gray-400 hover:text-gray-600 transition-colors"
+                        >
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <form onSubmit={handleSubmit}>
+                        {/* Common Fields */}
+                        <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+                            <h3 className="text-lg font-semibold text-gray-900 mb-4">Common Fields (Applied to All)</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Branch *</label>
+                                    <select
+                                        value={commonFields.branch_id}
+                                        onChange={(e) => setCommonFields({ ...commonFields, branch_id: e.target.value })}
+                                        required
+                                        disabled={isCaregiver}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                    >
+                                        <option value="">Select Branch</option>
+                                        {branches?.data?.map(branch => (
+                                            <option key={branch.id} value={branch.id}>{branch.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Pharmacy Name *</label>
+                                    <input
+                                        type="text"
+                                        value={commonFields.pharmacy_name}
+                                        onChange={(e) => setCommonFields({ ...commonFields, pharmacy_name: e.target.value })}
+                                        required
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Received Date *</label>
+                                    <input
+                                        type="date"
+                                        value={commonFields.received_date}
+                                        onChange={(e) => setCommonFields({ ...commonFields, received_date: e.target.value })}
+                                        required
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Received Time *</label>
+                                    <input
+                                        type="time"
+                                        value={commonFields.received_time}
+                                        onChange={(e) => setCommonFields({ ...commonFields, received_time: e.target.value })}
+                                        required
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Status *</label>
+                                    <select
+                                        value={commonFields.status}
+                                        onChange={(e) => setCommonFields({ ...commonFields, status: e.target.value })}
+                                        required
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                    >
+                                        <option value="received">Received</option>
+                                        <option value="verified">Verified</option>
+                                        <option value="stored">Stored</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Delivery Rows */}
+                        <div className="mb-6">
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-lg font-semibold text-gray-900">Deliveries</h3>
+                                <button
+                                    type="button"
+                                    onClick={addRow}
+                                    className="px-3 py-1.5 bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] text-sm rounded-lg hover:bg-[var(--theme-primary-hover)] transition-colors flex items-center gap-2"
+                                >
+                                    <Plus className="w-4 h-4" />
+                                    Add Row
+                                </button>
+                            </div>
+
+                            <div className="overflow-x-auto">
+                                <table className="w-full border-collapse">
+                                    <thead>
+                                        <tr className="bg-gray-100">
+                                            <th className="border border-gray-300 px-3 py-2 text-left text-sm font-semibold text-gray-700">Type</th>
+                                            <th className="border border-gray-300 px-3 py-2 text-left text-sm font-semibold text-gray-700">Resident</th>
+                                            <th className="border border-gray-300 px-3 py-2 text-left text-sm font-semibold text-gray-700">Medication</th>
+                                            <th className="border border-gray-300 px-3 py-2 text-left text-sm font-semibold text-gray-700">Quantity *</th>
+                                            <th className="border border-gray-300 px-3 py-2 text-left text-sm font-semibold text-gray-700">Notes</th>
+                                            <th className="border border-gray-300 px-3 py-2 text-left text-sm font-semibold text-gray-700">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {deliveries.map((delivery, index) => (
+                                            <tr key={index}>
+                                                <td className="border border-gray-300 px-3 py-2">
+                                                    <select
+                                                        value={delivery.delivery_type}
+                                                        onChange={(e) => updateDelivery(index, 'delivery_type', e.target.value)}
+                                                        className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent text-sm"
+                                                    >
+                                                        <option value="individual">Individual</option>
+                                                        <option value="batch">Batch</option>
+                                                    </select>
+                                                </td>
+                                                <td className="border border-gray-300 px-3 py-2">
+                                                    {delivery.delivery_type === 'individual' ? (
+                                                        <select
+                                                            value={delivery.resident_id}
+                                                            onChange={(e) => updateDelivery(index, 'resident_id', e.target.value)}
+                                                            className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent text-sm"
+                                                        >
+                                                            <option value="">Select Resident</option>
+                                                            {filteredResidents.map(resident => (
+                                                                <option key={resident.id} value={resident.id}>
+                                                                    {resident.first_name} {resident.last_name}
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                    ) : (
+                                                        <span className="text-sm text-gray-500">N/A</span>
+                                                    )}
+                                                </td>
+                                                <td className="border border-gray-300 px-3 py-2">
+                                                    {delivery.delivery_type === 'individual' ? (
+                                                        <select
+                                                            value={delivery.medication_id}
+                                                            onChange={(e) => updateDelivery(index, 'medication_id', e.target.value)}
+                                                            disabled={!delivery.resident_id}
+                                                            required={delivery.delivery_type === 'individual'}
+                                                            className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent text-sm disabled:bg-gray-100"
+                                                        >
+                                                            <option value="">
+                                                                {!delivery.resident_id ? 'Select Resident First' : 'Select Medication'}
+                                                            </option>
+                                                            {(filteredMedications[delivery.resident_id] || []).map(medication => {
+                                                                const drugName = medication.drug?.name || medication.name || 'Unknown';
+                                                                const displayName = medication.name || drugName;
+                                                                return (
+                                                                    <option key={medication.id} value={medication.id}>
+                                                                        {displayName}
+                                                                    </option>
+                                                                );
+                                                            })}
+                                                        </select>
+                                                    ) : (
+                                                        <span className="text-sm text-gray-500">N/A</span>
+                                                    )}
+                                                </td>
+                                                <td className="border border-gray-300 px-3 py-2">
+                                                    <input
+                                                        type="text"
+                                                        value={delivery.quantity_received}
+                                                        onChange={(e) => updateDelivery(index, 'quantity_received', e.target.value)}
+                                                        required
+                                                        placeholder="e.g., 30 tablets"
+                                                        className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent text-sm"
+                                                    />
+                                                </td>
+                                                <td className="border border-gray-300 px-3 py-2">
+                                                    <input
+                                                        type="text"
+                                                        value={delivery.notes}
+                                                        onChange={(e) => updateDelivery(index, 'notes', e.target.value)}
+                                                        placeholder="Optional notes"
+                                                        className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent text-sm"
+                                                    />
+                                                </td>
+                                                <td className="border border-gray-300 px-3 py-2">
+                                                    {deliveries.length > 1 && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => removeRow(index)}
+                                                            className="px-2 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700 transition-colors"
+                                                        >
+                                                            Remove
+                                                        </button>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center justify-end space-x-3 pt-4 border-t">
+                            <button
+                                type="button"
+                                onClick={onClose}
+                                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="submit"
+                                disabled={isSubmitting}
+                                className="px-4 py-2 bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] rounded-lg hover:bg-[var(--theme-primary-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {isSubmitting ? 'Creating...' : `Create ${deliveries.length} Delivery(ies)`}
                             </button>
                         </div>
                     </form>

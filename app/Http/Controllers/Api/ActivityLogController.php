@@ -7,7 +7,7 @@ use App\Models\ActivityLog;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 
-class ActivityLogController extends Controller
+class ActivityLogController extends BaseApiController
 {
     /**
      * Get all activity logs

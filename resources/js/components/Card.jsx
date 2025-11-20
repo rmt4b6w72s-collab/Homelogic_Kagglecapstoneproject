@@ -26,7 +26,7 @@ export default function Card({
             <div className="p-6">
                 {title && (
                     <div className="mb-4">
-                        <p className="text-[#8B4513] text-sm font-semibold uppercase tracking-wide">
+                        <p className="text-[var(--theme-secondary)] text-sm font-semibold uppercase tracking-wide">
                             {title}
                         </p>
                     </div>

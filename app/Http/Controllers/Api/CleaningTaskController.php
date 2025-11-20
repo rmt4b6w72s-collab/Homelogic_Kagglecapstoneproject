@@ -8,7 +8,7 @@ use App\Models\CleaningTask;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
-class CleaningTaskController extends Controller
+class CleaningTaskController extends BaseApiController
 {
     public function index(Request $request)
     {

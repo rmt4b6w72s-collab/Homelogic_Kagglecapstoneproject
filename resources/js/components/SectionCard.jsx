@@ -22,14 +22,14 @@ export default function SectionCard({
             <div className="px-6 py-4 border-b border-gray-200">
                 <div className="flex items-center justify-between">
                     {title && (
-                        <h2 className="text-lg font-bold text-[#25603E]">{title}</h2>
+                        <h2 className="text-lg font-bold text-[var(--theme-primary)]">{title}</h2>
                     )}
                     <div className="flex items-center space-x-4">
                         {headerRight}
                         {actionLabel && onAction && (
                             <button
                                 onClick={onAction}
-                                className="text-sm text-[#25603E] hover:text-[#1B402D] font-medium"
+                                className="text-sm text-[var(--theme-primary)] hover:text-[var(--theme-primary-hover)] font-medium transition-colors"
                             >
                                 {actionLabel} →
                             </button>

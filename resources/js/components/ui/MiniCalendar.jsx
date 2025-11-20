@@ -91,9 +91,9 @@ export default function MiniCalendar({
         let classes = 'p-1.5 md:p-2 text-center rounded-lg border transition-all text-xs md:text-sm ';
         
         if (day.isSelected) {
-            classes += 'bg-[#25603E] text-white border-[#25603E] font-bold ';
+            classes += 'bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] border-[var(--theme-primary)] font-bold ';
         } else if (day.isToday) {
-            classes += 'bg-[#25603E]/10 text-[#25603E] border-[#25603E] font-semibold ';
+            classes += 'bg-[var(--theme-primary-bg)] text-[var(--theme-primary)] border-[var(--theme-primary)] font-semibold ';
         } else if (!day.isCurrentMonth) {
             classes += 'text-gray-300 border-transparent ';
         } else {
@@ -178,4 +178,6 @@ export default function MiniCalendar({
         </div>
     );
 }
+
+
 

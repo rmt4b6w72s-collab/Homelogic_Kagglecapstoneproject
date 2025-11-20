@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Carbon\Carbon;
 
-class FireDrillController extends Controller
+class FireDrillController extends BaseApiController
 {
     /**
      * Display a listing of the resource.
@@ -120,6 +120,47 @@ class FireDrillController extends Controller
         }
 
         $drill->update($validated);
+
+        return response()->json($drill->load(['branch', 'createdBy']));
+    }
+
+    /**
+     * Mark fire drill as complete.
+     */
+    public function markComplete($id): JsonResponse
+    {
+        $drill = FireDrill::findOrFail($id);
+        
+        if ($drill->status !== 'scheduled') {
+            return response()->json([
+                'message' => 'Only scheduled fire drills can be marked as complete.',
+            ], 400);
+        }
+
+        $drill->update([
+            'status' => 'completed',
+            'completed_at' => now(),
+        ]);
+
+        return response()->json($drill->load(['branch', 'createdBy']));
+    }
+
+    /**
+     * Cancel fire drill.
+     */
+    public function cancel($id): JsonResponse
+    {
+        $drill = FireDrill::findOrFail($id);
+        
+        if ($drill->status !== 'scheduled') {
+            return response()->json([
+                'message' => 'Only scheduled fire drills can be cancelled.',
+            ], 400);
+        }
+
+        $drill->update([
+            'status' => 'cancelled',
+        ]);
 
         return response()->json($drill->load(['branch', 'createdBy']));
     }

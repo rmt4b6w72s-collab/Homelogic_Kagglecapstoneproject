@@ -93,7 +93,7 @@ export default function UsersPage() {
     const renderUserCard = (user) => {
         const isInactive = !isUserActive(user);
         const cardClass = `bg-white rounded-lg shadow-lg p-6 transition-all duration-200 hover:shadow-xl ${
-            isInactive ? 'border border-red-200 bg-red-50/60 hover:border-red-300' : 'border border-gray-200 hover:border-[#25603E]'
+            isInactive ? 'border border-red-200 bg-red-50/60 hover:border-red-300' : 'border border-gray-200 hover:border-[var(--theme-primary)]'
         }`;
 
         return (
@@ -104,7 +104,7 @@ export default function UsersPage() {
                             <img
                                 src={user.profile_image_url}
                                 alt={user.name}
-                                className="w-16 h-16 rounded-full object-cover border-[3px] border-[#25603E] shadow-md"
+                                className="w-16 h-16 rounded-full object-cover border-[3px] border-[var(--theme-primary)] shadow-md"
                                 onError={(e) => {
                                     e.target.style.display = 'none';
                                     if (e.target.nextElementSibling) {
@@ -114,7 +114,7 @@ export default function UsersPage() {
                             />
                         ) : null}
                         <div
-                            className={`w-16 h-16 rounded-full bg-gradient-to-br from-[#25603E] to-[#4a7a2a] flex items-center justify-center shadow-md ${
+                            className={`w-16 h-16 rounded-full bg-gradient-to-br from-[var(--theme-primary)] to-[#4a7a2a] flex items-center justify-center shadow-md ${
                                 user.profile_image_url ? 'hidden' : ''
                             }`}
                         >
@@ -139,14 +139,14 @@ export default function UsersPage() {
                     <div className="flex space-x-2 ml-2">
                         <button
                             onClick={() => handleEditFromProfile(user)}
-                            className="p-2.5 text-[#25603E] hover:bg-green-50 rounded-lg transition-colors border border-transparent hover:border-[#25603E]"
+                            className="p-2.5 text-[var(--theme-primary)] hover:bg-green-50 rounded-lg transition-colors border border-transparent hover:border-[var(--theme-primary)]"
                             title="Edit User"
                         >
                             <Edit className="w-5 h-5" />
                         </button>
                         <button
                             onClick={() => setViewingProfile(user)}
-                            className="p-2.5 text-[#25603E] hover:bg-green-50 rounded-lg transition-colors border border-transparent hover:border-[#25603E]"
+                            className="p-2.5 text-[var(--theme-primary)] hover:bg-green-50 rounded-lg transition-colors border border-transparent hover:border-[var(--theme-primary)]"
                             title="View Profile"
                         >
                             <Eye className="w-5 h-5" />
@@ -210,7 +210,7 @@ export default function UsersPage() {
                             setEditing(null);
                             setShowForm(true);
                         }}
-                        className="w-full sm:w-auto px-4 py-2 bg-[#25603E] text-white rounded-lg hover:bg-[#1B402D] transition-colors flex items-center justify-center space-x-2 text-sm md:text-base"
+                        className="w-full sm:w-auto px-4 py-2 bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] rounded-lg hover:bg-[var(--theme-primary-hover)] transition-colors flex items-center justify-center space-x-2 text-sm md:text-base"
                     >
                         <Plus className="w-4 h-4" />
                         <span>Add User</span>
@@ -226,7 +226,7 @@ export default function UsersPage() {
                             placeholder="Search by name or email..."
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                         />
                     </div>
 
@@ -236,7 +236,7 @@ export default function UsersPage() {
                         <select
                             value={branchFilter}
                             onChange={(e) => setBranchFilter(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent appearance-none bg-white"
+                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent appearance-none bg-white"
                         >
                             <option value="">All Branches</option>
                             {branchesData?.data?.map(branch => (
@@ -250,7 +250,7 @@ export default function UsersPage() {
                         <select
                             value={activeFilter}
                             onChange={(e) => setActiveFilter(e.target.value)}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent appearance-none bg-white"
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent appearance-none bg-white"
                         >
                             <option value="all">All Users</option>
                             <option value="active">Active Only</option>
@@ -262,7 +262,7 @@ export default function UsersPage() {
 
             {isLoading ? (
                 <div className="text-center py-12">
-                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#25603E]"></div>
+                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--theme-primary)]"></div>
                     <p className="mt-4 text-gray-600">Loading users...</p>
                 </div>
             ) : (
@@ -772,7 +772,7 @@ function UserForm({ record, branches, roles, onClose, onSuccess }) {
                                         onChange={(e) => setFormData({...formData, email: e.target.value})}
                                         required
                                         placeholder="staff@serenityafh.com"
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                     />
                                     <p className="text-xs text-gray-500 mt-1">This will be used for login</p>
                                     {errors.email && <p className="text-xs text-red-600 mt-1">{errors.email[0]}</p>}
@@ -836,7 +836,7 @@ function UserForm({ record, branches, roles, onClose, onSuccess }) {
                                         required
                                         placeholder="Enter first name"
                                         maxLength={255}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                     />
                                     {errors.first_name && <p className="text-xs text-red-600 mt-1">{errors.first_name[0]}</p>}
                                 </div>
@@ -851,7 +851,7 @@ function UserForm({ record, branches, roles, onClose, onSuccess }) {
                                         onChange={(e) => setFormData({...formData, middle_names: e.target.value})}
                                         placeholder="Enter middle names (optional)"
                                         maxLength={255}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                     />
                                 </div>
 
@@ -866,7 +866,7 @@ function UserForm({ record, branches, roles, onClose, onSuccess }) {
                                         required
                                         placeholder="Enter last name"
                                         maxLength={255}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                     />
                                     {errors.last_name && <p className="text-xs text-red-600 mt-1">{errors.last_name[0]}</p>}
                                 </div>
@@ -881,7 +881,7 @@ function UserForm({ record, branches, roles, onClose, onSuccess }) {
                                         onChange={(e) => setFormData({...formData, phone_number: e.target.value})}
                                         required
                                         placeholder="+1 (425) 555-0123"
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                     />
                                     <p className="text-xs text-gray-500 mt-1">Include country code for international format</p>
                                     {errors.phone_number && <p className="text-xs text-red-600 mt-1">{errors.phone_number[0]}</p>}
@@ -897,7 +897,7 @@ function UserForm({ record, branches, roles, onClose, onSuccess }) {
                                         onChange={(e) => setFormData({...formData, date_of_birth: e.target.value})}
                                         required
                                         max={new Date(Date.now() - 18 * 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                     />
                                     <p className="text-xs text-gray-500 mt-1">Format: MM/DD/YYYY - Must be 18+ years old</p>
                                     {errors.date_of_birth && <p className="text-xs text-red-600 mt-1">{errors.date_of_birth[0]}</p>}
@@ -910,7 +910,7 @@ function UserForm({ record, branches, roles, onClose, onSuccess }) {
                                     <select
                                         value={formData.marital_status}
                                         onChange={(e) => setFormData({...formData, marital_status: e.target.value})}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                     >
                                         <option value="">Choose marital status</option>
                                         <option value="single">Single</option>
@@ -934,7 +934,7 @@ function UserForm({ record, branches, roles, onClose, onSuccess }) {
                                                 checked={formData.sex === 'male'}
                                                 onChange={(e) => setFormData({...formData, sex: e.target.value})}
                                                 required
-                                                className="w-4 h-4 text-[#25603E] border-gray-300 focus:ring-[#25603E]"
+                                                className="w-4 h-4 text-[var(--theme-primary)] border-gray-300 focus:ring-[var(--theme-primary)]"
                                             />
                                             <span className="text-sm text-gray-700">Male</span>
                                         </label>
@@ -946,7 +946,7 @@ function UserForm({ record, branches, roles, onClose, onSuccess }) {
                                                 checked={formData.sex === 'female'}
                                                 onChange={(e) => setFormData({...formData, sex: e.target.value})}
                                                 required
-                                                className="w-4 h-4 text-[#25603E] border-gray-300 focus:ring-[#25603E]"
+                                                className="w-4 h-4 text-[var(--theme-primary)] border-gray-300 focus:ring-[var(--theme-primary)]"
                                             />
                                             <span className="text-sm text-gray-700">Female</span>
                                         </label>
@@ -958,7 +958,7 @@ function UserForm({ record, branches, roles, onClose, onSuccess }) {
                                                 checked={formData.sex === 'other'}
                                                 onChange={(e) => setFormData({...formData, sex: e.target.value})}
                                                 required
-                                                className="w-4 h-4 text-[#25603E] border-gray-300 focus:ring-[#25603E]"
+                                                className="w-4 h-4 text-[var(--theme-primary)] border-gray-300 focus:ring-[var(--theme-primary)]"
                                             />
                                             <span className="text-sm text-gray-700">Other</span>
                                         </label>
@@ -982,7 +982,7 @@ function UserForm({ record, branches, roles, onClose, onSuccess }) {
                                         onChange={(e) => setFormData({...formData, credentials: e.target.value})}
                                         placeholder="e.g., RN, LPN, CNA, etc."
                                         maxLength={255}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                     />
                                 </div>
 
@@ -996,7 +996,7 @@ function UserForm({ record, branches, roles, onClose, onSuccess }) {
                                         onChange={(e) => setFormData({...formData, credential_details: e.target.value})}
                                         placeholder="Additional credential information (optional)"
                                         maxLength={255}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                     />
                                 </div>
 
@@ -1010,7 +1010,7 @@ function UserForm({ record, branches, roles, onClose, onSuccess }) {
                                         onChange={(e) => setFormData({...formData, date_employed: e.target.value})}
                                         required
                                         max={new Date().toISOString().split('T')[0]}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                     />
                                     <p className="text-xs text-gray-500 mt-1">Format: MM/DD/YYYY - Cannot be in the future</p>
                                     {errors.date_employed && <p className="text-xs text-red-600 mt-1">{errors.date_employed[0]}</p>}
@@ -1026,7 +1026,7 @@ function UserForm({ record, branches, roles, onClose, onSuccess }) {
                                         onChange={(e) => setFormData({...formData, supervisor_name: e.target.value})}
                                         placeholder="Enter supervisor name"
                                         maxLength={255}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                     />
                                 </div>
 
@@ -1040,7 +1040,7 @@ function UserForm({ record, branches, roles, onClose, onSuccess }) {
                                         onChange={(e) => setFormData({...formData, provider_name: e.target.value})}
                                         placeholder="Enter provider name"
                                         maxLength={255}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                     />
                                 </div>
 
@@ -1056,7 +1056,7 @@ function UserForm({ record, branches, roles, onClose, onSuccess }) {
                                             setFormData({...formData, role: e.target.value});
                                         }}
                                         required
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                     >
                                         <option value="">Choose role</option>
                                         <option value="care_giver">Care Giver</option>
@@ -1079,7 +1079,7 @@ function UserForm({ record, branches, roles, onClose, onSuccess }) {
                                     <select
                                         value={formData.assigned_branch_id}
                                         onChange={(e) => setFormData({...formData, assigned_branch_id: e.target.value})}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                     >
                                         <option value="">Select branch assignment</option>
                                         {branches.map(branch => (
@@ -1094,7 +1094,7 @@ function UserForm({ record, branches, roles, onClose, onSuccess }) {
                                             type="checkbox"
                                             checked={formData.is_active}
                                             onChange={(e) => setFormData({...formData, is_active: e.target.checked})}
-                                            className="w-4 h-4 text-[#25603E] border-gray-300 rounded focus:ring-[#25603E]"
+                                            className="w-4 h-4 text-[var(--theme-primary)] border-gray-300 rounded focus:ring-[var(--theme-primary)]"
                                         />
                                         <span className="text-sm font-medium text-gray-700">Active Employee</span>
                                     </label>
@@ -1116,7 +1116,7 @@ function UserForm({ record, branches, roles, onClose, onSuccess }) {
                                     onChange={(e) => setFormData({...formData, password: e.target.value})}
                                     required={!record}
                                     placeholder="Enter secure password"
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                 />
                                 <p className="text-xs text-gray-500 mt-1">Minimum 8 characters, include numbers and special characters</p>
                                 {errors.password && <p className="text-xs text-red-600 mt-1">{errors.password[0]}</p>}
@@ -1135,7 +1135,7 @@ function UserForm({ record, branches, roles, onClose, onSuccess }) {
                                     onChange={(e) => setFormData({...formData, notes: e.target.value})}
                                     rows={3}
                                     placeholder="Any additional notes about this staff member..."
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                 />
                             </div>
                         </div>
@@ -1151,7 +1151,7 @@ function UserForm({ record, branches, roles, onClose, onSuccess }) {
                             <button
                                 type="submit"
                                 disabled={isSubmitting}
-                                className="px-4 py-2 bg-[#25603E] text-white rounded-lg hover:bg-[#1B402D] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="px-4 py-2 bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] rounded-lg hover:bg-[var(--theme-primary-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {isSubmitting ? 'Saving...' : (record ? 'Update' : 'Create')}
                             </button>
@@ -1170,7 +1170,7 @@ function UserProfileViewer({ user, onClose, onEdit, onToggleActive }) {
         <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto" style={{ backgroundColor: 'rgba(0, 0, 0, 0.1)' }}>
             <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[95vh] overflow-y-auto my-8">
                 {/* Header */}
-                <div className="bg-gradient-to-r from-[#25603E] to-[#4a7a2a] p-4 md:p-8 text-white rounded-t-xl">
+                <div className="bg-gradient-to-r from-[var(--theme-primary)] to-[#4a7a2a] p-4 md:p-8 text-white rounded-t-xl">
                     <div className="flex flex-col md:flex-row md:items-start md:justify-between space-y-4 md:space-y-0">
                         <div className="flex flex-col md:flex-row md:items-center md:space-x-6 space-y-4 md:space-y-0">
                             {/* Profile Picture */}
@@ -1186,7 +1186,7 @@ function UserProfileViewer({ user, onClose, onEdit, onToggleActive }) {
                                 />
                             ) : null}
                             <div className={`w-24 h-24 md:w-32 md:h-32 rounded-full bg-white flex items-center justify-center border-4 border-white shadow-lg ${user.profile_image_url ? 'hidden' : ''} mx-auto md:mx-0`}>
-                                <span className="text-[#25603E] font-bold text-4xl md:text-5xl">
+                                <span className="text-[var(--theme-primary)] font-bold text-4xl md:text-5xl">
                                     {user.name?.charAt(0)?.toUpperCase() || 'U'}
                                 </span>
                             </div>
@@ -1214,7 +1214,7 @@ function UserProfileViewer({ user, onClose, onEdit, onToggleActive }) {
                     {/* Personal Information */}
                     <div className="mb-6 md:mb-8">
                         <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-4 flex items-center">
-                            <UserIcon className="w-5 h-5 mr-2 text-[#25603E]" />
+                            <UserIcon className="w-5 h-5 mr-2 text-[var(--theme-primary)]" />
                             Personal Information
                         </h3>
                         <div className="bg-gray-50 rounded-lg p-4 md:p-6">
@@ -1280,7 +1280,7 @@ function UserProfileViewer({ user, onClose, onEdit, onToggleActive }) {
                     {/* Employment Details */}
                     <div className="mb-6 md:mb-8">
                         <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-4 flex items-center">
-                            <Briefcase className="w-5 h-5 mr-2 text-[#25603E]" />
+                            <Briefcase className="w-5 h-5 mr-2 text-[var(--theme-primary)]" />
                             Employment Details
                         </h3>
                         <div className="bg-gray-50 rounded-lg p-4 md:p-6">
@@ -1390,7 +1390,7 @@ function UserProfileViewer({ user, onClose, onEdit, onToggleActive }) {
                                         disabled={isDeactivating}
                                         className="sr-only peer"
                                     />
-                                    <div className="w-14 h-7 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[#25603E] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-[#25603E]"></div>
+                                    <div className="w-14 h-7 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[var(--theme-primary)] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-[var(--theme-primary)]"></div>
                                 </div>
                                 <span className="ml-3 text-sm font-medium text-gray-700">
                                     {user.is_active ? 'Active' : 'Inactive'}
@@ -1409,7 +1409,7 @@ function UserProfileViewer({ user, onClose, onEdit, onToggleActive }) {
                                     onClose();
                                     if (onEdit) onEdit(user);
                                 }}
-                                className="px-6 py-2 bg-[#25603E] text-white rounded-lg hover:bg-[#1B402D] transition-colors flex items-center justify-center space-x-2 w-full sm:w-auto"
+                                className="px-6 py-2 bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] rounded-lg hover:bg-[var(--theme-primary-hover)] transition-colors flex items-center justify-center space-x-2 w-full sm:w-auto"
                             >
                                 <Edit className="w-4 h-4" />
                                 <span>Edit User</span>

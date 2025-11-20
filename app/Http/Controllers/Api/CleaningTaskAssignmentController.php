@@ -11,7 +11,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
-class CleaningTaskAssignmentController extends Controller
+class CleaningTaskAssignmentController extends BaseApiController
 {
     public function index(Request $request, CleaningTask $cleaningTask)
     {

@@ -1,66 +1,123 @@
-/* Evergreen Oasis Care Home - Logo Theme Colors */
-/* Background color extracted from logo */
+/* Evergreen Oasis Care Home - Theme Colors */
+/* Default fallback colors */
 :root {
-    --logo-bg: #F5F5DC; /* Light beige/cream from logo background */
-    --logo-green: #25603E; /* Dark green from logo tree */
-    --logo-brown: #8B4513; /* Dark brown/sepia from logo text */
+    --theme-primary: #25603E;
+    --theme-secondary: #8B4513;
+    --theme-accent: #F5F5DC;
+    --theme-primary-hover: #1B402D;
+    --theme-primary-light: #4a7a5a;
+    --theme-primary-dark: #1B402D;
+    --theme-secondary-hover: #6b3410;
+    --theme-secondary-light: #a6683a;
+    --theme-text-on-primary: #FFFFFF;
+    --theme-text-on-secondary: #FFFFFF;
+    --theme-border: rgba(37, 96, 62, 0.2);
+    --theme-border-light: rgba(37, 96, 62, 0.1);
+    --theme-primary-bg: rgba(37, 96, 62, 0.1);
+    --theme-primary-bg-light: rgba(37, 96, 62, 0.05);
 }
 
-/* Apply logo background to the main app */
+/* Apply accent background to the main app */
 body {
-    background-color: var(--logo-bg) !important;
+    background-color: var(--theme-accent, #F5F5DC) !important;
 }
 
 /* Filament panel background */
 .filament-app {
-    background-color: var(--logo-bg) !important;
+    background-color: var(--theme-accent, #F5F5DC) !important;
 }
 
 /* Login page styling */
 .filament-login-page {
-    background-color: var(--logo-bg) !important;
+    background-color: var(--theme-accent, #F5F5DC) !important;
 }
 
 .filament-login-page .filament-login-page-card {
     background-color: white;
-    border: 2px solid var(--logo-green);
-    box-shadow: 0 4px 6px rgba(37, 96, 62, 0.1);
+    border: 2px solid var(--theme-primary);
+    box-shadow: 0 4px 6px var(--theme-primary-bg);
 }
 
-/* Customize button colors to match logo */
+/* Customize button colors to match theme */
 .btn-primary {
-    background-color: var(--logo-green) !important;
-    border-color: var(--logo-green) !important;
+    background-color: var(--theme-primary) !important;
+    border-color: var(--theme-primary) !important;
+    color: var(--theme-text-on-primary) !important;
 }
 
 .btn-primary:hover {
-    background-color: #1B402D !important;
-    border-color: #1B402D !important;
+    background-color: var(--theme-primary-hover) !important;
+    border-color: var(--theme-primary-hover) !important;
+}
+
+.btn-secondary {
+    background-color: var(--theme-secondary) !important;
+    border-color: var(--theme-secondary) !important;
+    color: var(--theme-text-on-secondary) !important;
+}
+
+.btn-secondary:hover {
+    background-color: var(--theme-secondary-hover) !important;
+    border-color: var(--theme-secondary-hover) !important;
 }
 
 /* Customize text colors */
 .text-primary {
-    color: var(--logo-green) !important;
+    color: var(--theme-primary) !important;
 }
 
 .text-secondary {
-    color: var(--logo-brown) !important;
+    color: var(--theme-secondary) !important;
+}
+
+.text-accent {
+    color: var(--theme-accent) !important;
+}
+
+/* Background utility classes */
+.bg-primary {
+    background-color: var(--theme-primary) !important;
+}
+
+.bg-secondary {
+    background-color: var(--theme-secondary) !important;
+}
+
+.bg-primary-light {
+    background-color: var(--theme-primary-bg) !important;
+}
+
+.bg-primary-lighter {
+    background-color: var(--theme-primary-bg-light) !important;
+}
+
+/* Border utility classes */
+.border-primary {
+    border-color: var(--theme-primary) !important;
+}
+
+.border-secondary {
+    border-color: var(--theme-secondary) !important;
+}
+
+.border-primary-light {
+    border-color: var(--theme-border) !important;
 }
 
 /* Navigation styling */
 .filament-topbar {
-    background-color: var(--logo-green) !important;
+    background-color: var(--theme-primary) !important;
 }
 
 .filament-topbar .text-white {
-    color: white !important;
+    color: var(--theme-text-on-primary) !important;
 }
 
 /* Sidebar styling */
 .filament-sidebar {
-    background-color: var(--logo-brown) !important;
+    background-color: var(--theme-secondary) !important;
 }
 
 .filament-sidebar .text-white {
-    color: white !important;
+    color: var(--theme-text-on-secondary) !important;
 }

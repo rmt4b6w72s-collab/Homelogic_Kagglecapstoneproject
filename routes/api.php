@@ -76,12 +76,31 @@ Route::prefix('v1')->group(function () {
 
     // Medication Deliveries
     Route::apiResource('medication-deliveries', \App\Http\Controllers\Api\MedicationDeliveryController::class)->middleware('auth:sanctum');
+    Route::post('/medication-deliveries/bulk', [\App\Http\Controllers\Api\MedicationDeliveryController::class, 'bulkStore'])->middleware('auth:sanctum');
 
     // Grocery Status Updates
     Route::apiResource('grocery-status-updates', \App\Http\Controllers\Api\GroceryStatusUpdateController::class)->middleware('auth:sanctum');
+    Route::patch('/grocery-status-updates/{id}/status', [\App\Http\Controllers\Api\GroceryStatusUpdateController::class, 'updateStatus'])->middleware('auth:sanctum');
 
     // Fire Drills
     Route::apiResource('fire-drills', \App\Http\Controllers\Api\FireDrillController::class)->middleware('auth:sanctum');
+    Route::post('/fire-drills/{id}/mark-complete', [\App\Http\Controllers\Api\FireDrillController::class, 'markComplete'])->middleware('auth:sanctum');
+    Route::post('/fire-drills/{id}/cancel', [\App\Http\Controllers\Api\FireDrillController::class, 'cancel'])->middleware('auth:sanctum');
+    
+    // Fire Drill Templates
+    Route::apiResource('fire-drill-templates', \App\Http\Controllers\Api\FireDrillTemplateController::class)->middleware('auth:sanctum');
+    
+    // Pharmacy Templates
+    Route::apiResource('pharmacy-templates', \App\Http\Controllers\Api\PharmacyTemplateController::class)->middleware('auth:sanctum');
+    
+    // Pharmacy Management
+    Route::apiResource('pharmacy-suppliers', \App\Http\Controllers\Api\PharmacySupplierController::class)->middleware('auth:sanctum');
+    Route::apiResource('pharmacy-inventory', \App\Http\Controllers\Api\PharmacyInventoryController::class)->middleware('auth:sanctum');
+    Route::apiResource('pharmacy-orders', \App\Http\Controllers\Api\PharmacyOrderController::class)->middleware('auth:sanctum');
+    Route::post('/pharmacy-orders/{id}/mark-received', [\App\Http\Controllers\Api\PharmacyOrderController::class, 'markAsReceived'])->middleware('auth:sanctum');
+    
+    // Grocery Item Templates
+    Route::apiResource('grocery-item-templates', \App\Http\Controllers\Api\GroceryItemTemplateController::class)->middleware('auth:sanctum');
 
     // Sleep Records
     Route::apiResource('sleep-records', SleepRecordController::class)->middleware('auth:sanctum');
@@ -89,7 +108,12 @@ Route::prefix('v1')->group(function () {
 
     // Facilities & Branches
     Route::apiResource('facilities', FacilityController::class)->middleware('auth:sanctum');
+    Route::post('facilities/{id}', [FacilityController::class, 'update'])->middleware('auth:sanctum'); // For file uploads
+    Route::post('facilities/approve-registration/{registrationId}', [FacilityController::class, 'approveRegistration'])->middleware('auth:sanctum');
     Route::apiResource('branches', BranchController::class)->middleware('auth:sanctum');
+    
+    // Facility Registrations (Super Admin only)
+    Route::apiResource('facility-registrations', \App\Http\Controllers\Api\FacilityRegistrationController::class)->middleware('auth:sanctum');
 
     // Vital ranges
     Route::apiResource('vital-ranges', VitalRangeController::class)->middleware('auth:sanctum');

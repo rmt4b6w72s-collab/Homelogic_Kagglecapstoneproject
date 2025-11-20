@@ -348,7 +348,27 @@ class CustomNavigationProvider
                                 auth()->user()->hasRole('administrator') ||
                                 auth()->user()->hasRole('super_admin')
                             )),
+                        NavigationItem::make('Facility Registrations')
+                            ->url(route('filament.admin.resources.facility-registrations.index'))
+                            ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.resources.facility-registrations.*'))
+                            ->visible(fn (): bool => auth()->check() && auth()->user()->hasRole('super_admin')),
                     ]);
+        }
+        
+        // Add Super Admin group if user is super admin
+        if (auth()->check() && auth()->user()->hasRole('super_admin')) {
+            $items[] = NavigationItem::make('Super Admin')
+                ->icon('heroicon-o-shield-check')
+                ->url('#')
+                ->isActiveWhen(fn (): bool => 
+                    request()->routeIs('filament.admin.resources.facility-registrations.*')
+                )
+                ->sort(5)
+                ->childItems([
+                    NavigationItem::make('Facility Registrations')
+                        ->url(route('filament.admin.resources.facility-registrations.index'))
+                        ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.resources.facility-registrations.*')),
+                ]);
         }
         
         // Completely replace all navigation items

@@ -92,7 +92,7 @@ export default function DataTable({
         <div className={`bg-white rounded-lg shadow border border-gray-200 overflow-hidden ${className}`}>
             {/* Bulk Actions */}
             {bulkActions.length > 0 && selectedRows.size > 0 && (
-                <div className="px-4 py-3 bg-[#25603E] text-white flex items-center justify-between">
+                <div className="px-4 py-3 bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] flex items-center justify-between">
                     <span className="text-sm font-medium">
                         {selectedRows.size} item{selectedRows.size !== 1 ? 's' : ''} selected
                     </span>
@@ -101,7 +101,7 @@ export default function DataTable({
                             <button
                                 key={idx}
                                 onClick={() => handleBulkAction(action)}
-                                className="px-3 py-1.5 bg-white text-[#25603E] rounded-lg hover:bg-gray-100 transition-colors text-sm font-medium"
+                                className="px-3 py-1.5 bg-white text-[var(--theme-primary)] rounded-lg hover:bg-gray-100 transition-colors text-sm font-medium"
                             >
                                 {action.label}
                             </button>
@@ -183,7 +183,7 @@ export default function DataTable({
                                                     aria-label="Select row"
                                                 >
                                                     {isSelected ? (
-                                                        <CheckSquare className="w-5 h-5 text-[#25603E]" />
+                                                        <CheckSquare className="w-5 h-5 text-[var(--theme-primary)]" />
                                                     ) : (
                                                         <Square className="w-5 h-5" />
                                                     )}
@@ -238,6 +238,8 @@ export default function DataTable({
         </div>
     );
 }
+
+
 
 
 

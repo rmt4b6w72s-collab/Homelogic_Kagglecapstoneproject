@@ -72,7 +72,7 @@ export default function AppointmentsCharts() {
             <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
                 <div className="max-w-7xl mx-auto px-4 py-8">
                     <div className="text-center py-12">
-                        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#25603E]"></div>
+                        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--theme-primary)]"></div>
                         <p className="mt-4 text-gray-600">Loading appointment charts...</p>
                     </div>
                 </div>
@@ -103,7 +103,7 @@ export default function AppointmentsCharts() {
                             </button>
                             <button
                                 onClick={() => refetch()}
-                                className="inline-flex items-center gap-2 px-4 py-2 bg-[#25603E] text-white rounded-lg text-sm font-medium hover:bg-[#1B402D] transition"
+                                className="inline-flex items-center gap-2 px-4 py-2 bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] rounded-lg text-sm font-medium hover:bg-[var(--theme-primary-hover)] transition"
                             >
                                 <RefreshCcw className="h-4 w-4" />
                                 Refresh
@@ -141,7 +141,7 @@ export default function AppointmentsCharts() {
                         }}
                         onClick={(e) => e.stopPropagation()}
                         onInput={(e) => e.stopPropagation()}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                 />
                             </div>
                             <div className="flex-1 min-w-[200px]">
@@ -171,7 +171,7 @@ export default function AppointmentsCharts() {
                         }}
                         onClick={(e) => e.stopPropagation()}
                         onInput={(e) => e.stopPropagation()}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                 />
                             </div>
                             <div className="flex-1 min-w-[200px]">
@@ -182,7 +182,7 @@ export default function AppointmentsCharts() {
                                 <select
                         value={branchId || ''}
                         onChange={(e) => setBranchId(e.target.value || null)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                 >
                         <option value="">All Branches</option>
                         {branches.map(b => (
@@ -198,7 +198,7 @@ export default function AppointmentsCharts() {
                                 <select
                         value={residentId || ''}
                         onChange={(e) => setResidentId(e.target.value || null)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                 >
                         <option value="">All Residents</option>
                         {residents.map(r => (

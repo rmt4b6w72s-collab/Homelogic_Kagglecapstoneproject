@@ -7,7 +7,7 @@ use App\Models\Branch;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-class BranchController extends Controller
+class BranchController extends BaseApiController
 {
     public function index(Request $request): JsonResponse
     {

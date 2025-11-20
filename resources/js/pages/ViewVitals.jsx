@@ -546,7 +546,7 @@ export default function ViewVitals() {
                                             setResidentId(''); // Reset resident when branch changes
                                             setCurrentPage(1);
                                         }}
-                                        className="w-full pl-9 pr-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-[#25603E] focus:border-transparent appearance-none"
+                                        className="w-full pl-9 pr-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent appearance-none"
                                     >
                                         <option value="">All Branches</option>
                                         {filteredBranchOptions.map(b => (
@@ -567,7 +567,7 @@ export default function ViewVitals() {
                                         setResidentId(e.target.value);
                                         setCurrentPage(1);
                                     }}
-                                    className="w-full pl-9 pr-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-[#25603E] focus:border-transparent appearance-none"
+                                    className="w-full pl-9 pr-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent appearance-none"
                                 >
                                     <option value="">Select a Resident</option>
                                     {residentsData?.data?.map(r => (
@@ -580,7 +580,7 @@ export default function ViewVitals() {
                         </div>
 
                         <div>
-                            <button className="px-4 py-2 bg-[#25603E] text-white rounded-lg hover:bg-[#1B402D] transition-colors mt-6">
+                            <button className="px-4 py-2 bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] rounded-lg hover:bg-[var(--theme-primary-hover)] transition-colors mt-6">
                                 Allow
                             </button>
                         </div>
@@ -595,7 +595,7 @@ export default function ViewVitals() {
                                         setMonth(parseInt(e.target.value));
                                         setCurrentPage(1);
                                     }}
-                                    className="w-full pl-9 pr-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-[#25603E] focus:border-transparent appearance-none"
+                                    className="w-full pl-9 pr-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent appearance-none"
                                 >
                                     {months.map((m, idx) => (
                                         <option key={idx + 1} value={idx + 1}>{m}</option>
@@ -614,7 +614,7 @@ export default function ViewVitals() {
                                         setYear(parseInt(e.target.value));
                                         setCurrentPage(1);
                                     }}
-                                    className="w-full pl-9 pr-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-[#25603E] focus:border-transparent appearance-none"
+                                    className="w-full pl-9 pr-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent appearance-none"
                                 >
                                     {years.map(y => (
                                         <option key={y} value={y}>{y}</option>
@@ -630,7 +630,7 @@ export default function ViewVitals() {
                     <div className="h-96" style={{ backgroundColor: '#ffffff' }}>
                 {isLoading ? (
                             <div className="flex items-center justify-center h-full">
-                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#25603E]"></div>
+                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--theme-primary)]"></div>
                             </div>
                         ) : error ? (
                             <div className="flex items-center justify-center h-full text-red-600 text-sm text-center px-4">
@@ -651,14 +651,14 @@ export default function ViewVitals() {
                     <button
                         onClick={handleDownload}
                         disabled={!vitalsData?.data || vitalsData.data.length === 0}
-                        className="px-6 py-2 bg-[#25603E] text-white rounded-lg hover:bg-[#1B402D] transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="px-6 py-2 bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] rounded-lg hover:bg-[var(--theme-primary-hover)] transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         <Download className="w-4 h-4" />
                         Download Vitals
                     </button>
                     <button
                         onClick={handleNewVitals}
-                        className="px-6 py-2 bg-white text-[#25603E] border-2 border-[#25603E] rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2"
+                        className="px-6 py-2 bg-white text-[var(--theme-primary)] border-2 border-[var(--theme-primary)] rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2"
                     >
                         <Plus className="w-4 h-4" />
                         New Vitals
@@ -671,15 +671,15 @@ export default function ViewVitals() {
                         <table className="w-full">
                             <thead className="bg-gray-50">
                                 <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-[#25603E] uppercase tracking-wider">Date</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-[#25603E] uppercase tracking-wider">Blood Pressure</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-[#25603E] uppercase tracking-wider">Temperature</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-[#25603E] uppercase tracking-wider">Pulse</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-[#25603E] uppercase tracking-wider">Oxygen Saturation</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-[#25603E] uppercase tracking-wider">Pain</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-[#25603E] uppercase tracking-wider">Reason Declined</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-[#25603E] uppercase tracking-wider">Vital Status</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-[#25603E] uppercase tracking-wider">Action</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-[var(--theme-primary)] uppercase tracking-wider">Date</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-[var(--theme-primary)] uppercase tracking-wider">Blood Pressure</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-[var(--theme-primary)] uppercase tracking-wider">Temperature</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-[var(--theme-primary)] uppercase tracking-wider">Pulse</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-[var(--theme-primary)] uppercase tracking-wider">Oxygen Saturation</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-[var(--theme-primary)] uppercase tracking-wider">Pain</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-[var(--theme-primary)] uppercase tracking-wider">Reason Declined</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-[var(--theme-primary)] uppercase tracking-wider">Vital Status</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-[var(--theme-primary)] uppercase tracking-wider">Action</th>
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
@@ -687,7 +687,7 @@ export default function ViewVitals() {
                                     <tr>
                                         <td colSpan="9" className="px-6 py-4 text-center">
                                             <div className="flex items-center justify-center">
-                                                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#25603E]"></div>
+                                                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[var(--theme-primary)]"></div>
                                             </div>
                                         </td>
                                     </tr>

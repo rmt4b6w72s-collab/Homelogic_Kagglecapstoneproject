@@ -2,12 +2,11 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
 use App\Models\Appointment;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 
-class AppointmentController extends Controller
+class AppointmentController extends BaseApiController
 {
     public function index(Request $request): JsonResponse
     {

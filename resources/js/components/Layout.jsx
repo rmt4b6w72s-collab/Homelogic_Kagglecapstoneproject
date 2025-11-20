@@ -27,7 +27,9 @@ import {
     Command,
     ShoppingCart,
     Truck,
-    Flame
+    Flame,
+    ShieldCheck,
+    Clock
 } from 'lucide-react';
 import NotificationDropdown from './NotificationDropdown';
 import { useToastContext } from '../contexts/ToastContext';
@@ -83,6 +85,16 @@ const navigation = [
     },
     { name: 'Grocery Status', icon: ShoppingCart, path: '/grocery-status', children: null },
     { name: 'Fire Drills', icon: Flame, path: '/fire-drills', children: null },
+    { 
+        name: 'Pharmacy', 
+        icon: Building2, 
+        path: '/pharmacy/suppliers', 
+        children: [
+            { name: 'Suppliers', path: '/pharmacy/suppliers' },
+            { name: 'Inventory', path: '/pharmacy/inventory' },
+            { name: 'Orders', path: '/pharmacy/orders' },
+        ]
+    },
     { name: 'Reports', icon: FileText, path: '/reports', children: null },
     { 
         name: 'Administration', 
@@ -100,6 +112,20 @@ const navigation = [
             { name: 'Inactive Records', path: '/administration/deactivated' },
             { name: 'Employee Documents', path: '/administration/employee-documents' },
             { name: 'Activity Logs', path: '/administration/activity-logs' },
+        ]
+    },
+];
+
+const superAdminNavigation = [
+    { name: 'Dashboard', icon: LayoutDashboard, path: '/super-admin/dashboard', children: null },
+    { 
+        name: 'Super Admin', 
+        icon: ShieldCheck, 
+        path: '/super-admin', 
+        children: [
+            { name: 'Dashboard', path: '/super-admin/dashboard' },
+            { name: 'Facility Registrations', path: '/super-admin/facility-registrations' },
+            { name: 'Facilities', path: '/super-admin/facilities' },
         ]
     },
 ];
@@ -339,12 +365,23 @@ export default function Layout() {
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [isCaregiver]);
 
+    const isSuperAdmin = React.useMemo(() => {
+        if (!currentUser) return false;
+        return currentUser.role === 'super_admin' || 
+               currentUser.role === 'Super Admin' ||
+               (currentUser.roles && Array.isArray(currentUser.roles) && 
+                currentUser.roles.some(r => (typeof r === 'string' ? r : r.name) === 'super_admin'));
+    }, [currentUser]);
+
     const navigationItems = React.useMemo(() => {
+        if (isSuperAdmin) {
+            return superAdminNavigation;
+        }
         if (isCaregiver) {
             return caregiverNavigation;
         }
         return navigation;
-    }, [isCaregiver]);
+    }, [isCaregiver, isSuperAdmin]);
 
     const appTimezoneLabel = React.useMemo(() => {
         const timeZone = PACIFIC_TIMEZONE_ID;
@@ -358,6 +395,17 @@ export default function Layout() {
 
     const leaveRequestsPath = isCaregiver ? '/leave-requests' : '/administration/leave-requests';
 
+    // Get facility branding with defaults - CSS variables are set by ThemeProvider
+    const facilityBranding = React.useMemo(() => {
+        return {
+            name: currentUser?.facility_branding?.name || 'Evergreen Oasis Care Home',
+            logo: currentUser?.facility_branding?.logo || '/images/logo.jpeg',
+            primary_color: currentUser?.facility_branding?.primary_color || '#25603E',
+            secondary_color: currentUser?.facility_branding?.secondary_color || '#8B4513',
+            accent_color: currentUser?.facility_branding?.accent_color || '#F5F5DC',
+        };
+    }, [currentUser?.facility_branding]);
+
     return (
         <div className="flex h-screen bg-gray-50">
             {/* Mobile menu backdrop */}
@@ -369,36 +417,52 @@ export default function Layout() {
             )}
             
             {/* Sidebar */}
-            <aside className={`fixed md:relative inset-y-0 left-0 z-50 transform transition-transform duration-300 ease-in-out ${
-                mobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
-            } w-64 bg-[#25603E] text-white flex flex-col`}>
+            <aside 
+                className={`fixed md:relative inset-y-0 left-0 z-50 transform transition-transform duration-300 ease-in-out ${
+                    mobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+                } w-64 bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] flex flex-col`}
+            >
                 {/* Mobile close button */}
                 <button
                     onClick={() => setMobileMenuOpen(false)}
-                    className="md:hidden absolute top-4 right-4 text-white hover:text-gray-300"
+                    className="md:hidden absolute top-4 right-4 text-[var(--theme-text-on-primary)] hover:text-gray-300"
                 >
                     <X className="w-6 h-6" />
                 </button>
                 {/* Logo */}
-                <div className="p-6 border-b border-[#4a7a2a]">
+                <div 
+                    className="p-6 border-b border-[var(--theme-primary-light)]"
+                >
                     <div className="flex items-center space-x-3">
-                        <div className="w-12 h-12 bg-[#25603E] rounded-full flex items-center justify-center shadow-lg overflow-hidden">
+                        <div 
+                            className="w-12 h-12 bg-[var(--theme-primary)] rounded-full flex items-center justify-center shadow-lg overflow-hidden"
+                        >
                             <img 
-                                src="/images/logo.jpeg" 
-                                alt="Evergreen Oasis Care Home"
+                                src={facilityBranding.logo} 
+                                alt={facilityBranding.name}
                                 className="w-full h-full object-cover"
                                 onError={(e) => {
                                     e.target.style.display = 'none';
                                     e.target.nextElementSibling.style.display = 'flex';
                                 }}
                             />
-                            <div className="w-full h-full bg-[#25603E] rounded-full flex items-center justify-center hidden">
-                                <span className="text-white font-bold text-xl">E</span>
+                            <div 
+                                className="w-full h-full bg-[var(--theme-primary)] rounded-full flex items-center justify-center hidden"
+                            >
+                                <span className="text-[var(--theme-text-on-primary)] font-bold text-xl">
+                                    {facilityBranding.name.charAt(0).toUpperCase()}
+                                </span>
                             </div>
                         </div>
                         <div>
-                            <span className="text-xl font-semibold text-white">Evergreen Oasis</span>
-                            <p className="text-xs text-gray-300">Care Home</p>
+                            <span className="text-xl font-semibold text-[var(--theme-text-on-primary)]">
+                                {facilityBranding.name.split(' ')[0]}
+                            </span>
+                            <p className="text-xs text-gray-300">
+                                {facilityBranding.name.split(' ').length > 1 ?
+                                    facilityBranding.name.split(' ').slice(1).join(' ') :
+                                    'Care Home'}
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -420,9 +484,7 @@ export default function Layout() {
                                         <button
                                             onClick={() => setExpandedMenus({...expandedMenus, [item.name]: !isExpanded})}
                                             className={`w-full flex items-center justify-between space-x-3 px-4 py-3 rounded-lg transition-colors ${
-                                                isActive
-                                                    ? 'bg-white text-[#25603E] shadow-md'
-                                                    : 'text-white hover:bg-[#4a7a2a] hover:text-white'
+                                                isActive ? 'bg-white shadow-md text-[var(--theme-primary)]' : 'text-[var(--theme-text-on-primary)] hover:text-[var(--theme-text-on-primary)] hover:bg-[var(--theme-primary-light)]'
                                             }`}
                                         >
                                             <div className="flex items-center space-x-3">
@@ -444,11 +506,9 @@ export default function Layout() {
                                                             key={child.path}
                                                             to={child.path}
                                                             onClick={() => setMobileMenuOpen(false)}
-                                                            className={`block px-4 py-2 rounded-lg transition-colors text-sm ${
-                                                                isChildActive
-                                                                    ? 'bg-[#4a7a2a] text-white'
-                                                                    : 'text-white hover:bg-[#4a7a2a] hover:text-white'
-                                                            }`}
+                                                                className={`block px-4 py-2 rounded-lg transition-colors text-sm ${
+                                                                    isChildActive ? 'bg-white shadow-md text-[var(--theme-primary)]' : 'text-[var(--theme-text-on-primary)] hover:text-[var(--theme-text-on-primary)] hover:bg-[var(--theme-primary-light)]'
+                                                                }`}
                                                         >
                                                             {child.name}
                                                         </Link>
@@ -462,9 +522,7 @@ export default function Layout() {
                                         to={item.path}
                                         onClick={() => setMobileMenuOpen(false)}
                                         className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
-                                            isActive
-                                                ? 'bg-white text-[#25603E] shadow-md'
-                                                : 'text-white hover:bg-[#4a7a2a] hover:text-white'
+                                            isActive ? 'bg-white shadow-md text-[var(--theme-primary)]' : 'text-[var(--theme-text-on-primary)] hover:text-[var(--theme-text-on-primary)] hover:bg-[var(--theme-primary-light)]'
                                         }`}
                                     >
                                         <Icon className="w-5 h-5" />
@@ -489,7 +547,9 @@ export default function Layout() {
                             <Menu className="w-6 h-6" />
                         </button>
                         <div className="flex flex-col">
-                            <h1 className="text-lg md:text-xl font-semibold text-[#25603E]">Evergreen Oasis</h1>
+                            <h1 className="text-lg md:text-xl font-semibold text-[var(--theme-primary)]">
+                                {facilityBranding.name}
+                            </h1>
                             {appClock.time && (
                                 <span className="md:hidden text-xs text-gray-500">
                                     {appClock.time} • {appTimezoneLabel}

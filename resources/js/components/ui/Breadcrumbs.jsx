@@ -9,7 +9,7 @@ export default function Breadcrumbs({ items = [] }) {
         <nav className="flex items-center space-x-2 text-sm mb-4" aria-label="Breadcrumb">
             <Link
                 to="/dashboard"
-                className="text-gray-500 hover:text-[#25603E] transition-colors"
+                className="text-gray-500 hover:text-[var(--theme-primary)] transition-colors"
                 aria-label="Home"
             >
                 <Home className="w-4 h-4" />
@@ -27,7 +27,7 @@ export default function Breadcrumbs({ items = [] }) {
                         ) : (
                             <Link
                                 to={item.path}
-                                className="text-gray-500 hover:text-[#25603E] transition-colors"
+                                className="text-gray-500 hover:text-[var(--theme-primary)] transition-colors"
                             >
                                 {item.label}
                             </Link>
@@ -38,6 +38,8 @@ export default function Breadcrumbs({ items = [] }) {
         </nav>
     );
 }
+
+
 
 
 

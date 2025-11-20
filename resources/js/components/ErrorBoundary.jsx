@@ -91,7 +91,7 @@ function ErrorFallback({ error, errorInfo, onReset, onReload, onGoToDashboard })
                 <div className="flex flex-col sm:flex-row gap-3">
                     <button
                         onClick={onReset}
-                        className="flex-1 px-4 py-2.5 bg-[#25603E] text-white rounded-lg hover:bg-[#1B402D] transition-colors font-medium flex items-center justify-center space-x-2"
+                        className="flex-1 px-4 py-2.5 bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] rounded-lg hover:bg-[var(--theme-primary-hover)] transition-colors font-medium flex items-center justify-center space-x-2"
                     >
                         <RefreshCw className="w-4 h-4" />
                         <span>Try Again</span>

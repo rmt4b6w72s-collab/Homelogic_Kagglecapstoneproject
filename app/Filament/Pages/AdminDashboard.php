@@ -25,11 +25,13 @@ class AdminDashboard extends BaseDashboard
     public static function canAccess(): bool
     {
         $user = Auth::user();
-        return Auth::check() && (
+        // Super admins should not access this - they have their own dashboard
+        return Auth::check() && 
+            $user->role !== 'super_admin' && 
+            !$user->hasRole('super_admin') && (
             $user->role === 'admin' || 
             $user->role === 'administrator' || 
-            $user->hasRole('administrator') || 
-            $user->hasRole('super_admin')
+            $user->hasRole('administrator')
         );
     }
 

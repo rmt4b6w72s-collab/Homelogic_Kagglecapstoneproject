@@ -32,7 +32,7 @@ export default function Drugs() {
           </div>
           <button
             onClick={() => { setEditing(null); setShowForm(true); }}
-            className="w-full sm:w-auto px-4 py-2 bg-[#25603E] text-white rounded-lg hover:bg-[#1B402D] transition-colors flex items-center justify-center space-x-2 text-sm md:text-base"
+            className="w-full sm:w-auto px-4 py-2 bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] rounded-lg hover:bg-[var(--theme-primary-hover)] transition-colors flex items-center justify-center space-x-2 text-sm md:text-base"
           >
             <Plus className="w-4 h-4" />
             <span>Add Drug</span>
@@ -45,14 +45,14 @@ export default function Drugs() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search drugs by name or generic name..."
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
           />
         </div>
       </div>
 
       {isLoading ? (
         <div className="text-center py-12">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#25603E]"></div>
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--theme-primary)]"></div>
           <p className="mt-4 text-gray-600">Loading drugs...</p>
         </div>
       ) : (
@@ -98,7 +98,7 @@ export default function Drugs() {
                         <div className="flex items-center justify-end space-x-2">
                           <button
                             onClick={() => { setEditing(drug); setShowForm(true); }}
-                            className="p-2 text-[#25603E] hover:bg-green-50 rounded-lg transition-colors"
+                            className="p-2 text-[var(--theme-primary)] hover:bg-green-50 rounded-lg transition-colors"
                             title="Edit"
                           >
                             <Edit className="w-4 h-4" />
@@ -201,7 +201,7 @@ function DrugForm({ record, onClose, onSuccess }) {
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
                   required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                 />
                 {errors.name && <p className="text-xs text-red-600 mt-1">{errors.name[0]}</p>}
               </div>
@@ -210,7 +210,7 @@ function DrugForm({ record, onClose, onSuccess }) {
                 <input
                   value={form.generic_name}
                   onChange={(e) => setForm({ ...form, generic_name: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                 />
                 {errors.generic_name && <p className="text-xs text-red-600 mt-1">{errors.generic_name[0]}</p>}
               </div>
@@ -223,7 +223,7 @@ function DrugForm({ record, onClose, onSuccess }) {
                   value={form.dosage_form}
                   onChange={(e) => setForm({ ...form, dosage_form: e.target.value })}
                   placeholder="e.g., Tablet, Capsule, Liquid"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                 />
                 {errors.dosage_form && <p className="text-xs text-red-600 mt-1">{errors.dosage_form[0]}</p>}
               </div>
@@ -233,7 +233,7 @@ function DrugForm({ record, onClose, onSuccess }) {
                   value={form.strength}
                   onChange={(e) => setForm({ ...form, strength: e.target.value })}
                   placeholder="e.g., 500mg, 10ml"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                 />
                 {errors.strength && <p className="text-xs text-red-600 mt-1">{errors.strength[0]}</p>}
               </div>
@@ -245,7 +245,7 @@ function DrugForm({ record, onClose, onSuccess }) {
                 value={form.description}
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
                 rows={3}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
               />
               {errors.description && <p className="text-xs text-red-600 mt-1">{errors.description[0]}</p>}
             </div>
@@ -257,7 +257,7 @@ function DrugForm({ record, onClose, onSuccess }) {
                 onChange={(e) => setForm({ ...form, indications: e.target.value })}
                 rows={3}
                 placeholder="What conditions or diseases this drug is used to treat"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
               />
               {errors.indications && <p className="text-xs text-red-600 mt-1">{errors.indications[0]}</p>}
             </div>
@@ -269,7 +269,7 @@ function DrugForm({ record, onClose, onSuccess }) {
                 onChange={(e) => setForm({ ...form, contraindications: e.target.value })}
                 rows={3}
                 placeholder="Conditions or situations where this drug should not be used"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
               />
               {errors.contraindications && <p className="text-xs text-red-600 mt-1">{errors.contraindications[0]}</p>}
             </div>
@@ -281,7 +281,7 @@ function DrugForm({ record, onClose, onSuccess }) {
                 onChange={(e) => setForm({ ...form, side_effects: e.target.value })}
                 rows={3}
                 placeholder="Known side effects of this drug"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
               />
               {errors.side_effects && <p className="text-xs text-red-600 mt-1">{errors.side_effects[0]}</p>}
             </div>
@@ -293,7 +293,7 @@ function DrugForm({ record, onClose, onSuccess }) {
                 onChange={(e) => setForm({ ...form, storage_instructions: e.target.value })}
                 rows={2}
                 placeholder="e.g., Store at room temperature, Keep refrigerated"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
               />
               {errors.storage_instructions && <p className="text-xs text-red-600 mt-1">{errors.storage_instructions[0]}</p>}
             </div>
@@ -304,7 +304,7 @@ function DrugForm({ record, onClose, onSuccess }) {
                   type="checkbox"
                   checked={form.is_active}
                   onChange={(e) => setForm({ ...form, is_active: e.target.checked })}
-                  className="w-4 h-4 text-[#25603E] border-gray-300 rounded focus:ring-[#25603E]"
+                  className="w-4 h-4 text-[var(--theme-primary)] border-gray-300 rounded focus:ring-[var(--theme-primary)]"
                 />
                 <span className="text-sm font-medium text-gray-700">Active</span>
               </label>
@@ -327,7 +327,7 @@ function DrugForm({ record, onClose, onSuccess }) {
               type="submit"
               form="drug-form"
               disabled={submitting}
-              className="w-full sm:w-auto px-4 py-2 bg-[#25603E] text-white rounded-lg hover:bg-[#1B402D] disabled:opacity-50"
+              className="w-full sm:w-auto px-4 py-2 bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] rounded-lg hover:bg-[var(--theme-primary-hover)] disabled:opacity-50"
             >
               {submitting ? 'Saving...' : (record ? 'Update' : 'Create')}
             </button>

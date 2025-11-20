@@ -7,7 +7,7 @@ use App\Models\Drug;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 
-class DrugController extends Controller
+class DrugController extends BaseApiController
 {
     public function index(Request $request): JsonResponse
     {

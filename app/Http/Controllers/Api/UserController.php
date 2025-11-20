@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Schema;
 
-class UserController extends Controller
+class UserController extends BaseApiController
 {
     public function index(Request $request): JsonResponse
     {

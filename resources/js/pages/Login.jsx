@@ -51,7 +51,7 @@ export default function Login() {
     return (
         <div className="min-h-screen flex flex-col md:flex-row bg-[#F5F5F0]">
             {/* Brand / Welcome Panel */}
-            <div className="md:w-1/2 relative overflow-hidden flex items-center justify-center bg-gradient-to-br from-[#1F513B] via-[#25603E] to-[#36875E] text-white p-8 md:p-12">
+            <div className="md:w-1/2 relative overflow-hidden flex items-center justify-center text-white p-8 md:p-12" style={{ background: `linear-gradient(to bottom right, var(--theme-primary-dark), var(--theme-primary), var(--theme-primary-light))` }}>
                 <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.45),_rgba(255,255,255,0))]"></div>
                 <div className="absolute inset-0 opacity-10 mix-blend-soft-light bg-[radial-gradient(circle_at_center,_rgba(255,255,255,0.45)_0%,_rgba(255,255,255,0)_65%)]"></div>
                 <div className="relative z-10 max-w-xl space-y-8 text-center md:text-left">
@@ -105,8 +105,8 @@ export default function Login() {
             <div className="md:w-1/2 flex items-center justify-center p-6 md:p-12 bg-white">
                 <div className="w-full max-w-md space-y-8">
                     <div className="space-y-2 text-center md:text-left">
-                        <p className="text-xs uppercase tracking-[0.4em] text-[#25603E] font-semibold">Welcome back</p>
-                        <h2 className="text-2xl md:text-3xl font-semibold text-[#1B402D]">Sign in to Evergreen</h2>
+                        <p className="text-xs uppercase tracking-[0.4em] text-[var(--theme-primary)] font-semibold">Welcome back</p>
+                        <h2 className="text-2xl md:text-3xl font-semibold text-[var(--theme-primary-dark)]">Sign in to Evergreen</h2>
                         <p className="text-sm text-[#627567] leading-relaxed">
                             Enter the credentials provided by the Evergreen administration team to continue.
                         </p>
@@ -135,7 +135,7 @@ export default function Login() {
                                         onChange={(e) => setEmail(e.target.value)}
                                         required
                                         autoComplete="email"
-                                        className="block w-full pl-11 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent outline-none transition-all placeholder:text-gray-400"
+                                        className="block w-full pl-11 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-[var(--theme-primary)] outline-none transition-all placeholder:text-gray-400"
                                         placeholder="staff@serenityafh.com"
                                     />
                                 </div>
@@ -156,13 +156,13 @@ export default function Login() {
                                         onChange={(e) => setPassword(e.target.value)}
                                         required
                                         autoComplete="current-password"
-                                        className="block w-full pl-11 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent outline-none transition-all placeholder:text-gray-400"
+                                        className="block w-full pl-11 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-[var(--theme-primary)] outline-none transition-all placeholder:text-gray-400"
                                         placeholder="Enter your password"
                                     />
                                     <button
                                         type="button"
                                         onClick={() => setShowPassword((prev) => !prev)}
-                                        className="absolute inset-y-0 right-3 flex items-center text-sm font-semibold text-[#25603E] hover:text-[#1B402D] transition-colors"
+                                        className="absolute inset-y-0 right-3 flex items-center text-sm font-semibold text-[var(--theme-primary)] hover:text-[var(--theme-primary-hover)] transition-colors"
                                         aria-label={showPassword ? 'Hide password' : 'Show password'}
                                     >
                                         {showPassword ? (
@@ -177,7 +177,7 @@ export default function Login() {
                             <button
                                 type="submit"
                                 disabled={loading}
-                                className="w-full bg-[#25603E] text-white py-3 px-4 rounded-lg font-medium hover:bg-[#1B402D] focus:outline-none focus:ring-2 focus:ring-[#25603E] focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
+                                className="w-full bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] py-3 px-4 rounded-lg font-medium hover:bg-[var(--theme-primary-hover)] focus:outline-none focus:ring-2 focus:ring-[var(--theme-primary)] focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
                             >
                                 {loading ? 'Signing in...' : 'Sign In'}
                             </button>
@@ -186,7 +186,7 @@ export default function Login() {
                         <div className="text-xs text-[#6F8276] leading-relaxed">
                             <p>
                                 Trouble signing in?{' '}
-                                <a href="mailto:support@evergreenoasiscare.com" className="text-[#25603E] font-semibold hover:underline">
+                                <a href="mailto:support@evergreenoasiscare.com" className="text-[var(--theme-primary)] font-semibold hover:text-[var(--theme-primary-hover)] hover:underline transition-colors">
                                     Contact support
                                 </a>{' '}
                                 or access the Filament admin console directly.

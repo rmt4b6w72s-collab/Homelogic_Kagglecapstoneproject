@@ -4,10 +4,15 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Facility;
+use App\Models\User;
+use App\Models\Branch;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 
-class FacilityController extends Controller
+class FacilityController extends BaseApiController
 {
     public function index(Request $request): JsonResponse
     {
@@ -27,16 +32,126 @@ class FacilityController extends Controller
 
     public function store(Request $request): JsonResponse
     {
-        $validated = $request->validate([
+        $rules = [
             'name' => 'required|string|max:255',
             'address' => 'nullable|string|max:1000',
             'phone' => 'nullable|string|max:50',
             'email' => 'nullable|email|max:255',
-            'is_active' => 'boolean',
-        ]);
+            'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'primary_color' => 'nullable|string|max:7',
+            'secondary_color' => 'nullable|string|max:7',
+            'accent_color' => 'nullable|string|max:7',
+            'is_active' => 'nullable|boolean',
+        ];
+        
+        // Only validate subdomain if it's provided and not empty
+        if ($request->has('subdomain') && !empty($request->input('subdomain'))) {
+            $rules['subdomain'] = 'nullable|string|max:255|unique:facilities,subdomain|regex:/^[a-z0-9-]+$/';
+        }
+        
+        // Validate owner and branch fields if creating new facility AND owner email is provided
+        // If owner_email is provided, all owner fields become required
+        if ($request->has('owner_email') && !empty(trim($request->input('owner_email')))) {
+            $rules['owner_name'] = 'required|string|max:255';
+            $rules['owner_email'] = 'required|email|unique:users,email';
+            $rules['owner_role'] = 'required|string|in:administrator,manager,clinical_supervisor';
+            $rules['owner_password'] = 'required|string|min:8';
+            $rules['branch_name'] = 'required|string|max:255';
+            $rules['branch_address'] = 'nullable|string';
+        }
+        
+        $validated = $request->validate($rules);
+        
+        // Convert is_active to boolean if present
+        if (isset($validated['is_active'])) {
+            // Handle both string and boolean values
+            if (is_string($validated['is_active'])) {
+                $validated['is_active'] = in_array(strtolower($validated['is_active']), ['1', 'true', 'yes', 'on']);
+            } else {
+                $validated['is_active'] = (bool) $validated['is_active'];
+            }
+        } else {
+            $validated['is_active'] = true; // Default to true
+        }
+        
+        // Only include subdomain if provided and not empty
+        if ($request->has('subdomain')) {
+            $subdomain = trim($request->input('subdomain'));
+            if (!empty($subdomain)) {
+                $validated['subdomain'] = $subdomain;
+            }
+            // If empty, don't include it (will be null in database)
+        }
 
-        $facility = Facility::create($validated);
-        return response()->json($facility, 201);
+        // Handle logo upload
+        if ($request->hasFile('logo')) {
+            $logo = $request->file('logo');
+            $logoPath = $logo->store('facilities/logos', 'public');
+            $validated['logo'] = $logoPath;
+        }
+
+        return DB::transaction(function () use ($validated, $request) {
+            // Extract facility data
+            $facilityData = array_filter($validated, function ($key) {
+                return !in_array($key, ['owner_name', 'owner_email', 'owner_role', 'owner_password', 'branch_name', 'branch_address']);
+            }, ARRAY_FILTER_USE_KEY);
+            
+            // Create facility
+            $facility = Facility::create($facilityData);
+            
+            $owner = null;
+            $branch = null;
+            
+            // Create owner account and branch if provided (all owner fields must be present)
+            if ($request->has('owner_email') && 
+                !empty(trim($request->input('owner_email'))) && 
+                $request->has('owner_name') && 
+                !empty(trim($request->input('owner_name'))) &&
+                $request->has('owner_password') && 
+                !empty($request->input('owner_password'))) {
+                // Create initial branch
+                $branch = $facility->branches()->create([
+                    'name' => $validated['branch_name'] ?? 'Main Branch',
+                    'address' => $validated['branch_address'] ?? $validated['address'] ?? null,
+                    'is_active' => true,
+                ]);
+                
+                // Create facility owner account
+                $owner = User::create([
+                    'name' => $validated['owner_name'],
+                    'email' => $validated['owner_email'],
+                    'password' => Hash::make($validated['owner_password']),
+                    'role' => $validated['owner_role'],
+                    'facility_id' => $facility->id,
+                    'assigned_branch_id' => $branch->id,
+                    'is_active' => true,
+                ]);
+                
+                // Update facility with owner reference
+                $facility->update([
+                    'registered_by_user_id' => $owner->id,
+                    'registration_status' => 'approved',
+                ]);
+            }
+            
+            $facility->refresh(); // Refresh to get logo_url accessor
+            $facility->load(['branches', 'owner']); // Load relationships
+            
+            $response = [
+                'facility' => $facility,
+                'message' => $owner ? 'Facility created with owner account and initial branch' : 'Facility created successfully'
+            ];
+            
+            if ($owner) {
+                $response['owner'] = $owner;
+            }
+            
+            if ($branch) {
+                $response['branch'] = $branch;
+            }
+            
+            return response()->json($response, 201);
+        });
     }
 
     public function show($id): JsonResponse
@@ -47,15 +162,160 @@ class FacilityController extends Controller
     public function update(Request $request, $id): JsonResponse
     {
         $facility = Facility::findOrFail($id);
-        $validated = $request->validate([
+        
+        // Separate file validation from other fields
+        $rules = [
             'name' => 'sometimes|required|string|max:255',
             'address' => 'nullable|string|max:1000',
             'phone' => 'nullable|string|max:50',
             'email' => 'nullable|email|max:255',
-            'is_active' => 'boolean',
-        ]);
+            'primary_color' => 'nullable|string|max:7',
+            'secondary_color' => 'nullable|string|max:7',
+            'accent_color' => 'nullable|string|max:7',
+            'is_active' => 'nullable|boolean',
+        ];
+        
+        // Only validate subdomain if it's provided and not empty
+        if ($request->has('subdomain') && !empty(trim($request->input('subdomain')))) {
+            $rules['subdomain'] = 'nullable|string|max:255|unique:facilities,subdomain,' . $id . '|regex:/^[a-z0-9-]+$/';
+        }
+        
+        // Add logo validation only if file is present
+        if ($request->hasFile('logo')) {
+            $rules['logo'] = 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048';
+        }
+        
+        $validated = $request->validate($rules);
+        
+        // Convert is_active to boolean if present
+        if (isset($validated['is_active'])) {
+            if (is_string($validated['is_active'])) {
+                $validated['is_active'] = in_array(strtolower($validated['is_active']), ['1', 'true', 'yes', 'on']);
+            } else {
+                $validated['is_active'] = (bool) $validated['is_active'];
+            }
+        }
+        
+        // Only include subdomain if provided and not empty
+        if ($request->has('subdomain')) {
+            $subdomain = trim($request->input('subdomain'));
+            if (!empty($subdomain)) {
+                $validated['subdomain'] = $subdomain;
+            } else {
+                $validated['subdomain'] = null; // Set to null if empty string
+            }
+        }
+
+        // Handle logo upload
+        if ($request->hasFile('logo')) {
+            // Delete old logo if exists
+            if ($facility->logo) {
+                Storage::disk('public')->delete($facility->logo);
+            }
+            $logo = $request->file('logo');
+            $logoPath = $logo->store('facilities/logos', 'public');
+            $validated['logo'] = $logoPath;
+        }
+
         $facility->update($validated);
+        
+        // Reload facility to get logo_url accessor
+        $facility->refresh();
+        
         return response()->json($facility);
+    }
+
+    public function approveRegistration(Request $request, $registrationId): JsonResponse
+    {
+        $registration = \App\Models\FacilityRegistration::findOrFail($registrationId);
+        
+        if ($registration->status !== 'pending') {
+            return response()->json(['message' => 'Registration already processed'], 400);
+        }
+
+        $validated = $request->validate([
+            'facility_name' => 'required|string|max:255',
+            'subdomain' => 'required|string|max:255|unique:facilities,subdomain|regex:/^[a-z0-9-]+$/',
+            'address' => 'nullable|string',
+            'phone' => 'nullable|string',
+            'email' => 'nullable|email',
+            'branch_name' => 'required|string|max:255',
+            'branch_address' => 'nullable|string',
+            'owner_name' => 'required|string|max:255',
+            'owner_email' => 'required|email|unique:users,email',
+            'owner_role' => 'required|string|in:administrator,manager,clinical_supervisor',
+            'owner_password' => 'required|string|min:8',
+            'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'primary_color' => 'nullable|string|max:7',
+            'secondary_color' => 'nullable|string|max:7',
+            'accent_color' => 'nullable|string|max:7',
+        ]);
+
+        return DB::transaction(function () use ($validated, $registration) {
+            // Create facility
+            $facilityData = [
+                'name' => $validated['facility_name'],
+                'address' => $validated['address'] ?? null,
+                'phone' => $validated['phone'] ?? null,
+                'email' => $validated['email'] ?? null,
+                'subdomain' => $validated['subdomain'],
+                'registration_status' => 'approved',
+                'is_active' => true,
+            ];
+
+            if (isset($validated['primary_color'])) {
+                $facilityData['primary_color'] = $validated['primary_color'];
+            }
+            if (isset($validated['secondary_color'])) {
+                $facilityData['secondary_color'] = $validated['secondary_color'];
+            }
+            if (isset($validated['accent_color'])) {
+                $facilityData['accent_color'] = $validated['accent_color'];
+            }
+
+            $facility = Facility::create($facilityData);
+
+            // Handle logo upload
+            if ($request->hasFile('logo')) {
+                $logo = $request->file('logo');
+                $logoPath = $logo->store('facilities/logos', 'public');
+                $facility->update(['logo' => $logoPath]);
+            }
+
+            // Create initial branch
+            $branch = $facility->branches()->create([
+                'name' => $validated['branch_name'] ?? 'Main Branch',
+                'address' => $validated['branch_address'] ?? $validated['address'] ?? null,
+                'is_active' => true,
+            ]);
+
+            // Create facility owner account
+            $owner = User::create([
+                'name' => $validated['owner_name'],
+                'email' => $validated['owner_email'],
+                'password' => Hash::make($validated['owner_password']),
+                'role' => $validated['owner_role'],
+                'facility_id' => $facility->id,
+                'assigned_branch_id' => $branch->id,
+                'is_active' => true,
+            ]);
+
+            // Update facility with owner reference
+            $facility->update([
+                'registered_by_user_id' => $owner->id,
+            ]);
+
+            // Update registration status
+            $registration->update([
+                'status' => 'approved',
+                'approved_by_user_id' => auth()->id(),
+            ]);
+
+            return response()->json([
+                'message' => 'Facility approved and set up successfully',
+                'facility' => $facility->load('branches', 'owner'),
+            ]);
+        });
     }
 
     public function destroy($id): JsonResponse

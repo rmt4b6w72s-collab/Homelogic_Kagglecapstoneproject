@@ -299,7 +299,7 @@ export default function AssessmentDetail() {
     if (isLoading) {
         return (
             <div className="text-center py-12">
-                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#25603E]"></div>
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--theme-primary)]"></div>
                 <p className="mt-4 text-gray-600">Loading assessment...</p>
             </div>
         );
@@ -333,7 +333,7 @@ export default function AssessmentDetail() {
                     <button
                         onClick={handleSubmit}
                         disabled={submitMutation.isPending}
-                        className="px-4 py-2 bg-[#25603E] text-white rounded-lg hover:bg-[#1B402D] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                        className="px-4 py-2 bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] rounded-lg hover:bg-[var(--theme-primary-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
                     >
                         <CheckCircle className="w-4 h-4" />
                         <span>{submitMutation.isPending ? 'Submitting...' : 'Submit for Review'}</span>
@@ -353,7 +353,7 @@ export default function AssessmentDetail() {
                     <div
                         className={`h-3 rounded-full transition-all duration-300 ${
                             overallProgress === 100 ? 'bg-green-500' :
-                            overallProgress >= 75 ? 'bg-[#25603E]' :
+                            overallProgress >= 75 ? 'bg-[var(--theme-primary)]' :
                             overallProgress >= 50 ? 'bg-yellow-500' :
                             'bg-orange-500'
                         }`}
@@ -368,7 +368,7 @@ export default function AssessmentDetail() {
             <div className="bg-white rounded-lg shadow p-6 mb-6">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div className="flex items-center space-x-3">
-                        <ClipboardList className="w-5 h-5 text-[#25603E]" />
+                        <ClipboardList className="w-5 h-5 text-[var(--theme-primary)]" />
                         <div>
                             <p className="text-xs text-gray-500">Type</p>
                             <p className="text-sm font-medium text-gray-900">{assessment.assessment_type || 'Assessment'}</p>
@@ -420,7 +420,7 @@ export default function AssessmentDetail() {
                                     <div
                                         className={`h-2 rounded-full transition-all duration-300 ${
                                             sectionProgress === 100 ? 'bg-green-500' :
-                                            sectionProgress >= 75 ? 'bg-[#25603E]' :
+                                            sectionProgress >= 75 ? 'bg-[var(--theme-primary)]' :
                                             sectionProgress >= 50 ? 'bg-yellow-500' :
                                             'bg-red-500'
                                         }`}
@@ -528,7 +528,7 @@ function QuestionInput({ question, onSave }) {
 
     const common = {
         className:
-            'mt-2 w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#25603E] focus:border-transparent',
+            'mt-2 w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent',
     };
 
     switch (question.response_type) {

@@ -40,6 +40,11 @@ import HousekeepingDashboard from './pages/HousekeepingDashboard';
 import MedicationDeliveries from './pages/MedicationDeliveries';
 import GroceryStatus from './pages/GroceryStatus';
 import FireDrills from './pages/FireDrills';
+import PharmacySuppliers from './pages/PharmacySuppliers';
+import PharmacyInventory from './pages/PharmacyInventory';
+import PharmacyOrders from './pages/PharmacyOrders';
+import SuperAdminDashboard from './pages/SuperAdminDashboard';
+import FacilityRegistrations from './pages/FacilityRegistrations';
 
 // Report sub-pages
 import ChartReports from './pages/reports/ChartReports';
@@ -83,6 +88,9 @@ function App() {
                 <Route path="medication-deliveries" element={<MedicationDeliveries />} />
                 <Route path="grocery-status" element={<GroceryStatus />} />
                 <Route path="fire-drills" element={<FireDrills />} />
+                <Route path="pharmacy/suppliers" element={<PharmacySuppliers />} />
+                <Route path="pharmacy/inventory" element={<PharmacyInventory />} />
+                <Route path="pharmacy/orders" element={<PharmacyOrders />} />
                 <Route path="housekeeping" element={<Housekeeping />} />
                 <Route path="housekeeping/dashboard" element={<HousekeepingDashboard />} />
                 <Route path="housekeeping/schedule" element={<HousekeepingSchedule />} />
@@ -103,6 +111,12 @@ function App() {
                 <Route path="reports/vitals-history" element={<VitalsHistory />} />
                 <Route path="reports/sleep-charts" element={<SleepCharts />} />
                 <Route path="reports/staff-charts" element={<StaffCharts />} />
+
+                {/* Super Admin */}
+                <Route path="super-admin/dashboard" element={<SuperAdminDashboard />} />
+                <Route path="super-admin/facility-registrations" element={<FacilityRegistrations />} />
+                <Route path="super-admin/facilities" element={<Facilities />} />
+                <Route path="super-admin/facilities/create" element={<Facilities />} />
 
                 {/* Administration */}
                 <Route path="administration/residents" element={<Residents />} />

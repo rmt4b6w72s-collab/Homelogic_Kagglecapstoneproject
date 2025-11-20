@@ -36,6 +36,27 @@ export function useToast() {
         return addToast({ type: 'info', title, message, ...options });
     }, [addToast]);
 
+    const showToast = useCallback((message, type = 'success', options = {}) => {
+        // Support both formats: showToast(message, type) and showToast(message, type, options)
+        if (typeof type === 'string') {
+            switch (type) {
+                case 'success':
+                    return success(message, '', options);
+                case 'error':
+                    return error(message, '', options);
+                case 'warning':
+                    return warning(message, '', options);
+                case 'info':
+                    return info(message, '', options);
+                default:
+                    return success(message, '', options);
+            }
+        } else {
+            // If type is an object (options), treat message as title and type as options
+            return success(message, '', type || {});
+        }
+    }, [success, error, warning, info]);
+
     return {
         toasts,
         addToast,
@@ -44,8 +65,11 @@ export function useToast() {
         error,
         warning,
         info,
+        showToast,
     };
 }
+
+
 
 
 

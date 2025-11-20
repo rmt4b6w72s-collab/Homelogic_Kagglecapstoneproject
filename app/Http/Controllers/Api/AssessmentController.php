@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Carbon\Carbon;
 
-class AssessmentController extends Controller
+class AssessmentController extends BaseApiController
 {
     public function index(Request $request): JsonResponse
     {

@@ -9,7 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Carbon\Carbon;
 
-class MedicationAdministrationController extends Controller
+class MedicationAdministrationController extends BaseApiController
 {
     public function index(Request $request): JsonResponse
     {

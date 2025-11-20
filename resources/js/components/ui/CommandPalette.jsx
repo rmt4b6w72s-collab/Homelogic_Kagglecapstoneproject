@@ -130,7 +130,7 @@ export default function CommandPalette({ isOpen, onClose }) {
                                             onClick={() => handleSelect(command)}
                                             className={`w-full flex items-center space-x-3 px-4 py-3 text-left transition-colors ${
                                                 isSelected
-                                                    ? 'bg-[#25603E] text-white'
+                                                    ? 'bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)]'
                                                     : 'hover:bg-gray-50 text-gray-900'
                                             }`}
                                             onMouseEnter={() => setSelectedIndex(index)}
@@ -176,6 +176,8 @@ export default function CommandPalette({ isOpen, onClose }) {
         </div>
     );
 }
+
+
 
 
 

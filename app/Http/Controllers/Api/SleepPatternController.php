@@ -11,7 +11,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Schema;
 use Carbon\Carbon;
 
-class SleepPatternController extends Controller
+class SleepPatternController extends BaseApiController
 {
     public function getPattern(Request $request): JsonResponse
     {

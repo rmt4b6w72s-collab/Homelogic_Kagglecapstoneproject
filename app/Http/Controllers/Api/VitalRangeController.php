@@ -7,7 +7,7 @@ use App\Models\VitalRange;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-class VitalRangeController extends Controller
+class VitalRangeController extends BaseApiController
 {
     public function index(Request $request): JsonResponse
     {

@@ -15,5 +15,55 @@ return Application::configure(basePath: dirname(__DIR__))
         //
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        // API-specific error handling
+        $exceptions->render(function (\Illuminate\Validation\ValidationException $e, $request) {
+            if ($request->is('api/*')) {
+                return response()->json([
+                    'message' => 'Validation failed',
+                    'errors' => $e->errors(),
+                ], 422);
+            }
+        });
+
+        $exceptions->render(function (\Illuminate\Database\Eloquent\ModelNotFoundException $e, $request) {
+            if ($request->is('api/*')) {
+                return response()->json([
+                    'message' => 'Resource not found',
+                ], 404);
+            }
+        });
+
+        $exceptions->render(function (\Illuminate\Auth\Access\AuthorizationException $e, $request) {
+            if ($request->is('api/*')) {
+                return response()->json([
+                    'message' => 'Unauthorized',
+                ], 403);
+            }
+        });
+
+        // Log unexpected errors for API requests
+        $exceptions->report(function (\Throwable $e) {
+            if (request()->is('api/*')) {
+                \Illuminate\Support\Facades\Log::error('API Error', [
+                    'exception' => get_class($e),
+                    'message' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
+                    'url' => request()->fullUrl(),
+                    'method' => request()->method(),
+                ]);
+            }
+        });
+
+        // Return user-friendly error messages for API
+        $exceptions->render(function (\Throwable $e, $request) {
+            if ($request->is('api/*') && !($e instanceof \Illuminate\Validation\ValidationException) 
+                && !($e instanceof \Illuminate\Database\Eloquent\ModelNotFoundException)
+                && !($e instanceof \Illuminate\Auth\Access\AuthorizationException)) {
+                return response()->json([
+                    'message' => config('app.debug') 
+                        ? $e->getMessage() 
+                        : 'An error occurred',
+                ], 500);
+            }
+        });
     })->create();

@@ -14,7 +14,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
-class CleaningChecklistController extends Controller
+class CleaningChecklistController extends BaseApiController
 {
     public function index(Request $request)
     {

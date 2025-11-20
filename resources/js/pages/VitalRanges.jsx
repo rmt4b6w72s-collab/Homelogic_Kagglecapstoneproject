@@ -26,7 +26,7 @@ export default function VitalRanges() {
             <h2 className="text-xl font-semibold text-gray-900 mb-2">Vital Ranges Management</h2>
             <p className="text-gray-600">View and manage vital sign reference ranges.</p>
           </div>
-          <button onClick={() => { setEditing(null); setShowForm(true); }} className="w-full sm:w-auto px-4 py-2 bg-[#25603E] text-white rounded-lg hover:bg-[#1B402D] transition-colors flex items-center justify-center space-x-2 text-sm md:text-base">
+          <button onClick={() => { setEditing(null); setShowForm(true); }} className="w-full sm:w-auto px-4 py-2 bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] rounded-lg hover:bg-[var(--theme-primary-hover)] transition-colors flex items-center justify-center space-x-2 text-sm md:text-base">
             <Plus className="w-4 h-4" />
             <span>Add Range</span>
           </button>
@@ -35,7 +35,7 @@ export default function VitalRanges() {
 
       {isLoading ? (
         <div className="text-center py-12">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#25603E]"></div>
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--theme-primary)]"></div>
           <p className="mt-4 text-gray-600">Loading ranges...</p>
         </div>
       ) : (
@@ -58,8 +58,8 @@ export default function VitalRanges() {
                   <td className="px-6 py-4 whitespace-nowrap">{r.max_normal ?? '-'}</td>
                   <td className="px-6 py-4 whitespace-nowrap">{r.unit ?? '-'}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
-                    <button onClick={() => { setEditing(r); setShowForm(true); }} className="p-2 text-[#25603E] hover:bg-green-50 rounded-lg mr-2"><Edit className="w-4 h-4" /></button>
-                    <button onClick={() => window.confirm('Delete range?') && deleteMutation.mutate(r.id)} className="p-2 text-[#8B4513] hover:bg-amber-50 rounded-lg"><Trash2 className="w-4 h-4" /></button>
+                    <button onClick={() => { setEditing(r); setShowForm(true); }} className="p-2 text-[var(--theme-primary)] hover:bg-green-50 rounded-lg mr-2"><Edit className="w-4 h-4" /></button>
+                    <button onClick={() => window.confirm('Delete range?') && deleteMutation.mutate(r.id)} className="p-2 text-[var(--theme-secondary)] hover:bg-amber-50 rounded-lg"><Trash2 className="w-4 h-4" /></button>
                   </td>
                 </tr>
               ))}
@@ -128,7 +128,7 @@ function RangeForm({ record, onClose, onSuccess }) {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Parameter *</label>
-              <select value={form.parameter} onChange={(e) => setForm({ ...form, parameter: e.target.value })} required className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent">
+              <select value={form.parameter} onChange={(e) => setForm({ ...form, parameter: e.target.value })} required className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent">
                 <option value="">Select parameter</option>
                 <option value="systolic">Systolic</option>
                 <option value="diastolic">Diastolic</option>
@@ -141,24 +141,24 @@ function RangeForm({ record, onClose, onSuccess }) {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Min Normal</label>
-                <input type="number" step="0.01" value={form.min_normal} onChange={(e) => setForm({ ...form, min_normal: e.target.value })} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent" />
+                <input type="number" step="0.01" value={form.min_normal} onChange={(e) => setForm({ ...form, min_normal: e.target.value })} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Max Normal</label>
-                <input type="number" step="0.01" value={form.max_normal} onChange={(e) => setForm({ ...form, max_normal: e.target.value })} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent" />
+                <input type="number" step="0.01" value={form.max_normal} onChange={(e) => setForm({ ...form, max_normal: e.target.value })} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent" />
               </div>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Unit</label>
-              <input value={form.unit} onChange={(e) => setForm({ ...form, unit: e.target.value })} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent" />
+              <input value={form.unit} onChange={(e) => setForm({ ...form, unit: e.target.value })} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-              <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={2} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent" />
+              <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={2} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent" />
             </div>
             <div className="flex items-center justify-end space-x-3 pt-4 border-t">
               <button type="button" onClick={onClose} className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</button>
-              <button type="submit" disabled={submitting} className="w-full sm:w-auto px-4 py-2 bg-[#25603E] text-white rounded-lg hover:bg-[#1B402D] disabled:opacity-50">{submitting ? 'Saving...' : (record ? 'Update' : 'Create')}</button>
+              <button type="submit" disabled={submitting} className="w-full sm:w-auto px-4 py-2 bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] rounded-lg hover:bg-[var(--theme-primary-hover)] disabled:opacity-50">{submitting ? 'Saving...' : (record ? 'Update' : 'Create')}</button>
             </div>
           </form>
         </div>

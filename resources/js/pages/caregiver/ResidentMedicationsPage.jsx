@@ -319,7 +319,7 @@ export default function ResidentMedicationsPage() {
     if (residentLoading || isLoading) {
         return (
             <div className="text-center py-12">
-                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#25603E]"></div>
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--theme-primary)]"></div>
                 <p className="mt-4 text-gray-600">Loading medications...</p>
             </div>
         );
@@ -461,7 +461,7 @@ function MedicationTimeBadges({ medication }) {
                         case 'refused':
                             return 'bg-yellow-500 text-white';
                         default:
-                            return 'bg-green-100 text-[#25603E]';
+                            return 'bg-green-100 text-[var(--theme-primary)]';
                     }
                 };
 
@@ -819,7 +819,7 @@ function QuickAdminister({ medication, onSuccess }) {
                         openDosageModal(false);
                     }} 
                     disabled={isButtonDisabled} 
-                    className="px-2 py-1 bg-[#25603E] text-white rounded text-xs hover:bg-[#1B402D] disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-2 py-1 bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] rounded text-xs hover:bg-[var(--theme-primary-hover)] disabled:opacity-50 disabled:cursor-not-allowed"
                     title={
                         isDailyLimitReached 
                             ? 'Daily administration limit reached for this medication'
@@ -896,7 +896,7 @@ function QuickAdminister({ medication, onSuccess }) {
                                         }
                                     }}
                                     placeholder="e.g., 1 tablet, 5 ml"
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                     disabled={submitting}
                                 />
                                 {(dosageValidationError || error) && (
@@ -914,7 +914,7 @@ function QuickAdminister({ medication, onSuccess }) {
                                     onChange={(e) => setDosageNotes(e.target.value)}
                                     rows={3}
                                     placeholder="Enter any additional notes..."
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                     disabled={submitting}
                                 />
                             </div>
@@ -1067,7 +1067,7 @@ function QuickAdminister({ medication, onSuccess }) {
                                         setSubmitting(false);
                                     }
                                 }}
-                                className="px-4 py-2 text-sm bg-[#25603E] text-white rounded-lg hover:bg-[#1B402D] disabled:cursor-not-allowed disabled:opacity-50"
+                                className="px-4 py-2 text-sm bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] rounded-lg hover:bg-[var(--theme-primary-hover)] disabled:cursor-not-allowed disabled:opacity-50"
                                 disabled={submitting}
                             >
                                 {submitting ? 'Saving...' : 'Confirm'}

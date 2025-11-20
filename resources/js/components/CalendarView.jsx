@@ -66,7 +66,7 @@ export default function CalendarView({ events, onSelectEvent, onSelectSlot, defa
                 selectable
                 style={{ height: '100%', width: '100%' }}
                 eventPropGetter={(event) => {
-                    const backgroundColor = event.color || '#25603E';
+                    const backgroundColor = event.color || 'var(--theme-primary)';
                     const borderColor = event.borderColor || backgroundColor;
                     return {
                         style: {

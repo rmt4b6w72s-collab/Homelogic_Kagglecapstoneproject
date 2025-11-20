@@ -8,11 +8,17 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use App\Traits\Loggable;
 use App\Traits\FormatsPhoneNumbers;
+use App\Models\Scopes\FacilityScope;
 
 class Resident extends Model
 {
     use Loggable;
     use FormatsPhoneNumbers;
+
+    protected static function booted()
+    {
+        static::addGlobalScope(new FacilityScope);
+    }
     protected $fillable = [
         'name',
         'first_name',

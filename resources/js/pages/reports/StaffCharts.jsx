@@ -42,7 +42,7 @@ export default function StaffCharts() {
             <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
                 <div className="max-w-7xl mx-auto px-4 py-8">
                     <div className="text-center py-12">
-                        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#25603E]"></div>
+                        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--theme-primary)]"></div>
                         <p className="mt-4 text-gray-600">Loading staff charts...</p>
                     </div>
                 </div>
@@ -73,7 +73,7 @@ export default function StaffCharts() {
                             </button>
                             <button
                                 onClick={() => refetch()}
-                                className="inline-flex items-center gap-2 px-4 py-2 bg-[#25603E] text-white rounded-lg text-sm font-medium hover:bg-[#1B402D] transition"
+                                className="inline-flex items-center gap-2 px-4 py-2 bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] rounded-lg text-sm font-medium hover:bg-[var(--theme-primary-hover)] transition"
                             >
                                 <RefreshCcw className="h-4 w-4" />
                                 Refresh

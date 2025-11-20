@@ -14,10 +14,12 @@ import {
     Filler
 } from 'chart.js';
 import api from '../services/api';
+import { useTheme } from '../contexts/ThemeContext';
+import { hexToRgb, addOpacity } from '../utils/colorUtils';
 import { 
     Users, Calendar, Activity, UserCheck, ClipboardList, AlertCircle, 
     TrendingUp, Clock, CheckCircle, FileText, Heart, Pill, Moon,
-    ArrowRight, Sparkles, MoreVertical
+    ArrowRight, Sparkles, MoreVertical, Flame
 } from 'lucide-react';
 import { DashboardSkeleton } from '../components/ui/SkeletonLoader';
 import MiniCalendar from '../components/ui/MiniCalendar';
@@ -50,6 +52,13 @@ export default function Dashboard() {
             }
         },
     });
+
+    // Redirect super admins to super admin dashboard
+    React.useEffect(() => {
+        if (currentUser && (currentUser.role === 'super_admin' || currentUser.role === 'Super Admin')) {
+            navigate('/super-admin/dashboard', { replace: true });
+        }
+    }, [currentUser, navigate]);
     
     const { data: stats, isLoading, error } = useQuery({
         queryKey: ['dashboard-stats'],
@@ -89,6 +98,27 @@ export default function Dashboard() {
                 return response.data;
             } catch (err) {
                 console.error('Daily activities API error:', err);
+                return { data: [] };
+            }
+        },
+        retry: false,
+    });
+
+    // Fetch upcoming fire drills
+    const { data: upcomingFireDrills } = useQuery({
+        queryKey: ['upcoming-fire-drills'],
+        queryFn: async () => {
+            try {
+                const response = await api.get('/fire-drills', {
+                    params: {
+                        upcoming: 'true',
+                        status: 'scheduled',
+                        per_page: 5,
+                    }
+                });
+                return response.data;
+            } catch (err) {
+                console.error('Fire drills API error:', err);
                 return { data: [] };
             }
         },
@@ -147,9 +177,9 @@ export default function Dashboard() {
             title: 'My Residents',
             value: Number(stats?.assigned_residents ?? 0),
             icon: Users,
-            gradient: 'from-[#25603E] to-[#4a7a2a]',
-            iconBg: 'bg-green-50',
-            iconColor: 'text-[#25603E]',
+            gradient: 'from-[var(--theme-primary)] to-[var(--theme-primary-light)]',
+            iconBg: 'bg-[var(--theme-primary-bg-light)]',
+            iconColor: 'text-[var(--theme-primary)]',
             description: 'Assigned to me',
             link: '/administration/residents',
             trend: 'positive'
@@ -158,9 +188,9 @@ export default function Dashboard() {
             title: "Today's Appointments",
             value: Number(stats?.todays_appointments ?? 0),
             icon: Calendar,
-            gradient: 'from-[#25603E] to-[#4a7a2a]',
-            iconBg: 'bg-green-50',
-            iconColor: 'text-[#25603E]',
+            gradient: 'from-[var(--theme-primary)] to-[var(--theme-primary-light)]',
+            iconBg: 'bg-[var(--theme-primary-bg-light)]',
+            iconColor: 'text-[var(--theme-primary)]',
             description: 'Scheduled meetings',
             link: '/appointments',
             trend: 'positive'
@@ -169,9 +199,9 @@ export default function Dashboard() {
             title: 'Pending Assessments',
             value: Number(stats?.pending_assessments ?? 0),
             icon: ClipboardList,
-            gradient: 'from-[#8B4513] to-[#a0522d]',
-            iconBg: 'bg-amber-50',
-            iconColor: 'text-[#8B4513]',
+            gradient: 'from-[var(--theme-secondary)] to-[var(--theme-secondary-light)]',
+            iconBg: 'bg-[var(--theme-primary-bg-light)]',
+            iconColor: 'text-[var(--theme-secondary)]',
             description: 'Awaiting completion',
             link: '/assessments',
             trend: (stats?.pending_assessments ?? 0) > 0 ? 'warning' : 'positive'
@@ -180,9 +210,9 @@ export default function Dashboard() {
             title: 'Vitals Recorded',
             value: Number(stats?.today_vitals ?? 0),
             icon: Activity,
-            gradient: 'from-[#25603E] to-[#4a7a2a]',
-            iconBg: 'bg-green-50',
-            iconColor: 'text-[#25603E]',
+            gradient: 'from-[var(--theme-primary)] to-[var(--theme-primary-light)]',
+            iconBg: 'bg-[var(--theme-primary-bg-light)]',
+            iconColor: 'text-[var(--theme-primary)]',
             description: 'Today',
             link: '/vitals',
             trend: 'positive'
@@ -191,9 +221,9 @@ export default function Dashboard() {
             title: 'Leave Requests',
             value: Number(stats?.pending_leave_requests ?? 0),
             icon: AlertCircle,
-            gradient: 'from-[#8B4513] to-[#a0522d]',
-            iconBg: 'bg-amber-50',
-            iconColor: 'text-[#8B4513]',
+            gradient: 'from-[var(--theme-secondary)] to-[var(--theme-secondary-light)]',
+            iconBg: 'bg-[var(--theme-primary-bg-light)]',
+            iconColor: 'text-[var(--theme-secondary)]',
             description: 'Pending approval',
             link: '/administration/leave-requests',
             trend: (stats?.pending_leave_requests ?? 0) > 0 ? 'warning' : 'positive'
@@ -202,9 +232,9 @@ export default function Dashboard() {
             title: 'Weekly Appointments',
             value: Number(stats?.week_appointments ?? 0),
             icon: Calendar,
-            gradient: 'from-[#25603E] to-[#4a7a2a]',
-            iconBg: 'bg-green-50',
-            iconColor: 'text-[#25603E]',
+            gradient: 'from-[var(--theme-primary)] to-[var(--theme-primary-light)]',
+            iconBg: 'bg-[var(--theme-primary-bg-light)]',
+            iconColor: 'text-[var(--theme-primary)]',
             description: 'Next 7 days',
             link: '/appointments',
             trend: 'positive'
@@ -214,36 +244,36 @@ export default function Dashboard() {
             title: 'Total Residents',
             value: stats?.total_residents || 0,
             icon: Users,
-            gradient: 'from-[#25603E] to-[#4a7a2a]',
-            iconBg: 'bg-green-50',
-            iconColor: 'text-[#25603E]',
+            gradient: 'from-[var(--theme-primary)] to-[var(--theme-primary-light)]',
+            iconBg: 'bg-[var(--theme-primary-bg-light)]',
+            iconColor: 'text-[var(--theme-primary)]',
             link: '/administration/residents',
         },
         {
             title: "Today's Appointments",
             value: stats?.today_appointments || 0,
             icon: Calendar,
-            gradient: 'from-[#25603E] to-[#4a7a2a]',
-            iconBg: 'bg-green-50',
-            iconColor: 'text-[#25603E]',
+            gradient: 'from-[var(--theme-primary)] to-[var(--theme-primary-light)]',
+            iconBg: 'bg-[var(--theme-primary-bg-light)]',
+            iconColor: 'text-[var(--theme-primary)]',
             link: '/appointments',
         },
         {
             title: 'Today Vitals',
             value: stats?.today_vitals || 0,
             icon: Activity,
-            gradient: 'from-[#8B4513] to-[#a0522d]',
-            iconBg: 'bg-amber-50',
-            iconColor: 'text-[#8B4513]',
+            gradient: 'from-[var(--theme-secondary)] to-[var(--theme-secondary-light)]',
+            iconBg: 'bg-[var(--theme-primary-bg-light)]',
+            iconColor: 'text-[var(--theme-secondary)]',
             link: '/vitals',
         },
         {
             title: 'Total Staff',
             value: stats?.total_staff || 0,
             icon: UserCheck,
-            gradient: 'from-[#8B4513] to-[#a0522d]',
-            iconBg: 'bg-amber-50',
-            iconColor: 'text-[#8B4513]',
+            gradient: 'from-[var(--theme-secondary)] to-[var(--theme-secondary-light)]',
+            iconBg: 'bg-[var(--theme-primary-bg-light)]',
+            iconColor: 'text-[var(--theme-secondary)]',
             link: '/administration/users',
         },
     ];
@@ -275,13 +305,13 @@ export default function Dashboard() {
                                 <div className="flex flex-col md:flex-row md:items-center md:justify-between">
                                     <div className="flex items-center space-x-4 mb-4 md:mb-0">
                                         <div className="relative">
-                                            <div className="absolute inset-0 bg-gradient-to-br from-[#25603E] to-[#4a7a2a] rounded-xl blur-sm opacity-50"></div>
-                                            <div className="relative w-12 h-12 md:w-16 md:h-16 bg-gradient-to-br from-[#25603E] to-[#4a7a2a] rounded-xl flex items-center justify-center">
-                                                <Sparkles className="w-6 h-6 md:w-8 md:h-8 text-white" />
+                                            <div className="absolute inset-0 rounded-xl blur-sm opacity-50" style={{ background: `linear-gradient(to bottom right, var(--theme-primary), var(--theme-primary-light))` }}></div>
+                                            <div className="relative w-12 h-12 md:w-16 md:h-16 rounded-xl flex items-center justify-center" style={{ background: `linear-gradient(to bottom right, var(--theme-primary), var(--theme-primary-light))` }}>
+                                                <Sparkles className="w-6 h-6 md:w-8 md:h-8 text-[var(--theme-text-on-primary)]" />
                                             </div>
                                         </div>
                                         <div>
-                                            <h1 className="text-xl md:text-2xl font-bold text-[#25603E]">
+                                            <h1 className="text-xl md:text-2xl font-bold text-[var(--theme-primary)]">
                                                 {greeting}, {currentUser?.first_name || currentUser?.name || 'User'} 👋
                                             </h1>
                                             <p className="text-xs md:text-sm text-gray-600 mt-1">
@@ -291,7 +321,7 @@ export default function Dashboard() {
                                     </div>
                                     <div className="text-left md:text-right">
                                         <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Last Login</p>
-                                        <p className="text-sm font-semibold text-[#8B4513]">
+                                        <p className="text-sm font-semibold text-[var(--theme-secondary)]">
                                             {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                                         </p>
                                         <p className="text-xs text-gray-500">
@@ -319,11 +349,11 @@ export default function Dashboard() {
                                         <div className="p-6">
                                             <div className="flex items-start justify-between mb-4">
                                                 <div className="flex-1">
-                                                    <p className="text-[#8B4513] text-sm font-semibold uppercase tracking-wide mb-1">
+                                                    <p className="text-[var(--theme-secondary)] text-sm font-semibold uppercase tracking-wide mb-1">
                                                         {card.title}
                                                     </p>
                                                     <div className="flex items-baseline space-x-2">
-                                                        <p className="text-4xl font-bold text-[#25603E]">
+                                                        <p className="text-4xl font-bold text-[var(--theme-primary)]">
                                                             {card.value}
                                                         </p>
                                                         {card.trend === 'warning' && (
@@ -344,7 +374,7 @@ export default function Dashboard() {
                                             
                                             {/* Hover effect */}
                                             {card.link && (
-                                                <div className="flex items-center text-[#25603E] text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                                <div className="flex items-center text-[var(--theme-primary)] text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                                                     <span>View details</span>
                                                     <ArrowRight className="w-4 h-4 ml-2 transform group-hover:translate-x-1 transition-transform" />
                                                 </div>
@@ -361,10 +391,10 @@ export default function Dashboard() {
                             <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
                                 <div className="px-6 py-4 border-b border-gray-200">
                                     <div className="flex items-center justify-between">
-                                        <h2 className="text-lg font-bold text-[#25603E]">Upcoming Appointments</h2>
+                                        <h2 className="text-lg font-bold text-[var(--theme-primary)]">Upcoming Appointments</h2>
                                         <button
                                             onClick={() => navigate('/appointments')}
-                                            className="text-sm text-[#25603E] hover:text-[#1B402D] font-medium"
+                                            className="text-sm text-[var(--theme-primary)] hover:text-[var(--theme-primary-hover)] font-medium transition-colors"
                                         >
                                             View all →
                                         </button>
@@ -376,9 +406,9 @@ export default function Dashboard() {
                                             {stats.upcoming_appointments_list.map((apt, idx) => (
                                                 <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
                                                     <div className="flex items-center space-x-3 flex-1">
-                                                        <Calendar className="w-5 h-5 text-[#25603E] flex-shrink-0" />
+                                                        <Calendar className="w-5 h-5 text-[var(--theme-primary)] flex-shrink-0" />
                                                         <div className="flex-1 min-w-0">
-                                                            <p className="text-sm font-semibold text-[#25603E] truncate">
+                                                            <p className="text-sm font-semibold text-[var(--theme-primary)] truncate">
                                                                 {apt.resident_name}
                                                             </p>
                                                             <p className="text-xs text-gray-600 truncate">
@@ -411,10 +441,10 @@ export default function Dashboard() {
                             <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
                                 <div className="px-6 py-4 border-b border-gray-200">
                                     <div className="flex items-center justify-between">
-                                        <h2 className="text-lg font-bold text-[#25603E]">My Residents</h2>
+                                        <h2 className="text-lg font-bold text-[var(--theme-primary)]">My Residents</h2>
                                         <button
                                             onClick={() => navigate('/administration/residents')}
-                                            className="text-sm text-[#25603E] hover:text-[#1B402D] font-medium"
+                                            className="text-sm text-[var(--theme-primary)] hover:text-[var(--theme-primary-hover)] font-medium transition-colors"
                                         >
                                             View all →
                                         </button>
@@ -425,13 +455,13 @@ export default function Dashboard() {
                                         <div className="space-y-3">
                                             {stats.resident_list.map((resident, idx) => (
                                                 <div key={idx} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors cursor-pointer">
-                                                    <div className="w-10 h-10 bg-[#25603E] rounded-full flex items-center justify-center flex-shrink-0">
-                                                        <span className="text-white text-sm font-bold">
+                                                    <div className="w-10 h-10 bg-[var(--theme-primary)] rounded-full flex items-center justify-center flex-shrink-0">
+                                                        <span className="text-[var(--theme-text-on-primary)] text-sm font-bold">
                                                             {resident.name.split(' ').map(n => n[0]).join('')}
                                                         </span>
                                                     </div>
                                                     <div className="flex-1 min-w-0">
-                                                        <p className="text-sm font-semibold text-[#25603E] truncate">
+                                                        <p className="text-sm font-semibold text-[var(--theme-primary)] truncate">
                                                             {resident.name}
                                                         </p>
                                                         <p className="text-xs text-gray-500">
@@ -468,7 +498,7 @@ export default function Dashboard() {
                                 <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
                                     <div className="px-6 py-4 border-b border-gray-200">
                                         <div className="flex items-center justify-between">
-                                            <h2 className="text-lg font-bold text-[#25603E]">Medication Reminders</h2>
+                                            <h2 className="text-lg font-bold text-[var(--theme-primary)]">Medication Reminders</h2>
                                             <span className="text-xs text-gray-500">Next 24 Hours</span>
                                         </div>
                                     </div>
@@ -478,13 +508,13 @@ export default function Dashboard() {
                                                 {stats.medication_reminders.map((reminder, idx) => (
                                                     <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
                                                         <div className="flex items-center space-x-3 flex-1">
-                                                            <div className="w-10 h-10 bg-[#25603E] rounded-full flex items-center justify-center flex-shrink-0">
-                                                                <span className="text-white text-sm font-bold">
+                                                            <div className="w-10 h-10 bg-[var(--theme-primary)] rounded-full flex items-center justify-center flex-shrink-0">
+                                                                <span className="text-[var(--theme-text-on-primary)] text-sm font-bold">
                                                                     {reminder.resident_name.split(' ').map(n => n[0]).join('')}
                                                                 </span>
                                                             </div>
                                                             <div className="flex-1 min-w-0">
-                                                                <p className="text-sm font-semibold text-[#25603E] truncate">
+                                                                <p className="text-sm font-semibold text-[var(--theme-primary)] truncate">
                                                                     {reminder.resident_name}
                                                                 </p>
                                                                 <p className="text-xs text-gray-600 truncate">
@@ -497,7 +527,7 @@ export default function Dashboard() {
                                                         </div>
                                                         <button
                                                             onClick={() => navigate('/medications')}
-                                                            className="ml-2 px-4 py-1.5 bg-[#8B4513] hover:bg-[#6b3410] text-white text-xs font-medium rounded-lg transition-colors whitespace-nowrap"
+                                                            className="ml-2 px-4 py-1.5 bg-[var(--theme-secondary)] hover:bg-[var(--theme-secondary-hover)] text-[var(--theme-text-on-secondary)] text-xs font-medium rounded-lg transition-colors whitespace-nowrap"
                                                         >
                                                             Log
                                                         </button>
@@ -514,6 +544,88 @@ export default function Dashboard() {
                                 </div>
                             </div>
                         </div>
+
+                        {/* Upcoming Fire Drills Widget */}
+                        {upcomingFireDrills?.data && upcomingFireDrills.data.length > 0 && (
+                            <div className="mt-6">
+                                <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+                                    <div className="px-6 py-4 border-b border-gray-200">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-2">
+                                                <Flame className="w-5 h-5 text-orange-600" />
+                                                <h2 className="text-lg font-bold text-[var(--theme-primary)]">Upcoming Fire Drills</h2>
+                                            </div>
+                                            <button
+                                                onClick={() => navigate('/fire-drills')}
+                                                className="text-xs text-[var(--theme-primary)] hover:text-[var(--theme-primary-hover)] hover:underline transition-colors"
+                                            >
+                                                View All
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div className="p-4">
+                                        <div className="space-y-3">
+                                            {upcomingFireDrills.data.slice(0, 5).map((drill) => {
+                                                const drillDate = new Date(drill.scheduled_date);
+                                                const today = new Date();
+                                                today.setHours(0, 0, 0, 0);
+                                                const tomorrow = new Date(today);
+                                                tomorrow.setDate(tomorrow.getDate() + 1);
+                                                const isToday = drillDate.toDateString() === today.toDateString();
+                                                const isTomorrow = drillDate.toDateString() === tomorrow.toDateString();
+                                                
+                                                let urgencyColor = 'text-gray-600';
+                                                let urgencyBg = 'bg-gray-50';
+                                                let urgencyText = '';
+                                                
+                                                if (isToday) {
+                                                    urgencyColor = 'text-red-600';
+                                                    urgencyBg = 'bg-red-50';
+                                                    urgencyText = 'Today';
+                                                } else if (isTomorrow) {
+                                                    urgencyColor = 'text-orange-600';
+                                                    urgencyBg = 'bg-orange-50';
+                                                    urgencyText = 'Tomorrow';
+                                                } else {
+                                                    const daysUntil = Math.ceil((drillDate - today) / (1000 * 60 * 60 * 24));
+                                                    urgencyText = `${daysUntil} days`;
+                                                }
+
+                                                const timeStr = drill.scheduled_time 
+                                                    ? new Date(`2000-01-01T${drill.scheduled_time}`).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+                                                    : 'TBD';
+
+                                                return (
+                                                    <div 
+                                                        key={drill.id} 
+                                                        className={`flex items-center justify-between p-3 ${urgencyBg} rounded-xl hover:opacity-90 transition-colors cursor-pointer`}
+                                                        onClick={() => navigate('/fire-drills')}
+                                                    >
+                                                        <div className="flex items-center space-x-3 flex-1">
+                                                            <div className={`w-10 h-10 ${urgencyBg} border-2 ${urgencyColor.replace('text-', 'border-')} rounded-full flex items-center justify-center flex-shrink-0`}>
+                                                                <Flame className={`w-5 h-5 ${urgencyColor}`} />
+                                                            </div>
+                                                            <div className="flex-1 min-w-0">
+                                                                <p className="text-sm font-semibold text-gray-900 truncate">
+                                                                    {drill.branch?.name || 'Unknown Branch'}
+                                                                </p>
+                                                                <p className="text-xs text-gray-600">
+                                                                    {drillDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} at {timeStr}
+                                                                </p>
+                                                                <span className={`text-xs font-medium ${urgencyColor}`}>
+                                                                    {urgencyText}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                        <ArrowRight className="w-4 h-4 text-gray-400" />
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </>
                 )}
             </div>
@@ -550,17 +662,17 @@ function ResidentVitalsTrendSection({ residents, defaultTrend }) {
     return (
         <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-                <h2 className="text-xl font-bold text-[#25603E]">Resident Vitals Trend</h2>
+                <h2 className="text-xl font-bold text-[var(--theme-primary)]">Resident Vitals Trend</h2>
                 <div className="flex items-center">
                     {isLoading && (
                         <div className="inline-flex items-center mr-2">
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#25603E]"></div>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[var(--theme-primary)]"></div>
                         </div>
                     )}
                     <select
                         value={selectedResident || ''}
                         onChange={(e) => handleResidentChange(e.target.value)}
-                        className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm font-medium text-[#25603E] focus:ring-2 focus:ring-[#25603E] focus:border-transparent bg-white"
+                        className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm font-medium text-[var(--theme-primary)] focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent bg-white"
                     >
                         {residents.map((resident) => (
                             <option key={resident.id} value={resident.id}>
@@ -579,6 +691,10 @@ function ResidentVitalsTrendSection({ residents, defaultTrend }) {
 
 // Resident Vitals Chart Component
 function ResidentVitalsChart({ data }) {
+    const { primary, secondary } = useTheme();
+    const primaryRgb = hexToRgb(primary || '#25603E');
+    const tooltipBg = primaryRgb ? `rgba(${primaryRgb.r}, ${primaryRgb.g}, ${primaryRgb.b}, 0.9)` : 'rgba(37, 96, 62, 0.9)';
+    
     const chartData = {
         labels: data?.map(item => item.day) || [],
         datasets: [
@@ -645,11 +761,11 @@ function ResidentVitalsChart({ data }) {
                         size: 12,
                         weight: '500',
                     },
-                    color: '#25603E',
+                    color: primary || '#25603E',
                 },
             },
             tooltip: {
-                backgroundColor: 'rgba(37, 96, 62, 0.9)',
+                backgroundColor: tooltipBg,
                 padding: 12,
                 titleFont: {
                     size: 13,
@@ -678,7 +794,7 @@ function ResidentVitalsChart({ data }) {
                         size: 11,
                         weight: '500',
                     },
-                    color: '#8B4513',
+                    color: secondary || '#8B4513',
                 },
             },
             y: {
@@ -694,7 +810,7 @@ function ResidentVitalsChart({ data }) {
                         size: 11,
                         weight: '500',
                     },
-                    color: '#8B4513',
+                    color: secondary || '#8B4513',
                 },
             },
         },

@@ -14,7 +14,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
-class ChartController extends Controller
+class ChartController extends BaseApiController
 {
     // Resident Charts
     public function residentStats(): JsonResponse

@@ -7,7 +7,7 @@ use App\Models\LeaveRequest;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-class LeaveRequestController extends Controller
+class LeaveRequestController extends BaseApiController
 {
     public function index(Request $request): JsonResponse
     {

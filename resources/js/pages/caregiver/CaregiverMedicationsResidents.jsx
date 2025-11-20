@@ -136,7 +136,7 @@ export default function CaregiverMedicationsResidents() {
                     <button
                         type="button"
                         onClick={() => navigate(`/medications/residents/${resident.id}`)}
-                        className="inline-flex items-center gap-2 rounded-lg bg-[#25603E] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#1B402D] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#25603E]"
+                        className="inline-flex items-center gap-2 rounded-lg bg-[var(--theme-primary)] px-4 py-2 text-sm font-semibold text-[var(--theme-text-on-primary)] shadow-sm transition hover:bg-[var(--theme-primary-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--theme-primary)]"
                     >
                         <Pill className="w-4 h-4" />
                         Medications
@@ -219,6 +219,8 @@ export default function CaregiverMedicationsResidents() {
         </div>
     );
 }
+
+
 
 
 

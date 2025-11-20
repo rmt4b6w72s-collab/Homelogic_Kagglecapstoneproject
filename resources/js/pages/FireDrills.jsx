@@ -1,9 +1,10 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../services/api';
-import { Flame, Plus, Search, Filter, Edit, Trash2, Calendar, Clock, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
+import { Flame, Plus, Search, Filter, Edit, Trash2, Calendar, Clock, CheckCircle, XCircle, AlertTriangle, List, Grid } from 'lucide-react';
 import SectionCard from '../components/SectionCard';
 import Card from '../components/Card';
+import CalendarView from '../components/CalendarView';
 
 export default function FireDrills() {
     const queryClient = useQueryClient();
@@ -12,6 +13,7 @@ export default function FireDrills() {
     const [statusFilter, setStatusFilter] = useState('');
     const [dateFrom, setDateFrom] = useState('');
     const [dateTo, setDateTo] = useState('');
+    const [viewMode, setViewMode] = useState('list'); // 'list' or 'calendar'
     const [showForm, setShowForm] = useState(false);
     const [editing, setEditing] = useState(null);
     const [currentUser, setCurrentUser] = useState(null);
@@ -75,6 +77,24 @@ export default function FireDrills() {
         },
     });
 
+    const markCompleteMutation = useMutation({
+        mutationFn: async (id) => {
+            await api.post(`/fire-drills/${id}/mark-complete`);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries(['fire-drills']);
+        },
+    });
+
+    const cancelMutation = useMutation({
+        mutationFn: async (id) => {
+            await api.post(`/fire-drills/${id}/cancel`);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries(['fire-drills']);
+        },
+    });
+
     const drills = data?.data || [];
     const branches = branchesData?.data || [];
 
@@ -92,6 +112,18 @@ export default function FireDrills() {
     const handleDelete = (id) => {
         if (window.confirm('Are you sure you want to delete this fire drill?')) {
             deleteMutation.mutate(id);
+        }
+    };
+
+    const handleMarkComplete = (id) => {
+        if (window.confirm('Mark this fire drill as complete?')) {
+            markCompleteMutation.mutate(id);
+        }
+    };
+
+    const handleCancel = (id) => {
+        if (window.confirm('Cancel this fire drill? This action cannot be undone.')) {
+            cancelMutation.mutate(id);
         }
     };
 
@@ -159,7 +191,7 @@ export default function FireDrills() {
                                 setEditing(null);
                                 setShowForm(true);
                             }}
-                            className="w-full sm:w-auto px-4 py-2 bg-[#25603E] text-white rounded-lg hover:bg-[#1B402D] transition-colors flex items-center justify-center space-x-2"
+                            className="w-full sm:w-auto px-4 py-2 bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] rounded-lg hover:bg-[var(--theme-primary-hover)] transition-colors flex items-center justify-center space-x-2"
                         >
                             <Plus className="w-4 h-4" />
                             <span>Schedule Fire Drill</span>
@@ -192,7 +224,7 @@ export default function FireDrills() {
                             placeholder="Search fire drills..."
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                         />
                     </div>
 
@@ -200,7 +232,7 @@ export default function FireDrills() {
                         <select
                             value={branchFilter}
                             onChange={(e) => setBranchFilter(e.target.value)}
-                            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                         >
                             <option value="">All Branches</option>
                             {branches.map(branch => (
@@ -212,7 +244,7 @@ export default function FireDrills() {
                     <select
                         value={statusFilter}
                         onChange={(e) => setStatusFilter(e.target.value)}
-                        className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                        className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                     >
                         <option value="">All Status</option>
                         <option value="scheduled">Scheduled</option>
@@ -225,7 +257,7 @@ export default function FireDrills() {
                         value={dateFrom}
                         onChange={(e) => setDateFrom(e.target.value)}
                         placeholder="From Date"
-                        className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                        className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                     />
                 </div>
 
@@ -236,8 +268,38 @@ export default function FireDrills() {
                             value={dateTo}
                             onChange={(e) => setDateTo(e.target.value)}
                             placeholder="To Date"
-                            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                         />
+                    </div>
+                )}
+
+                {/* View Toggle */}
+                {filteredDrills.length > 0 && (
+                    <div className="mb-4 flex justify-end">
+                        <div className="inline-flex rounded-lg border border-gray-200 bg-white p-1 shadow-sm">
+                            <button
+                                onClick={() => setViewMode('list')}
+                                className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+                                    viewMode === 'list'
+                                        ? 'bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)]'
+                                        : 'text-gray-700 hover:bg-gray-50'
+                                }`}
+                            >
+                                <List className="w-4 h-4" />
+                                List View
+                            </button>
+                            <button
+                                onClick={() => setViewMode('calendar')}
+                                className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+                                    viewMode === 'calendar'
+                                        ? 'bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)]'
+                                        : 'text-gray-700 hover:bg-gray-50'
+                                }`}
+                            >
+                                <Grid className="w-4 h-4" />
+                                Calendar View
+                            </button>
+                        </div>
                     </div>
                 )}
 
@@ -250,6 +312,62 @@ export default function FireDrills() {
                         <Flame className="w-16 h-16 text-gray-400 mx-auto mb-4" />
                         <p className="text-gray-500">No fire drills found.</p>
                     </div>
+                ) : viewMode === 'calendar' ? (
+                    <CalendarView
+                        events={filteredDrills.map(drill => {
+                            const date = drill.scheduled_date ? new Date(drill.scheduled_date) : new Date();
+                            let start = new Date(date);
+                            let end = new Date(date);
+                            
+                            if (drill.scheduled_time) {
+                                const timeParts = drill.scheduled_time.split(':');
+                                if (timeParts.length >= 2) {
+                                    const hours = parseInt(timeParts[0]) || 0;
+                                    const minutes = parseInt(timeParts[1]) || 0;
+                                    start.setHours(hours, minutes, 0);
+                                    end.setHours(hours + 1, minutes, 0);
+                                }
+                            } else {
+                                start.setHours(10, 0, 0);
+                                end.setHours(11, 0, 0);
+                            }
+
+                            const statusColors = {
+                                scheduled: '#f59e0b',
+                                completed: '#10b981',
+                                cancelled: '#ef4444',
+                            };
+
+                            return {
+                                id: drill.id,
+                                title: `${drill.branch?.name || 'Branch'} - ${drill.status.charAt(0).toUpperCase() + drill.status.slice(1)}`,
+                                start,
+                                end,
+                                color: statusColors[drill.status] || 'var(--theme-primary)',
+                                borderColor: statusColors[drill.status] || 'var(--theme-primary)',
+                                textColor: '#ffffff',
+                                resource: drill,
+                            };
+                        })}
+                        onSelectEvent={(event) => {
+                            if (event.resource && !isCaregiver) {
+                                handleEdit(event.resource);
+                            }
+                        }}
+                        onSelectSlot={(slotInfo) => {
+                            if (!isCaregiver) {
+                                const selectedDate = slotInfo.start.toISOString().split('T')[0];
+                                const selectedTime = slotInfo.start.toTimeString().slice(0, 5);
+                                setEditing({
+                                    scheduled_date: selectedDate,
+                                    scheduled_time: selectedTime,
+                                });
+                                setShowForm(true);
+                            }
+                        }}
+                        views={['month', 'week', 'day']}
+                        defaultDate={new Date()}
+                    />
                 ) : (
                     <div className="grid grid-cols-1 gap-4">
                         {filteredDrills.map((drill) => (
@@ -283,24 +401,47 @@ export default function FireDrills() {
                                             </div>
                                         )}
                                     </div>
-                                    {!isCaregiver && (
-                                        <div className="flex items-center gap-2 ml-4">
-                                            <button
-                                                onClick={() => handleEdit(drill)}
-                                                className="p-2 text-gray-600 hover:text-[#25603E] transition-colors"
-                                                title="Edit"
-                                            >
-                                                <Edit className="w-4 h-4" />
-                                            </button>
-                                            <button
-                                                onClick={() => handleDelete(drill.id)}
-                                                className="p-2 text-gray-600 hover:text-red-600 transition-colors"
-                                                title="Delete"
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                            </button>
-                                        </div>
-                                    )}
+                                    <div className="flex items-center gap-2 ml-4">
+                                        {/* Quick Actions for Scheduled Drills */}
+                                        {drill.status === 'scheduled' && !isCaregiver && (
+                                            <>
+                                                <button
+                                                    onClick={() => handleMarkComplete(drill.id)}
+                                                    className="px-3 py-1.5 bg-green-600 text-white text-xs font-medium rounded-lg hover:bg-green-700 transition-colors flex items-center gap-1"
+                                                    title="Mark Complete"
+                                                >
+                                                    <CheckCircle className="w-3 h-3" />
+                                                    Complete
+                                                </button>
+                                                <button
+                                                    onClick={() => handleCancel(drill.id)}
+                                                    className="px-3 py-1.5 bg-red-600 text-white text-xs font-medium rounded-lg hover:bg-red-700 transition-colors flex items-center gap-1"
+                                                    title="Cancel"
+                                                >
+                                                    <XCircle className="w-3 h-3" />
+                                                    Cancel
+                                                </button>
+                                            </>
+                                        )}
+                                        {!isCaregiver && (
+                                            <>
+                                                <button
+                                                    onClick={() => handleEdit(drill)}
+                                                    className="p-2 text-gray-600 hover:text-[var(--theme-primary)] transition-colors"
+                                                    title="Edit"
+                                                >
+                                                    <Edit className="w-4 h-4" />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDelete(drill.id)}
+                                                    className="p-2 text-gray-600 hover:text-red-600 transition-colors"
+                                                    title="Delete"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            </>
+                                        )}
+                                    </div>
                                 </div>
                             </Card>
                         ))}
@@ -399,7 +540,7 @@ function FireDrillForm({ record, branches, isCaregiver, caregiverBranchId, onClo
                                     onChange={(e) => setFormData({ ...formData, branch_id: e.target.value })}
                                     required
                                     disabled={isCaregiver}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                 >
                                     <option value="">Select Branch</option>
                                     {branches.map(branch => (
@@ -415,7 +556,7 @@ function FireDrillForm({ record, branches, isCaregiver, caregiverBranchId, onClo
                                     value={formData.status}
                                     onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                                     required
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                 >
                                     <option value="scheduled">Scheduled</option>
                                     <option value="completed">Completed</option>
@@ -432,7 +573,7 @@ function FireDrillForm({ record, branches, isCaregiver, caregiverBranchId, onClo
                                     onChange={(e) => setFormData({ ...formData, scheduled_date: e.target.value })}
                                     required
                                     min={new Date().toISOString().split('T')[0]}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                 />
                                 {errors.scheduled_date && <p className="text-xs text-red-600 mt-1">{errors.scheduled_date[0]}</p>}
                             </div>
@@ -444,7 +585,7 @@ function FireDrillForm({ record, branches, isCaregiver, caregiverBranchId, onClo
                                     value={formData.scheduled_time}
                                     onChange={(e) => setFormData({ ...formData, scheduled_time: e.target.value })}
                                     required
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                 />
                                 {errors.scheduled_time && <p className="text-xs text-red-600 mt-1">{errors.scheduled_time[0]}</p>}
                             </div>
@@ -456,7 +597,7 @@ function FireDrillForm({ record, branches, isCaregiver, caregiverBranchId, onClo
                                 value={formData.notes}
                                 onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                                 rows={3}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                 placeholder="Enter any additional notes..."
                             />
                             {errors.notes && <p className="text-xs text-red-600 mt-1">{errors.notes[0]}</p>}
@@ -473,7 +614,7 @@ function FireDrillForm({ record, branches, isCaregiver, caregiverBranchId, onClo
                             <button
                                 type="submit"
                                 disabled={isSubmitting}
-                                className="px-4 py-2 bg-[#25603E] text-white rounded-lg hover:bg-[#1B402D] disabled:opacity-50"
+                                className="px-4 py-2 bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] rounded-lg hover:bg-[var(--theme-primary-hover)] disabled:opacity-50"
                             >
                                 {isSubmitting ? 'Saving...' : (record ? 'Update' : 'Create')}
                             </button>

@@ -2,13 +2,12 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
 use App\Models\Medication;
 use App\Models\MedicationAdministration;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 
-class MedicationController extends Controller
+class MedicationController extends BaseApiController
 {
     public function index(Request $request): JsonResponse
     {

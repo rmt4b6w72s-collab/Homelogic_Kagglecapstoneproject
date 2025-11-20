@@ -214,7 +214,7 @@ export default function Profile() {
     if (isLoading) {
         return (
             <div className="text-center py-12">
-                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#25603E]"></div>
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--theme-primary)]"></div>
                 <p className="mt-4 text-gray-600">Loading profile...</p>
             </div>
         );
@@ -306,7 +306,7 @@ export default function Profile() {
                                         type={showPasswords.current ? 'text' : 'password'}
                                         value={passwordData.current_password}
                                         onChange={(e) => setPasswordData({...passwordData, current_password: e.target.value})}
-                                        className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                        className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                         placeholder="Enter current password"
                                     />
                                     <button
@@ -325,7 +325,7 @@ export default function Profile() {
                                         type={showPasswords.new ? 'text' : 'password'}
                                         value={passwordData.password}
                                         onChange={(e) => setPasswordData({...passwordData, password: e.target.value})}
-                                        className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                        className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                         placeholder="Enter new password (min. 8 characters)"
                                     />
                                     <button
@@ -344,7 +344,7 @@ export default function Profile() {
                                         type={showPasswords.confirm ? 'text' : 'password'}
                                         value={passwordData.password_confirmation}
                                         onChange={(e) => setPasswordData({...passwordData, password_confirmation: e.target.value})}
-                                        className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                        className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                         placeholder="Confirm new password"
                                     />
                                     <button
@@ -360,7 +360,7 @@ export default function Profile() {
                                 <button
                                     onClick={handlePasswordChange}
                                     disabled={passwordMutation.isLoading}
-                                    className="flex items-center gap-2 px-4 py-2 bg-[#25603E] text-white rounded-lg hover:bg-[#1B402D] transition-colors font-medium disabled:opacity-70 disabled:cursor-not-allowed"
+                                    className="flex items-center gap-2 px-4 py-2 bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] rounded-lg hover:bg-[var(--theme-primary-hover)] transition-colors font-medium disabled:opacity-70 disabled:cursor-not-allowed"
                                 >
                                     <Lock className="w-4 h-4" />
                                     <span>{passwordMutation.isLoading ? 'Changing...' : 'Change Password'}</span>
@@ -385,7 +385,7 @@ export default function Profile() {
             )}
 
             {/* Profile Header */}
-            <div className="bg-gradient-to-br from-[#25603E] via-[#2f6c3a] to-[#1B402D] rounded-2xl shadow-xl p-6 md:p-8 mb-6 text-white">
+            <div className="bg-gradient-to-br from-[var(--theme-primary)] via-[#2f6c3a] to-[var(--theme-primary-hover)] rounded-2xl shadow-xl p-6 md:p-8 mb-6 text-white">
                 <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
                     <div className="flex flex-col md:flex-row md:items-center gap-6">
                         <div className="relative mx-auto md:mx-0">
@@ -460,7 +460,7 @@ export default function Profile() {
                         {!isEditing && (
                             <button
                                 onClick={() => setIsEditing(true)}
-                                className="flex items-center justify-center gap-2 px-4 md:px-6 py-2 bg-white text-[#25603E] rounded-lg shadow hover:bg-green-50 transition-colors font-medium"
+                                className="flex items-center justify-center gap-2 px-4 md:px-6 py-2 bg-white text-[var(--theme-primary)] rounded-lg shadow hover:bg-green-50 transition-colors font-medium"
                             >
                                 <Edit className="w-4 h-4" />
                                 <span>Edit Profile</span>
@@ -478,7 +478,7 @@ export default function Profile() {
                                 <button
                                     onClick={handleSave}
                                     disabled={updateMutation.isLoading}
-                                    className="flex items-center justify-center gap-2 px-4 md:px-6 py-2 bg-white text-[#25603E] rounded-lg shadow hover:bg-green-50 transition-colors font-medium disabled:opacity-70 disabled:cursor-not-allowed"
+                                    className="flex items-center justify-center gap-2 px-4 md:px-6 py-2 bg-white text-[var(--theme-primary)] rounded-lg shadow hover:bg-green-50 transition-colors font-medium disabled:opacity-70 disabled:cursor-not-allowed"
                                 >
                                     <Save className="w-4 h-4" />
                                     <span>{updateMutation.isLoading ? 'Saving...' : 'Save Changes'}</span>
@@ -515,9 +515,9 @@ export default function Profile() {
             {/* Profile Content */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
                 {/* Personal Information */}
-                <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden border-l-4 border-l-[#25603E] hover:shadow-xl transition-shadow">
+                <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden border-l-4 border-l-[var(--theme-primary)] hover:shadow-xl transition-shadow">
                     <div className="p-6">
-                        <h3 className="text-lg font-bold text-[#25603E] mb-4 flex items-center">
+                        <h3 className="text-lg font-bold text-[var(--theme-primary)] mb-4 flex items-center">
                             <UserIcon className="w-5 h-5 mr-2" />
                             Personal Information
                         </h3>
@@ -532,9 +532,9 @@ export default function Profile() {
                 </div>
 
                 {/* Employment Details */}
-                <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden border-l-4 border-l-[#8B4513] hover:shadow-xl transition-shadow">
+                <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden border-l-4 border-l-[var(--theme-secondary)] hover:shadow-xl transition-shadow">
                     <div className="p-6">
-                        <h3 className="text-lg font-bold text-[#25603E] mb-4 flex items-center">
+                        <h3 className="text-lg font-bold text-[var(--theme-primary)] mb-4 flex items-center">
                             <Briefcase className="w-5 h-5 mr-2" />
                             Employment Details
                         </h3>
@@ -551,7 +551,7 @@ export default function Profile() {
                 {/* Contact Information */}
                 <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden border-l-4 border-l-[#4a7a2a] hover:shadow-xl transition-shadow">
                     <div className="p-6">
-                        <h3 className="text-lg font-bold text-[#25603E] mb-4 flex items-center">
+                        <h3 className="text-lg font-bold text-[var(--theme-primary)] mb-4 flex items-center">
                             <Phone className="w-5 h-5 mr-2" />
                             Contact Information
                         </h3>
@@ -568,7 +568,7 @@ export default function Profile() {
                 {/* Additional Information */}
                 <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden border-l-4 border-l-[#a0522d] hover:shadow-xl transition-shadow">
                         <div className="p-6">
-                        <h3 className="text-lg font-bold text-[#25603E] mb-4 flex items-center">
+                        <h3 className="text-lg font-bold text-[var(--theme-primary)] mb-4 flex items-center">
                             <FileText className="w-5 h-5 mr-2" />
                             Additional Notes
                         </h3>
@@ -579,7 +579,7 @@ export default function Profile() {
                                         onChange={(e) => setEditedUser({...editedUser, notes: e.target.value})}
                                         rows={5}
                                     placeholder="Add any additional notes or information..."
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent resize-none"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent resize-none"
                                     />
                                 ) : (
                                 <p className="text-gray-700 whitespace-pre-wrap">
@@ -739,7 +739,7 @@ function ViewContactInfo({ user }) {
                     </p>
                     <a 
                         href={`mailto:${user.email}`}
-                        className="text-base font-semibold text-[#25603E] hover:text-[#1B402D] transition-colors break-all"
+                        className="text-base font-semibold text-[var(--theme-primary)] hover:text-[var(--theme-primary-hover)] transition-colors break-all"
                     >
                         {user.email}
                     </a>
@@ -753,7 +753,7 @@ function ViewContactInfo({ user }) {
                     </p>
                     <a 
                         href={`tel:${user.phone_number}`}
-                        className="text-base font-semibold text-[#25603E] hover:text-[#1B402D] transition-colors"
+                        className="text-base font-semibold text-[var(--theme-primary)] hover:text-[var(--theme-primary-hover)] transition-colors"
                     >
                         {user.phone_number}
                     </a>
@@ -773,7 +773,7 @@ function EditPersonalInfo({ user, setUser }) {
                     type="text"
                     value={user?.first_name || ''}
                     onChange={(e) => setUser({...user, first_name: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                 />
             </div>
             <div>
@@ -782,7 +782,7 @@ function EditPersonalInfo({ user, setUser }) {
                     type="text"
                     value={user?.middle_names || ''}
                     onChange={(e) => setUser({...user, middle_names: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                 />
             </div>
             <div>
@@ -791,7 +791,7 @@ function EditPersonalInfo({ user, setUser }) {
                     type="text"
                     value={user?.last_name || ''}
                     onChange={(e) => setUser({...user, last_name: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                 />
             </div>
             {user?.date_of_birth && (
@@ -801,7 +801,7 @@ function EditPersonalInfo({ user, setUser }) {
                         type="date"
                         value={user.date_of_birth}
                         onChange={(e) => setUser({...user, date_of_birth: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                     />
                 </div>
             )}
@@ -811,7 +811,7 @@ function EditPersonalInfo({ user, setUser }) {
                     <select
                         value={user.marital_status || ''}
                         onChange={(e) => setUser({...user, marital_status: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                     >
                         <option value="">Select status</option>
                         <option value="single">Single</option>
@@ -836,7 +836,7 @@ function EditEmploymentInfo({ user, setUser }) {
                         type="text"
                         value={user.position || ''}
                         onChange={(e) => setUser({...user, position: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                     />
                 </div>
             )}
@@ -847,7 +847,7 @@ function EditEmploymentInfo({ user, setUser }) {
                         type="text"
                         value={user.credentials || ''}
                         onChange={(e) => setUser({...user, credentials: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                     />
                 </div>
             )}
@@ -858,7 +858,7 @@ function EditEmploymentInfo({ user, setUser }) {
                         type="text"
                         value={user.credential_details || ''}
                         onChange={(e) => setUser({...user, credential_details: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                     />
                 </div>
             )}
@@ -869,7 +869,7 @@ function EditEmploymentInfo({ user, setUser }) {
                         type="text"
                         value={user.supervisor_name || ''}
                         onChange={(e) => setUser({...user, supervisor_name: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                     />
                 </div>
             )}
@@ -880,7 +880,7 @@ function EditEmploymentInfo({ user, setUser }) {
                         type="text"
                         value={user.provider_name || ''}
                         onChange={(e) => setUser({...user, provider_name: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                     />
                 </div>
             )}
@@ -897,7 +897,7 @@ function EditContactInfo({ user, setUser }) {
                     type="email"
                     value={user?.email || ''}
                     onChange={(e) => setUser({...user, email: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                 />
             </div>
             <div>
@@ -906,7 +906,7 @@ function EditContactInfo({ user, setUser }) {
                     type="tel"
                     value={user?.phone_number || ''}
                     onChange={(e) => setUser({...user, phone_number: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                 />
             </div>
         </>

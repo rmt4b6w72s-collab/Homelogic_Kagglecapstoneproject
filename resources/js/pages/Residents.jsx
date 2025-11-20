@@ -119,7 +119,7 @@ export default function Residents() {
                                 />
                             </div>
                         ) : (
-                            <div className="w-16 h-16 rounded-full bg-[#25603E] flex items-center justify-center text-white font-semibold text-lg flex-shrink-0">
+                            <div className="w-16 h-16 rounded-full bg-[var(--theme-primary)] flex items-center justify-center text-[var(--theme-text-on-primary)] font-semibold text-lg flex-shrink-0">
                                 {resident.first_name?.[0]?.toUpperCase() || ''}
                                 {resident.last_name?.[0]?.toUpperCase() || ''}
                             </div>
@@ -145,7 +145,7 @@ export default function Residents() {
                                 setEditing(resident);
                                 setShowForm(true);
                             }}
-                            className="p-2 text-[#25603E] hover:bg-green-50 rounded-lg transition-colors"
+                            className="p-2 text-[var(--theme-primary)] hover:bg-green-50 rounded-lg transition-colors"
                             title="Edit"
                         >
                             <Edit className="w-4 h-4" />
@@ -158,7 +158,7 @@ export default function Residents() {
                                 }
                             }}
                             className={`p-2 rounded-lg transition-colors ${
-                                resident.is_active ? 'text-[#8B4513] hover:bg-amber-50' : 'text-green-600 hover:bg-green-50'
+                                resident.is_active ? 'text-[var(--theme-secondary)] hover:bg-amber-50' : 'text-green-600 hover:bg-green-50'
                             }`}
                             title={resident.is_active ? 'Deactivate' : 'Activate'}
                         >
@@ -241,7 +241,7 @@ export default function Residents() {
                             setEditing(null);
                             setShowForm(true);
                         }}
-                        className="w-full sm:w-auto px-4 py-2 bg-[#25603E] text-white rounded-lg hover:bg-[#1B402D] transition-colors flex items-center justify-center space-x-2 text-sm md:text-base"
+                        className="w-full sm:w-auto px-4 py-2 bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] rounded-lg hover:bg-[var(--theme-primary-hover)] transition-colors flex items-center justify-center space-x-2 text-sm md:text-base"
                     >
                         <Plus className="w-4 h-4" />
                         <span>Add Resident</span>
@@ -257,7 +257,7 @@ export default function Residents() {
                             placeholder="Search by name or room number..."
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                         />
                     </div>
 
@@ -268,7 +268,7 @@ export default function Residents() {
                             value={branchFilter}
                             onChange={(e) => setBranchFilter(e.target.value)}
                             disabled={isCaregiver}
-                            className={`w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent appearance-none ${isCaregiver ? 'bg-gray-100 cursor-not-allowed' : 'bg-white'}`}
+                            className={`w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent appearance-none ${isCaregiver ? 'bg-gray-100 cursor-not-allowed' : 'bg-white'}`}
                         >
                             {!isCaregiver && <option value="">All Branches</option>}
                             {branchOptions?.map(branch => (
@@ -282,7 +282,7 @@ export default function Residents() {
                         <select
                             value={statusFilter}
                             onChange={(e) => setStatusFilter(e.target.value)}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent appearance-none bg-white"
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent appearance-none bg-white"
                         >
                             <option value="">All Status</option>
                             <option value="active">Active</option>
@@ -302,7 +302,7 @@ export default function Residents() {
 
             {isLoading ? (
                 <div className="text-center py-12">
-                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#25603E]"></div>
+                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--theme-primary)]"></div>
                     <p className="mt-4 text-gray-600">Loading residents...</p>
                 </div>
             ) : (
@@ -792,8 +792,8 @@ function ResidentForm({ record, branches, onClose, onSuccess }) {
                                                 file:mr-4 file:py-2 file:px-4
                                                 file:rounded-lg file:border-0
                                                 file:text-sm file:font-semibold
-                                                file:bg-[#25603E] file:text-white
-                                                hover:file:bg-[#1B402D]
+                                                file:bg-[var(--theme-primary)] file:text-[var(--theme-text-on-primary)]
+                                                hover:file:bg-[var(--theme-primary-hover)]
                                                 file:cursor-pointer"
                                         />
                                         <p className="text-xs text-gray-500 mt-1">
@@ -814,7 +814,7 @@ function ResidentForm({ record, branches, onClose, onSuccess }) {
                                         value={formData.first_name}
                                         onChange={(e) => setFormData({...formData, first_name: e.target.value})}
                                         required
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                     />
                                     {errors.first_name && <p className="text-xs text-red-600 mt-1">{errors.first_name[0]}</p>}
                                 </div>
@@ -827,7 +827,7 @@ function ResidentForm({ record, branches, onClose, onSuccess }) {
                                         type="text"
                                         value={formData.middle_names}
                                         onChange={(e) => setFormData({...formData, middle_names: e.target.value})}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                     />
                                 </div>
 
@@ -840,7 +840,7 @@ function ResidentForm({ record, branches, onClose, onSuccess }) {
                                         value={formData.last_name}
                                         onChange={(e) => setFormData({...formData, last_name: e.target.value})}
                                         required
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                     />
                                     {errors.last_name && <p className="text-xs text-red-600 mt-1">{errors.last_name[0]}</p>}
                                 </div>
@@ -855,7 +855,7 @@ function ResidentForm({ record, branches, onClose, onSuccess }) {
                                         onChange={(e) => setFormData({...formData, date_of_birth: e.target.value})}
                                         required
                                         max={new Date(Date.now() - 18 * 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                     />
                                     {errors.date_of_birth && <p className="text-xs text-red-600 mt-1">{errors.date_of_birth[0]}</p>}
                                 </div>
@@ -867,7 +867,7 @@ function ResidentForm({ record, branches, onClose, onSuccess }) {
                                     <select
                                         value={formData.gender}
                                         onChange={(e) => setFormData({...formData, gender: e.target.value})}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                     >
                                         <option value="">Select Gender</option>
                                         <option value="Male">Male</option>
@@ -884,7 +884,7 @@ function ResidentForm({ record, branches, onClose, onSuccess }) {
                                         type="tel"
                                         value={formData.phone}
                                         onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                     />
                                 </div>
 
@@ -896,7 +896,7 @@ function ResidentForm({ record, branches, onClose, onSuccess }) {
                                         value={formData.branch_id}
                                         onChange={(e) => setFormData({...formData, branch_id: e.target.value})}
                                         required
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                     >
                                         <option value="">Select Branch</option>
                                         {branches.map(branch => (
@@ -914,7 +914,7 @@ function ResidentForm({ record, branches, onClose, onSuccess }) {
                                         type="text"
                                         value={formData.room_number}
                                         onChange={(e) => setFormData({...formData, room_number: e.target.value})}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                     />
                                 </div>
 
@@ -927,7 +927,7 @@ function ResidentForm({ record, branches, onClose, onSuccess }) {
                                         value={formData.admission_date}
                                         onChange={(e) => setFormData({...formData, admission_date: e.target.value})}
                                         required
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                     />
                                     {errors.admission_date && <p className="text-xs text-red-600 mt-1">{errors.admission_date[0]}</p>}
                                 </div>
@@ -946,7 +946,7 @@ function ResidentForm({ record, branches, onClose, onSuccess }) {
                                         value={formData.diagnosis}
                                         onChange={(e) => setFormData({...formData, diagnosis: e.target.value})}
                                         rows={3}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                         placeholder="Enter primary medical diagnosis..."
                                     />
                                 </div>
@@ -959,7 +959,7 @@ function ResidentForm({ record, branches, onClose, onSuccess }) {
                                         value={formData.allergies}
                                         onChange={(e) => setFormData({...formData, allergies: e.target.value})}
                                         rows={3}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                         placeholder="List any known allergies..."
                                     />
                                 </div>
@@ -972,7 +972,7 @@ function ResidentForm({ record, branches, onClose, onSuccess }) {
                                         type="text"
                                         value={formData.physician_name}
                                         onChange={(e) => setFormData({...formData, physician_name: e.target.value})}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                     />
                                 </div>
 
@@ -984,7 +984,7 @@ function ResidentForm({ record, branches, onClose, onSuccess }) {
                                         type="text"
                                         value={formData.medicare_number}
                                         onChange={(e) => setFormData({...formData, medicare_number: e.target.value})}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                         placeholder="Enter Medicare number (optional)"
                                     />
                                 </div>
@@ -997,7 +997,7 @@ function ResidentForm({ record, branches, onClose, onSuccess }) {
                                         type="text"
                                         value={formData.primary_care_doctor}
                                         onChange={(e) => setFormData({...formData, primary_care_doctor: e.target.value})}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                         placeholder="Enter primary care doctor name (optional)"
                                     />
                                 </div>
@@ -1010,7 +1010,7 @@ function ResidentForm({ record, branches, onClose, onSuccess }) {
                                         value={formData.medical_conditions}
                                         onChange={(e) => setFormData({...formData, medical_conditions: e.target.value})}
                                         rows={3}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                         placeholder="List any additional medical conditions..."
                                     />
                                 </div>
@@ -1029,7 +1029,7 @@ function ResidentForm({ record, branches, onClose, onSuccess }) {
                                         type="text"
                                         value={formData.emergency_contact_name}
                                         onChange={(e) => setFormData({...formData, emergency_contact_name: e.target.value})}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                     />
                                 </div>
 
@@ -1041,7 +1041,7 @@ function ResidentForm({ record, branches, onClose, onSuccess }) {
                                         type="tel"
                                         value={formData.emergency_contact_phone}
                                         onChange={(e) => setFormData({...formData, emergency_contact_phone: e.target.value})}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                     />
                                 </div>
                             </div>
@@ -1058,7 +1058,7 @@ function ResidentForm({ record, branches, onClose, onSuccess }) {
                             <button
                                 type="submit"
                                 disabled={isSubmitting}
-                                className="px-4 py-2 bg-[#25603E] text-white rounded-lg hover:bg-[#1B402D] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                                className="px-4 py-2 bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] rounded-lg hover:bg-[var(--theme-primary-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
                             >
                                 {isSubmitting && (
                                     <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">

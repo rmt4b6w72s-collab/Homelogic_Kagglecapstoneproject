@@ -7,7 +7,7 @@ use App\Models\MedicationDelivery;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 
-class MedicationDeliveryController extends Controller
+class MedicationDeliveryController extends BaseApiController
 {
     /**
      * Display a listing of the resource.
@@ -135,6 +135,61 @@ class MedicationDeliveryController extends Controller
         $delivery->update($validated);
 
         return response()->json($delivery->load(['branch', 'resident', 'medication', 'receivedBy']));
+    }
+
+    /**
+     * Store multiple deliveries in bulk.
+     */
+    public function bulkStore(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'deliveries' => 'required|array|min:1',
+            'deliveries.*.branch_id' => 'required|exists:branches,id',
+            'deliveries.*.delivery_type' => 'required|in:individual,batch',
+            'deliveries.*.resident_id' => 'nullable|exists:residents,id',
+            'deliveries.*.medication_id' => 'nullable|exists:medications,id',
+            'deliveries.*.pharmacy_name' => 'required|string|max:255',
+            'deliveries.*.quantity_received' => 'required|string|max:255',
+            'deliveries.*.received_date' => 'required|date',
+            'deliveries.*.received_time' => 'required|string',
+            'deliveries.*.status' => 'nullable|in:received,verified,stored',
+            'deliveries.*.notes' => 'nullable|string',
+        ]);
+
+        $created = [];
+        $errors = [];
+
+        foreach ($validated['deliveries'] as $index => $deliveryData) {
+            // Validate medication_id is required for individual deliveries
+            if ($deliveryData['delivery_type'] === 'individual' && empty($deliveryData['medication_id'])) {
+                $errors[] = [
+                    'index' => $index,
+                    'message' => 'Medication is required for individual deliveries.',
+                ];
+                continue;
+            }
+
+            try {
+                $deliveryData['received_by'] = auth()->id();
+                $deliveryData['status'] = $deliveryData['status'] ?? 'received';
+                
+                $delivery = MedicationDelivery::create($deliveryData);
+                $created[] = $delivery->load(['branch', 'resident', 'medication', 'receivedBy']);
+            } catch (\Exception $e) {
+                $errors[] = [
+                    'index' => $index,
+                    'message' => $e->getMessage(),
+                ];
+            }
+        }
+
+        return response()->json([
+            'message' => count($created) . ' delivery(ies) created successfully.',
+            'created' => $created,
+            'errors' => $errors,
+            'success_count' => count($created),
+            'error_count' => count($errors),
+        ], count($created) > 0 ? 201 : 422);
     }
 
     /**

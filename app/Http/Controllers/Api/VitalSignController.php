@@ -2,19 +2,18 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
 use App\Models\VitalSign;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 
-class VitalSignController extends Controller
+class VitalSignController extends BaseApiController
 {
     public function index(Request $request): JsonResponse
     {
         $query = VitalSign::with(['resident', 'takenBy']);
         $user = $request->user();
 
-        if ($user && $user->hasRole('caregiver')) {
+        if ($this->isCaregiver($user)) {
             if ($user->assigned_branch_id) {
                 $query->where('branch_id', $user->assigned_branch_id);
             } else {

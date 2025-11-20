@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Tenant SaaS Platform - Implementation Plan</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        h1 {
+            text-align: center;
+            color: #667eea;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            font-size: 1.2em;
+            margin-bottom: 40px;
+        }
+
+        .section {
+            margin-bottom: 50px;
+            padding: 30px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            border-left: 5px solid #667eea;
+        }
+
+        .section h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section h3 {
+            color: #764ba2;
+            margin: 20px 0 15px 0;
+            font-size: 1.3em;
+        }
+
+        /* Architecture Diagram */
+        .architecture {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            margin: 30px 0;
+        }
+
+        .layer {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .layer-header {
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .components {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .component {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 500;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+            transition: transform 0.3s;
+        }
+
+        .component:hover {
+            transform: translateY(-5px);
+        }
+
+        /* Flow Diagram */
+        .flow-diagram {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .flow-step {
+            background: white;
+            padding: 20px 30px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 600px;
+            position: relative;
+        }
+
+        .flow-step::after {
+            content: '↓';
+            position: absolute;
+            bottom: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 2em;
+            color: #667eea;
+        }
+
+        .flow-step:last-child::after {
+            display: none;
+        }
+
+        .step-number {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 30px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        /* Multi-Tenancy Visualization */
+        .tenant-visual {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .tenant-box {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            border-top: 5px solid;
+        }
+
+        .tenant-box.facility1 { border-top-color: #667eea; }
+        .tenant-box.facility2 { border-top-color: #f093fb; }
+        .tenant-box.facility3 { border-top-color: #4facfe; }
+
+        .tenant-header {
+            font-weight: bold;
+            font-size: 1.2em;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .tenant-features {
+            list-style: none;
+            padding: 0;
+        }
+
+        .tenant-features li {
+            padding: 8px 0;
+            padding-left: 25px;
+            position: relative;
+        }
+
+        .tenant-features li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        /* Customization Panel */
+        .customization-demo {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .brand-preview {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .brand-logo {
+            width: 100px;
+            height: 100px;
+            background: #ddd;
+            border-radius: 10px;
+            margin: 0 auto 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8em;
+            color: #666;
+        }
+
+        .brand-colors {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 15px;
+        }
+
+        .color-swatch {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid #ddd;
+        }
+
+        /* Database Schema */
+        .schema-visual {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .table-box {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .table-name {
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .table-field {
+            padding: 5px 0;
+            font-size: 0.9em;
+            color: #555;
+            font-family: 'Courier New', monospace;
+        }
+
+        .table-field.primary { color: #667eea; font-weight: bold; }
+        .table-field.foreign { color: #764ba2; }
+
+        /* Legend */
+        .legend {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 30px 0;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .legend-items {
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 3px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 1.8em;
+            }
+
+            .components {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .icon {
+            font-size: 1.2em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏥 Multi-Tenant SaaS Platform</h1>
+        <p class="subtitle">Visual Implementation Plan for Adult Family Care Management System</p>
+
+        <!-- Overview -->
+        <div class="section">
+            <h2><span class="icon">📋</span> Overview</h2>
+            <p>Transform the current single-tenant application into a multi-tenant SaaS platform where facility owners can register, super admins manage onboarding, and each facility operates with isolated data and custom branding.</p>
+        </div>
+
+        <!-- Architecture -->
+        <div class="section">
+            <h2><span class="icon">🏗️</span> System Architecture</h2>
+            <div class="architecture">
+                <div class="layer">
+                    <div class="layer-header">Public Layer</div>
+                    <div class="components">
+                        <div class="component">Registration Form</div>
+                        <div class="component">Login Page</div>
+                    </div>
+                </div>
+                
+                <div class="layer">
+                    <div class="layer-header">Super Admin Panel</div>
+                    <div class="components">
+                        <div class="component">Registration Management</div>
+                        <div class="component">Facility Setup</div>
+                        <div class="component">Customization Interface</div>
+                        <div class="component">User Role Assignment</div>
+                    </div>
+                </div>
+
+                <div class="layer">
+                    <div class="layer-header">Facility Admin Panel</div>
+                    <div class="components">
+                        <div class="component">Branch Management</div>
+                        <div class="component">Resident Management</div>
+                        <div class="component">Medication Tracking</div>
+                        <div class="component">Staff Management</div>
+                    </div>
+                </div>
+
+                <div class="layer">
+                    <div class="layer-header">Data Layer (Isolated per Facility)</div>
+                    <div class="components">
+                        <div class="component">Facility Data</div>
+                        <div class="component">Branch Data</div>
+                        <div class="component">Resident Data</div>
+                        <div class="component">Medication Data</div>
+                        <div class="component">User Data</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Registration Flow -->
+        <div class="section">
+            <h2><span class="icon">🔄</span> Facility Registration Workflow</h2>
+            <div class="flow-diagram">
+                <div class="flow-step">
+                    <span class="step-number">1</span>
+                    <strong>Facility Owner Submits Registration</strong><br>
+                    <small>Public form: facility name, contact info, address, optional subdomain request</small>
+                </div>
+                
+                <div class="flow-step">
+                    <span class="step-number">2</span>
+                    <strong>Super Admin Reviews Request</strong><br>
+                    <small>Registration appears in super admin panel for review</small>
+                </div>
+                
+                <div class="flow-step">
+                    <span class="step-number">3</span>
+                    <strong>Super Admin Sets Up Facility</strong><br>
+                    <small>Creates facility record, sets up initial branch, configures basic settings</small>
+                </div>
+                
+                <div class="flow-step">
+                    <span class="step-number">4</span>
+                    <strong>Super Admin Customizes Branding</strong><br>
+                    <small>Uploads logo, sets color scheme (primary, secondary, accent)</small>
+                </div>
+                
+                <div class="flow-step">
+                    <span class="step-number">5</span>
+                    <strong>Super Admin Creates Owner Account</strong><br>
+                    <small>Creates facility owner user with configurable role (admin/manager/etc.)</small>
+                </div>
+                
+                <div class="flow-step">
+                    <span class="step-number">6</span>
+                    <strong>Owner Receives Credentials</strong><br>
+                    <small>Welcome email with login credentials and access instructions</small>
+                </div>
+                
+                <div class="flow-step">
+                    <span class="step-number">7</span>
+                    <strong>Owner Accesses Their Panel</strong><br>
+                    <small>Logs in via /admin (context-aware) or subdomain.facility.com with custom branding</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Multi-Tenancy Visualization -->
+        <div class="section">
+            <h2><span class="icon">🏢</span> Multi-Tenancy Structure</h2>
+            <div class="tenant-visual">
+                <div class="tenant-box facility1">
+                    <div class="tenant-header">Evergreen Oasis Care Home</div>
+                    <ul class="tenant-features">
+                        <li>Custom Logo</li>
+                        <li>Blue Color Scheme</li>
+                        <li>Subdomain: evergreen</li>
+                        <li>Isolated Data Access</li>
+                        <li>Owner: John Doe</li>
+                        <li>3 Branches</li>
+                    </ul>
+                </div>
+                
+                <div class="tenant-box facility2">
+                    <div class="tenant-header">Serenity Care Facility</div>
+                    <ul class="tenant-features">
+                        <li>Custom Logo</li>
+                        <li>Pink Color Scheme</li>
+                        <li>Subdomain: serenity</li>
+                        <li>Isolated Data Access</li>
+                        <li>Owner: Jane Smith</li>
+                        <li>2 Branches</li>
+                    </ul>
+                </div>
+                
+                <div class="tenant-box facility3">
+                    <div class="tenant-header">Harmony Care Center</div>
+                    <ul class="tenant-features">
+                        <li>Custom Logo</li>
+                        <li>Green Color Scheme</li>
+                        <li>Subdomain: harmony</li>
+                        <li>Isolated Data Access</li>
+                        <li>Owner: Bob Johnson</li>
+                        <li>1 Branch</li>
+                    </ul>
+                </div>
+            </div>
+            <p style="margin-top: 20px; padding: 15px; background: #e3f2fd; border-radius: 8px; border-left: 4px solid #2196F3;">
+                <strong>Data Isolation:</strong> Each facility can only access their own data. All queries are automatically scoped to the facility_id through middleware and global scopes.
+            </p>
+        </div>
+
+        <!-- Customization -->
+        <div class="section">
+            <h2><span class="icon">🎨</span> Facility Customization</h2>
+            <p>Super admins can customize each facility's branding through a dedicated interface:</p>
+            
+            <div class="customization-demo">
+                <div class="brand-preview">
+                    <div class="brand-logo" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                        LOGO
+                    </div>
+                    <div><strong>Facility Name</strong></div>
+                    <div class="brand-colors">
+                        <div class="color-swatch" style="background: #667eea;" title="Primary"></div>
+                        <div class="color-swatch" style="background: #764ba2;" title="Secondary"></div>
+                        <div class="color-swatch" style="background: #f093fb;" title="Accent"></div>
+                    </div>
+                </div>
+                
+                <div class="brand-preview">
+                    <div class="brand-logo" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
+                        LOGO
+                    </div>
+                    <div><strong>Facility Name</strong></div>
+                    <div class="brand-colors">
+                        <div class="color-swatch" style="background: #f093fb;" title="Primary"></div>
+                        <div class="color-swatch" style="background: #f5576c;" title="Secondary"></div>
+                        <div class="color-swatch" style="background: #4facfe;" title="Accent"></div>
+                    </div>
+                </div>
+                
+                <div class="brand-preview">
+                    <div class="brand-logo" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white;">
+                        LOGO
+                    </div>
+                    <div><strong>Facility Name</strong></div>
+                    <div class="brand-colors">
+                        <div class="color-swatch" style="background: #4facfe;" title="Primary"></div>
+                        <div class="color-swatch" style="background: #00f2fe;" title="Secondary"></div>
+                        <div class="color-swatch" style="background: #43e97b;" title="Accent"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <h3>Customization Features:</h3>
+            <ul style="padding-left: 30px; margin-top: 15px;">
+                <li><strong>Logo Upload:</strong> Facility-specific logo displayed in panel header</li>
+                <li><strong>Color Scheme:</strong> Primary, secondary, and accent colors for UI elements</li>
+                <li><strong>Brand Name:</strong> Facility name displayed as brand name in panel</li>
+                <li><strong>Subdomain:</strong> Optional subdomain for facility-specific URL (e.g., evergreen.app.com)</li>
+                <li><strong>Live Preview:</strong> See changes before saving</li>
+            </ul>
+        </div>
+
+        <!-- Database Schema -->
+        <div class="section">
+            <h2><span class="icon">🗄️</span> Database Schema Updates</h2>
+            <div class="schema-visual">
+                <div class="table-box">
+                    <div class="table-name">facilities</div>
+                    <div class="table-field primary">id (PK)</div>
+                    <div class="table-field">name</div>
+                    <div class="table-field">address</div>
+                    <div class="table-field">logo</div>
+                    <div class="table-field">primary_color</div>
+                    <div class="table-field">secondary_color</div>
+                    <div class="table-field">accent_color</div>
+                    <div class="table-field">subdomain (unique)</div>
+                    <div class="table-field">registration_status</div>
+                    <div class="table-field foreign">registered_by_user_id (FK)</div>
+                </div>
+                
+                <div class="table-box">
+                    <div class="table-name">facility_registrations</div>
+                    <div class="table-field primary">id (PK)</div>
+                    <div class="table-field">facility_name</div>
+                    <div class="table-field">contact_name</div>
+                    <div class="table-field">email</div>
+                    <div class="table-field">phone</div>
+                    <div class="table-field">address</div>
+                    <div class="table-field">requested_subdomain</div>
+                    <div class="table-field">status</div>
+                    <div class="table-field foreign">approved_by_user_id (FK)</div>
+                    <div class="table-field">notes</div>
+                </div>
+                
+                <div class="table-box">
+                    <div class="table-name">users</div>
+                    <div class="table-field primary">id (PK)</div>
+                    <div class="table-field">name</div>
+                    <div class="table-field">email (unique)</div>
+                    <div class="table-field">password</div>
+                    <div class="table-field">role</div>
+                    <div class="table-field foreign">facility_id (FK)</div>
+                    <div class="table-field foreign">assigned_branch_id (FK)</div>
+                </div>
+                
+                <div class="table-box">
+                    <div class="table-name">branches</div>
+                    <div class="table-field primary">id (PK)</div>
+                    <div class="table-field">name</div>
+                    <div class="table-field">address</div>
+                    <div class="table-field foreign">facility_id (FK)</div>
+                    <div class="table-field">phone</div>
+                    <div class="table-field">email</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Routing -->
+        <div class="section">
+            <h2><span class="icon">🛣️</span> Routing Strategy</h2>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin: 20px 0;">
+                <div style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.1);">
+                    <h3 style="color: #667eea; margin-bottom: 15px;">Path-Based Routing</h3>
+                    <p><strong>URL:</strong> <code>yourapp.com/admin</code></p>
+                    <p style="margin-top: 10px;">Facility context is determined by:</p>
+                    <ul style="padding-left: 25px; margin-top: 10px;">
+                        <li>User's facility_id from database</li>
+                        <li>Automatic data filtering by facility</li>
+                        <li>Custom branding loaded from facility record</li>
+                    </ul>
+                </div>
+                
+                <div style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.1);">
+                    <h3 style="color: #764ba2; margin-bottom: 15px;">Subdomain Routing</h3>
+                    <p><strong>URL:</strong> <code>evergreen.yourapp.com/admin</code></p>
+                    <p style="margin-top: 10px;">Facility detection via:</p>
+                    <ul style="padding-left: 25px; margin-top: 10px;">
+                        <li>Subdomain extraction from request</li>
+                        <li>Lookup facility by subdomain field</li>
+                        <li>Set facility context automatically</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Implementation Phases -->
+        <div class="section">
+            <h2><span class="icon">📅</span> Implementation Phases</h2>
+            <div style="margin-top: 20px;">
+                <h3 style="background: #667eea; color: white; padding: 10px 15px; border-radius: 5px; margin-bottom: 15px;">Phase 1: Database & Models</h3>
+                <ul style="padding-left: 30px; margin-bottom: 20px;">
+                    <li>Add customization fields to facilities table</li>
+                    <li>Add facility_id to users table</li>
+                    <li>Create facility_registrations table</li>
+                    <li>Update Facility and User models</li>
+                    <li>Migrate existing data to "Evergreen Oasis Care Home"</li>
+                </ul>
+                
+                <h3 style="background: #764ba2; color: white; padding: 10px 15px; border-radius: 5px; margin-bottom: 15px;">Phase 2: Multi-Tenancy Core</h3>
+                <ul style="padding-left: 30px; margin-bottom: 20px;">
+                    <li>Create facility context middleware</li>
+                    <li>Implement global scopes for data isolation</li>
+                    <li>Add subdomain detection support</li>
+                    <li>Update all models with facility relationships</li>
+                </ul>
+                
+                <h3 style="background: #f093fb; color: white; padding: 10px 15px; border-radius: 5px; margin-bottom: 15px;">Phase 3: Super Admin Panel</h3>
+                <ul style="padding-left: 30px; margin-bottom: 20px;">
+                    <li>Create FacilityRegistrationResource</li>
+                    <li>Build facility customization interface</li>
+                    <li>Implement registration approval workflow</li>
+                    <li>Add role assignment during setup</li>
+                </ul>
+                
+                <h3 style="background: #4facfe; color: white; padding: 10px 15px; border-radius: 5px; margin-bottom: 15px;">Phase 4: Registration System</h3>
+                <ul style="padding-left: 30px; margin-bottom: 20px;">
+                    <li>Create public registration form</li>
+                    <li>Build registration controller</li>
+                    <li>Add email notifications</li>
+                    <li>Create success/confirmation pages</li>
+                </ul>
+                
+                <h3 style="background: #43e97b; color: white; padding: 10px 15px; border-radius: 5px; margin-bottom: 15px;">Phase 5: Dynamic Branding</h3>
+                <ul style="padding-left: 30px; margin-bottom: 20px;">
+                    <li>Update AdminPanelProvider for dynamic branding</li>
+                    <li>Implement logo loading from facility</li>
+                    <li>Apply custom color schemes</li>
+                    <li>Test branding across facilities</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Security & Isolation -->
+        <div class="section">
+            <h2><span class="icon">🔒</span> Security & Data Isolation</h2>
+            <div style="background: #fff3cd; padding: 20px; border-radius: 10px; border-left: 4px solid #ffc107; margin-top: 15px;">
+                <h3 style="color: #856404; margin-bottom: 15px;">Data Isolation Mechanisms</h3>
+                <ul style="padding-left: 30px;">
+                    <li><strong>Global Scopes:</strong> Automatically filter all queries by facility_id</li>
+                    <li><strong>Middleware Protection:</strong> Prevent cross-facility access at request level</li>
+                    <li><strong>Relationship Scoping:</strong> Ensure related data respects facility boundaries</li>
+                    <li><strong>Access Control:</strong> Super admins can only manage registrations, not access facility data</li>
+                    <li><strong>Subdomain Validation:</strong> Verify subdomain matches user's facility</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Legend -->
+        <div class="legend">
+            <h3 style="margin-bottom: 15px;">Legend</h3>
+            <div class="legend-items">
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #667eea;"></div>
+                    <span>Primary System Components</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #764ba2;"></div>
+                    <span>Super Admin Functions</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #f093fb;"></div>
+                    <span>Facility-Level Features</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #4facfe;"></div>
+                    <span>Data Layer</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 2px solid #ddd; color: #666;">
+            <p><strong>Multi-Tenant SaaS Platform</strong> | Adult Family Care Management System</p>
+            <p style="margin-top: 5px; font-size: 0.9em;">Implementation Plan v1.0</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -43,6 +43,7 @@ class User extends Authenticatable implements FilamentUser
         'supervisor_name',
         'provider_name',
         'role',
+        'facility_id',
         'assigned_branch_id',
         'is_active',
         'hire_date',
@@ -89,8 +90,29 @@ class User extends Authenticatable implements FilamentUser
      */
     public function canAccessPanel(Panel $panel): bool
     {
-        // Only allow users with view_admin_panel permission
-        return $this->is_active && $this->hasPermission('view_admin_panel');
+        // Super admins can always access
+        if ($this->role === 'super_admin') {
+            return $this->is_active;
+        }
+
+        // Other users need permission and must belong to a facility
+        return $this->is_active 
+            && $this->hasPermission('view_admin_panel')
+            && $this->facility_id !== null;
+    }
+
+    /**
+     * Get the current facility context for this user
+     */
+    public function getCurrentFacility(): ?Facility
+    {
+        if ($this->role === 'super_admin') {
+            // Super admins can access any facility via context
+            // This will be set by middleware
+            return null;
+        }
+
+        return $this->facility;
     }
 
     /**
@@ -130,6 +152,11 @@ class User extends Authenticatable implements FilamentUser
     public function assignedBranch()
     {
         return $this->belongsTo(Branch::class, 'assigned_branch_id');
+    }
+
+    public function facility()
+    {
+        return $this->belongsTo(Facility::class);
     }
 
     public function assignments()

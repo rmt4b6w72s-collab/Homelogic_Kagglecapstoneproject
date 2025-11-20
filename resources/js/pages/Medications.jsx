@@ -312,8 +312,8 @@ export default function Medications() {
                         title: `${residentName} - ${medication.name || medication.drug?.name || 'Medication'}`,
                         start: eventStart,
                         end: eventEnd,
-                        color: medication.is_active ? '#25603E' : '#9ca3af',
-                        borderColor: medication.is_active ? '#25603E' : '#9ca3af',
+                        color: medication.is_active ? 'var(--theme-primary)' : '#9ca3af',
+                        borderColor: medication.is_active ? 'var(--theme-primary)' : '#9ca3af',
                         textColor: '#ffffff',
                         resource: medication,
                         time: time,
@@ -450,7 +450,7 @@ export default function Medications() {
                                             navigate('/medication-history');
                                         }
                                     }}
-                                    className="mt-2 text-xs text-[#25603E] hover:underline"
+                                    className="mt-2 text-xs text-[var(--theme-primary)] hover:underline"
                                 >
                                     Medication History
                                 </button>
@@ -496,7 +496,7 @@ export default function Medications() {
                                         setEditing(medication);
                                         setShowForm(true);
                                     }}
-                                    className="px-3 py-1.5 text-sm text-[#25603E] border border-[#25603E] rounded-lg hover:bg-[#25603E] hover:text-white transition-colors flex items-center gap-1.5"
+                                    className="px-3 py-1.5 text-sm text-[var(--theme-primary)] border border-[var(--theme-primary)] rounded-lg hover:bg-[var(--theme-primary)] hover:text-[var(--theme-text-on-primary)] transition-colors flex items-center gap-1.5"
                                 >
                                     <Edit className="w-4 h-4" />
                                     <span>Edit</span>
@@ -572,7 +572,7 @@ export default function Medications() {
     if (isCaregiver) {
         return (
             <div className="text-center py-12">
-                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#25603E]"></div>
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--theme-primary)]"></div>
                 <p className="mt-4 text-gray-600">Redirecting...</p>
             </div>
         );
@@ -589,7 +589,7 @@ export default function Medications() {
                     {!isCaregiver && (
                         <button
                             onClick={() => { setEditing(null); setShowForm(true); }}
-                            className="w-full sm:w-auto px-4 py-2 bg-[#25603E] text-white rounded-lg hover:bg-[#1B402D] transition-colors flex items-center justify-center space-x-2 text-sm md:text-base"
+                            className="w-full sm:w-auto px-4 py-2 bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] rounded-lg hover:bg-[var(--theme-primary-hover)] transition-colors flex items-center justify-center space-x-2 text-sm md:text-base"
                         >
                             <Plus className="w-4 h-4" />
                             <span>Add Medication</span>
@@ -605,7 +605,7 @@ export default function Medications() {
                             placeholder="Search by medication name, resident..."
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                         />
                     </div>
                     <div>
@@ -614,7 +614,7 @@ export default function Medications() {
                             onClick={() => setActiveOnly(!activeOnly)}
                             className={`w-full px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                                 activeOnly
-                                    ? 'bg-[#25603E] text-white'
+                                    ? 'bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)]'
                                     : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
                             }`}
                         >
@@ -626,7 +626,7 @@ export default function Medications() {
                         <select
                             value={residentFilter}
                             onChange={(e) => setResidentFilter(e.target.value)}
-                            className="w-full px-4 py-2 rounded-lg text-sm border border-gray-300 focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                            className="w-full px-4 py-2 rounded-lg text-sm border border-gray-300 focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                         >
                             <option value="">All</option>
                             {residentsData?.data?.map(r => (
@@ -639,7 +639,7 @@ export default function Medications() {
                         <select
                             value={branchFilter}
                             onChange={(e) => setBranchFilter(e.target.value)}
-                            className="w-full px-4 py-2 rounded-lg text-sm border border-gray-300 focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                            className="w-full px-4 py-2 rounded-lg text-sm border border-gray-300 focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                         >
                             <option value="">All</option>
                             {branchesData?.data?.map(b => (
@@ -652,7 +652,7 @@ export default function Medications() {
 
             {isLoading ? (
                 <div className="text-center py-12">
-                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#25603E]"></div>
+                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--theme-primary)]"></div>
                     <p className="mt-4 text-gray-600">Loading medications...</p>
                 </div>
             ) : (
@@ -666,7 +666,7 @@ export default function Medications() {
                                         onClick={() => setViewMode('list')}
                                         className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
                                             viewMode === 'list'
-                                                ? 'bg-[#25603E] text-white'
+                                                ? 'bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)]'
                                                 : 'text-gray-700 hover:bg-gray-50'
                                         }`}
                                     >
@@ -677,7 +677,7 @@ export default function Medications() {
                                         onClick={() => setViewMode('calendar')}
                                         className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
                                             viewMode === 'calendar'
-                                                ? 'bg-[#25603E] text-white'
+                                                ? 'bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)]'
                                                 : 'text-gray-700 hover:bg-gray-50'
                                         }`}
                                     >
@@ -815,7 +815,7 @@ export default function Medications() {
                                 a.click();
                                 URL.revokeObjectURL(url);
                             }}
-                            className="w-full sm:w-auto px-4 py-2 bg-[#25603E] text-white rounded-lg hover:bg-[#1B402D] transition-colors flex items-center justify-center space-x-2 text-sm md:text-base"
+                            className="w-full sm:w-auto px-4 py-2 bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] rounded-lg hover:bg-[var(--theme-primary-hover)] transition-colors flex items-center justify-center space-x-2 text-sm md:text-base"
                         >
                             <Download className="w-4 h-4" />
                             <span>Export Medications Report by Resident</span>
@@ -961,7 +961,7 @@ function MedicationAdministrationForm({ medication, onClose, onSuccess }) {
                                 onChange={(e) => setFormData({...formData, administered_at: e.target.value})}
                                 required
                                 max={getPacificDateTimeLocalString()}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                             />
                             {errors.administered_at && <p className="text-xs text-red-600 mt-1">{errors.administered_at[0]}</p>}
                         </div>
@@ -976,7 +976,7 @@ function MedicationAdministrationForm({ medication, onClose, onSuccess }) {
                                         key={s}
                                         type="button"
                                         onClick={() => setFormData({ ...formData, status: s })}
-                                        className={`px-3 py-1 rounded-lg text-xs border ${formData.status===s ? 'bg-[#25603E] text-white border-[#25603E]' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'}`}
+                                        className={`px-3 py-1 rounded-lg text-xs border ${formData.status===s ? 'bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] border-[var(--theme-primary)]' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'}`}
                                     >
                                         {s.charAt(0).toUpperCase()+s.slice(1)}
                                     </button>
@@ -986,7 +986,7 @@ function MedicationAdministrationForm({ medication, onClose, onSuccess }) {
                                 value={formData.status}
                                 onChange={(e) => setFormData({...formData, status: e.target.value})}
                                 required
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                             >
                                 <option value="completed">Completed</option>
                                 <option value="missed">Missed</option>
@@ -1004,7 +1004,7 @@ function MedicationAdministrationForm({ medication, onClose, onSuccess }) {
                                 value={formData.dosage_given}
                                 onChange={(e) => setFormData({...formData, dosage_given: e.target.value})}
                                 placeholder="e.g., 1 tablet, 5ml"
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                             />
                             {errors.dosage_given && <p className="text-xs text-red-600 mt-1">{errors.dosage_given[0]}</p>}
                         </div>
@@ -1017,7 +1017,7 @@ function MedicationAdministrationForm({ medication, onClose, onSuccess }) {
                                 value={formData.notes}
                                 onChange={(e) => setFormData({...formData, notes: e.target.value})}
                                 rows={3}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                 placeholder="Additional notes about the administration..."
                             />
                             {errors.notes && <p className="text-xs text-red-600 mt-1">{errors.notes[0]}</p>}
@@ -1034,7 +1034,7 @@ function MedicationAdministrationForm({ medication, onClose, onSuccess }) {
                             <button
                                 type="submit"
                                 disabled={isSubmitting}
-                                className="px-4 py-2 bg-[#25603E] text-white rounded-lg hover:bg-[#1B402D] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="px-4 py-2 bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] rounded-lg hover:bg-[var(--theme-primary-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {isSubmitting ? 'Recording...' : 'Record Administration'}
                             </button>
@@ -1233,7 +1233,7 @@ function MedicationForm({ record, residents, branches, currentUser, isCaregiver,
                                     }}
                                     required
                                     disabled={isCaregiver && currentUser?.assigned_branch_id}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                                 >
                                     <option value="">Select Branch</option>
                                     {filteredBranches.map(b => (
@@ -1250,7 +1250,7 @@ function MedicationForm({ record, residents, branches, currentUser, isCaregiver,
                                     onChange={(e) => setFormData({ ...formData, resident_id: e.target.value })}
                                     required
                                     disabled={!formData.branch_id}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                                 >
                                     <option value="">
                                         {formData.branch_id ? 'Select Resident' : 'Select Branch First'}
@@ -1277,7 +1277,7 @@ function MedicationForm({ record, residents, branches, currentUser, isCaregiver,
                                         });
                                     }}
                                     required
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                 >
                                     <option value="">Select Drug</option>
                                     {uniqueDrugs.map(d => (
@@ -1295,7 +1295,7 @@ function MedicationForm({ record, residents, branches, currentUser, isCaregiver,
                                         type="text"
                                         value={formData.name}
                                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                         placeholder="Will use drug name if not provided"
                                     />
                                 </div>
@@ -1307,7 +1307,7 @@ function MedicationForm({ record, residents, branches, currentUser, isCaregiver,
                                     type="text"
                                     value={formData.quantity}
                                     onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                     placeholder="e.g., 30 tablets"
                                 />
                                 {errors.quantity && <p className="text-xs text-red-600 mt-1">{errors.quantity[0]}</p>}
@@ -1319,7 +1319,7 @@ function MedicationForm({ record, residents, branches, currentUser, isCaregiver,
                                     value={formData.instructions}
                                     onChange={(e) => setFormData({ ...formData, instructions: e.target.value })}
                                     required
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                 >
                                     <option value="">Choose dosage instructions</option>
                                     <option value="t.i.d">t.i.d — Thrice daily</option>
@@ -1351,7 +1351,7 @@ function MedicationForm({ record, residents, branches, currentUser, isCaregiver,
                                     value={formData.start_date}
                                     onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
                                     required
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                 />
                                 {errors.start_date && <p className="text-xs text-red-600 mt-1">{errors.start_date[0]}</p>}
                             </div>
@@ -1363,7 +1363,7 @@ function MedicationForm({ record, residents, branches, currentUser, isCaregiver,
                                     value={formData.end_date}
                                     onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
                                     min={formData.start_date || ''}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                 />
                                 {errors.end_date && <p className="text-xs text-red-600 mt-1">{errors.end_date[0]}</p>}
                             </div>
@@ -1374,7 +1374,7 @@ function MedicationForm({ record, residents, branches, currentUser, isCaregiver,
                                     type="text"
                                     value={formData.diagnosis}
                                     onChange={(e) => setFormData({ ...formData, diagnosis: e.target.value })}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                     placeholder="Enter diagnosis or condition for this medication"
                                 />
                                 {errors.diagnosis && <p className="text-xs text-red-600 mt-1">{errors.diagnosis[0]}</p>}
@@ -1409,7 +1409,7 @@ function MedicationForm({ record, residents, branches, currentUser, isCaregiver,
 
                             <div className="space-x-3">
                                 <button type="button" onClick={onClose} className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">Cancel</button>
-                                <button type="submit" disabled={isSubmitting} className="px-4 py-2 bg-[#25603E] text-white rounded-lg hover:bg-[#1B402D] transition-colors disabled:opacity-50">
+                                <button type="submit" disabled={isSubmitting} className="px-4 py-2 bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] rounded-lg hover:bg-[var(--theme-primary-hover)] transition-colors disabled:opacity-50">
                                     {isSubmitting ? 'Saving...' : (record ? 'Update Medication' : 'Create Medication')}
                                 </button>
                             </div>
@@ -1641,7 +1641,7 @@ function MedicationTimeBadges({ medication }) {
                         case 'refused':
                             return 'bg-yellow-500 text-white';
                         default:
-                            return 'bg-green-100 text-[#25603E]';
+                            return 'bg-green-100 text-[var(--theme-primary)]';
                     }
                 };
 
@@ -2001,7 +2001,7 @@ function QuickAdminister({ medication, onSuccess }) {
                         openDosageModal(false);
                     }} 
                     disabled={isButtonDisabled} 
-                    className="px-2 py-1 bg-[#25603E] text-white rounded text-xs hover:bg-[#1B402D] disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-2 py-1 bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] rounded text-xs hover:bg-[var(--theme-primary-hover)] disabled:opacity-50 disabled:cursor-not-allowed"
                     title={
                         isDailyLimitReached 
                             ? 'Daily administration limit reached for this medication'
@@ -2078,7 +2078,7 @@ function QuickAdminister({ medication, onSuccess }) {
                                         }
                                     }}
                                     placeholder="e.g., 1 tablet, 5 ml"
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                     disabled={submitting}
                                 />
                                 {(dosageValidationError || error) && (
@@ -2096,7 +2096,7 @@ function QuickAdminister({ medication, onSuccess }) {
                                     onChange={(e) => setDosageNotes(e.target.value)}
                                     rows={3}
                                     placeholder="Enter any additional notes..."
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                     disabled={submitting}
                                 />
                             </div>
@@ -2309,7 +2309,7 @@ function QuickAdminister({ medication, onSuccess }) {
                                         setSubmitting(false);
                                     }
                                 }}
-                                className="px-4 py-2 text-sm bg-[#25603E] text-white rounded-lg hover:bg-[#1B402D] disabled:cursor-not-allowed disabled:opacity-50"
+                                className="px-4 py-2 text-sm bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] rounded-lg hover:bg-[var(--theme-primary-hover)] disabled:cursor-not-allowed disabled:opacity-50"
                                 disabled={submitting}
                             >
                                 {submitting ? 'Saving...' : 'Confirm'}
@@ -2384,7 +2384,7 @@ function TimePicker({ value, onChange, className = '' }) {
             <button
                 type="button"
                 onClick={() => setIsOpen(!isOpen)}
-                className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent bg-white text-left flex items-center justify-between text-sm ${className}`}
+                className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent bg-white text-left flex items-center justify-between text-sm ${className}`}
             >
                 <span className={`${value ? 'text-gray-900' : 'text-gray-400'} font-medium`}>
                     {displayValue}
@@ -2407,7 +2407,7 @@ function TimePicker({ value, onChange, className = '' }) {
                                     const newHours = parseInt(e.target.value);
                                     handleTimeChange(newHours, minutes, period);
                                 }}
-                                className="px-2.5 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent text-center text-base font-medium"
+                                className="px-2.5 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent text-center text-base font-medium"
                                 onClick={(e) => e.stopPropagation()}
                             >
                                 {hourOptions.map(h => (
@@ -2424,7 +2424,7 @@ function TimePicker({ value, onChange, className = '' }) {
                                     const newMinutes = parseInt(e.target.value);
                                     handleTimeChange(hours, newMinutes, period);
                                 }}
-                                className="px-2.5 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent text-center text-base font-medium"
+                                className="px-2.5 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent text-center text-base font-medium"
                                 onClick={(e) => e.stopPropagation()}
                             >
                                 {minuteOptions.map(m => (
@@ -2439,7 +2439,7 @@ function TimePicker({ value, onChange, className = '' }) {
                                     const newPeriod = e.target.value;
                                     handleTimeChange(hours, minutes, newPeriod);
                                 }}
-                                className="px-2.5 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent text-center text-base font-medium"
+                                className="px-2.5 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent text-center text-base font-medium"
                                 onClick={(e) => e.stopPropagation()}
                             >
                                 <option value="AM">AM</option>

@@ -143,7 +143,7 @@ export default function MedicationHistory() {
                             <select
                                 value={residentId}
                                 onChange={(event) => setResidentId(event.target.value)}
-                                className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent appearance-none bg-white"
+                                className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent appearance-none bg-white"
                             >
                                 <option value="">All residents</option>
                                 {residents.map((resident) => (
@@ -162,7 +162,7 @@ export default function MedicationHistory() {
                             <select
                                 value={status}
                                 onChange={(event) => setStatus(event.target.value)}
-                                className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent appearance-none bg-white"
+                                className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent appearance-none bg-white"
                             >
                                 {statusOptions.map((option) => (
                                     <option key={option.value} value={option.value}>
@@ -181,7 +181,7 @@ export default function MedicationHistory() {
                                 type="date"
                                 value={dateFrom}
                                 onChange={(event) => setDateFrom(event.target.value)}
-                                className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                             />
                         </div>
                     </div>
@@ -194,7 +194,7 @@ export default function MedicationHistory() {
                                 type="date"
                                 value={dateTo}
                                 onChange={(event) => setDateTo(event.target.value)}
-                                className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#25603E] focus:border-transparent"
+                                className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                             />
                         </div>
                     </div>
@@ -204,7 +204,7 @@ export default function MedicationHistory() {
             <div className="bg-white rounded-lg shadow overflow-hidden">
                 {isLoading ? (
                     <div className="py-12 text-center">
-                        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#25603E]"></div>
+                        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--theme-primary)]"></div>
                         <p className="mt-4 text-gray-600">Loading medication history…</p>
                     </div>
                 ) : error ? (

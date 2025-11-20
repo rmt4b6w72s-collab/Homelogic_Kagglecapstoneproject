@@ -8,7 +8,7 @@ use App\Models\AssessmentQuestion;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 
-class AssessmentQuestionController extends Controller
+class AssessmentQuestionController extends BaseApiController
 {
     public function update(Request $request, Assessment $assessment, AssessmentQuestion $question): JsonResponse
     {

@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import App from './App';
 import ErrorBoundary from './components/ErrorBoundary';
 import { ToastProvider } from './contexts/ToastContext';
+import ThemeWrapper from './components/ThemeWrapper';
 import '../css/app.css';
 
 // Suppress Cloudflare cookie warnings - after imports
@@ -129,11 +130,13 @@ function initApp() {
                     <React.StrictMode>
                         <ErrorBoundary>
                             <QueryClientProvider client={queryClient}>
-                                <ToastProvider>
-                                    <BrowserRouter basename="/app">
-                                        <App />
-                                    </BrowserRouter>
-                                </ToastProvider>
+                                <ThemeWrapper>
+                                    <ToastProvider>
+                                        <BrowserRouter basename="/app">
+                                            <App />
+                                        </BrowserRouter>
+                                    </ToastProvider>
+                                </ThemeWrapper>
                             </QueryClientProvider>
                         </ErrorBoundary>
                     </React.StrictMode>

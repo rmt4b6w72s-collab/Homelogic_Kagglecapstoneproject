@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Schema;
 
-class SleepRecordController extends Controller
+class SleepRecordController extends BaseApiController
 {
     public function index(Request $request): JsonResponse
     {

@@ -8,7 +8,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
-class EmployeeDocumentController extends Controller
+class EmployeeDocumentController extends BaseApiController
 {
     public function index(Request $request): JsonResponse
     {

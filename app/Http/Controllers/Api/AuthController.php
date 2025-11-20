@@ -120,6 +120,7 @@ class AuthController extends Controller
         // reference `user.assigned_branch` without needing extra API calls.
         $user->loadMissing([
             'assignedBranch.facility',
+            'facility',
         ]);
 
         $appTimezone = config('app.timezone', 'UTC');
@@ -130,6 +131,22 @@ class AuthController extends Controller
         $payload['app_timezone_abbr'] = $now->format('T');
         $payload['app_timezone_offset'] = $now->format('P');
         $payload['app_current_time'] = $now->toIso8601String();
+        
+        // Include facility branding if available
+        if ($user->facility) {
+            $payload['facility_branding'] = $user->facility->branding;
+        } elseif ($user->assignedBranch && $user->assignedBranch->facility) {
+            $payload['facility_branding'] = $user->assignedBranch->facility->branding;
+        } else {
+            // Default branding
+            $payload['facility_branding'] = [
+                'name' => 'Evergreen Oasis Care Home',
+                'logo' => asset('images/logo.jpeg'),
+                'primary_color' => '#25603E',
+                'secondary_color' => '#8B4513',
+                'accent_color' => '#F5F5DC',
+            ];
+        }
 
         return $payload;
     }
