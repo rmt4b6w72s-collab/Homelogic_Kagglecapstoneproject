@@ -74,3 +74,4 @@ export function filterNavigationByPermissionAccess(navigationItems, userPermissi
     .filter(item => item !== null);
 }
 
+
