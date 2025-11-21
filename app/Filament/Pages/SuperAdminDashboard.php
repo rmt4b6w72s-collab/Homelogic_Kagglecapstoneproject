@@ -5,6 +5,11 @@ namespace App\Filament\Pages;
 use Filament\Pages\Dashboard as BaseDashboard;
 use Illuminate\Support\Facades\Auth;
 use App\Filament\Widgets\SuperAdminStatsWidget;
+use App\Filament\Widgets\SuperAdminHeroWidget;
+use App\Filament\Widgets\SuperAdminSystemOverviewWidget;
+use App\Filament\Widgets\SuperAdminFacilitiesWidget;
+use App\Filament\Widgets\SuperAdminRecentRegistrationsWidget;
+use App\Filament\Widgets\SuperAdminQuickActionsWidget;
 
 class SuperAdminDashboard extends BaseDashboard
 {
@@ -29,7 +34,12 @@ class SuperAdminDashboard extends BaseDashboard
     public function getWidgets(): array
     {
         return [
+            SuperAdminHeroWidget::class,
             SuperAdminStatsWidget::class,
+            SuperAdminSystemOverviewWidget::class,
+            SuperAdminQuickActionsWidget::class,
+            SuperAdminFacilitiesWidget::class,
+            SuperAdminRecentRegistrationsWidget::class,
         ];
     }
 

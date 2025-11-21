@@ -5,51 +5,62 @@ namespace App\Filament\Widgets;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 use App\Models\Facility;
-use App\Models\FacilityRegistration;
-use App\Models\User;
 use App\Models\Branch;
+use App\Models\Resident;
+use App\Models\User;
+use App\Models\Appointment;
 
-class SuperAdminStatsWidget extends BaseWidget
+class SuperAdminSystemOverviewWidget extends BaseWidget
 {
-    protected static ?int $sort = 1;
+    protected static ?int $sort = 2;
 
     protected function getStats(): array
     {
         $totalFacilities = Facility::count();
-        $activeFacilities = Facility::where('is_active', true)->count();
-        $pendingRegistrations = FacilityRegistration::where('status', 'pending')->count();
-        $totalUsers = User::where('role', '!=', 'super_admin')->count();
-        $activeUsers = User::where('role', '!=', 'super_admin')->where('is_active', true)->count();
         $totalBranches = Branch::count();
-        $activeBranches = Branch::where('is_active', true)->count();
+        $totalResidents = Resident::count();
+        $totalUsers = User::where('role', '!=', 'super_admin')->count();
+        $activeResidents = Resident::where('is_active', true)->count();
+        $activeUsers = User::where('role', '!=', 'super_admin')->where('is_active', true)->count();
+        $todayAppointments = Appointment::whereDate('appointment_date', today())->count();
+        $upcomingAppointments = Appointment::whereDate('appointment_date', '>=', today())
+            ->whereNotIn('status', ['cancelled', 'completed'])
+            ->count();
 
         return [
             Stat::make('Total Facilities', $totalFacilities)
-                ->description($activeFacilities . ' active')
+                ->description('Across all organizations')
                 ->descriptionIcon('heroicon-o-building-office')
                 ->color('primary')
                 ->chart($this->getFacilityChartData())
                 ->url(route('filament.admin.resources.facilities.index')),
             
-            Stat::make('Pending Registrations', $pendingRegistrations)
-                ->description('Awaiting approval')
-                ->descriptionIcon('heroicon-o-clock')
-                ->color('warning')
-                ->chart($this->getRegistrationChartData())
-                ->url(route('filament.admin.resources.facility-registrations.index', ['tableFilters[status][value]' => 'pending'])),
-            
             Stat::make('Total Branches', $totalBranches)
-                ->description($activeBranches . ' active')
+                ->description('Care locations')
                 ->descriptionIcon('heroicon-o-map-pin')
                 ->color('info')
                 ->chart($this->getBranchChartData()),
             
-            Stat::make('System Users', $totalUsers)
-                ->description($activeUsers . ' active')
+            Stat::make('Total Residents', $totalResidents)
+                ->description($activeResidents . ' active')
                 ->descriptionIcon('heroicon-o-users')
                 ->color('success')
+                ->chart($this->getResidentChartData())
+                ->url(route('filament.admin.resources.residents.index')),
+            
+            Stat::make('System Users', $totalUsers)
+                ->description($activeUsers . ' active')
+                ->descriptionIcon('heroicon-o-user-group')
+                ->color('warning')
                 ->chart($this->getUserChartData())
                 ->url(route('filament.admin.resources.users.index')),
+            
+            Stat::make('Today\'s Appointments', $todayAppointments)
+                ->description($upcomingAppointments . ' upcoming')
+                ->descriptionIcon('heroicon-o-calendar')
+                ->color('danger')
+                ->chart($this->getAppointmentChartData())
+                ->url(route('filament.admin.resources.appointments.index')),
         ];
     }
 
@@ -57,21 +68,6 @@ class SuperAdminStatsWidget extends BaseWidget
     {
         try {
             return Facility::selectRaw('DATE(created_at) as date, COUNT(*) as count')
-                ->where('created_at', '>=', now()->subDays(7))
-                ->groupBy('date')
-                ->orderBy('date')
-                ->pluck('count')
-                ->toArray();
-        } catch (\Exception $e) {
-            return [0, 0, 0, 0, 0, 0, 0];
-        }
-    }
-
-    private function getRegistrationChartData(): array
-    {
-        try {
-            return FacilityRegistration::selectRaw('DATE(created_at) as date, COUNT(*) as count')
-                ->where('status', 'pending')
                 ->where('created_at', '>=', now()->subDays(7))
                 ->groupBy('date')
                 ->orderBy('date')
@@ -96,6 +92,20 @@ class SuperAdminStatsWidget extends BaseWidget
         }
     }
 
+    private function getResidentChartData(): array
+    {
+        try {
+            return Resident::selectRaw('DATE(created_at) as date, COUNT(*) as count')
+                ->where('created_at', '>=', now()->subDays(7))
+                ->groupBy('date')
+                ->orderBy('date')
+                ->pluck('count')
+                ->toArray();
+        } catch (\Exception $e) {
+            return [0, 0, 0, 0, 0, 0, 0];
+        }
+    }
+
     private function getUserChartData(): array
     {
         try {
@@ -110,4 +120,19 @@ class SuperAdminStatsWidget extends BaseWidget
             return [0, 0, 0, 0, 0, 0, 0];
         }
     }
+
+    private function getAppointmentChartData(): array
+    {
+        try {
+            return Appointment::selectRaw('DATE(appointment_date) as date, COUNT(*) as count')
+                ->whereBetween('appointment_date', [now()->startOfWeek(), now()->endOfWeek()])
+                ->groupBy('date')
+                ->orderBy('date')
+                ->pluck('count')
+                ->toArray();
+        } catch (\Exception $e) {
+            return [0, 0, 0, 0, 0, 0, 0];
+        }
+    }
 }
+

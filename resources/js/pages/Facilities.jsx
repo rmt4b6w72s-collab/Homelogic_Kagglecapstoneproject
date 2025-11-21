@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../services/api';
 import { Building2, Plus, Search, Edit, Trash2, MapPin, Phone, Mail, Image as ImageIcon, Palette, Users } from 'lucide-react';
@@ -11,7 +12,7 @@ export default function Facilities() {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null);
   
-  // Check if user is super admin
+  // Check if user is super admin - MUST be called before any conditional returns
   const { data: currentUser, isLoading: userLoading } = useQuery({
     queryKey: ['current-user'],
     queryFn: async () => {
@@ -24,6 +25,22 @@ export default function Facilities() {
     },
   });
   
+  // Facilities query - MUST be called before any conditional returns (hooks rule)
+  const { data, isLoading } = useQuery({
+    queryKey: ['facilities', search],
+    queryFn: async () => {
+      const res = await api.get('/facilities', { params: { search, per_page: 20 } });
+      return res.data;
+    },
+    enabled: !userLoading, // Only fetch when user data is loaded
+  });
+
+  // Delete mutation - MUST be called before any conditional returns (hooks rule)
+  const deleteMutation = useMutation({
+    mutationFn: async (id) => api.delete(`/facilities/${id}`),
+    onSuccess: () => queryClient.invalidateQueries(['facilities']),
+  });
+  
   const isSuperAdmin = currentUser?.role === 'super_admin';
   
   // Redirect non-super admins to dashboard
@@ -33,7 +50,7 @@ export default function Facilities() {
     }
   }, [currentUser, isSuperAdmin, userLoading, navigate]);
   
-  // Don't render anything if not super admin
+  // Don't render anything if not super admin (AFTER all hooks are called)
   if (userLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -48,19 +65,6 @@ export default function Facilities() {
   if (!isSuperAdmin) {
     return null; // Will redirect via useEffect
   }
-
-  const { data, isLoading } = useQuery({
-    queryKey: ['facilities', search],
-    queryFn: async () => {
-      const res = await api.get('/facilities', { params: { search, per_page: 20 } });
-      return res.data;
-    },
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: async (id) => api.delete(`/facilities/${id}`),
-    onSuccess: () => queryClient.invalidateQueries(['facilities']),
-  });
 
   return (
     <div>
@@ -199,9 +203,9 @@ function FacilityForm({ record, isSuperAdmin, onClose, onSuccess }) {
     email: record?.email || '',
     subdomain: record?.subdomain || '',
     is_active: record?.is_active ?? true,
-    primary_color: record?.primary_color || '#25603E',
-    secondary_color: record?.secondary_color || '#8B4513',
-    accent_color: record?.accent_color || '#F5F5DC',
+    primary_color: record?.primary_color || '#1E3A5F', // HomeLogic360 dark blue
+    secondary_color: record?.secondary_color || '#86EFAC', // HomeLogic360 light green
+    accent_color: record?.accent_color || '#FFFFFF', // HomeLogic360 white
     logo: null,
     // Owner account fields (only when creating new facility)
     owner_name: '',
