@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../services/api';
-import { 
-  ArrowLeft, Save, Building2, Palette, Settings, Users, Shield, 
+import {
+  ArrowLeft, Save, Building2, Palette, Settings, Users, Shield,
   MapPin, Phone, Mail, Image as ImageIcon, CheckCircle, XCircle,
   Plus, Edit, Trash2, Search, Eye, AlertCircle, X, Calendar,
   Briefcase, Award, Clock, User as UserIcon
@@ -117,11 +117,10 @@ export default function FacilityEdit() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`px-4 py-2 font-medium transition-all duration-200 flex items-center gap-2 whitespace-nowrap ${
-                  activeTab === tab.id
+                className={`px-4 py-2 font-medium transition-all duration-200 flex items-center gap-2 whitespace-nowrap ${activeTab === tab.id
                     ? 'text-[var(--theme-primary)] border-b-2 border-[var(--theme-primary)] font-semibold'
                     : 'text-gray-600 hover:text-[var(--theme-primary)]'
-                }`}
+                  }`}
               >
                 <Icon className="w-4 h-4" />
                 <span>{tab.label}</span>
@@ -397,7 +396,7 @@ function BrandingTab({ facility }) {
         formData.append('subdomain', data.subdomain.trim());
       }
       if (data.provider_code) formData.append('provider_code', data.provider_code);
-      
+
       return api.post(`/facilities/${facility.id}`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
@@ -954,9 +953,10 @@ function PermissionsTab({ facilityId, facilityName }) {
 // User Form Modal Component (simplified version)
 function UserFormModal({ record, facilityId, branches, roles, onClose, onSuccess }) {
   const { showToast } = useToastContext();
-  
+
   const formatDateForInput = (dateString) => {
     if (!dateString) return '';
+    if (typeof dateString !== 'string') return '';
     if (dateString.match(/^\d{4}-\d{2}-\d{2}$/)) return dateString;
     const date = new Date(dateString);
     return date.toISOString().split('T')[0];
@@ -1276,11 +1276,10 @@ function UserProfileModal({ user, onClose, onEdit }) {
                   </div>
                 )}
                 <div className="mt-2">
-                  <span className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${
-                    displayUser.is_active 
-                      ? 'bg-green-500 text-white' 
+                  <span className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${displayUser.is_active
+                      ? 'bg-green-500 text-white'
                       : 'bg-red-500 text-white'
-                  }`}>
+                    }`}>
                     {displayUser.is_active ? 'Active' : 'Inactive'}
                   </span>
                 </div>
@@ -1330,10 +1329,10 @@ function UserProfileModal({ user, onClose, onEdit }) {
                       Date of Birth
                     </p>
                     <p className="font-semibold text-gray-900">
-                      {new Date(displayUser.date_of_birth).toLocaleDateString('en-US', { 
-                        month: 'long', 
-                        day: 'numeric', 
-                        year: 'numeric' 
+                      {new Date(displayUser.date_of_birth).toLocaleDateString('en-US', {
+                        month: 'long',
+                        day: 'numeric',
+                        year: 'numeric'
                       })}
                     </p>
                   </div>
@@ -1407,10 +1406,10 @@ function UserProfileModal({ user, onClose, onEdit }) {
                       Date Employed
                     </p>
                     <p className="font-semibold text-gray-900">
-                      {new Date(displayUser.date_employed).toLocaleDateString('en-US', { 
-                        month: 'long', 
-                        day: 'numeric', 
-                        year: 'numeric' 
+                      {new Date(displayUser.date_employed).toLocaleDateString('en-US', {
+                        month: 'long',
+                        day: 'numeric',
+                        year: 'numeric'
                       })}
                     </p>
                   </div>
@@ -1422,10 +1421,10 @@ function UserProfileModal({ user, onClose, onEdit }) {
                       Hire Date
                     </p>
                     <p className="font-semibold text-gray-900">
-                      {new Date(displayUser.hire_date).toLocaleDateString('en-US', { 
-                        month: 'long', 
-                        day: 'numeric', 
-                        year: 'numeric' 
+                      {new Date(displayUser.hire_date).toLocaleDateString('en-US', {
+                        month: 'long',
+                        day: 'numeric',
+                        year: 'numeric'
                       })}
                     </p>
                   </div>

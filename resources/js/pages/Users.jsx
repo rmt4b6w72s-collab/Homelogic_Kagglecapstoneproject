@@ -92,9 +92,8 @@ export default function UsersPage() {
 
     const renderUserCard = (user) => {
         const isInactive = !isUserActive(user);
-        const cardClass = `bg-white rounded-lg shadow-lg p-6 transition-all duration-200 hover:shadow-xl ${
-            isInactive ? 'border border-red-200 bg-red-50/60 hover:border-red-300' : 'border border-gray-200 hover:border-[var(--theme-primary)]'
-        }`;
+        const cardClass = `bg-white rounded-lg shadow-lg p-6 transition-all duration-200 hover:shadow-xl ${isInactive ? 'border border-red-200 bg-red-50/60 hover:border-red-300' : 'border border-gray-200 hover:border-[var(--theme-primary)]'
+            }`;
 
         return (
             <div key={user.id} className={cardClass}>
@@ -114,9 +113,8 @@ export default function UsersPage() {
                             />
                         ) : null}
                         <div
-                            className={`w-16 h-16 rounded-full bg-gradient-to-br from-[var(--theme-primary)] to-[#4a7a2a] flex items-center justify-center shadow-md ${
-                                user.profile_image_url ? 'hidden' : ''
-                            }`}
+                            className={`w-16 h-16 rounded-full bg-gradient-to-br from-[var(--theme-primary)] to-[#4a7a2a] flex items-center justify-center shadow-md ${user.profile_image_url ? 'hidden' : ''
+                                }`}
                         >
                             <span className="text-white font-bold text-xl">
                                 {user.name?.charAt(0)?.toUpperCase() || 'U'}
@@ -171,9 +169,8 @@ export default function UsersPage() {
                     <div className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded-lg">
                         <span className="text-gray-600 font-medium">Status:</span>
                         <span
-                            className={`font-semibold px-3 py-1 rounded-full text-xs ${
-                                user.is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                            }`}
+                            className={`font-semibold px-3 py-1 rounded-full text-xs ${user.is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                                }`}
                         >
                             {user.is_active ? 'Active' : 'Inactive'}
                         </span>
@@ -365,10 +362,11 @@ export default function UsersPage() {
 // User Form Component
 function UserForm({ record, branches, roles, onClose, onSuccess }) {
     const queryClient = useQueryClient();
-    
+
     // Format date helper function
     const formatDateForInput = (dateString) => {
         if (!dateString) return '';
+        if (typeof dateString !== 'string') return '';
         // If it's already in YYYY-MM-DD format, return it
         if (dateString.match(/^\d{4}-\d{2}-\d{2}$/)) return dateString;
         // Otherwise parse and format it
@@ -421,10 +419,10 @@ function UserForm({ record, branches, roles, onClose, onSuccess }) {
             console.log('UserForm record:', record);
             console.log('Role from record.role:', record.role);
             console.log('Role from record.roles:', record.roles);
-            
+
             const roleValue = getRoleValue(record);
             console.log('Setting role to:', roleValue);
-            
+
             // Use functional update to ensure state is set correctly
             setFormData(prevFormData => {
                 const newFormData = {
@@ -484,8 +482,8 @@ function UserForm({ record, branches, roles, onClose, onSuccess }) {
                 setProfileImagePreview(record.profile_image_url);
             } else if (record.profile_image) {
                 // Fallback: If profile_image_url is not available, construct the URL
-                const imageUrl = record.profile_image.startsWith('http') 
-                    ? record.profile_image 
+                const imageUrl = record.profile_image.startsWith('http')
+                    ? record.profile_image
                     : `/storage/${record.profile_image}`;
                 setProfileImagePreview(imageUrl);
             } else {
@@ -506,30 +504,30 @@ function UserForm({ record, branches, roles, onClose, onSuccess }) {
     const handleFileChange = (e) => {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
-            
+
             // Validate file type
             if (!file.type.startsWith('image/')) {
                 setErrors({ profile_image: ['Please select an image file'] });
                 return;
             }
-            
+
             // Validate file size (5MB max)
             if (file.size > 5 * 1024 * 1024) {
                 setErrors({ profile_image: ['Image size must be less than 5MB'] });
                 return;
             }
-            
+
             setProfileImage(file);
             // Clear the removed flag since user selected a new image
             setImageRemoved(false);
-            
+
             // Create preview
             const reader = new FileReader();
             reader.onloadend = () => {
                 setProfileImagePreview(reader.result);
             };
             reader.readAsDataURL(file);
-            
+
             // Clear any previous errors
             if (errors.profile_image) {
                 setErrors({ ...errors, profile_image: null });
@@ -571,11 +569,11 @@ function UserForm({ record, branches, roles, onClose, onSuccess }) {
             const name = nameParts.join(' ') || formData.email;
 
             let response;
-            
+
             // Use FormData if there's an image or image removal, otherwise use JSON (like residents)
             if (profileImage || (imageRemoved && record)) {
                 const formDataToSend = new FormData();
-                
+
                 // Add all form fields
                 formDataToSend.append('name', name);
                 formDataToSend.append('first_name', formData.first_name);
@@ -597,12 +595,12 @@ function UserForm({ record, branches, roles, onClose, onSuccess }) {
                 }
                 formDataToSend.append('is_active', formData.is_active ? '1' : '0');
                 formDataToSend.append('notes', formData.notes || '');
-                
+
                 // Add password if provided
                 if (formData.password) {
                     formDataToSend.append('password', formData.password);
                 }
-                
+
                 // Handle profile image
                 if (profileImage) {
                     formDataToSend.append('profile_image', profileImage);
@@ -662,7 +660,7 @@ function UserForm({ record, branches, roles, onClose, onSuccess }) {
                     is_active: formData.is_active,
                     notes: formData.notes || null,
                 };
-                
+
                 // Add password if provided
                 if (formData.password) {
                     payload.password = formData.password;
@@ -682,18 +680,18 @@ function UserForm({ record, branches, roles, onClose, onSuccess }) {
                     console.log('User created successfully:', response.data);
                 }
             }
-            
+
             console.log('Profile image URL:', response.data?.profile_image_url);
-            
+
             // Invalidate queries to refresh the user list BEFORE showing alert
             await queryClient.invalidateQueries({ queryKey: ['users'] });
-            
+
             // Wait a bit for the invalidation to trigger refetch
             await new Promise(resolve => setTimeout(resolve, 200));
-            
+
             // Show success message
             alert(record ? 'User updated successfully!' : 'User created successfully!');
-            
+
             // Close form and refresh
             onSuccess();
         } catch (error) {
@@ -740,7 +738,7 @@ function UserForm({ record, branches, roles, onClose, onSuccess }) {
                             </div>
                         </div>
                     )}
-                    
+
                     {Object.keys(errors).filter(key => key !== 'general').length > 0 && (
                         <div className="mb-4 p-4 bg-yellow-50 border-2 border-yellow-300 rounded-lg">
                             <div className="flex items-start">
@@ -769,7 +767,7 @@ function UserForm({ record, branches, roles, onClose, onSuccess }) {
                                     <input
                                         type="email"
                                         value={formData.email}
-                                        onChange={(e) => setFormData({...formData, email: e.target.value})}
+                                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                                         required
                                         placeholder="staff@serenityafh.com"
                                         className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
@@ -832,7 +830,7 @@ function UserForm({ record, branches, roles, onClose, onSuccess }) {
                                     <input
                                         type="text"
                                         value={formData.first_name}
-                                        onChange={(e) => setFormData({...formData, first_name: e.target.value})}
+                                        onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
                                         required
                                         placeholder="Enter first name"
                                         maxLength={255}
@@ -848,7 +846,7 @@ function UserForm({ record, branches, roles, onClose, onSuccess }) {
                                     <input
                                         type="text"
                                         value={formData.middle_names}
-                                        onChange={(e) => setFormData({...formData, middle_names: e.target.value})}
+                                        onChange={(e) => setFormData({ ...formData, middle_names: e.target.value })}
                                         placeholder="Enter middle names (optional)"
                                         maxLength={255}
                                         className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
@@ -862,7 +860,7 @@ function UserForm({ record, branches, roles, onClose, onSuccess }) {
                                     <input
                                         type="text"
                                         value={formData.last_name}
-                                        onChange={(e) => setFormData({...formData, last_name: e.target.value})}
+                                        onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
                                         required
                                         placeholder="Enter last name"
                                         maxLength={255}
@@ -878,7 +876,7 @@ function UserForm({ record, branches, roles, onClose, onSuccess }) {
                                     <input
                                         type="tel"
                                         value={formData.phone_number}
-                                        onChange={(e) => setFormData({...formData, phone_number: e.target.value})}
+                                        onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
                                         required
                                         placeholder="+1 (425) 555-0123"
                                         className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
@@ -894,7 +892,7 @@ function UserForm({ record, branches, roles, onClose, onSuccess }) {
                                     <input
                                         type="date"
                                         value={formData.date_of_birth}
-                                        onChange={(e) => setFormData({...formData, date_of_birth: e.target.value})}
+                                        onChange={(e) => setFormData({ ...formData, date_of_birth: e.target.value })}
                                         required
                                         max={new Date(Date.now() - 18 * 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
                                         className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
@@ -909,7 +907,7 @@ function UserForm({ record, branches, roles, onClose, onSuccess }) {
                                     </label>
                                     <select
                                         value={formData.marital_status}
-                                        onChange={(e) => setFormData({...formData, marital_status: e.target.value})}
+                                        onChange={(e) => setFormData({ ...formData, marital_status: e.target.value })}
                                         className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                     >
                                         <option value="">Choose marital status</option>
@@ -932,7 +930,7 @@ function UserForm({ record, branches, roles, onClose, onSuccess }) {
                                                 name="sex"
                                                 value="male"
                                                 checked={formData.sex === 'male'}
-                                                onChange={(e) => setFormData({...formData, sex: e.target.value})}
+                                                onChange={(e) => setFormData({ ...formData, sex: e.target.value })}
                                                 required
                                                 className="w-4 h-4 text-[var(--theme-primary)] border-gray-300 focus:ring-[var(--theme-primary)]"
                                             />
@@ -944,7 +942,7 @@ function UserForm({ record, branches, roles, onClose, onSuccess }) {
                                                 name="sex"
                                                 value="female"
                                                 checked={formData.sex === 'female'}
-                                                onChange={(e) => setFormData({...formData, sex: e.target.value})}
+                                                onChange={(e) => setFormData({ ...formData, sex: e.target.value })}
                                                 required
                                                 className="w-4 h-4 text-[var(--theme-primary)] border-gray-300 focus:ring-[var(--theme-primary)]"
                                             />
@@ -956,7 +954,7 @@ function UserForm({ record, branches, roles, onClose, onSuccess }) {
                                                 name="sex"
                                                 value="other"
                                                 checked={formData.sex === 'other'}
-                                                onChange={(e) => setFormData({...formData, sex: e.target.value})}
+                                                onChange={(e) => setFormData({ ...formData, sex: e.target.value })}
                                                 required
                                                 className="w-4 h-4 text-[var(--theme-primary)] border-gray-300 focus:ring-[var(--theme-primary)]"
                                             />
@@ -979,7 +977,7 @@ function UserForm({ record, branches, roles, onClose, onSuccess }) {
                                     <input
                                         type="text"
                                         value={formData.credentials}
-                                        onChange={(e) => setFormData({...formData, credentials: e.target.value})}
+                                        onChange={(e) => setFormData({ ...formData, credentials: e.target.value })}
                                         placeholder="e.g., RN, LPN, CNA, etc."
                                         maxLength={255}
                                         className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
@@ -993,7 +991,7 @@ function UserForm({ record, branches, roles, onClose, onSuccess }) {
                                     <input
                                         type="text"
                                         value={formData.credential_details}
-                                        onChange={(e) => setFormData({...formData, credential_details: e.target.value})}
+                                        onChange={(e) => setFormData({ ...formData, credential_details: e.target.value })}
                                         placeholder="Additional credential information (optional)"
                                         maxLength={255}
                                         className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
@@ -1007,7 +1005,7 @@ function UserForm({ record, branches, roles, onClose, onSuccess }) {
                                     <input
                                         type="date"
                                         value={formData.date_employed}
-                                        onChange={(e) => setFormData({...formData, date_employed: e.target.value})}
+                                        onChange={(e) => setFormData({ ...formData, date_employed: e.target.value })}
                                         required
                                         max={new Date().toISOString().split('T')[0]}
                                         className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
@@ -1023,7 +1021,7 @@ function UserForm({ record, branches, roles, onClose, onSuccess }) {
                                     <input
                                         type="text"
                                         value={formData.supervisor_name}
-                                        onChange={(e) => setFormData({...formData, supervisor_name: e.target.value})}
+                                        onChange={(e) => setFormData({ ...formData, supervisor_name: e.target.value })}
                                         placeholder="Enter supervisor name"
                                         maxLength={255}
                                         className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
@@ -1037,7 +1035,7 @@ function UserForm({ record, branches, roles, onClose, onSuccess }) {
                                     <input
                                         type="text"
                                         value={formData.provider_name}
-                                        onChange={(e) => setFormData({...formData, provider_name: e.target.value})}
+                                        onChange={(e) => setFormData({ ...formData, provider_name: e.target.value })}
                                         placeholder="Enter provider name"
                                         maxLength={255}
                                         className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
@@ -1053,7 +1051,7 @@ function UserForm({ record, branches, roles, onClose, onSuccess }) {
                                         value={formData.role || ''}
                                         onChange={(e) => {
                                             console.log('Role changed to:', e.target.value);
-                                            setFormData({...formData, role: e.target.value});
+                                            setFormData({ ...formData, role: e.target.value });
                                         }}
                                         required
                                         className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
@@ -1078,7 +1076,7 @@ function UserForm({ record, branches, roles, onClose, onSuccess }) {
                                     </label>
                                     <select
                                         value={formData.assigned_branch_id}
-                                        onChange={(e) => setFormData({...formData, assigned_branch_id: e.target.value})}
+                                        onChange={(e) => setFormData({ ...formData, assigned_branch_id: e.target.value })}
                                         className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                     >
                                         <option value="">Select branch assignment</option>
@@ -1093,7 +1091,7 @@ function UserForm({ record, branches, roles, onClose, onSuccess }) {
                                         <input
                                             type="checkbox"
                                             checked={formData.is_active}
-                                            onChange={(e) => setFormData({...formData, is_active: e.target.checked})}
+                                            onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
                                             className="w-4 h-4 text-[var(--theme-primary)] border-gray-300 rounded focus:ring-[var(--theme-primary)]"
                                         />
                                         <span className="text-sm font-medium text-gray-700">Active Employee</span>
@@ -1113,10 +1111,10 @@ function UserForm({ record, branches, roles, onClose, onSuccess }) {
                                 <input
                                     type="password"
                                     value={formData.password}
-                                    onChange={(e) => setFormData({...formData, password: e.target.value})}
+                                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                                     required={!record}
                                     placeholder="Enter secure password"
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                 />
                                 <p className="text-xs text-gray-500 mt-1">Minimum 8 characters, include numbers and special characters</p>
                                 {errors.password && <p className="text-xs text-red-600 mt-1">{errors.password[0]}</p>}
@@ -1132,10 +1130,10 @@ function UserForm({ record, branches, roles, onClose, onSuccess }) {
                                 </label>
                                 <textarea
                                     value={formData.notes}
-                                    onChange={(e) => setFormData({...formData, notes: e.target.value})}
+                                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                                     rows={3}
                                     placeholder="Any additional notes about this staff member..."
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                 />
                             </div>
                         </div>
@@ -1244,10 +1242,10 @@ function UserProfileViewer({ user, onClose, onEdit, onToggleActive }) {
                                             Date of Birth
                                         </p>
                                         <p className="font-semibold text-gray-900">
-                                            {new Date(user.date_of_birth).toLocaleDateString('en-US', { 
-                                                month: 'long', 
-                                                day: 'numeric', 
-                                                year: 'numeric' 
+                                            {new Date(user.date_of_birth).toLocaleDateString('en-US', {
+                                                month: 'long',
+                                                day: 'numeric',
+                                                year: 'numeric'
                                             })}
                                         </p>
                                     </div>
@@ -1325,10 +1323,10 @@ function UserProfileViewer({ user, onClose, onEdit, onToggleActive }) {
                                             Date Employed
                                         </p>
                                         <p className="font-semibold text-gray-900">
-                                            {new Date(user.date_employed).toLocaleDateString('en-US', { 
-                                                month: 'long', 
-                                                day: 'numeric', 
-                                                year: 'numeric' 
+                                            {new Date(user.date_employed).toLocaleDateString('en-US', {
+                                                month: 'long',
+                                                day: 'numeric',
+                                                year: 'numeric'
                                             })}
                                         </p>
                                     </div>
@@ -1347,11 +1345,10 @@ function UserProfileViewer({ user, onClose, onEdit, onToggleActive }) {
                                 )}
                                 <div>
                                     <p className="text-sm text-gray-600 mb-1">Status</p>
-                                    <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${
-                                        user.is_active 
-                                            ? 'bg-green-100 text-green-800' 
+                                    <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${user.is_active
+                                            ? 'bg-green-100 text-green-800'
                                             : 'bg-red-100 text-red-800'
-                                    }`}>
+                                        }`}>
                                         {user.is_active ? 'Active' : 'Inactive'}
                                     </span>
                                 </div>

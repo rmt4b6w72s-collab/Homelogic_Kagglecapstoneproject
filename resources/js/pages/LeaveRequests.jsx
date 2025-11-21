@@ -37,7 +37,7 @@ export default function LeaveRequests() {
 
   const { data: users } = useQuery({
     queryKey: ['users-options'],
-    queryFn: async () => (await api.get('/residents', { params: { per_page: 1 } })).data && (await api.get('/roles')) && (await api.get('/v1/user')) && [] ,
+    queryFn: async () => (await api.get('/residents', { params: { per_page: 1 } })).data && (await api.get('/roles')) && (await api.get('/v1/user')) && [],
     enabled: false,
   });
 
@@ -111,21 +111,21 @@ export default function LeaveRequests() {
         // Add indicator based on status
         if (leaveRequest.status === 'approved') {
           dayData.approvedCount += 1;
-          dayData.indicators.push({ 
-            type: 'approved_leave', 
+          dayData.indicators.push({
+            type: 'approved_leave',
             color: 'bg-blue-500',
             status: 'approved'
           });
         } else if (leaveRequest.status === 'pending') {
           dayData.pendingCount += 1;
-          dayData.indicators.push({ 
-            type: 'pending_leave', 
+          dayData.indicators.push({
+            type: 'pending_leave',
             color: 'bg-yellow-500',
             status: 'pending'
           });
         } else if (leaveRequest.status === 'rejected' || leaveRequest.status === 'declined') {
-          dayData.indicators.push({ 
-            type: 'rejected_leave', 
+          dayData.indicators.push({
+            type: 'rejected_leave',
             color: 'bg-gray-400',
             status: 'rejected'
           });
@@ -143,8 +143,8 @@ export default function LeaveRequests() {
       // If more than 50% of staff are on approved leave, mark as coverage gap
       // Note: This assumes you have a total staff count - you may need to fetch this
       if (day.approvedCount > 5) { // Threshold can be adjusted
-        day.indicators.push({ 
-          type: 'coverage_gap', 
+        day.indicators.push({
+          type: 'coverage_gap',
           color: 'bg-red-500',
           status: 'coverage_gap'
         });
@@ -212,7 +212,7 @@ export default function LeaveRequests() {
               </button>
             </div>
           </div>
-          
+
           <div className="flex flex-wrap gap-2">
             {['all', 'pending', 'approved', 'rejected'].map((s) => (
               <button key={s} onClick={() => setStatusFilter(s)} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors capitalize ${statusFilter === s ? 'bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)]' : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'}`}>{s}</button>
@@ -253,13 +253,13 @@ export default function LeaveRequests() {
                       </div>
                     )}
                   </div>
-                  
+
                   {/* Reason */}
                   {lr.reason && (
                     <div className="mt-auto pt-4 border-t border-gray-100">
                       <p className="text-xs font-medium text-gray-500 uppercase mb-1">Reason</p>
                       <p className="text-sm text-gray-700 line-clamp-2">{lr.reason}</p>
-                  </div>
+                    </div>
                   )}
                 </div>
               </div>
@@ -279,12 +279,12 @@ export default function LeaveRequests() {
           currentUser={currentUser}
           isCaregiver={isCaregiver}
           onClose={() => { setShowForm(false); setEditing(null); }}
-          onSuccess={() => { 
-        setShowForm(false); 
-        setEditing(null); 
-        queryClient.invalidateQueries(['leave-requests']);
-        queryClient.invalidateQueries(['leave-requests-calendar']);
-      }}
+          onSuccess={() => {
+            setShowForm(false);
+            setEditing(null);
+            queryClient.invalidateQueries(['leave-requests']);
+            queryClient.invalidateQueries(['leave-requests-calendar']);
+          }}
         />
       )}
     </div>
@@ -294,15 +294,11 @@ export default function LeaveRequests() {
 function LeaveForm({ record, currentUser, isCaregiver, onClose, onSuccess }) {
   // Format date helper function
   const formatDateForInput = (dateString) => {
-    if (!dateString) return getLocalDateString();
-    // If it's already in YYYY-MM-DD format, return it
+    if (!dateString) return '';
+    if (typeof dateString !== 'string') return '';
     if (dateString.match(/^\d{4}-\d{2}-\d{2}$/)) return dateString;
-    // Otherwise parse and format it using local date
     const date = new Date(dateString);
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
+    return date.toISOString().split('T')[0];
   };
 
   const [form, setForm] = useState({
@@ -319,20 +315,20 @@ function LeaveForm({ record, currentUser, isCaregiver, onClose, onSuccess }) {
     e.preventDefault();
     setSubmitting(true);
     setErrors({});
-    
+
     // Client-side validation
     if (!form.start_date || !form.end_date) {
       setErrors({ general: 'Please select both start and end dates.' });
       setSubmitting(false);
       return;
     }
-    
+
     if (!form.reason || form.reason.trim().length < 10) {
       setErrors({ general: 'Reason must be at least 10 characters long.' });
       setSubmitting(false);
       return;
     }
-    
+
     try {
       console.log('Submitting leave request:', form);
       let response;
@@ -348,17 +344,17 @@ function LeaveForm({ record, currentUser, isCaregiver, onClose, onSuccess }) {
       console.error('Error response:', e.response);
       console.error('Error data:', e.response?.data);
       const errorData = e.response?.data;
-      
+
       // Handle validation errors
       if (errorData?.errors) {
         const validationErrors = {};
         Object.keys(errorData.errors).forEach(key => {
-          validationErrors[key] = Array.isArray(errorData.errors[key]) 
-            ? errorData.errors[key][0] 
+          validationErrors[key] = Array.isArray(errorData.errors[key])
+            ? errorData.errors[key][0]
             : errorData.errors[key];
         });
         setErrors(validationErrors);
-        
+
         // Also show the general message if provided
         if (errorData?.message) {
           setErrors(prev => ({ ...prev, general: errorData.message }));
@@ -414,14 +410,14 @@ function LeaveForm({ record, currentUser, isCaregiver, onClose, onSuccess }) {
             </div>
             {/* Only admins can approve/reject leave requests */}
             {!isCaregiver && (
-            <div>
-              <label className="block text-sm font-medium text-gray-900 mb-1">Status</label>
-              <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent">
-                <option value="pending">Pending</option>
-                <option value="approved">Approved</option>
+              <div>
+                <label className="block text-sm font-medium text-gray-900 mb-1">Status</label>
+                <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent">
+                  <option value="pending">Pending</option>
+                  <option value="approved">Approved</option>
                   <option value="declined">Declined</option>
-              </select>
-            </div>
+                </select>
+              </div>
             )}
             <div className="flex items-center justify-end space-x-3 pt-4 border-t">
               <button type="button" onClick={onClose} className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</button>
