@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Constants\Modules;
 use App\Http\Controllers\Controller;
 use App\Models\PharmacyInventory;
 use Illuminate\Http\Request;
@@ -11,6 +12,9 @@ class PharmacyInventoryController extends BaseApiController
 {
     public function index(Request $request): JsonResponse
     {
+        if ($error = $this->requireModuleAccess(Modules::PHARMACY)) {
+            return $error;
+        }
         $query = PharmacyInventory::with(['branch', 'drug', 'stockLots']);
         
         $user = $request->user();
@@ -55,6 +59,10 @@ class PharmacyInventoryController extends BaseApiController
     
     public function store(Request $request): JsonResponse
     {
+        if ($error = $this->requireModuleAccess(Modules::PHARMACY)) {
+            return $error;
+        }
+
         $validated = $request->validate([
             'branch_id' => 'required|exists:branches,id',
             'drug_id' => 'required|exists:drugs,id',
@@ -89,6 +97,10 @@ class PharmacyInventoryController extends BaseApiController
     
     public function show(string $id): JsonResponse
     {
+        if ($error = $this->requireModuleAccess(Modules::PHARMACY)) {
+            return $error;
+        }
+
         $inventory = PharmacyInventory::with(['branch', 'drug', 'stockLots', 'transactions'])
             ->findOrFail($id);
         
@@ -97,6 +109,10 @@ class PharmacyInventoryController extends BaseApiController
     
     public function update(Request $request, string $id): JsonResponse
     {
+        if ($error = $this->requireModuleAccess(Modules::PHARMACY)) {
+            return $error;
+        }
+
         $inventory = PharmacyInventory::findOrFail($id);
         
         $validated = $request->validate([
@@ -117,6 +133,10 @@ class PharmacyInventoryController extends BaseApiController
     
     public function destroy(string $id): JsonResponse
     {
+        if ($error = $this->requireModuleAccess(Modules::PHARMACY)) {
+            return $error;
+        }
+
         $inventory = PharmacyInventory::findOrFail($id);
         $inventory->delete();
         

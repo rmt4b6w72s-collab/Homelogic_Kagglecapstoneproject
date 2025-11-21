@@ -89,3 +89,398 @@
     background-color: var(--theme-primary);
     color: var(--theme-text-on-primary);
 }
+
+/* Fix button text visibility on Filament stat cards and widget cards */
+.fi-stat-action,
+.fi-stat-actions button,
+.fi-stat-actions a,
+.fi-stat-overview-actions button,
+.fi-stat-overview-actions a,
+[class*="fi-stat"] button,
+[class*="fi-stat"] a,
+.fi-widget button,
+.fi-widget a,
+[class*="fi-widget"] button,
+[class*="fi-widget"] a {
+    color: rgb(55 65 81) !important; /* gray-700 */
+    font-weight: 500;
+}
+
+[class*="fi-stat"] button:hover,
+[class*="fi-stat"] a:hover,
+[class*="fi-widget"] button:hover,
+[class*="fi-widget"] a:hover {
+    color: rgb(31 41 55) !important; /* gray-800 */
+}
+
+/* Dark mode support for stat card and widget buttons */
+.dark [class*="fi-stat"] button,
+.dark [class*="fi-stat"] a,
+.dark [class*="fi-widget"] button,
+.dark [class*="fi-widget"] a {
+    color: rgb(229 231 235) !important; /* gray-200 */
+}
+
+.dark [class*="fi-stat"] button:hover,
+.dark [class*="fi-stat"] a:hover,
+.dark [class*="fi-widget"] button:hover,
+.dark [class*="fi-widget"] a:hover {
+    color: rgb(255 255 255) !important; /* white */
+}
+
+/* Ensure stat card and widget action icons are visible */
+[class*="fi-stat"] svg,
+[class*="fi-widget"] svg {
+    color: inherit;
+}
+
+/* Fix button text on white/light backgrounds in cards */
+.bg-white button,
+.bg-white a,
+[class*="bg-white"] button,
+[class*="bg-white"] a {
+    color: rgb(55 65 81) !important; /* gray-700 */
+}
+
+.bg-white button:hover,
+.bg-white a:hover,
+[class*="bg-white"] button:hover,
+[class*="bg-white"] a:hover {
+    color: rgb(31 41 55) !important; /* gray-800 */
+}
+
+/* Fix button text on gradient/purple backgrounds */
+.bg-gradient-to-r button,
+.bg-gradient-to-r a,
+[class*="from-purple"] button,
+[class*="from-purple"] a,
+[class*="from-indigo"] button,
+[class*="from-indigo"] a {
+    color: rgb(255 255 255) !important; /* white */
+    font-weight: 500;
+}
+
+.bg-gradient-to-r button:hover,
+.bg-gradient-to-r a:hover,
+[class*="from-purple"] button:hover,
+[class*="from-purple"] a:hover,
+[class*="from-indigo"] button:hover,
+[class*="from-indigo"] a:hover {
+    color: rgb(243 244 246) !important; /* gray-100 */
+}
+
+/* Fix button text color on blue/primary backgrounds - only for dark backgrounds */
+button[class*="bg-blue"]:not([class*="bg-blue-100"]):not([class*="bg-blue-50"]):not([class*="bg-blue-200"]),
+button[class*="bg-primary"]:not([class*="bg-gray-100"]):not([class*="bg-gray-50"]):not([class*="bg-gray-200"]),
+button[style*="background-color: #1E3A5F"],
+button[style*="background: #1E3A5F"],
+a[class*="bg-blue"]:not([class*="bg-blue-100"]):not([class*="bg-blue-50"]):not([class*="bg-blue-200"]),
+a[class*="bg-primary"]:not([class*="bg-gray-100"]):not([class*="bg-gray-50"]):not([class*="bg-gray-200"]),
+a[style*="background-color: #1E3A5F"],
+a[style*="background: #1E3A5F"] {
+    color: #FFFFFF !important; /* white */
+}
+
+/* Fix button text on primary color backgrounds using CSS variables */
+[style*="--theme-primary"] button,
+[style*="--theme-primary"] a,
+button[style*="var(--theme-primary)"],
+a[style*="var(--theme-primary)"] {
+    color: var(--theme-text-on-primary, #FFFFFF) !important;
+}
+
+/* Fix buttons with primary color class or style */
+.bg-\[var\(--theme-primary\)\] button,
+.bg-\[var\(--theme-primary\)\] a,
+button.bg-\[var\(--theme-primary\)\],
+a.bg-\[var\(--theme-primary\)\] {
+    color: var(--theme-text-on-primary, #FFFFFF) !important;
+}
+
+/* General rule for any button with blue background - exclude light shades */
+button[class*="bg-blue-500"],
+button[class*="bg-blue-600"],
+button[class*="bg-blue-700"],
+button[class*="bg-blue-800"],
+button[class*="bg-blue-900"],
+button[class*="bg-primary"]:not([class*="bg-gray-100"]):not([class*="bg-gray-50"]) {
+    color: #FFFFFF !important;
+}
+
+/* More specific rules for common button patterns */
+button.bg-blue-500,
+button.bg-blue-600,
+button.bg-blue-700,
+button.bg-primary,
+a.bg-blue-500,
+a.bg-blue-600,
+a.bg-blue-700,
+a.bg-primary {
+    color: #FFFFFF !important;
+}
+
+/* Fix buttons using CSS variables for primary color - only when not on light backgrounds */
+a[style*="background-color: var(--theme-primary)"]:not([class*="bg-gray-100"]):not([class*="bg-gray-50"]):not([class*="bg-white"]),
+button[style*="background-color: var(--theme-primary)"]:not([class*="bg-gray-100"]):not([class*="bg-gray-50"]):not([class*="bg-white"]),
+a[style*="background: var(--theme-primary)"]:not([class*="bg-gray-100"]):not([class*="bg-gray-50"]):not([class*="bg-white"]),
+button[style*="background: var(--theme-primary)"]:not([class*="bg-gray-100"]):not([class*="bg-gray-50"]):not([class*="bg-white"]) {
+    color: var(--theme-text-on-primary, #FFFFFF) !important;
+}
+
+/* Fix text color when using text-[var(--theme-text-on-primary)] */
+.text-\[var\(--theme-text-on-primary\)\] {
+    color: var(--theme-text-on-primary, #FFFFFF) !important;
+}
+
+/* Ensure light background buttons have dark text - override any white text rules */
+button.bg-gray-100,
+button.bg-gray-50,
+button.bg-white,
+a.bg-gray-100,
+a.bg-gray-50,
+a.bg-white,
+button[class*="bg-gray-100"],
+button[class*="bg-gray-50"],
+a[class*="bg-gray-100"],
+a[class*="bg-gray-50"],
+button[class*="text-gray-700"],
+button[class*="text-gray-600"],
+a[class*="text-gray-700"],
+a[class*="text-gray-600"] {
+    color: rgb(55 65 81) !important; /* gray-700 */
+}
+
+button.bg-gray-100:hover,
+button.bg-gray-50:hover,
+a.bg-gray-100:hover,
+a.bg-gray-50:hover,
+button[class*="bg-gray-100"]:hover,
+button[class*="bg-gray-50"]:hover,
+a[class*="bg-gray-100"]:hover,
+a[class*="bg-gray-50"]:hover,
+button[class*="hover:bg-gray-200"] {
+    color: rgb(31 41 55) !important; /* gray-800 */
+}
+
+/* Ensure buttons with primary background always have white text, even on hover */
+button[style*="--theme-primary"]:hover,
+a[style*="--theme-primary"]:hover,
+button[style*="background-color: var(--theme-primary)"]:hover,
+a[style*="background-color: var(--theme-primary)"]:hover,
+button[style*="background: var(--theme-primary)"]:hover,
+a[style*="background: var(--theme-primary)"]:hover {
+    color: #FFFFFF !important;
+}
+
+/* Button animations */
+button,
+a[role="button"] {
+    transition: all 0.2s ease-in-out;
+}
+
+button:hover:not(:disabled),
+a[role="button"]:hover {
+    transform: translateY(-1px);
+}
+
+button:active:not(:disabled),
+a[role="button"]:active {
+    transform: translateY(0);
+}
+
+/* Primary button animations - target by style attribute */
+button[style*="--theme-primary"]:hover:not(:disabled),
+a[style*="--theme-primary"]:hover:not(:disabled),
+button[style*="background-color: var(--theme-primary)"]:hover:not(:disabled),
+a[style*="background-color: var(--theme-primary)"]:hover:not(:disabled),
+button[style*="background: var(--theme-primary)"]:hover:not(:disabled),
+a[style*="background: var(--theme-primary)"]:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(30, 58, 95, 0.3);
+    color: #FFFFFF !important;
+}
+
+button[style*="--theme-primary"]:active:not(:disabled),
+a[style*="--theme-primary"]:active:not(:disabled),
+button[style*="background-color: var(--theme-primary)"]:active:not(:disabled),
+a[style*="background-color: var(--theme-primary)"]:active:not(:disabled),
+button[style*="background: var(--theme-primary)"]:active:not(:disabled),
+a[style*="background: var(--theme-primary)"]:active:not(:disabled) {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(30, 58, 95, 0.2);
+    color: #FFFFFF !important;
+}
+
+/* General rule: any element with primary background should have white text */
+[style*="background-color: var(--theme-primary)"],
+[style*="background: var(--theme-primary)"] {
+    color: var(--theme-text-on-primary, #FFFFFF) !important;
+}
+
+/* Ensure hover states maintain white text for primary buttons */
+button:hover[style*="--theme-primary"],
+a:hover[style*="--theme-primary"],
+button:hover[style*="background-color: var(--theme-primary)"],
+a:hover[style*="background-color: var(--theme-primary)"],
+button:hover[style*="background: var(--theme-primary)"],
+a:hover[style*="background: var(--theme-primary)"] {
+    color: #FFFFFF !important;
+}
+
+/* Fix active tab text visibility - ensure primary color text is visible */
+/* Target elements with text color using CSS variable */
+/* BUT exclude elements that should use text-on-primary (dark backgrounds) */
+[class*="text-\[var\(--theme-primary\)\]"] {
+    color: var(--theme-primary, #1E3A5F) !important;
+}
+
+/* Ensure all buttons with primary background maintain white text */
+button[style*="color: #FFFFFF"],
+button[style*="color: white"],
+button[style*="color: var(--theme-text-on-primary)"] {
+    color: #FFFFFF !important;
+}
+
+button[style*="color: #FFFFFF"]:hover,
+button[style*="color: white"]:hover,
+button[style*="color: var(--theme-text-on-primary)"]:hover {
+    color: #FFFFFF !important;
+}
+
+/* Fix text visibility on dark backgrounds using theme variables */
+/* This works with any facility's color scheme - uses CSS variables */
+/* Elements with primary background should use text-on-primary color */
+[class*="bg-\[var\(--theme-primary\)\]"] {
+    color: var(--theme-text-on-primary, #FFFFFF) !important;
+}
+
+/* Sidebar - ensure it uses theme variables for text color */
+/* But don't override active navigation items with white backgrounds */
+aside[class*="bg-\[var\(--theme-primary\)\]"]:not([class*="bg-white"]) {
+    color: var(--theme-text-on-primary, #FFFFFF) !important;
+}
+
+/* All text elements inside sidebar should use theme text-on-primary color */
+/* But preserve elements with explicit white background (active states) */
+/* Note: Child elements of bg-white links are handled by the critical rules at the end */
+aside[class*="bg-\[var\(--theme-primary\)\]"] p:not([class*="bg-white"]),
+aside[class*="bg-\[var\(--theme-primary\)\]"] span:not([class*="bg-white"]):not([class*="text-\[var\(--theme-primary\)\"]"]),
+aside[class*="bg-\[var\(--theme-primary\)\]"] div:not([class*="bg-white"]):not([class*="text-\[var\(--theme-primary\)\"]"]),
+aside[class*="bg-\[var\(--theme-primary\)\]"] a:not([class*="bg-white"]):not([class*="text-\[var\(--theme-primary\)\"]"]),
+aside[class*="bg-\[var\(--theme-primary\)\]"] button:not([class*="bg-white"]):not([class*="text-\[var\(--theme-primary\)\"]"]),
+aside[class*="bg-\[var\(--theme-primary\)\]"] li:not([class*="bg-white"]) {
+    color: var(--theme-text-on-primary, #FFFFFF) !important;
+}
+
+/* Preserve active state colors - white background items should use primary color for text */
+/* This ensures active navigation links are visible on white background */
+/* Higher specificity to override ALL general sidebar text color rules */
+/* Target all navigation links and buttons with white background - MUST come after general rules */
+/* Use max specificity to ensure this overrides everything */
+aside nav a[class*="bg-white"][class*="text-\[var"],
+aside nav button[class*="bg-white"][class*="text-\[var"],
+aside a[class*="bg-white"][class*="text-\[var"],
+aside button[class*="bg-white"][class*="text-\[var"],
+aside nav a[class*="bg-white"],
+aside nav button[class*="bg-white"],
+aside a[class*="bg-white"],
+aside button[class*="bg-white"] {
+    color: var(--theme-primary, #1E3A5F) !important;
+}
+
+/* Ensure all child elements (text, icons) in active navigation items are visible */
+/* This must override the general sidebar rules for child elements */
+aside a[class*="bg-white"] *,
+aside button[class*="bg-white"] *,
+aside nav a[class*="bg-white"] *,
+aside nav button[class*="bg-white"] *,
+aside a[class*="bg-white"] span,
+aside a[class*="bg-white"] svg,
+aside button[class*="bg-white"] span,
+aside button[class*="bg-white"] svg,
+aside nav a[class*="bg-white"] span,
+aside nav a[class*="bg-white"] svg,
+aside nav button[class*="bg-white"] span,
+aside nav button[class*="bg-white"] svg {
+    color: var(--theme-primary, #1E3A5F) !important;
+}
+
+/* Ensure icons in active navigation items are also visible */
+aside a[class*="bg-white"] svg,
+aside button[class*="bg-white"] svg,
+aside nav a[class*="bg-white"] svg,
+aside nav button[class*="bg-white"] svg {
+    stroke: var(--theme-primary, #1E3A5F) !important;
+    fill: var(--theme-primary, #1E3A5F) !important;
+}
+
+/* Fix gray text on dark backgrounds - use theme text-on-primary instead */
+/* This ensures gray text is visible on any facility's dark background */
+aside[class*="bg-\[var\(--theme-primary\)\]"] .text-gray-300:not([class*="bg-white"]),
+aside[class*="bg-\[var\(--theme-primary\)\]"] .text-gray-400:not([class*="bg-white"]),
+aside[class*="bg-\[var\(--theme-primary\)\]"] .text-gray-500:not([class*="bg-white"]),
+aside[class*="bg-\[var\(--theme-primary\)\]"] .text-gray-600:not([class*="bg-white"]) {
+    color: var(--theme-text-on-primary, #FFFFFF) !important;
+    opacity: 0.9; /* Slightly transparent for hierarchy while still visible */
+}
+
+/* Fix text in elements with primary background using inline styles */
+/* Works with any facility's theme variables */
+[style*="background-color: var(--theme-primary)"],
+[style*="background: var(--theme-primary)"] {
+    color: var(--theme-text-on-primary, #FFFFFF) !important;
+}
+
+[style*="background-color: var(--theme-primary)"] *:not([class*="bg-white"]),
+[style*="background: var(--theme-primary)"] *:not([class*="bg-white"]) {
+    color: var(--theme-text-on-primary, #FFFFFF) !important;
+}
+
+/* Any element with black/dark backgrounds should have white text */
+/* This is a fallback for any black backgrounds */
+[class*="bg-black"]:not([class*="bg-white"]),
+[style*="background-color: #000"]:not([class*="bg-white"]),
+[style*="background: #000"]:not([class*="bg-white"]) {
+    color: #FFFFFF !important;
+}
+
+[class*="bg-black"] *:not([class*="bg-white"]),
+[style*="background-color: #000"] *:not([class*="bg-white"]),
+[style*="background: #000"] *:not([class*="bg-white"]) {
+    color: #FFFFFF !important;
+}
+
+/* CRITICAL: Ensure active navigation links are visible - highest priority rule */
+/* This must override ALL other sidebar rules for links/buttons with white background */
+aside[class*="bg-\[var\(--theme-primary\)\]"] nav a[class*="bg-white"],
+aside[class*="bg-\[var\(--theme-primary\)\]"] nav button[class*="bg-white"],
+aside[class*="bg-\[var\(--theme-primary\)\]"] a[class*="bg-white"],
+aside[class*="bg-\[var\(--theme-primary\)\]"] button[class*="bg-white"] {
+    color: var(--theme-primary, #1E3A5F) !important;
+}
+
+/* CRITICAL: All descendants of active nav links must use primary color (not just direct children) */
+aside[class*="bg-\[var\(--theme-primary\)\]"] nav a[class*="bg-white"] *,
+aside[class*="bg-\[var\(--theme-primary\)\]"] nav button[class*="bg-white"] *,
+aside[class*="bg-\[var\(--theme-primary\)\]"] a[class*="bg-white"] *,
+aside[class*="bg-\[var\(--theme-primary\)\]"] button[class*="bg-white"] *,
+aside[class*="bg-\[var\(--theme-primary\)\]"] nav a[class*="bg-white"] span,
+aside[class*="bg-\[var\(--theme-primary\)\]"] nav a[class*="bg-white"] div,
+aside[class*="bg-\[var\(--theme-primary\)\]"] a[class*="bg-white"] span,
+aside[class*="bg-\[var\(--theme-primary\)\]"] a[class*="bg-white"] div,
+aside[class*="bg-\[var\(--theme-primary\)\]"] nav button[class*="bg-white"] span,
+aside[class*="bg-\[var\(--theme-primary\)\]"] nav button[class*="bg-white"] div,
+aside[class*="bg-\[var\(--theme-primary\)\]"] button[class*="bg-white"] span,
+aside[class*="bg-\[var\(--theme-primary\)\]"] button[class*="bg-white"] div {
+    color: var(--theme-primary, #1E3A5F) !important;
+}
+
+/* CRITICAL: Icons in active nav links must use primary color */
+aside[class*="bg-\[var\(--theme-primary\)\]"] nav a[class*="bg-white"] svg,
+aside[class*="bg-\[var\(--theme-primary\)\]"] nav button[class*="bg-white"] svg,
+aside[class*="bg-\[var\(--theme-primary\)\]"] a[class*="bg-white"] svg,
+aside[class*="bg-\[var\(--theme-primary\)\]"] button[class*="bg-white"] svg {
+    color: var(--theme-primary, #1E3A5F) !important;
+    stroke: var(--theme-primary, #1E3A5F) !important;
+    fill: var(--theme-primary, #1E3A5F) !important;
+}

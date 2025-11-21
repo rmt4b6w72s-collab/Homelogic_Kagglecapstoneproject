@@ -196,21 +196,21 @@ function DrugForm({ record, onClose, onSuccess }) {
           <form onSubmit={handleSubmit} className="space-y-6" id="drug-form">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Drug Name *</label>
+                <label className="block text-sm font-medium text-gray-900 mb-1">Drug Name *</label>
                 <input
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
                   required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                 />
                 {errors.name && <p className="text-xs text-red-600 mt-1">{errors.name[0]}</p>}
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Generic Name</label>
+                <label className="block text-sm font-medium text-gray-900 mb-1">Generic Name</label>
                 <input
                   value={form.generic_name}
                   onChange={(e) => setForm({ ...form, generic_name: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                 />
                 {errors.generic_name && <p className="text-xs text-red-600 mt-1">{errors.generic_name[0]}</p>}
               </div>
@@ -218,29 +218,29 @@ function DrugForm({ record, onClose, onSuccess }) {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Dosage Form</label>
+                <label className="block text-sm font-medium text-gray-900 mb-1">Dosage Form</label>
                 <input
                   value={form.dosage_form}
                   onChange={(e) => setForm({ ...form, dosage_form: e.target.value })}
                   placeholder="e.g., Tablet, Capsule, Liquid"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                 />
                 {errors.dosage_form && <p className="text-xs text-red-600 mt-1">{errors.dosage_form[0]}</p>}
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Strength</label>
+                <label className="block text-sm font-medium text-gray-900 mb-1">Strength</label>
                 <input
                   value={form.strength}
                   onChange={(e) => setForm({ ...form, strength: e.target.value })}
                   placeholder="e.g., 500mg, 10ml"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                 />
                 {errors.strength && <p className="text-xs text-red-600 mt-1">{errors.strength[0]}</p>}
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+              <label className="block text-sm font-medium text-gray-900 mb-1">Description</label>
               <textarea
                 value={form.description}
                 onChange={(e) => setForm({ ...form, description: e.target.value })}

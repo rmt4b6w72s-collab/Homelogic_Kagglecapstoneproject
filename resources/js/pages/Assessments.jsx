@@ -263,7 +263,7 @@ export default function Assessments() {
                         <select
                             value={statusFilter}
                             onChange={(e) => setStatusFilter(e.target.value)}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                         >
                             <option value="">All Status</option>
                             <option value="draft">Draft</option>
@@ -282,7 +282,7 @@ export default function Assessments() {
                             placeholder="Assessment Type"
                             value={typeFilter}
                             onChange={(e) => setTypeFilter(e.target.value)}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                         />
                     </div>
 
@@ -291,7 +291,7 @@ export default function Assessments() {
                         <select
                             value={dateFilter}
                             onChange={(e) => setDateFilter(e.target.value)}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                         >
                             <option value="all">All Dates</option>
                             <option value="today">Today</option>
@@ -481,8 +481,15 @@ function AssessmentForm({ record, residents, branches, onClose, onSuccess }) {
 
     // Filter residents by selected branch
     const filteredResidents = React.useMemo(() => {
-        if (!formData.branch_id) return residents;
-        return residents.filter(r => r.branch_id == formData.branch_id);
+        if (!formData.branch_id) {
+            return [];
+        }
+        // Convert both to strings for comparison to handle type mismatches
+        const selectedBranchId = String(formData.branch_id);
+        return residents.filter(r => {
+            if (!r.branch_id) return false;
+            return String(r.branch_id) === selectedBranchId;
+        });
     }, [formData.branch_id, residents]);
 
     // Auto-select branch when resident is selected
@@ -556,7 +563,7 @@ function AssessmentForm({ record, residents, branches, onClose, onSuccess }) {
                                     value={formData.branch_id}
                                     onChange={(e) => setFormData({...formData, branch_id: e.target.value, resident_id: ''})}
                                     required
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                 >
                                     <option value="">Select Branch</option>
                                     {branches.map(branch => (
@@ -599,7 +606,7 @@ function AssessmentForm({ record, residents, branches, onClose, onSuccess }) {
                                     onChange={(e) => setFormData({...formData, assessment_type: e.target.value})}
                                     required
                                     placeholder="e.g., Initial Assessment, Follow-up"
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                 />
                                 {errors.assessment_type && <p className="text-xs text-red-600 mt-1">{errors.assessment_type[0]}</p>}
                             </div>
@@ -614,7 +621,7 @@ function AssessmentForm({ record, residents, branches, onClose, onSuccess }) {
                                     onChange={(e) => setFormData({...formData, assessment_date: e.target.value})}
                                     required
                                     max={new Date().toISOString().split('T')[0]}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                 />
                                 {errors.assessment_date && <p className="text-xs text-red-600 mt-1">{errors.assessment_date[0]}</p>}
                             </div>
@@ -628,7 +635,7 @@ function AssessmentForm({ record, residents, branches, onClose, onSuccess }) {
                                 value={formData.status}
                                 onChange={(e) => setFormData({...formData, status: e.target.value})}
                                 required
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                             >
                                 <option value="draft">Draft</option>
                                 <option value="in_progress">In Progress</option>
@@ -648,7 +655,7 @@ function AssessmentForm({ record, residents, branches, onClose, onSuccess }) {
                                 value={formData.notes}
                                 onChange={(e) => setFormData({...formData, notes: e.target.value})}
                                 rows={4}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                 placeholder="Additional notes about the assessment..."
                             />
                             {errors.notes && <p className="text-xs text-red-600 mt-1">{errors.notes[0]}</p>}

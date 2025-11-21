@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Models\Appointment;
+use App\Models\ResidentDocument;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 
@@ -129,6 +130,11 @@ class AppointmentController extends BaseApiController
         $request->validate([
             'status' => 'required|in:scheduled,completed,cancelled',
             'notes' => 'nullable|string',
+            'documents' => 'nullable|array',
+            'documents.*.document_name' => 'required_with:documents|string|max:255',
+            'documents.*.document_type' => 'required_with:documents|string|in:insurance,medical,legal,admission,appointment,other',
+            'documents.*.file' => 'required_with:documents|file|max:10240|mimes:pdf,jpeg,jpg,png,gif,doc,docx',
+            'documents.*.notes' => 'nullable|string',
         ]);
 
         $appointment = Appointment::findOrFail($id);
@@ -144,6 +150,38 @@ class AppointmentController extends BaseApiController
         }
         
         $appointment->save();
+
+        // Handle document uploads if provided
+        // Check for documents in FormData format (documents[0][file], documents[0][document_name], etc.)
+        $documentCount = 0;
+        while ($request->has("documents.{$documentCount}.file") || $request->hasFile("documents.{$documentCount}.file")) {
+            $file = $request->hasFile("documents.{$documentCount}.file") 
+                ? $request->file("documents.{$documentCount}.file")
+                : null;
+            
+            if ($file && $file->isValid()) {
+                $documentName = $request->get("documents.{$documentCount}.document_name", 'Document');
+                $documentType = $request->get("documents.{$documentCount}.document_type", 'appointment');
+                $documentNotes = $request->get("documents.{$documentCount}.notes");
+                
+                $fileName = time() . '_' . $file->getClientOriginalName();
+                $filePath = $file->storeAs('resident-documents', $fileName, 'public');
+                
+                ResidentDocument::create([
+                    'resident_id' => $appointment->resident_id,
+                    'appointment_id' => $appointment->id,
+                    'document_name' => $documentName,
+                    'document_type' => $documentType,
+                    'file_path' => $filePath,
+                    'file_name' => $file->getClientOriginalName(),
+                    'file_size' => $file->getSize(),
+                    'mime_type' => $file->getMimeType(),
+                    'uploaded_by' => auth()->id(),
+                    'notes' => $documentNotes,
+                ]);
+            }
+            $documentCount++;
+        }
 
         return response()->json($appointment->load(['resident', 'healthcareProvider']));
     }

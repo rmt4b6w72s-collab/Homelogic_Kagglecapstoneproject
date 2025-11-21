@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../services/api';
-import { Activity, User, Heart, Plus, Thermometer, Droplet, Edit, Trash2 } from 'lucide-react';
+import { Activity, User, Heart, Plus, Thermometer, Droplet, Edit, Trash2, ChevronDown } from 'lucide-react';
 import { getLocalDateString } from '../utils/pacificTime';
 import { TableSkeleton, ListSkeleton } from '../components/ui/SkeletonLoader';
 import EmptyState from '../components/ui/EmptyState';
@@ -390,7 +390,7 @@ function VitalSignForm({ record, residents, onClose, onSuccess }) {
                                     value={formData.resident_id}
                                     onChange={(e) => setFormData({...formData, resident_id: e.target.value})}
                                     required
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                 >
                                     <option value="">Select Resident</option>
                                     {residents.map(r => (
@@ -411,7 +411,7 @@ function VitalSignForm({ record, residents, onClose, onSuccess }) {
                                     value={formData.measurement_date}
                                     onChange={(e) => setFormData({...formData, measurement_date: e.target.value})}
                                     required
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                 />
                                 {errors.measurement_date && <p className="text-xs text-red-600 mt-1">{errors.measurement_date[0]}</p>}
                             </div>
@@ -440,7 +440,7 @@ function VitalSignForm({ record, residents, onClose, onSuccess }) {
                                         onChange={(e) => setFormData({...formData, systolic: e.target.value})}
                                         min="0"
                                         max="300"
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                     />
                                 </div>
 
@@ -454,7 +454,7 @@ function VitalSignForm({ record, residents, onClose, onSuccess }) {
                                         onChange={(e) => setFormData({...formData, diastolic: e.target.value})}
                                         min="0"
                                         max="200"
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                     />
                                 </div>
 
@@ -469,7 +469,7 @@ function VitalSignForm({ record, residents, onClose, onSuccess }) {
                                         onChange={(e) => setFormData({...formData, temperature: e.target.value})}
                                         min="90"
                                         max="110"
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                     />
                                 </div>
 
@@ -483,7 +483,7 @@ function VitalSignForm({ record, residents, onClose, onSuccess }) {
                                         onChange={(e) => setFormData({...formData, pulse: e.target.value})}
                                         min="0"
                                         max="200"
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                     />
                                 </div>
 
@@ -497,7 +497,7 @@ function VitalSignForm({ record, residents, onClose, onSuccess }) {
                                         onChange={(e) => setFormData({...formData, oxygen_saturation: e.target.value})}
                                         min="0"
                                         max="100"
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                     />
                                 </div>
 
@@ -511,7 +511,7 @@ function VitalSignForm({ record, residents, onClose, onSuccess }) {
                                         onChange={(e) => setFormData({...formData, pain_level: e.target.value})}
                                         min="0"
                                         max="10"
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                     />
                                 </div>
                             </div>

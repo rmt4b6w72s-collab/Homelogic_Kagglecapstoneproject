@@ -120,18 +120,18 @@ export default function Facilities() {
                     {/* Actions */}
                     <div className="flex space-x-1">
                     <button
-                      onClick={() => { setEditing(f); setShowForm(true); }}
+                      onClick={() => navigate(`/super-admin/facilities/${f.id}/edit`)}
                         className="p-2 text-[var(--theme-primary)] hover:bg-[var(--theme-primary-bg-light)] rounded-lg transition-colors"
                       title="Edit"
                     >
-                      <Edit className="w-4 h-4" />
+                      <Edit className="w-4 h-4 text-[var(--theme-primary)]" />
                     </button>
                     <button
                       onClick={() => window.confirm('Delete facility?') && deleteMutation.mutate(f.id)}
                         className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                       title="Delete"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-4 h-4 text-red-600" />
                     </button>
                     </div>
                   </div>
@@ -348,7 +348,7 @@ function FacilityForm({ record, isSuperAdmin, onClose, onSuccess }) {
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Basic Information</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
+                  <label className="block text-sm font-medium text-gray-900 mb-1">Name *</label>
                   <input
                     value={form.name}
                     onChange={(e) => setForm({ ...form, name: e.target.value })}
@@ -359,7 +359,7 @@ function FacilityForm({ record, isSuperAdmin, onClose, onSuccess }) {
                 </div>
                 {isSuperAdmin && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Subdomain</label>
+                    <label className="block text-sm font-medium text-gray-900 mb-1">Subdomain</label>
                     <input
                       value={form.subdomain}
                       onChange={(e) => setForm({ ...form, subdomain: e.target.value.replace(/[^a-z0-9-]/g, '').toLowerCase() })}
@@ -370,7 +370,7 @@ function FacilityForm({ record, isSuperAdmin, onClose, onSuccess }) {
                   </div>
                 )}
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                  <label className="block text-sm font-medium text-gray-900 mb-1">Address</label>
                   <textarea
                     value={form.address}
                     onChange={(e) => setForm({ ...form, address: e.target.value })}
@@ -379,7 +379,7 @@ function FacilityForm({ record, isSuperAdmin, onClose, onSuccess }) {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                  <label className="block text-sm font-medium text-gray-900 mb-1">Phone</label>
                   <input
                     value={form.phone}
                     onChange={(e) => setForm({ ...form, phone: e.target.value })}
@@ -387,7 +387,7 @@ function FacilityForm({ record, isSuperAdmin, onClose, onSuccess }) {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                  <label className="block text-sm font-medium text-gray-900 mb-1">Email</label>
                   <input
                     type="email"
                     value={form.email}
@@ -439,7 +439,7 @@ function FacilityForm({ record, isSuperAdmin, onClose, onSuccess }) {
                           type="text"
                           value={form.primary_color}
                           onChange={(e) => setForm({ ...form, primary_color: e.target.value })}
-                          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent font-mono text-sm"
+                          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent font-mono text-sm"
                           placeholder="#25603E"
                         />
                       </div>
@@ -457,7 +457,7 @@ function FacilityForm({ record, isSuperAdmin, onClose, onSuccess }) {
                           type="text"
                           value={form.secondary_color}
                           onChange={(e) => setForm({ ...form, secondary_color: e.target.value })}
-                          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent font-mono text-sm"
+                          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent font-mono text-sm"
                           placeholder="#8B4513"
                         />
                       </div>
@@ -475,7 +475,7 @@ function FacilityForm({ record, isSuperAdmin, onClose, onSuccess }) {
                           type="text"
                           value={form.accent_color}
                           onChange={(e) => setForm({ ...form, accent_color: e.target.value })}
-                          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent font-mono text-sm"
+                          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent font-mono text-sm"
                           placeholder="#F5F5DC"
                         />
                       </div>

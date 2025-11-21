@@ -409,6 +409,77 @@ class DashboardService
     {
         return $this->getMedicationReminders(null, 10);
     }
+
+    /**
+     * Get daily activities for calendar view
+     */
+    public function getDailyActivities(User $user, int $days = 30): array
+    {
+        $startDate = Carbon::now()->subDays($days);
+        $endDate = Carbon::now();
+        
+        $branchId = null;
+        if (UserRoles::isCaregiverRole($user->role)) {
+            $branchId = $user->assigned_branch_id;
+        }
+        
+        $activities = [];
+        $currentDate = $startDate->copy();
+        
+        while ($currentDate <= $endDate) {
+            $dateStr = $currentDate->format('Y-m-d');
+            
+            // Count appointments for this date
+            $appointmentsCount = Appointment::whereHas('resident', function ($q) use ($branchId) {
+                if ($branchId) {
+                    $q->where('branch_id', $branchId)->where('is_active', true);
+                } else {
+                    $q->where('is_active', true);
+                }
+            })->whereDate('appointment_date', $dateStr)->count();
+            
+            // Count medications due on this date
+            $medicationsDue = Medication::whereHas('resident', function ($q) use ($branchId) {
+                if ($branchId) {
+                    $q->where('branch_id', $branchId)->where('is_active', true);
+                } else {
+                    $q->where('is_active', true);
+                }
+            })
+            ->where('is_active', true)
+            ->where(function ($q) use ($dateStr) {
+                $q->whereNull('start_date')
+                  ->orWhere('start_date', '<=', $dateStr);
+            })
+            ->where(function ($q) use ($dateStr) {
+                $q->whereNull('end_date')
+                  ->orWhere('end_date', '>=', $dateStr);
+            })
+            ->count();
+            
+            // Count vitals recorded on this date
+            $vitalsRecorded = VitalSign::whereHas('resident', function ($q) use ($branchId) {
+                if ($branchId) {
+                    $q->where('branch_id', $branchId)->where('is_active', true);
+                } else {
+                    $q->where('is_active', true);
+                }
+            })->whereDate('measurement_date', $dateStr)->count();
+            
+            if ($appointmentsCount > 0 || $medicationsDue > 0 || $vitalsRecorded > 0) {
+                $activities[] = [
+                    'date' => $dateStr,
+                    'appointments_count' => $appointmentsCount,
+                    'medications_due' => $medicationsDue,
+                    'vitals_recorded' => $vitalsRecorded,
+                ];
+            }
+            
+            $currentDate->addDay();
+        }
+        
+        return $activities;
+    }
 }
 
 

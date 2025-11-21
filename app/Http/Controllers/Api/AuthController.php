@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Services\ActivityLogService;
+use App\Models\Facility;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -17,6 +18,7 @@ class AuthController extends Controller
         $credentials = $request->validate([
             'email' => 'required|email',
             'password' => 'required',
+            'provider_code' => 'nullable|string',
         ]);
 
         if (Auth::attempt($credentials)) {
@@ -32,6 +34,36 @@ class AuthController extends Controller
                 return response()->json([
                     'message' => 'This account has been deactivated. Please contact an administrator.',
                 ], 403);
+            }
+
+            // Validate provider code if provided
+            if ($request->filled('provider_code')) {
+                // Super admins don't have facility_id, so skip provider code validation
+                if ($user->role !== 'super_admin') {
+                    // Find facility by provider code (case-insensitive)
+                    $facility = Facility::whereRaw('LOWER(provider_code) = ?', [strtolower($request->provider_code)])->first();
+
+                    if (!$facility) {
+                        Auth::logout();
+                        $request->session()->invalidate();
+                        $request->session()->regenerateToken();
+
+                        return response()->json([
+                            'message' => 'Invalid provider code',
+                        ], 422);
+                    }
+
+                    // Verify user belongs to this facility
+                    if ($user->facility_id !== $facility->id) {
+                        Auth::logout();
+                        $request->session()->invalidate();
+                        $request->session()->regenerateToken();
+
+                        return response()->json([
+                            'message' => 'You don\'t belong to this facility',
+                        ], 403);
+                    }
+                }
             }
 
             $token = $user->createToken('api-token')->plainTextToken;
@@ -77,7 +109,21 @@ class AuthController extends Controller
 
     public function user(Request $request): JsonResponse
     {
-        return response()->json($this->transformUser($request->user()));
+        try {
+            $user = $request->user();
+            if (!$user) {
+                return response()->json(['message' => 'Unauthenticated'], 401);
+            }
+            return response()->json($this->transformUser($user));
+        } catch (\Exception $e) {
+            \Log::error('Error in user endpoint: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return response()->json([
+                'message' => 'Failed to load user data',
+                'error' => config('app.debug') ? $e->getMessage() : 'Internal server error'
+            ], 500);
+        }
     }
 
     public function changePassword(Request $request): JsonResponse
@@ -119,8 +165,8 @@ class AuthController extends Controller
         // frontend pages (e.g. profile, housekeeping, medications) can safely
         // reference `user.assigned_branch` without needing extra API calls.
         $user->loadMissing([
-            'assignedBranch.facility',
-            'facility',
+            'assignedBranch.facility.modules',
+            'facility.modules',
         ]);
 
         $appTimezone = config('app.timezone', 'UTC');
@@ -133,10 +179,17 @@ class AuthController extends Controller
         $payload['app_current_time'] = $now->toIso8601String();
         
         // Include facility branding if available
-        if ($user->facility) {
-            $payload['facility_branding'] = $user->facility->branding;
-        } elseif ($user->assignedBranch && $user->assignedBranch->facility) {
-            $payload['facility_branding'] = $user->assignedBranch->facility->branding;
+        $facility = $user->facility ?? ($user->assignedBranch ? $user->assignedBranch->facility : null);
+        
+        if ($facility) {
+            $payload['facility_branding'] = $facility->branding;
+            
+            // Include enabled modules for this facility
+            $enabledModules = $facility->modules()
+                ->where('is_enabled', true)
+                ->pluck('module')
+                ->toArray();
+            $payload['enabled_modules'] = $enabledModules;
         } else {
             // Default branding for super admin / HomeLogic360
             $payload['facility_branding'] = [
@@ -146,9 +199,108 @@ class AuthController extends Controller
                 'secondary_color' => '#86EFAC', // Light green from logo
                 'accent_color' => '#FFFFFF', // White from logo
             ];
+            
+            // Super admins have access to all modules
+            if ($user->role === 'super_admin' || $user->hasRole('super_admin')) {
+                $payload['enabled_modules'] = array_keys(\App\Constants\Modules::all());
+            } else {
+                $payload['enabled_modules'] = [];
+            }
         }
 
+        // Include effective permissions for navigation checks
+        // Get all permissions the user effectively has (considering facility overrides)
+        $payload['permissions'] = $this->getEffectivePermissions($user);
+
         return $payload;
+    }
+
+    /**
+     * Get all effective permissions for a user (considering facility-specific overrides)
+     */
+    protected function getEffectivePermissions(\App\Models\User $user): array
+    {
+        // Super admins have all permissions
+        if ($user->role === 'super_admin' || $user->hasRole('super_admin')) {
+            return \App\Models\Permission::pluck('name')->toArray();
+        }
+
+        $userRoles = $user->roles()->get();
+        
+        if ($userRoles->isEmpty()) {
+            return [];
+        }
+
+        // Get facility for module access checks
+        $facility = $user->facility ?? ($user->assignedBranch ? $user->assignedBranch->facility : null);
+        
+        // Get enabled modules for this facility
+        $enabledModules = [];
+        if ($facility) {
+            $enabledModules = $facility->modules()
+                ->where('is_enabled', true)
+                ->pluck('module')
+                ->toArray();
+        }
+
+        // Get facility-specific overrides for user's roles
+        $effectivePermissions = [];
+        
+        foreach ($userRoles as $role) {
+            // Get global permissions for this role
+            $roleGlobalPermissions = $role->permissions()->pluck('name')->toArray();
+            
+            // Get facility overrides for this role (if facility exists)
+            $facilityOverrides = collect();
+            if ($facility) {
+                $facilityOverrides = $facility->rolePermissions()
+                    ->where('role_id', $role->id)
+                    ->with('permission')
+                    ->get()
+                    ->keyBy(function ($item) {
+                        return $item->permission ? $item->permission->name : null;
+                    })
+                    ->filter(function ($item) {
+                        return $item->permission !== null;
+                    });
+            }
+
+            // Merge: facility overrides take precedence
+            foreach ($roleGlobalPermissions as $permissionName) {
+                $isAllowed = true;
+                
+                if ($facilityOverrides->has($permissionName)) {
+                    // Facility override exists - use it
+                    $isAllowed = $facilityOverrides[$permissionName]->is_allowed;
+                }
+                
+                if ($isAllowed) {
+                    // Check if permission requires module access
+                    try {
+                        $module = \App\Helpers\ModulePermissionMapper::getModuleForPermission($permissionName);
+                        
+                        if ($module === null) {
+                            // Permission doesn't map to a module, allow it
+                            $effectivePermissions[] = $permissionName;
+                        } elseif ($facility && in_array($module, $enabledModules)) {
+                            // Module is enabled, allow permission
+                            $effectivePermissions[] = $permissionName;
+                        }
+                        // If module is disabled, don't add permission
+                    } catch (\Exception $e) {
+                        // If ModulePermissionMapper fails, allow the permission to prevent breaking the app
+                        \Log::warning('ModulePermissionMapper error for permission: ' . $permissionName, [
+                            'error' => $e->getMessage(),
+                        ]);
+                        $effectivePermissions[] = $permissionName;
+                    }
+                }
+                // If explicitly denied, don't add permission
+            }
+        }
+
+        // Remove duplicates
+        return collect($effectivePermissions)->unique()->values()->toArray();
     }
 }
 

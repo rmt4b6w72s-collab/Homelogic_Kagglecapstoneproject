@@ -332,7 +332,7 @@ export default function MedicationDeliveries() {
                                             </h3>
                                             {Object.entries(grouped[groupKey]).map(([pharmacy, deliveries]) => (
                                                 <div key={pharmacy} className="mb-4">
-                                                    <h4 className="text-sm font-medium text-gray-700 mb-2 ml-2">
+                                                    <h4 className="text-sm font-medium text-gray-900 mb-2 ml-2">
                                                         {pharmacy} ({deliveries.length})
                                                     </h4>
                                                     <div className="grid grid-cols-1 gap-3">
@@ -565,13 +565,13 @@ function MedicationDeliveryForm({ record, branches, residents, medications, isCa
 
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Branch *</label>
+                                <label className="block text-sm font-medium text-gray-900 mb-1">Branch *</label>
                                 <select
                                     value={formData.branch_id}
                                     onChange={(e) => setFormData({ ...formData, branch_id: e.target.value, resident_id: '', medication_id: '' })}
                                     required
                                     disabled={isCaregiver}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent text-gray-900 bg-white"
                                 >
                                     <option value="">Select Branch</option>
                                     {branches.map(branch => (
@@ -583,12 +583,12 @@ function MedicationDeliveryForm({ record, branches, residents, medications, isCa
 
                             {formMode === 'full' && (
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Delivery Type *</label>
+                                    <label className="block text-sm font-medium text-gray-900 mb-1">Delivery Type *</label>
                                     <select
                                         value={formData.delivery_type}
                                         onChange={(e) => setFormData({ ...formData, delivery_type: e.target.value, resident_id: '', medication_id: '' })}
                                         required
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent text-gray-900 bg-white"
                                     >
                                         <option value="individual">Individual Medication</option>
                                         <option value="batch">Batch Delivery</option>
@@ -600,11 +600,11 @@ function MedicationDeliveryForm({ record, branches, residents, medications, isCa
                             {formData.delivery_type === 'individual' && formMode === 'full' && (
                                 <>
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Resident</label>
+                                        <label className="block text-sm font-medium text-gray-900 mb-1">Resident</label>
                                         <select
                                             value={formData.resident_id}
                                             onChange={(e) => setFormData({ ...formData, resident_id: e.target.value, medication_id: '' })}
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent text-gray-900 bg-white"
                                         >
                                             <option value="">Select Resident</option>
                                             {filteredResidents.map(resident => (
@@ -615,13 +615,13 @@ function MedicationDeliveryForm({ record, branches, residents, medications, isCa
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Medication *</label>
+                                        <label className="block text-sm font-medium text-gray-900 mb-1">Medication *</label>
                                         <select
                                             value={formData.medication_id}
                                             onChange={(e) => setFormData({ ...formData, medication_id: e.target.value })}
                                             required
                                             disabled={!formData.resident_id}
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed text-gray-900 bg-white"
                                         >
                                             <option value="">
                                                 {!formData.resident_id ? 'Select Resident First' : filteredMedications.length === 0 ? 'No medications found' : 'Select Medication'}
@@ -642,7 +642,7 @@ function MedicationDeliveryForm({ record, branches, residents, medications, isCa
                             )}
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Pharmacy Template (Optional)</label>
+                                <label className="block text-sm font-medium text-gray-900 mb-1">Pharmacy Template (Optional)</label>
                                 <select
                                     value=""
                                     onChange={(e) => {
@@ -657,7 +657,7 @@ function MedicationDeliveryForm({ record, branches, residents, medications, isCa
                                             }
                                         }
                                     }}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent mb-2"
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent mb-2 text-gray-900 bg-white"
                                 >
                                     <option value="">Select a saved pharmacy...</option>
                                     {pharmacyTemplatesData?.data?.map(template => (
@@ -668,61 +668,61 @@ function MedicationDeliveryForm({ record, branches, residents, medications, isCa
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Pharmacy Name *</label>
+                                <label className="block text-sm font-medium text-gray-900 mb-1">Pharmacy Name *</label>
                                 <input
                                     type="text"
                                     value={formData.pharmacy_name}
                                     onChange={(e) => setFormData({ ...formData, pharmacy_name: e.target.value })}
                                     required
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent text-gray-900 bg-white"
                                 />
                                 {errors.pharmacy_name && <p className="text-xs text-red-600 mt-1">{errors.pharmacy_name[0]}</p>}
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Quantity Received *</label>
+                                <label className="block text-sm font-medium text-gray-900 mb-1">Quantity Received *</label>
                                 <input
                                     type="text"
                                     value={formData.quantity_received}
                                     onChange={(e) => setFormData({ ...formData, quantity_received: e.target.value })}
                                     required
                                     placeholder="e.g., 30 tablets, 2 bottles"
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent text-gray-900 bg-white"
                                 />
                                 {errors.quantity_received && <p className="text-xs text-red-600 mt-1">{errors.quantity_received[0]}</p>}
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Received Date *</label>
+                                <label className="block text-sm font-medium text-gray-900 mb-1">Received Date *</label>
                                 <input
                                     type="date"
                                     value={formData.received_date}
                                     onChange={(e) => setFormData({ ...formData, received_date: e.target.value })}
                                     required
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent text-gray-900 bg-white"
                                 />
                                 {errors.received_date && <p className="text-xs text-red-600 mt-1">{errors.received_date[0]}</p>}
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Received Time *</label>
+                                <label className="block text-sm font-medium text-gray-900 mb-1">Received Time *</label>
                                 <input
                                     type="time"
                                     value={formData.received_time}
                                     onChange={(e) => setFormData({ ...formData, received_time: e.target.value })}
                                     required
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent text-gray-900 bg-white"
                                 />
                                 {errors.received_time && <p className="text-xs text-red-600 mt-1">{errors.received_time[0]}</p>}
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Status *</label>
+                                <label className="block text-sm font-medium text-gray-900 mb-1">Status *</label>
                                 <select
                                     value={formData.status}
                                     onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                                     required
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent text-gray-900 bg-white"
                                 >
                                     <option value="received">Received</option>
                                     <option value="verified">Verified</option>
@@ -733,12 +733,12 @@ function MedicationDeliveryForm({ record, branches, residents, medications, isCa
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                            <label className="block text-sm font-medium text-gray-900 mb-1">Notes</label>
                             <textarea
                                 value={formData.notes}
                                 onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                                 rows={3}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent text-gray-900 bg-white"
                                 placeholder="Enter any additional notes..."
                             />
                             {errors.notes && <p className="text-xs text-red-600 mt-1">{errors.notes[0]}</p>}
@@ -748,7 +748,7 @@ function MedicationDeliveryForm({ record, branches, residents, medications, isCa
                             <button
                                 type="button"
                                 onClick={onClose}
-                                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700 bg-white"
                             >
                                 Cancel
                             </button>
@@ -908,13 +908,13 @@ function BulkMedicationDeliveryForm({ branches, residents, medications, isCaregi
                             <h3 className="text-lg font-semibold text-gray-900 mb-4">Common Fields (Applied to All)</h3>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Branch *</label>
+                                    <label className="block text-sm font-medium text-gray-900 mb-1">Branch *</label>
                                     <select
                                         value={commonFields.branch_id}
                                         onChange={(e) => setCommonFields({ ...commonFields, branch_id: e.target.value })}
                                         required
                                         disabled={isCaregiver}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent text-gray-900 bg-white"
                                     >
                                         <option value="">Select Branch</option>
                                         {branches?.data?.map(branch => (
@@ -923,42 +923,42 @@ function BulkMedicationDeliveryForm({ branches, residents, medications, isCaregi
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Pharmacy Name *</label>
+                                    <label className="block text-sm font-medium text-gray-900 mb-1">Pharmacy Name *</label>
                                     <input
                                         type="text"
                                         value={commonFields.pharmacy_name}
                                         onChange={(e) => setCommonFields({ ...commonFields, pharmacy_name: e.target.value })}
                                         required
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent text-gray-900 bg-white"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Received Date *</label>
+                                    <label className="block text-sm font-medium text-gray-900 mb-1">Received Date *</label>
                                     <input
                                         type="date"
                                         value={commonFields.received_date}
                                         onChange={(e) => setCommonFields({ ...commonFields, received_date: e.target.value })}
                                         required
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent text-gray-900 bg-white"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Received Time *</label>
+                                    <label className="block text-sm font-medium text-gray-900 mb-1">Received Time *</label>
                                     <input
                                         type="time"
                                         value={commonFields.received_time}
                                         onChange={(e) => setCommonFields({ ...commonFields, received_time: e.target.value })}
                                         required
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent text-gray-900 bg-white"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Status *</label>
+                                    <label className="block text-sm font-medium text-gray-900 mb-1">Status *</label>
                                     <select
                                         value={commonFields.status}
                                         onChange={(e) => setCommonFields({ ...commonFields, status: e.target.value })}
                                         required
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent text-gray-900 bg-white"
                                     >
                                         <option value="received">Received</option>
                                         <option value="verified">Verified</option>
@@ -986,12 +986,12 @@ function BulkMedicationDeliveryForm({ branches, residents, medications, isCaregi
                                 <table className="w-full border-collapse">
                                     <thead>
                                         <tr className="bg-gray-100">
-                                            <th className="border border-gray-300 px-3 py-2 text-left text-sm font-semibold text-gray-700">Type</th>
-                                            <th className="border border-gray-300 px-3 py-2 text-left text-sm font-semibold text-gray-700">Resident</th>
-                                            <th className="border border-gray-300 px-3 py-2 text-left text-sm font-semibold text-gray-700">Medication</th>
-                                            <th className="border border-gray-300 px-3 py-2 text-left text-sm font-semibold text-gray-700">Quantity *</th>
-                                            <th className="border border-gray-300 px-3 py-2 text-left text-sm font-semibold text-gray-700">Notes</th>
-                                            <th className="border border-gray-300 px-3 py-2 text-left text-sm font-semibold text-gray-700">Action</th>
+                                            <th className="border border-gray-300 px-3 py-2 text-left text-sm font-semibold text-gray-900">Type</th>
+                                            <th className="border border-gray-300 px-3 py-2 text-left text-sm font-semibold text-gray-900">Resident</th>
+                                            <th className="border border-gray-300 px-3 py-2 text-left text-sm font-semibold text-gray-900">Medication</th>
+                                            <th className="border border-gray-300 px-3 py-2 text-left text-sm font-semibold text-gray-900">Quantity *</th>
+                                            <th className="border border-gray-300 px-3 py-2 text-left text-sm font-semibold text-gray-900">Notes</th>
+                                            <th className="border border-gray-300 px-3 py-2 text-left text-sm font-semibold text-gray-900">Action</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -1001,7 +1001,7 @@ function BulkMedicationDeliveryForm({ branches, residents, medications, isCaregi
                                                     <select
                                                         value={delivery.delivery_type}
                                                         onChange={(e) => updateDelivery(index, 'delivery_type', e.target.value)}
-                                                        className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent text-sm"
+                                                        className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent text-sm text-gray-900 bg-white"
                                                     >
                                                         <option value="individual">Individual</option>
                                                         <option value="batch">Batch</option>
@@ -1012,7 +1012,7 @@ function BulkMedicationDeliveryForm({ branches, residents, medications, isCaregi
                                                         <select
                                                             value={delivery.resident_id}
                                                             onChange={(e) => updateDelivery(index, 'resident_id', e.target.value)}
-                                                            className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent text-sm"
+                                                            className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent text-sm text-gray-900 bg-white"
                                                         >
                                                             <option value="">Select Resident</option>
                                                             {filteredResidents.map(resident => (
@@ -1032,7 +1032,7 @@ function BulkMedicationDeliveryForm({ branches, residents, medications, isCaregi
                                                             onChange={(e) => updateDelivery(index, 'medication_id', e.target.value)}
                                                             disabled={!delivery.resident_id}
                                                             required={delivery.delivery_type === 'individual'}
-                                                            className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent text-sm disabled:bg-gray-100"
+                                                            className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent text-sm disabled:bg-gray-100 text-gray-900 bg-white"
                                                         >
                                                             <option value="">
                                                                 {!delivery.resident_id ? 'Select Resident First' : 'Select Medication'}
@@ -1058,7 +1058,7 @@ function BulkMedicationDeliveryForm({ branches, residents, medications, isCaregi
                                                         onChange={(e) => updateDelivery(index, 'quantity_received', e.target.value)}
                                                         required
                                                         placeholder="e.g., 30 tablets"
-                                                        className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent text-sm"
+                                                        className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent text-sm text-gray-900 bg-white"
                                                     />
                                                 </td>
                                                 <td className="border border-gray-300 px-3 py-2">
@@ -1067,7 +1067,7 @@ function BulkMedicationDeliveryForm({ branches, residents, medications, isCaregi
                                                         value={delivery.notes}
                                                         onChange={(e) => updateDelivery(index, 'notes', e.target.value)}
                                                         placeholder="Optional notes"
-                                                        className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent text-sm"
+                                                        className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent text-sm text-gray-900 bg-white"
                                                     />
                                                 </td>
                                                 <td className="border border-gray-300 px-3 py-2">

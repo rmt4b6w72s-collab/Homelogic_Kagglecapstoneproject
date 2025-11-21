@@ -127,8 +127,8 @@ function RangeForm({ record, onClose, onSuccess }) {
           )}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Parameter *</label>
-              <select value={form.parameter} onChange={(e) => setForm({ ...form, parameter: e.target.value })} required className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent">
+              <label className="block text-sm font-medium text-gray-900 mb-1">Parameter *</label>
+              <select value={form.parameter} onChange={(e) => setForm({ ...form, parameter: e.target.value })} required className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent">
                 <option value="">Select parameter</option>
                 <option value="systolic">Systolic</option>
                 <option value="diastolic">Diastolic</option>
@@ -140,21 +140,21 @@ function RangeForm({ record, onClose, onSuccess }) {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Min Normal</label>
-                <input type="number" step="0.01" value={form.min_normal} onChange={(e) => setForm({ ...form, min_normal: e.target.value })} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent" />
+                <label className="block text-sm font-medium text-gray-900 mb-1">Min Normal</label>
+                <input type="number" step="0.01" value={form.min_normal} onChange={(e) => setForm({ ...form, min_normal: e.target.value })} className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Max Normal</label>
-                <input type="number" step="0.01" value={form.max_normal} onChange={(e) => setForm({ ...form, max_normal: e.target.value })} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent" />
+                <label className="block text-sm font-medium text-gray-900 mb-1">Max Normal</label>
+                <input type="number" step="0.01" value={form.max_normal} onChange={(e) => setForm({ ...form, max_normal: e.target.value })} className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent" />
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Unit</label>
-              <input value={form.unit} onChange={(e) => setForm({ ...form, unit: e.target.value })} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent" />
+              <label className="block text-sm font-medium text-gray-900 mb-1">Unit</label>
+              <input value={form.unit} onChange={(e) => setForm({ ...form, unit: e.target.value })} className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-              <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={2} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent" />
+              <label className="block text-sm font-medium text-gray-900 mb-1">Description</label>
+              <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={2} className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent" />
             </div>
             <div className="flex items-center justify-end space-x-3 pt-4 border-t">
               <button type="button" onClick={onClose} className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</button>

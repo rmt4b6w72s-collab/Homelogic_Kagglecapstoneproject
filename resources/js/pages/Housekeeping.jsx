@@ -266,7 +266,7 @@ export default function Housekeeping() {
                             onChange={(e) => setSkipNotesModal({ ...skipNotesModal, notes: e.target.value })}
                             placeholder="Enter reason for skipping..."
                             rows={4}
-                            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+                            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 bg-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
                             maxLength={1000}
                         />
                         <div className="mt-6 flex items-center justify-end gap-3">

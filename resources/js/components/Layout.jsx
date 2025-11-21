@@ -29,11 +29,15 @@ import {
     Truck,
     Flame,
     ShieldCheck,
-    Clock
+    Clock,
+    Shield
 } from 'lucide-react';
 import NotificationDropdown from './NotificationDropdown';
 import { useToastContext } from '../contexts/ToastContext';
+import { useTheme } from '../contexts/ThemeContext';
 import CommandPalette from './ui/CommandPalette';
+import { filterNavigationByModuleAccess } from '../utils/moduleAccess';
+import { filterNavigationByPermissionAccess } from '../utils/permissionAccess';
 import {
     PACIFIC_TIMEZONE_ID,
     setPacificServerTime,
@@ -44,6 +48,7 @@ import {
 
 const navigation = [
     { name: 'Dashboard', icon: LayoutDashboard, path: '/dashboard', children: null },
+    { name: 'My Residents', icon: Users, path: '/my-residents', children: null },
     { name: 'Assessments', icon: ClipboardList, path: '/assessments', children: null },
     { name: 'Appointment', icon: Calendar, path: '/appointments', children: null },
     { 
@@ -123,9 +128,10 @@ const superAdminNavigation = [
         icon: ShieldCheck, 
         path: '/super-admin', 
         children: [
-            { name: 'Dashboard', path: '/super-admin/dashboard' },
             { name: 'Facility Registrations', path: '/super-admin/facility-registrations' },
             { name: 'Facilities', path: '/super-admin/facilities' },
+            { name: 'Permissions', path: '/super-admin/permissions' },
+            { name: 'Settings', path: '/super-admin/settings' },
         ]
     },
 ];
@@ -167,6 +173,7 @@ export default function Layout() {
     const userButtonRef = useRef(null);
     const [expandedMenus, setExpandedMenus] = useState({});
     const [currentUser, setCurrentUser] = useState(null);
+    const [isLoadingUser, setIsLoadingUser] = useState(true);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [appClock, setAppClock] = useState({ time: '', date: '' });
     const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
@@ -176,11 +183,14 @@ export default function Layout() {
     useEffect(() => {
         const fetchUser = async () => {
             try {
+                setIsLoadingUser(true);
                 const response = await api.get('/user');
                 setCurrentUser(response.data);
                 setPacificServerTime(response.data?.app_current_time, response.data?.app_timezone_offset);
             } catch (err) {
                 console.error('Failed to fetch current user:', err);
+            } finally {
+                setIsLoadingUser(false);
             }
         };
         fetchUser();
@@ -367,21 +377,69 @@ export default function Layout() {
 
     const isSuperAdmin = React.useMemo(() => {
         if (!currentUser) return false;
-        return currentUser.role === 'super_admin' || 
-               currentUser.role === 'Super Admin' ||
-               (currentUser.roles && Array.isArray(currentUser.roles) && 
-                currentUser.roles.some(r => (typeof r === 'string' ? r : r.name) === 'super_admin'));
+        
+        // Check direct role property
+        const role = String(currentUser.role || '').toLowerCase().trim();
+        if (role === 'super_admin' || role === 'superadmin' || role === 'super admin') {
+            return true;
+        }
+        
+        // Check roles array
+        if (currentUser.roles) {
+            const roles = Array.isArray(currentUser.roles) ? currentUser.roles : (currentUser.roles.data || []);
+            const hasSuperAdminRole = roles.some(r => {
+                const roleName = String(typeof r === 'string' ? r : (r?.name || '')).toLowerCase().trim();
+                return roleName === 'super_admin' || roleName === 'superadmin' || roleName === 'super admin';
+            });
+            if (hasSuperAdminRole) {
+                return true;
+            }
+        }
+        
+        return false;
     }, [currentUser]);
 
     const navigationItems = React.useMemo(() => {
+        // If user is not loaded yet, return empty array (will show loading spinner)
+        if (!currentUser) {
+            return [];
+        }
+
+        let items;
+        // Super admin gets their own navigation menu
         if (isSuperAdmin) {
-            return superAdminNavigation;
+            items = [...superAdminNavigation]; // Create a copy to avoid mutations
+        } else if (isCaregiver) {
+            items = [...caregiverNavigation];
+        } else {
+            items = [...navigation];
         }
-        if (isCaregiver) {
-            return caregiverNavigation;
+
+        // Filter navigation items based on module access and permissions (except for super admins)
+        // Super admins see everything, no filtering needed
+        if (!isSuperAdmin) {
+            // First filter by module access
+            if (currentUser?.enabled_modules) {
+                items = filterNavigationByModuleAccess(
+                    items,
+                    currentUser.enabled_modules,
+                    isSuperAdmin
+                );
+            }
+            
+            // Then filter by permissions
+            if (currentUser?.permissions) {
+                items = filterNavigationByPermissionAccess(
+                    items,
+                    currentUser.permissions,
+                    isSuperAdmin
+                );
+            }
         }
-        return navigation;
-    }, [isCaregiver, isSuperAdmin]);
+
+        // Ensure we always return an array (fallback to default navigation if something went wrong)
+        return items && items.length > 0 ? items : (isSuperAdmin ? superAdminNavigation : navigation);
+    }, [isCaregiver, isSuperAdmin, currentUser, currentUser?.enabled_modules, currentUser?.permissions]);
 
     const appTimezoneLabel = React.useMemo(() => {
         const timeZone = PACIFIC_TIMEZONE_ID;
@@ -395,16 +453,17 @@ export default function Layout() {
 
     const leaveRequestsPath = isCaregiver ? '/leave-requests' : '/administration/leave-requests';
 
-    // Get facility branding with defaults - CSS variables are set by ThemeProvider
+    // Get theme from ThemeProvider (CSS variables are automatically set)
+    const theme = useTheme();
     const facilityBranding = React.useMemo(() => {
         return {
-            name: currentUser?.facility_branding?.name || 'HomeLogic360',
-            logo: currentUser?.facility_branding?.logo || '/images/logonew.png',
-            primary_color: currentUser?.facility_branding?.primary_color || '#1E3A5F', // Dark blue from logo
-            secondary_color: currentUser?.facility_branding?.secondary_color || '#86EFAC', // Light green from logo
-            accent_color: currentUser?.facility_branding?.accent_color || '#FFFFFF', // White from logo
+            name: theme.theme.name || currentUser?.facility_branding?.name || 'HomeLogic360',
+            logo: theme.theme.logo || currentUser?.facility_branding?.logo || '/images/logonew.png',
+            primary_color: theme.theme.primary_color || currentUser?.facility_branding?.primary_color || '#1E3A5F',
+            secondary_color: theme.theme.secondary_color || currentUser?.facility_branding?.secondary_color || '#86EFAC',
+            accent_color: theme.theme.accent_color || currentUser?.facility_branding?.accent_color || '#FFFFFF',
         };
-    }, [currentUser?.facility_branding]);
+    }, [theme.theme, currentUser?.facility_branding]);
 
     return (
         <div className="flex h-screen bg-gray-50">
@@ -458,7 +517,7 @@ export default function Layout() {
                             <span className="text-xl font-semibold text-[var(--theme-text-on-primary)]">
                                 {facilityBranding.name.split(' ')[0]}
                             </span>
-                            <p className="text-xs text-gray-300">
+                            <p className="text-xs text-[var(--theme-text-on-primary)] opacity-80">
                                 {facilityBranding.name.split(' ').length > 1 ?
                                     facilityBranding.name.split(' ').slice(1).join(' ') :
                                     'Care Home'}
@@ -469,12 +528,48 @@ export default function Layout() {
 
                 {/* Navigation */}
                 <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-                    {navigationItems.map((item) => {
+                    {isLoadingUser ? (
+                        <div className="flex items-center justify-center py-8">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--theme-text-on-primary)]"></div>
+                        </div>
+                    ) : navigationItems.length === 0 ? (
+                        <div className="text-center py-8 text-[var(--theme-text-on-primary)] text-sm opacity-75">
+                            No navigation items available
+                        </div>
+                    ) : (
+                        navigationItems.map((item) => {
                         const Icon = item.icon;
-                        const isActive = location.pathname === item.path || 
-                            location.pathname.startsWith(item.path + '/') ||
-                            (item.children && item.children.some(child => location.pathname === child.path || location.pathname.startsWith(child.path + '/')));
                         const hasChildren = item.children && item.children.length > 0;
+                        
+                        // For parent items with children, only mark active if a child is active
+                        // For items without children, check exact match or path starts with
+                        let isActive;
+                        if (hasChildren) {
+                            // Parent is active only if a child is active
+                            isActive = item.children.some(child => 
+                                location.pathname === child.path || 
+                                location.pathname.startsWith(child.path + '/')
+                            );
+                        } else {
+                            // For items without children, check exact match or starts with path + '/'
+                            // But exclude cases where a more specific path exists
+                            isActive = location.pathname === item.path || 
+                                location.pathname.startsWith(item.path + '/');
+                            
+                            // If this path is a prefix of another navigation item's path, don't mark active
+                            // unless we're on the exact path
+                            if (isActive && location.pathname !== item.path) {
+                                const hasMoreSpecificMatch = navigationItems.some(otherItem => 
+                                    otherItem.path !== item.path &&
+                                    otherItem.path.startsWith(item.path + '/') &&
+                                    location.pathname.startsWith(otherItem.path)
+                                );
+                                if (hasMoreSpecificMatch) {
+                                    isActive = false;
+                                }
+                            }
+                        }
+                        
                         const isExpanded = expandedMenus[item.name] ?? (isActive && hasChildren);
                         
                         return (
@@ -531,7 +626,8 @@ export default function Layout() {
                                 )}
                             </div>
                         );
-                    })}
+                    })
+                    )}
                 </nav>
             </aside>
 

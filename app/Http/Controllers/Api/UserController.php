@@ -28,6 +28,11 @@ class UserController extends BaseApiController
             $query->where('is_active', true);
         }
 
+        // Filter by facility
+        if ($request->has('facility_id')) {
+            $query->where('facility_id', $request->get('facility_id'));
+        }
+
         // Filter by branch
         if ($request->has('branch_id')) {
             $query->where('assigned_branch_id', $request->get('branch_id'));
@@ -84,6 +89,7 @@ class UserController extends BaseApiController
             'supervisor_name' => 'nullable|string|max:255',
             'provider_name' => 'nullable|string|max:255',
             'role' => 'required|string|max:255',
+            'facility_id' => 'nullable|exists:facilities,id',
             'assigned_branch_id' => 'nullable|exists:branches,id',
             'is_active' => 'boolean',
             'notes' => 'nullable|string',
@@ -175,6 +181,7 @@ class UserController extends BaseApiController
             'supervisor_name' => 'nullable|string|max:255',
             'provider_name' => 'nullable|string|max:255',
             'role' => 'sometimes|required|string|max:255',
+            'facility_id' => 'nullable|exists:facilities,id',
             'assigned_branch_id' => 'nullable|exists:branches,id',
             'is_active' => 'boolean',
             'notes' => 'nullable|string',

@@ -96,6 +96,33 @@ abstract class BaseApiController extends Controller
         $branchId = $resource->branch_id ?? $resource->branch?->id ?? null;
         return $user->assigned_branch_id === $branchId;
     }
+
+    /**
+     * Check if user has access to a module
+     */
+    protected function checkModuleAccess(string $module, ?object $user = null): bool
+    {
+        $user = $user ?? auth()->user();
+        
+        if (!$user) {
+            return false;
+        }
+
+        return $user->hasModuleAccess($module);
+    }
+
+    /**
+     * Return error response if module access is denied
+     */
+    protected function requireModuleAccess(string $module, ?object $user = null): ?JsonResponse
+    {
+        if (!$this->checkModuleAccess($module, $user)) {
+            $moduleName = \App\Constants\Modules::getDisplayName($module);
+            return $this->error("{$moduleName} module is not available for your facility.", 403);
+        }
+
+        return null;
+    }
 }
 
 

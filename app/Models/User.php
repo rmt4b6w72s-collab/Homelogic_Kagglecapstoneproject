@@ -222,9 +222,87 @@ class User extends Authenticatable implements FilamentUser
 
     public function hasPermission(string $permission): bool
     {
-        return $this->roles()->whereHas('permissions', function ($query) use ($permission) {
-            $query->where('name', $permission);
-        })->exists();
+        // Super admins bypass all restrictions
+        if ($this->role === 'super_admin' || $this->hasRole('super_admin')) {
+            return true;
+        }
+
+        // Get user's roles
+        $userRoles = $this->roles()->get();
+        
+        if ($userRoles->isEmpty()) {
+            return false;
+        }
+
+        // Check facility-specific role permissions first (if user has a facility)
+        if ($this->facility_id && $this->facility) {
+            foreach ($userRoles as $role) {
+                $facilityOverride = $this->facility->rolePermissions()
+                    ->where('role_id', $role->id)
+                    ->whereHas('permission', function ($query) use ($permission) {
+                        $query->where('name', $permission);
+                    })
+                    ->first();
+                
+                if ($facilityOverride) {
+                    // Facility-specific override exists, use it
+                    if ($facilityOverride->is_allowed) {
+                        // Permission is allowed, check module access
+                        return $this->checkModuleAccessForPermission($permission);
+                    } else {
+                        // Permission is explicitly denied
+                        return false;
+                    }
+                }
+            }
+        }
+
+        // Fall back to global role permissions
+        $hasGlobalRolePermission = $userRoles->contains(function ($role) use ($permission) {
+            return $role->permissions()->where('name', $permission)->exists();
+        });
+
+        if (!$hasGlobalRolePermission) {
+            return false;
+        }
+
+        // Check module access
+        return $this->checkModuleAccessForPermission($permission);
+    }
+
+    /**
+     * Check module access for a permission
+     */
+    private function checkModuleAccessForPermission(string $permission): bool
+    {
+        // Check if this permission requires module access check
+        $module = \App\Helpers\ModulePermissionMapper::getModuleForPermission($permission);
+        
+        if ($module === null) {
+            // Permission doesn't map to a module, allow if role has permission
+            return true;
+        }
+
+        // Check if user's facility has access to this module
+        return $this->hasModuleAccess($module);
+    }
+
+    /**
+     * Check if user has access to a module
+     */
+    public function hasModuleAccess(string $module): bool
+    {
+        // Super admins bypass facility module restrictions
+        if ($this->role === 'super_admin' || $this->hasRole('super_admin')) {
+            return true;
+        }
+
+        // If user doesn't have a facility, deny access
+        if (!$this->facility_id || !$this->facility) {
+            return false;
+        }
+
+        return $this->facility->hasModuleAccess($module);
     }
 
     public function hasAnyRole(array $roles): bool

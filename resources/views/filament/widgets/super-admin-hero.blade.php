@@ -1,5 +1,5 @@
 <x-filament-widgets::widget>
-    <div class="relative overflow-hidden rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 shadow-lg">
+    <div class="relative overflow-hidden rounded-xl shadow-lg" style="background: linear-gradient(to right, #1E3A5F, #2E5A8F);">
         <div class="absolute top-0 right-0 -mt-4 -mr-16 opacity-10">
             <svg class="w-48 h-48" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
@@ -11,14 +11,14 @@
                 <h2 class="text-lg font-semibold text-white mb-1">
                     Welcome, {{ auth()->user()->name }}!
                 </h2>
-                <p class="text-purple-100 text-sm">
+                <p class="text-white text-opacity-90 text-sm">
                     System Administrator Dashboard - Managing all facilities and system operations
                 </p>
             </div>
             
             <div class="hidden md:flex items-center space-x-4">
                 <div class="text-right">
-                    <p class="text-purple-100 text-xs">{{ now()->format('l') }}</p>
+                    <p class="text-white text-opacity-80 text-xs">{{ now()->format('l') }}</p>
                     <p class="text-white font-medium">{{ now()->format('F j, Y') }}</p>
                 </div>
                 <div class="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center backdrop-blur-sm">

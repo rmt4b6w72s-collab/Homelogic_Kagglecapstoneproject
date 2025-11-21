@@ -605,36 +605,36 @@ function TaskModal({ onClose, onSubmit, initialValues, isSaving }) {
 
                 <form onSubmit={handleSubmit} className="space-y-5">
                     <div>
-                        <label className="text-sm font-semibold text-gray-700">Task Title</label>
+                        <label className="text-sm font-semibold text-gray-900">Task Title</label>
                         <input
                             type="text"
                             name="title"
                             value={formValues.title}
                             onChange={handleChange}
                             required
-                            className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+                            className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 bg-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
                         />
                     </div>
 
                     <div>
-                        <label className="text-sm font-semibold text-gray-700">Instructions</label>
+                        <label className="text-sm font-semibold text-gray-900">Instructions</label>
                         <textarea
                             name="instructions"
                             value={formValues.instructions}
                             onChange={handleChange}
                             rows={3}
-                            className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+                            className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 bg-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
                         />
                     </div>
 
                     <div className="grid gap-4 md:grid-cols-3">
                         <div>
-                            <label className="text-sm font-semibold text-gray-700">Frequency</label>
+                            <label className="text-sm font-semibold text-gray-900">Frequency</label>
                             <select
                                 name="frequency"
                                 value={formValues.frequency}
                                 onChange={handleChange}
-                                className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+                                className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 bg-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
                             >
                                 {frequencyOptions.map((option) => (
                                     <option key={option.value} value={option.value}>
@@ -644,55 +644,55 @@ function TaskModal({ onClose, onSubmit, initialValues, isSaving }) {
                             </select>
                         </div>
                         <div>
-                            <label className="text-sm font-semibold text-gray-700">Start Window</label>
+                            <label className="text-sm font-semibold text-gray-900">Start Window</label>
                             <input
                                 type="time"
                                 name="window_start"
                                 value={formValues.window_start || ''}
                                 onChange={handleChange}
-                                className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+                                className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 bg-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
                             />
                         </div>
                         <div>
-                            <label className="text-sm font-semibold text-gray-700">End Window</label>
+                            <label className="text-sm font-semibold text-gray-900">End Window</label>
                             <input
                                 type="time"
                                 name="window_end"
                                 value={formValues.window_end || ''}
                                 onChange={handleChange}
-                                className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+                                className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 bg-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
                             />
                         </div>
                     </div>
 
                     <div className="grid gap-4 md:grid-cols-3">
                         <div>
-                            <label className="text-sm font-semibold text-gray-700">Display Order</label>
+                            <label className="text-sm font-semibold text-gray-900">Display Order</label>
                             <input
                                 type="number"
                                 name="display_order"
                                 value={formValues.display_order}
                                 onChange={handleChange}
                                 min={0}
-                                className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+                                className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 bg-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
                             />
                         </div>
                         <div>
-                            <label className="text-sm font-semibold text-gray-700">Estimated Minutes</label>
+                            <label className="text-sm font-semibold text-gray-900">Estimated Minutes</label>
                             <input
                                 type="number"
                                 name="estimated_minutes"
                                 value={formValues.estimated_minutes}
                                 onChange={handleChange}
                                 min={1}
-                                className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+                                className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 bg-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
                                 placeholder="e.g. 10"
                             />
                         </div>
                     </div>
 
                     <div>
-                        <label className="text-sm font-semibold text-gray-700">Days of week</label>
+                        <label className="text-sm font-semibold text-gray-900">Days of week</label>
                         <p className="text-xs text-gray-400">Leave blank to show on every day.</p>
                         <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
                             {dayOptions.map((day) => {
@@ -830,65 +830,65 @@ function AreaModal({ onClose, branchId, onSaved, initialValues }) {
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
-                        <label className="text-sm font-semibold text-gray-700">Area Name</label>
+                        <label className="text-sm font-semibold text-gray-900">Area Name</label>
                         <input
                             type="text"
                             name="name"
                             value={formValues.name}
                             onChange={handleChange}
                             required
-                            className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+                            className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 bg-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
                             placeholder="e.g. Kitchen, Float #1"
                         />
                     </div>
 
                     <div className="grid gap-4 md:grid-cols-2">
                         <div>
-                            <label className="text-sm font-semibold text-gray-700">Shift / Assignment Label</label>
+                            <label className="text-sm font-semibold text-gray-900">Shift / Assignment Label</label>
                             <input
                                 type="text"
                                 name="shift_label"
                                 value={formValues.shift_label}
                                 onChange={handleChange}
-                                className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+                                className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 bg-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
                                 placeholder="e.g. Day Shift"
                             />
                         </div>
                         <div>
-                            <label className="text-sm font-semibold text-gray-700">Location</label>
+                            <label className="text-sm font-semibold text-gray-900">Location</label>
                             <input
                                 type="text"
                                 name="location"
                                 value={formValues.location}
                                 onChange={handleChange}
-                                className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+                                className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 bg-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
                                 placeholder="e.g. Main Level"
                             />
                         </div>
                     </div>
 
                     <div>
-                        <label className="text-sm font-semibold text-gray-700">Description / Notes</label>
+                        <label className="text-sm font-semibold text-gray-900">Description / Notes</label>
                         <textarea
                             name="description"
                             value={formValues.description}
                             onChange={handleChange}
                             rows={3}
-                            className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+                            className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 bg-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
                             placeholder="Responsibilities, reminders, etc."
                         />
                     </div>
 
                     <div className="grid gap-4 md:grid-cols-2">
                         <div>
-                            <label className="text-sm font-semibold text-gray-700">Display Order</label>
+                            <label className="text-sm font-semibold text-gray-900">Display Order</label>
                             <input
                                 type="number"
                                 name="display_order"
                                 value={formValues.display_order}
                                 onChange={handleChange}
                                 min={0}
-                                className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+                                className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 bg-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
                             />
                         </div>
                         <label className="flex items-center gap-3 rounded-2xl border border-gray-200 px-4 py-3">

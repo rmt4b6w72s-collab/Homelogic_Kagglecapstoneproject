@@ -27,6 +27,7 @@ use App\Http\Controllers\Api\CleaningAreaController;
 use App\Http\Controllers\Api\CleaningTaskController;
 use App\Http\Controllers\Api\CleaningTaskAssignmentController;
 use App\Http\Controllers\Api\HousekeepingReportController;
+use App\Http\Controllers\Api\SystemSettingsController;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Session\Middleware\StartSession;
@@ -46,6 +47,7 @@ Route::prefix('v1')->middleware([\App\Http\Middleware\SetFacilityContext::class]
     // Dashboard
     Route::get('/dashboard/stats', [DashboardController::class, 'stats'])->middleware('auth:sanctum');
     Route::get('/dashboard/resident-vitals/{residentId}', [DashboardController::class, 'residentVitalsTrend'])->middleware('auth:sanctum');
+    Route::get('/dashboard/daily-activities', [DashboardController::class, 'dailyActivities'])->middleware('auth:sanctum');
 
     // Residents
     Route::apiResource('residents', ResidentController::class)->middleware('auth:sanctum');
@@ -110,10 +112,26 @@ Route::prefix('v1')->middleware([\App\Http\Middleware\SetFacilityContext::class]
     Route::apiResource('facilities', FacilityController::class)->middleware('auth:sanctum');
     Route::post('facilities/{id}', [FacilityController::class, 'update'])->middleware('auth:sanctum'); // For file uploads
     Route::post('facilities/approve-registration/{registrationId}', [FacilityController::class, 'approveRegistration'])->middleware('auth:sanctum');
+    
+    // Facility Permissions (Super Admin only)
+    Route::get('facilities/{facility}/permissions', [\App\Http\Controllers\Api\FacilityPermissionController::class, 'show'])->middleware('auth:sanctum');
+    Route::put('facilities/{facility}/permissions/modules', [\App\Http\Controllers\Api\FacilityPermissionController::class, 'updateModules'])->middleware('auth:sanctum');
+    Route::get('facilities/{facility}/permissions/roles/{role}', [\App\Http\Controllers\Api\FacilityPermissionController::class, 'getRolePermissions'])->middleware('auth:sanctum');
+    Route::put('facilities/{facility}/permissions/roles/{role}', [\App\Http\Controllers\Api\FacilityPermissionController::class, 'updateRolePermissions'])->middleware('auth:sanctum');
+    
     Route::apiResource('branches', BranchController::class)->middleware('auth:sanctum');
+    Route::get('branches/{id}/residents', [BranchController::class, 'residents'])->middleware('auth:sanctum');
+    Route::post('branches/{id}/transfer-residents', [BranchController::class, 'transferResidents'])->middleware('auth:sanctum');
     
     // Facility Registrations (Super Admin only)
     Route::apiResource('facility-registrations', \App\Http\Controllers\Api\FacilityRegistrationController::class)->middleware('auth:sanctum');
+
+    // System Settings (Super Admin only)
+    Route::prefix('system-settings')->middleware('auth:sanctum')->group(function () {
+        Route::get('/super-admin-theme', [SystemSettingsController::class, 'getSuperAdminTheme']);
+        Route::put('/super-admin-theme', [SystemSettingsController::class, 'updateSuperAdminTheme']);
+        Route::get('/', [SystemSettingsController::class, 'index']);
+    });
 
     // Vital ranges
     Route::apiResource('vital-ranges', VitalRangeController::class)->middleware('auth:sanctum');
@@ -132,6 +150,10 @@ Route::prefix('v1')->middleware([\App\Http\Middleware\SetFacilityContext::class]
 
     // Employee Documents
     Route::apiResource('employee-documents', EmployeeDocumentController::class)->middleware('auth:sanctum');
+
+    // Resident Documents
+    Route::apiResource('resident-documents', \App\Http\Controllers\Api\ResidentDocumentController::class)->middleware('auth:sanctum');
+    Route::get('/resident-documents/{id}/download', [\App\Http\Controllers\Api\ResidentDocumentController::class, 'download'])->middleware('auth:sanctum');
 
     // Notifications
     Route::get('/notifications', [NotificationController::class, 'index'])->middleware('auth:sanctum');

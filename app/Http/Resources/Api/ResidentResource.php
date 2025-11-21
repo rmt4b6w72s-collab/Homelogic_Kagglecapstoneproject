@@ -25,6 +25,7 @@ class ResidentResource extends JsonResource
             'phone' => $this->phone,
             'room' => $this->room,
             'room_number' => $this->room_number,
+            'branch_id' => $this->branch_id,
             'branch' => new BranchResource($this->whenLoaded('branch')),
             'admission_date' => $this->admission_date?->format('Y-m-d'),
             'discharge_date' => $this->discharge_date?->format('Y-m-d'),

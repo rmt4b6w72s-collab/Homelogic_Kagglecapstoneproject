@@ -34,14 +34,14 @@ class SuperAdminStatsWidget extends BaseWidget
             Stat::make('Pending Registrations', $pendingRegistrations)
                 ->description('Awaiting approval')
                 ->descriptionIcon('heroicon-o-clock')
-                ->color('warning')
+                ->color('success')
                 ->chart($this->getRegistrationChartData())
                 ->url(route('filament.admin.resources.facility-registrations.index', ['tableFilters[status][value]' => 'pending'])),
             
             Stat::make('Total Branches', $totalBranches)
                 ->description($activeBranches . ' active')
                 ->descriptionIcon('heroicon-o-map-pin')
-                ->color('info')
+                ->color('primary')
                 ->chart($this->getBranchChartData()),
             
             Stat::make('System Users', $totalUsers)

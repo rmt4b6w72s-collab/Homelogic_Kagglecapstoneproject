@@ -257,19 +257,42 @@ export default function Appointments() {
 
     const [completingAppointment, setCompletingAppointment] = useState(null);
     const [completionNotes, setCompletionNotes] = useState('');
+    const [completionDocuments, setCompletionDocuments] = useState([]);
 
-    const handleStatusUpdate = async (id, status, notes = null) => {
+    const handleStatusUpdate = async (id, status, notes = null, documents = []) => {
         try {
-            const payload = { status };
+            const formData = new FormData();
+            formData.append('status', status);
             if (notes !== null) {
-                payload.notes = notes;
+                formData.append('notes', notes);
             }
-            await api.patch(`/appointments/${id}/status`, payload);
+            
+            // Add documents if any
+            if (documents && documents.length > 0) {
+                documents.forEach((doc, index) => {
+                    if (doc.file) {
+                        formData.append(`documents[${index}][file]`, doc.file);
+                        formData.append(`documents[${index}][document_name]`, doc.document_name);
+                        formData.append(`documents[${index}][document_type]`, doc.document_type || 'appointment');
+                        if (doc.notes) {
+                            formData.append(`documents[${index}][notes]`, doc.notes);
+                        }
+                    }
+                });
+            }
+            
+            await api.patch(`/appointments/${id}/status`, formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
             setCompletingAppointment(null);
             setCompletionNotes('');
+            setCompletionDocuments([]);
             refetch();
         } catch (error) {
             console.error('Failed to update appointment status:', error);
+            alert(error.response?.data?.message || 'Failed to complete appointment');
         }
     };
 
@@ -527,7 +550,7 @@ export default function Appointments() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                             {/* Branch Filter */}
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Branch:</label>
+                                <label className="block text-sm font-medium text-gray-900 mb-2">Branch:</label>
                                 <div className="relative">
                                     <MapPin className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                                     <select
@@ -549,7 +572,7 @@ export default function Appointments() {
 
                             {/* Resident Filter */}
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Resident:</label>
+                                <label className="block text-sm font-medium text-gray-900 mb-2">Resident:</label>
                                 <div className="relative">
                                     <User className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                                     <select
@@ -854,35 +877,165 @@ export default function Appointments() {
 
             {/* Completion Notes Modal */}
             {completingAppointment && (
-                <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50 p-4" style={{ backgroundColor: 'rgba(0, 0, 0, 0.1)' }}>
-                    <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+                <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto" style={{ backgroundColor: 'rgba(0, 0, 0, 0.1)' }}>
+                    <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
                         <div className="p-6 border-b">
                             <h3 className="text-xl font-semibold text-gray-900">Complete Appointment</h3>
                         </div>
-                        <div className="p-6">
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Appointment Outcome / Notes (Optional)
-                            </label>
-                            <textarea
-                                rows={4}
-                                value={completionNotes}
-                                onChange={(e) => setCompletionNotes(e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
-                                placeholder="Enter notes about the appointment outcome..."
-                            />
+                        <div className="p-6 space-y-6">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-900 mb-2">
+                                    Appointment Outcome / Notes (Optional)
+                                </label>
+                                <textarea
+                                    rows={4}
+                                    value={completionNotes}
+                                    onChange={(e) => setCompletionNotes(e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                    placeholder="Enter notes about the appointment outcome..."
+                                />
+                            </div>
+
+                            {/* Documents Section */}
+                            <div>
+                                <div className="flex items-center justify-between mb-3">
+                                    <label className="block text-sm font-medium text-gray-700">
+                                        Upload Documents (Optional)
+                                    </label>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setCompletionDocuments([...completionDocuments, {
+                                                document_name: '',
+                                                document_type: 'appointment',
+                                                file: null,
+                                                notes: '',
+                                            }]);
+                                        }}
+                                        className="text-sm text-emerald-600 hover:text-emerald-700 font-medium"
+                                    >
+                                        + Add Document
+                                    </button>
+                                </div>
+                                {completionDocuments.length === 0 ? (
+                                    <p className="text-sm text-gray-500 italic">No documents added</p>
+                                ) : (
+                                    <div className="space-y-3">
+                                        {completionDocuments.map((doc, index) => (
+                                            <div key={index} className="border border-gray-200 rounded-lg p-4 space-y-3">
+                                                <div className="flex items-start justify-between">
+                                                    <h4 className="text-sm font-medium text-gray-900">Document {index + 1}</h4>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setCompletionDocuments(completionDocuments.filter((_, i) => i !== index));
+                                                        }}
+                                                        className="text-gray-400 hover:text-red-600"
+                                                    >
+                                                        ×
+                                                    </button>
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-3">
+                                                    <div>
+                                                        <label className="block text-xs font-medium text-gray-700 mb-1">
+                                                            Document Name *
+                                                        </label>
+                                                        <input
+                                                            type="text"
+                                                            value={doc.document_name}
+                                                            onChange={(e) => {
+                                                                const updated = [...completionDocuments];
+                                                                updated[index].document_name = e.target.value;
+                                                                setCompletionDocuments(updated);
+                                                            }}
+                                                            required
+                                                            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                                                            placeholder="e.g., Medical Report"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-xs font-medium text-gray-700 mb-1">
+                                                            Type *
+                                                        </label>
+                                                        <select
+                                                            value={doc.document_type}
+                                                            onChange={(e) => {
+                                                                const updated = [...completionDocuments];
+                                                                updated[index].document_type = e.target.value;
+                                                                setCompletionDocuments(updated);
+                                                            }}
+                                                            required
+                                                            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                                                        >
+                                                            <option value="appointment">Appointment</option>
+                                                            <option value="medical">Medical</option>
+                                                            <option value="insurance">Insurance</option>
+                                                            <option value="other">Other</option>
+                                                        </select>
+                                                    </div>
+                                                    <div className="col-span-2">
+                                                        <label className="block text-xs font-medium text-gray-700 mb-1">
+                                                            File *
+                                                        </label>
+                                                        <input
+                                                            type="file"
+                                                            onChange={(e) => {
+                                                                const updated = [...completionDocuments];
+                                                                updated[index].file = e.target.files[0];
+                                                                setCompletionDocuments(updated);
+                                                            }}
+                                                            accept=".pdf,.jpg,.jpeg,.png,.gif,.doc,.docx"
+                                                            required
+                                                            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                                                        />
+                                                        <p className="text-xs text-gray-500 mt-1">Max size: 10MB</p>
+                                                    </div>
+                                                    <div className="col-span-2">
+                                                        <label className="block text-xs font-medium text-gray-700 mb-1">
+                                                            Notes
+                                                        </label>
+                                                        <textarea
+                                                            value={doc.notes}
+                                                            onChange={(e) => {
+                                                                const updated = [...completionDocuments];
+                                                                updated[index].notes = e.target.value;
+                                                                setCompletionDocuments(updated);
+                                                            }}
+                                                            rows={2}
+                                                            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                                                            placeholder="Additional notes..."
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
                         </div>
                         <div className="p-6 border-t flex items-center justify-end space-x-3">
                             <button
                                 onClick={() => {
                                     setCompletingAppointment(null);
                                     setCompletionNotes('');
+                                    setCompletionDocuments([]);
                                 }}
                                 className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-all"
                             >
                                 Cancel
                             </button>
                             <button
-                                onClick={() => handleStatusUpdate(completingAppointment, 'completed', completionNotes || null)}
+                                onClick={() => {
+                                    // Validate documents
+                                    const validDocuments = completionDocuments.filter(doc => 
+                                        doc.document_name && doc.document_type && doc.file
+                                    );
+                                    if (completionDocuments.length > 0 && validDocuments.length !== completionDocuments.length) {
+                                        alert('Please fill in all required fields for documents');
+                                        return;
+                                    }
+                                    handleStatusUpdate(completingAppointment, 'completed', completionNotes || null, validDocuments);
+                                }}
                                 className="px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-all"
                             >
                                 Mark as Completed
@@ -926,7 +1079,7 @@ function AddAppointmentModal({ branches, residents, formData, setFormData, onClo
                     <div className="p-6 space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Branch</label>
+                            <label className="block text-sm font-medium text-gray-900 mb-2">Branch</label>
                             <div className="relative">
                                 <select
                                     value={formData.branch_id}
@@ -952,7 +1105,7 @@ function AddAppointmentModal({ branches, residents, formData, setFormData, onClo
                             {errors.branch_id && <p className="text-xs text-red-600 mt-1">{errors.branch_id}</p>}
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Resident *</label>
+                            <label className="block text-sm font-medium text-gray-900 mb-2">Resident *</label>
                             <div className="relative">
                                 <User className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                                 <select
@@ -975,7 +1128,7 @@ function AddAppointmentModal({ branches, residents, formData, setFormData, onClo
                             {errors.resident_id && <p className="text-xs text-red-600 mt-1">{errors.resident_id}</p>}
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Date *</label>
+                            <label className="block text-sm font-medium text-gray-900 mb-2">Date *</label>
                             <input
                                 type="date"
                                 value={formData.appointment_date}
@@ -991,14 +1144,14 @@ function AddAppointmentModal({ branches, residents, formData, setFormData, onClo
                             {errors.appointment_date && <p className="text-xs text-red-600 mt-1">{errors.appointment_date}</p>}
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Time</label>
+                            <label className="block text-sm font-medium text-gray-900 mb-2">Time</label>
                             <TimePicker
                                 value={formData.appointment_time}
                                 onChange={(value) => setFormData({ ...formData, appointment_time: value })}
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Provider Name</label>
+                            <label className="block text-sm font-medium text-gray-900 mb-2">Provider Name</label>
                             <div className="relative">
                                 <Stethoscope className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                                 <input
@@ -1011,7 +1164,7 @@ function AddAppointmentModal({ branches, residents, formData, setFormData, onClo
                             </div>
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
+                            <label className="block text-sm font-medium text-gray-900 mb-2">Location</label>
                             <div className="relative">
                                 <MapPin className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                                 <input

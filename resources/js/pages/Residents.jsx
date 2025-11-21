@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
-import { Search, Users, Plus, Edit, XCircle, CheckCircle, Filter } from 'lucide-react';
+import { Search, Users, Plus, Edit, XCircle, CheckCircle, Filter, Eye } from 'lucide-react';
 
 export default function Residents() {
+    const navigate = useNavigate();
     const queryClient = useQueryClient();
     const [search, setSearch] = useState('');
     const [branchFilter, setBranchFilter] = useState('');
@@ -141,6 +143,13 @@ export default function Residents() {
                     </div>
                     <div className="flex space-x-2">
                         <button
+                            onClick={() => navigate(`/my-residents/${resident.id}`)}
+                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                            title="View Details"
+                        >
+                            <Eye className="w-4 h-4" />
+                        </button>
+                        <button
                             onClick={() => {
                                 setEditing(resident);
                                 setShowForm(true);
@@ -257,7 +266,7 @@ export default function Residents() {
                             placeholder="Search by name or room number..."
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                         />
                     </div>
 
@@ -268,7 +277,7 @@ export default function Residents() {
                             value={branchFilter}
                             onChange={(e) => setBranchFilter(e.target.value)}
                             disabled={isCaregiver}
-                            className={`w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent appearance-none ${isCaregiver ? 'bg-gray-100 cursor-not-allowed' : 'bg-white'}`}
+                            className={`w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent appearance-none ${isCaregiver ? 'bg-gray-100 cursor-not-allowed' : 'bg-white'}`}
                         >
                             {!isCaregiver && <option value="">All Branches</option>}
                             {branchOptions?.map(branch => (
@@ -282,7 +291,7 @@ export default function Residents() {
                         <select
                             value={statusFilter}
                             onChange={(e) => setStatusFilter(e.target.value)}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent appearance-none bg-white"
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent appearance-none"
                         >
                             <option value="">All Status</option>
                             <option value="active">Active</option>
@@ -806,7 +815,7 @@ function ResidentForm({ record, branches, onClose, onSuccess }) {
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className="block text-sm font-medium text-gray-900 mb-2">
                                         First Name *
                                     </label>
                                     <input
@@ -814,25 +823,25 @@ function ResidentForm({ record, branches, onClose, onSuccess }) {
                                         value={formData.first_name}
                                         onChange={(e) => setFormData({...formData, first_name: e.target.value})}
                                         required
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                     />
                                     {errors.first_name && <p className="text-xs text-red-600 mt-1">{errors.first_name[0]}</p>}
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className="block text-sm font-medium text-gray-900 mb-2">
                                         Middle Names
                                     </label>
                                     <input
                                         type="text"
                                         value={formData.middle_names}
                                         onChange={(e) => setFormData({...formData, middle_names: e.target.value})}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className="block text-sm font-medium text-gray-900 mb-2">
                                         Last Name *
                                     </label>
                                     <input
@@ -840,13 +849,13 @@ function ResidentForm({ record, branches, onClose, onSuccess }) {
                                         value={formData.last_name}
                                         onChange={(e) => setFormData({...formData, last_name: e.target.value})}
                                         required
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                     />
                                     {errors.last_name && <p className="text-xs text-red-600 mt-1">{errors.last_name[0]}</p>}
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className="block text-sm font-medium text-gray-900 mb-2">
                                         Date of Birth *
                                     </label>
                                     <input
@@ -855,19 +864,19 @@ function ResidentForm({ record, branches, onClose, onSuccess }) {
                                         onChange={(e) => setFormData({...formData, date_of_birth: e.target.value})}
                                         required
                                         max={new Date(Date.now() - 18 * 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                     />
                                     {errors.date_of_birth && <p className="text-xs text-red-600 mt-1">{errors.date_of_birth[0]}</p>}
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className="block text-sm font-medium text-gray-900 mb-2">
                                         Gender
                                     </label>
                                     <select
                                         value={formData.gender}
                                         onChange={(e) => setFormData({...formData, gender: e.target.value})}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                     >
                                         <option value="">Select Gender</option>
                                         <option value="Male">Male</option>
@@ -877,26 +886,26 @@ function ResidentForm({ record, branches, onClose, onSuccess }) {
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className="block text-sm font-medium text-gray-900 mb-2">
                                         Phone
                                     </label>
                                     <input
                                         type="tel"
                                         value={formData.phone}
                                         onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className="block text-sm font-medium text-gray-900 mb-2">
                                         Branch *
                                     </label>
                                     <select
                                         value={formData.branch_id}
                                         onChange={(e) => setFormData({...formData, branch_id: e.target.value})}
                                         required
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                     >
                                         <option value="">Select Branch</option>
                                         {branches.map(branch => (
@@ -907,19 +916,19 @@ function ResidentForm({ record, branches, onClose, onSuccess }) {
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className="block text-sm font-medium text-gray-900 mb-2">
                                         Room Number
                                     </label>
                                     <input
                                         type="text"
                                         value={formData.room_number}
                                         onChange={(e) => setFormData({...formData, room_number: e.target.value})}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className="block text-sm font-medium text-gray-900 mb-2">
                                         Admission Date *
                                     </label>
                                     <input
@@ -927,7 +936,7 @@ function ResidentForm({ record, branches, onClose, onSuccess }) {
                                         value={formData.admission_date}
                                         onChange={(e) => setFormData({...formData, admission_date: e.target.value})}
                                         required
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                     />
                                     {errors.admission_date && <p className="text-xs text-red-600 mt-1">{errors.admission_date[0]}</p>}
                                 </div>
@@ -939,78 +948,78 @@ function ResidentForm({ record, branches, onClose, onSuccess }) {
                             <h3 className="text-lg font-semibold text-gray-900 mb-4">Medical Information</h3>
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="col-span-2">
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className="block text-sm font-medium text-gray-900 mb-2">
                                         Diagnosis
                                     </label>
                                     <textarea
                                         value={formData.diagnosis}
                                         onChange={(e) => setFormData({...formData, diagnosis: e.target.value})}
                                         rows={3}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                         placeholder="Enter primary medical diagnosis..."
                                     />
                                 </div>
 
                                 <div className="col-span-2">
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className="block text-sm font-medium text-gray-900 mb-2">
                                         Allergies
                                     </label>
                                     <textarea
                                         value={formData.allergies}
                                         onChange={(e) => setFormData({...formData, allergies: e.target.value})}
                                         rows={3}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                         placeholder="List any known allergies..."
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className="block text-sm font-medium text-gray-900 mb-2">
                                         Physician Name
                                     </label>
                                     <input
                                         type="text"
                                         value={formData.physician_name}
                                         onChange={(e) => setFormData({...formData, physician_name: e.target.value})}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className="block text-sm font-medium text-gray-900 mb-2">
                                         Medicare Number
                                     </label>
                                     <input
                                         type="text"
                                         value={formData.medicare_number}
                                         onChange={(e) => setFormData({...formData, medicare_number: e.target.value})}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                         placeholder="Enter Medicare number (optional)"
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className="block text-sm font-medium text-gray-900 mb-2">
                                         Primary Care Doctor
                                     </label>
                                     <input
                                         type="text"
                                         value={formData.primary_care_doctor}
                                         onChange={(e) => setFormData({...formData, primary_care_doctor: e.target.value})}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                         placeholder="Enter primary care doctor name (optional)"
                                     />
                                 </div>
 
                                 <div className="col-span-2">
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className="block text-sm font-medium text-gray-900 mb-2">
                                         Additional Medical Conditions
                                     </label>
                                     <textarea
                                         value={formData.medical_conditions}
                                         onChange={(e) => setFormData({...formData, medical_conditions: e.target.value})}
                                         rows={3}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                         placeholder="List any additional medical conditions..."
                                     />
                                 </div>
@@ -1022,26 +1031,26 @@ function ResidentForm({ record, branches, onClose, onSuccess }) {
                             <h3 className="text-lg font-semibold text-gray-900 mb-4">Emergency Contact</h3>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className="block text-sm font-medium text-gray-900 mb-2">
                                         Contact Name
                                     </label>
                                     <input
                                         type="text"
                                         value={formData.emergency_contact_name}
                                         onChange={(e) => setFormData({...formData, emergency_contact_name: e.target.value})}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className="block text-sm font-medium text-gray-900 mb-2">
                                         Contact Phone
                                     </label>
                                     <input
                                         type="tel"
                                         value={formData.emergency_contact_phone}
                                         onChange={(e) => setFormData({...formData, emergency_contact_phone: e.target.value})}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                     />
                                 </div>
                             </div>

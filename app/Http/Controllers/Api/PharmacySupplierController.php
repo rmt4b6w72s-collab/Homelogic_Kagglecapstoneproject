@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Constants\Modules;
 use App\Http\Controllers\Controller;
 use App\Models\PharmacySupplier;
 use Illuminate\Http\Request;
@@ -11,6 +12,9 @@ class PharmacySupplierController extends BaseApiController
 {
     public function index(Request $request): JsonResponse
     {
+        if ($error = $this->requireModuleAccess(Modules::PHARMACY)) {
+            return $error;
+        }
         $query = PharmacySupplier::with(['createdBy'])->withCount('orders');
         
         if ($request->has('is_active')) {
@@ -36,6 +40,10 @@ class PharmacySupplierController extends BaseApiController
     
     public function store(Request $request): JsonResponse
     {
+        if ($error = $this->requireModuleAccess(Modules::PHARMACY)) {
+            return $error;
+        }
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'contact_person' => 'nullable|string|max:255',
@@ -64,6 +72,10 @@ class PharmacySupplierController extends BaseApiController
     
     public function show(string $id): JsonResponse
     {
+        if ($error = $this->requireModuleAccess(Modules::PHARMACY)) {
+            return $error;
+        }
+
         $supplier = PharmacySupplier::with(['createdBy', 'orders'])
             ->withCount('orders')
             ->findOrFail($id);
@@ -73,6 +85,10 @@ class PharmacySupplierController extends BaseApiController
     
     public function update(Request $request, string $id): JsonResponse
     {
+        if ($error = $this->requireModuleAccess(Modules::PHARMACY)) {
+            return $error;
+        }
+
         $supplier = PharmacySupplier::findOrFail($id);
         
         $validated = $request->validate([
@@ -99,6 +115,10 @@ class PharmacySupplierController extends BaseApiController
     
     public function destroy(string $id): JsonResponse
     {
+        if ($error = $this->requireModuleAccess(Modules::PHARMACY)) {
+            return $error;
+        }
+
         $supplier = PharmacySupplier::findOrFail($id);
         
         // Check if supplier has orders

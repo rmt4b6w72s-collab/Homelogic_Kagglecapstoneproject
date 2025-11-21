@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Lock, Mail, Eye, EyeOff, ShieldCheck, ClipboardList } from 'lucide-react';
+import { Lock, Mail, Eye, EyeOff, ShieldCheck, ClipboardList, Building2 } from 'lucide-react';
 import api from '../services/api';
 
 export default function Login() {
     const navigate = useNavigate();
+    const [providerCode, setProviderCode] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
@@ -28,6 +29,7 @@ export default function Login() {
             const response = await api.post('/login', {
                 email,
                 password,
+                provider_code: providerCode || undefined,
             });
 
             if (response.data.token) {
@@ -172,6 +174,27 @@ export default function Login() {
                                         )}
                                     </button>
                                 </div>
+                            </div>
+
+                            <div>
+                                <label htmlFor="providerCode" className="block text-sm font-medium text-[#39463F] mb-2">
+                                    Provider Code
+                                </label>
+                                <div className="relative">
+                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <Building2 className="h-5 w-5 text-gray-400" />
+                                    </div>
+                                    <input
+                                        id="providerCode"
+                                        type="text"
+                                        value={providerCode}
+                                        onChange={(e) => setProviderCode(e.target.value)}
+                                        autoComplete="off"
+                                        className="block w-full pl-11 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-[var(--theme-primary)] outline-none transition-all placeholder:text-gray-400"
+                                        placeholder="Enter provider code (optional)"
+                                    />
+                                </div>
+                                <p className="text-xs text-[#6F8276] mt-1">Optional: Enter your facility's provider code</p>
                             </div>
 
                             <button

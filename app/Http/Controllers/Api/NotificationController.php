@@ -14,7 +14,8 @@ class NotificationController extends BaseApiController
      */
     public function index(Request $request): JsonResponse
     {
-        $query = auth()->user()->notifications();
+        $user = auth()->user();
+        $query = $user->notifications();
 
         // Filter by read status
         if ($request->has('unread_only') && $request->get('unread_only') === 'true') {
@@ -25,11 +26,67 @@ class NotificationController extends BaseApiController
 
         // Limit results
         $limit = $request->get('limit', 20);
-        $notifications = $query->limit($limit)->get();
+        $notifications = $query->limit($limit * 2)->get(); // Get more to filter after
+
+        // Filter by facility for non-super-admin users
+        if ($user->role !== 'super_admin' && $user->facility_id) {
+            $notifications = $notifications->filter(function ($notification) use ($user) {
+                $metadata = $notification->metadata ?? [];
+                
+                // Show notification if:
+                // 1. It has facility_id matching user's facility
+                // 2. It's about a user in the same facility (check user_id in metadata)
+                // 3. It doesn't have facility_id (legacy/global notifications)
+                
+                if (isset($metadata['facility_id'])) {
+                    return $metadata['facility_id'] == $user->facility_id;
+                }
+                
+                // Check if notification is about a user in the same facility
+                if (isset($metadata['user_id'])) {
+                    $notifiedUserId = $metadata['user_id'];
+                    $notifiedUser = \App\Models\User::find($notifiedUserId);
+                    if ($notifiedUser && $notifiedUser->facility_id == $user->facility_id) {
+                        return true;
+                    }
+                }
+                
+                // Show global/legacy notifications (no facility_id)
+                return !isset($metadata['facility_id']);
+            })->take($limit)->values();
+        } else {
+            $notifications = $notifications->take($limit);
+        }
+
+        // Calculate unread count with facility filtering
+        $unreadQuery = $user->unreadNotifications();
+        $unreadNotifications = $unreadQuery->get();
+        
+        if ($user->role !== 'super_admin' && $user->facility_id) {
+            $unreadNotifications = $unreadNotifications->filter(function ($notification) use ($user) {
+                $metadata = $notification->metadata ?? [];
+                
+                if (isset($metadata['facility_id'])) {
+                    return $metadata['facility_id'] == $user->facility_id;
+                }
+                
+                if (isset($metadata['user_id'])) {
+                    $notifiedUserId = $metadata['user_id'];
+                    $notifiedUser = \App\Models\User::find($notifiedUserId);
+                    if ($notifiedUser && $notifiedUser->facility_id == $user->facility_id) {
+                        return true;
+                    }
+                }
+                
+                return !isset($metadata['facility_id']);
+            });
+        }
+        
+        $unreadCount = $unreadNotifications->count();
 
         return response()->json([
             'notifications' => $notifications,
-            'unread_count' => auth()->user()->unreadNotifications()->count(),
+            'unread_count' => $unreadCount,
         ]);
     }
 
@@ -38,7 +95,31 @@ class NotificationController extends BaseApiController
      */
     public function count(): JsonResponse
     {
-        $unreadCount = auth()->user()->unreadNotifications()->count();
+        $user = auth()->user();
+        $unreadNotifications = $user->unreadNotifications()->get();
+
+        // Filter by facility for non-super-admin users
+        if ($user->role !== 'super_admin' && $user->facility_id) {
+            $unreadNotifications = $unreadNotifications->filter(function ($notification) use ($user) {
+                $metadata = $notification->metadata ?? [];
+                
+                if (isset($metadata['facility_id'])) {
+                    return $metadata['facility_id'] == $user->facility_id;
+                }
+                
+                if (isset($metadata['user_id'])) {
+                    $notifiedUserId = $metadata['user_id'];
+                    $notifiedUser = \App\Models\User::find($notifiedUserId);
+                    if ($notifiedUser && $notifiedUser->facility_id == $user->facility_id) {
+                        return true;
+                    }
+                }
+                
+                return !isset($metadata['facility_id']);
+            });
+        }
+
+        $unreadCount = $unreadNotifications->count();
 
         return response()->json([
             'count' => $unreadCount,

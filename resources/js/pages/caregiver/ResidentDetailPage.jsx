@@ -10,9 +10,11 @@ import {
     Pill,
     AlertCircle,
     Moon,
+    FileText,
 } from 'lucide-react';
 import api from '../../services/api';
 import Breadcrumbs from '../../components/ui/Breadcrumbs';
+import ResidentDocuments from '../../components/ResidentDocuments';
 
 const tabs = [
     { id: 'profile', label: 'Profile Overview', icon: Users },
@@ -20,6 +22,7 @@ const tabs = [
     { id: 'medications', label: 'Medications', icon: Pill },
     { id: 'vitals', label: 'Vitals', icon: Heart },
     { id: 'appointments', label: 'Appointments', icon: Calendar },
+    { id: 'documents', label: 'Documents', icon: FileText },
     { id: 'sleep', label: 'Sleep', icon: Moon },
 ];
 
@@ -559,6 +562,12 @@ export default function ResidentDetailPage() {
                                 ))}
                             </ul>
                         )}
+                    </div>
+                )}
+
+                {activeTab === 'documents' && (
+                    <div className="space-y-4">
+                        <ResidentDocuments residentId={resident?.id || residentId} />
                     </div>
                 )}
 

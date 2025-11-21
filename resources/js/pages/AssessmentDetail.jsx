@@ -528,7 +528,7 @@ function QuestionInput({ question, onSave }) {
 
     const common = {
         className:
-            'mt-2 w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent',
+            'mt-2 w-full px-3 py-2 border border-gray-300 rounded text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent',
     };
 
     switch (question.response_type) {

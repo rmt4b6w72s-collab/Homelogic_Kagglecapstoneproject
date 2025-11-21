@@ -1,0 +1,541 @@
+import React, { useState, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import api from '../services/api';
+import { FileText, Plus, Edit, Trash2, Search, Filter, Download, Calendar, AlertCircle, X } from 'lucide-react';
+
+const documentTypeOptions = {
+    insurance: 'Insurance',
+    medical: 'Medical',
+    legal: 'Legal',
+    admission: 'Admission',
+    appointment: 'Appointment',
+    other: 'Other',
+};
+
+const documentTypeColors = {
+    insurance: 'bg-blue-100 text-blue-800',
+    medical: 'bg-green-100 text-green-800',
+    legal: 'bg-yellow-100 text-yellow-800',
+    admission: 'bg-purple-100 text-purple-800',
+    appointment: 'bg-red-100 text-red-800',
+    other: 'bg-gray-100 text-gray-800',
+};
+
+export default function ResidentDocuments({ residentId }) {
+    const queryClient = useQueryClient();
+    const [search, setSearch] = useState('');
+    const [typeFilter, setTypeFilter] = useState('');
+    const [showForm, setShowForm] = useState(false);
+    const [editing, setEditing] = useState(null);
+    const [currentPage, setCurrentPage] = useState(1);
+
+    const { data, isLoading } = useQuery({
+        queryKey: ['resident-documents', residentId, search, typeFilter, currentPage],
+        queryFn: async () => {
+            const params = {
+                resident_id: residentId,
+                per_page: 20,
+                page: currentPage,
+            };
+            if (search) params.search = search;
+            if (typeFilter) params.document_type = typeFilter;
+
+            const response = await api.get('/resident-documents', { params });
+            return response.data;
+        },
+        enabled: !!residentId,
+    });
+
+    const { data: appointmentsData } = useQuery({
+        queryKey: ['appointments', residentId],
+        queryFn: async () => {
+            const response = await api.get('/appointments', { params: { resident_id: residentId, per_page: 100 } });
+            return response.data;
+        },
+        enabled: !!residentId,
+    });
+
+    const appointments = appointmentsData?.data || [];
+
+    const deleteMutation = useMutation({
+        mutationFn: async (id) => {
+            await api.delete(`/resident-documents/${id}`);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries(['resident-documents']);
+        },
+    });
+
+    const handleDelete = (id) => {
+        if (window.confirm('Are you sure you want to delete this document?')) {
+            deleteMutation.mutate(id);
+        }
+    };
+
+    const handleDownload = (document) => {
+        const url = `/api/v1/resident-documents/${document.id}/download`;
+        window.open(url, '_blank');
+    };
+
+    const documents = data?.data || [];
+    const pagination = data?.meta || {};
+
+    return (
+        <div className="space-y-6">
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <h2 className="text-2xl font-bold text-gray-900">Documents</h2>
+                    <p className="text-sm text-gray-500 mt-1">Manage resident documents and files</p>
+                </div>
+                <button
+                    onClick={() => {
+                        setEditing(null);
+                        setShowForm(true);
+                    }}
+                    className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700"
+                >
+                    <Plus className="h-4 w-4" />
+                    Add Document
+                </button>
+            </div>
+
+            {/* Filters */}
+            <div className="flex flex-col sm:flex-row gap-4">
+                <div className="flex-1">
+                    <div className="relative">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                        <input
+                            type="text"
+                            placeholder="Search documents..."
+                            value={search}
+                            onChange={(e) => {
+                                setSearch(e.target.value);
+                                setCurrentPage(1);
+                            }}
+                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                        />
+                    </div>
+                </div>
+                <div className="sm:w-48">
+                    <div className="relative">
+                        <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                        <select
+                            value={typeFilter}
+                            onChange={(e) => {
+                                setTypeFilter(e.target.value);
+                                setCurrentPage(1);
+                            }}
+                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent appearance-none bg-white"
+                        >
+                            <option value="">All Types</option>
+                            {Object.entries(documentTypeOptions).map(([value, label]) => (
+                                <option key={value} value={value}>{label}</option>
+                            ))}
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            {/* Documents List */}
+            {isLoading ? (
+                <div className="flex items-center justify-center py-12">
+                    <div className="h-8 w-8 animate-spin rounded-full border-2 border-emerald-200 border-t-emerald-600" />
+                </div>
+            ) : documents.length === 0 ? (
+                <div className="text-center py-12 bg-gray-50 rounded-lg border border-gray-200">
+                    <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">No documents found</h3>
+                    <p className="text-sm text-gray-500 mb-4">
+                        {search || typeFilter ? 'Try adjusting your filters' : 'Get started by adding a document'}
+                    </p>
+                    {!search && !typeFilter && (
+                        <button
+                            onClick={() => setShowForm(true)}
+                            className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700"
+                        >
+                            <Plus className="h-4 w-4" />
+                            Add Document
+                        </button>
+                    )}
+                </div>
+            ) : (
+                <>
+                    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                        <div className="overflow-x-auto">
+                            <table className="min-w-full divide-y divide-gray-200">
+                                <thead className="bg-gray-50">
+                                    <tr>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Document
+                                        </th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Type
+                                        </th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            File
+                                        </th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Related Appointment
+                                        </th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Uploaded
+                                        </th>
+                                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Actions
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody className="bg-white divide-y divide-gray-200">
+                                    {documents.map((document) => (
+                                        <tr key={document.id} className="hover:bg-gray-50">
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="text-sm font-medium text-gray-900">
+                                                    {document.document_name}
+                                                </div>
+                                                {document.notes && (
+                                                    <div className="text-xs text-gray-500 mt-1 line-clamp-1">
+                                                        {document.notes}
+                                                    </div>
+                                                )}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${documentTypeColors[document.document_type] || documentTypeColors.other}`}>
+                                                    {documentTypeOptions[document.document_type] || 'Other'}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="text-sm text-gray-900">
+                                                    {document.file_name || 'N/A'}
+                                                </div>
+                                                {document.file_size && (
+                                                    <div className="text-xs text-gray-500">
+                                                        {(document.file_size / 1024).toFixed(2)} KB
+                                                    </div>
+                                                )}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                {document.appointment ? (
+                                                    <div className="text-sm text-gray-900">
+                                                        {new Date(document.appointment.appointment_date).toLocaleDateString()}
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-sm text-gray-400">—</span>
+                                                )}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                {document.created_at ? new Date(document.created_at).toLocaleDateString() : 'N/A'}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                <div className="flex items-center justify-end gap-2">
+                                                    <button
+                                                        onClick={() => handleDownload(document)}
+                                                        className="text-emerald-600 hover:text-emerald-900"
+                                                        title="Download"
+                                                    >
+                                                        <Download className="h-4 w-4" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => {
+                                                            setEditing(document);
+                                                            setShowForm(true);
+                                                        }}
+                                                        className="text-blue-600 hover:text-blue-900"
+                                                        title="Edit"
+                                                    >
+                                                        <Edit className="h-4 w-4" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDelete(document.id)}
+                                                        className="text-red-600 hover:text-red-900"
+                                                        title="Delete"
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    {/* Pagination */}
+                    {pagination.last_page > 1 && (
+                        <div className="flex items-center justify-between">
+                            <div className="text-sm text-gray-700">
+                                Showing {pagination.from} to {pagination.to} of {pagination.total} documents
+                            </div>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                    disabled={currentPage === 1}
+                                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    Previous
+                                </button>
+                                <button
+                                    onClick={() => setCurrentPage(p => Math.min(pagination.last_page, p + 1))}
+                                    disabled={currentPage === pagination.last_page}
+                                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    Next
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </>
+            )}
+
+            {/* Document Form Modal */}
+            {showForm && (
+                <DocumentFormModal
+                    residentId={residentId}
+                    appointments={appointments}
+                    record={editing}
+                    onClose={() => {
+                        setShowForm(false);
+                        setEditing(null);
+                    }}
+                    onSuccess={() => {
+                        setShowForm(false);
+                        setEditing(null);
+                        queryClient.invalidateQueries(['resident-documents']);
+                    }}
+                />
+            )}
+        </div>
+    );
+}
+
+function DocumentFormModal({ residentId, appointments, record, onClose, onSuccess }) {
+    // Log and validate residentId
+    useEffect(() => {
+        console.log('DocumentFormModal received residentId:', residentId, typeof residentId);
+        if (!residentId) {
+            console.error('DocumentFormModal: residentId is missing or undefined!');
+        }
+    }, [residentId]);
+
+    const [formData, setFormData] = useState({
+        document_name: record?.document_name || '',
+        document_type: record?.document_type || '',
+        appointment_id: record?.appointment_id || null,
+        notes: record?.notes || '',
+    });
+    const [file, setFile] = useState(null);
+    const [errors, setErrors] = useState({});
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const handleFileChange = (e) => {
+        if (e.target.files && e.target.files[0]) {
+            setFile(e.target.files[0]);
+        }
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setErrors({});
+        setIsSubmitting(true);
+
+        try {
+            // Validate residentId is present
+            if (!residentId) {
+                setErrors({ general: 'Resident ID is missing. Please refresh the page and try again.' });
+                setIsSubmitting(false);
+                return;
+            }
+
+            const formDataToSend = new FormData();
+            formDataToSend.append('resident_id', String(residentId));
+            formDataToSend.append('document_name', formData.document_name);
+            formDataToSend.append('document_type', formData.document_type);
+            if (formData.appointment_id) {
+                formDataToSend.append('appointment_id', String(formData.appointment_id));
+            }
+            formDataToSend.append('notes', formData.notes || '');
+            
+            // Debug: Log what we're sending
+            console.log('Sending document data:', {
+                resident_id: residentId,
+                resident_id_type: typeof residentId,
+                document_name: formData.document_name,
+                document_type: formData.document_type,
+                appointment_id: formData.appointment_id,
+                file: file?.name,
+                file_size: file?.size,
+                file_type: file?.type,
+            });
+
+            if (file) {
+                formDataToSend.append('file_path', file);
+            } else if (!record) {
+                setErrors({ file_path: ['File is required for new documents'] });
+                setIsSubmitting(false);
+                return;
+            }
+
+            if (record) {
+                await api.put(`/resident-documents/${record.id}`, formDataToSend);
+            } else {
+                await api.post('/resident-documents', formDataToSend);
+            }
+            onSuccess();
+        } catch (error) {
+            console.error('Document upload error:', error);
+            console.error('Error response:', error.response?.data);
+            console.error('Error response errors:', error.response?.data?.errors);
+            console.error('Full error object:', JSON.stringify(error.response?.data, null, 2));
+            
+            if (error.response?.data?.errors) {
+                const validationErrors = error.response.data.errors;
+                console.log('Setting validation errors:', validationErrors);
+                setErrors(validationErrors);
+                // Also show general message if available
+                if (error.response.data.message) {
+                    setErrors(prev => ({ ...prev, general: error.response.data.message }));
+                }
+            } else {
+                const errorMessage = error.response?.data?.message || error.message || 'Failed to save document';
+                setErrors({ general: errorMessage });
+            }
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto" style={{ backgroundColor: 'rgba(0, 0, 0, 0.1)' }}>
+            <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto my-8">
+                <div className="p-6">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4 md:mb-6">
+                        <h2 className="text-2xl font-bold text-gray-900">
+                            {record ? 'Edit Document' : 'Add Document'}
+                        </h2>
+                        <button
+                            onClick={onClose}
+                            className="text-gray-400 hover:text-gray-600 text-2xl"
+                        >
+                            <X className="h-6 w-6" />
+                        </button>
+                    </div>
+
+                    {errors.general && (
+                        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                            <p className="text-sm text-red-800">{errors.general}</p>
+                        </div>
+                    )}
+
+                    <form onSubmit={handleSubmit} className="space-y-6">
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Document Name *
+                                </label>
+                                <input
+                                    type="text"
+                                    value={formData.document_name}
+                                    onChange={(e) => setFormData({...formData, document_name: e.target.value})}
+                                    required
+                                    maxLength={255}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                                />
+                                {errors.document_name && <p className="text-xs text-red-600 mt-1">{errors.document_name[0]}</p>}
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Document Type *
+                                </label>
+                                <select
+                                    value={formData.document_type}
+                                    onChange={(e) => setFormData({...formData, document_type: e.target.value})}
+                                    required
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                                >
+                                    <option value="">Select Type</option>
+                                    {Object.entries(documentTypeOptions).map(([value, label]) => (
+                                        <option key={value} value={value}>{label}</option>
+                                    ))}
+                                </select>
+                                {errors.document_type && <p className="text-xs text-red-600 mt-1">{errors.document_type[0]}</p>}
+                            </div>
+
+                            <div className="col-span-2">
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Related Appointment (Optional)
+                                </label>
+                                <select
+                                    value={formData.appointment_id || ''}
+                                    onChange={(e) => setFormData({...formData, appointment_id: e.target.value || null})}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                                >
+                                    <option value="">None</option>
+                                    {appointments.map((apt) => (
+                                        <option key={apt.id} value={apt.id}>
+                                            {new Date(apt.appointment_date).toLocaleDateString()} - {apt.provider_name || 'Appointment'}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="col-span-2">
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Document File {record ? '(leave blank to keep current)' : '*'}
+                                </label>
+                                <input
+                                    type="file"
+                                    onChange={handleFileChange}
+                                    accept=".pdf,.jpg,.jpeg,.png,.gif,.doc,.docx"
+                                    required={!record}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                                />
+                                <p className="text-xs text-gray-500 mt-1">
+                                    Accepted: PDF, Images (JPG, PNG, GIF), Word Docs (DOC, DOCX). Max size: 10MB
+                                </p>
+                                {record?.file_name && (
+                                    <p className="text-xs text-gray-600 mt-1">
+                                        Current file: {record.file_name}
+                                    </p>
+                                )}
+                                {errors.file_path && <p className="text-xs text-red-600 mt-1">{errors.file_path[0]}</p>}
+                            </div>
+
+                            <div className="col-span-2">
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Notes
+                                </label>
+                                <textarea
+                                    value={formData.notes}
+                                    onChange={(e) => setFormData({...formData, notes: e.target.value})}
+                                    rows={3}
+                                    placeholder="Any additional notes about this document..."
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="flex items-center justify-end space-x-3 pt-4 border-t">
+                            <button
+                                type="button"
+                                onClick={onClose}
+                                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="submit"
+                                disabled={isSubmitting}
+                                className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {isSubmitting ? 'Saving...' : (record ? 'Update' : 'Create')}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    );
+}
+

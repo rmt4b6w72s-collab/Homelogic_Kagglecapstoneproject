@@ -24,6 +24,7 @@ import Sleep from './pages/Sleep';
 import SleepPatterns from './pages/SleepPatterns';
 import ViewVitals from './pages/ViewVitals';
 import Facilities from './pages/Facilities';
+import FacilityEdit from './pages/FacilityEdit';
 import Branches from './pages/Branches';
 import VitalRanges from './pages/VitalRanges';
 import LeaveRequests from './pages/LeaveRequests';
@@ -44,7 +45,9 @@ import PharmacySuppliers from './pages/PharmacySuppliers';
 import PharmacyInventory from './pages/PharmacyInventory';
 import PharmacyOrders from './pages/PharmacyOrders';
 import SuperAdminDashboard from './pages/SuperAdminDashboard';
+import SuperAdminSettings from './pages/SuperAdminSettings';
 import FacilityRegistrations from './pages/FacilityRegistrations';
+import Permissions from './pages/Permissions';
 
 // Report sub-pages
 import ChartReports from './pages/reports/ChartReports';
@@ -60,15 +63,15 @@ import StaffCharts from './pages/reports/StaffCharts';
 function App() {
     return (
         <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route
-                path="/"
-                element={
-                    <ProtectedRoute>
-                        <Layout />
-                    </ProtectedRoute>
-                }
-            >
+                <Route path="/login" element={<Login />} />
+                <Route
+                    path="/"
+                    element={
+                        <ProtectedRoute>
+                            <Layout />
+                        </ProtectedRoute>
+                    }
+                >
                 <Route index element={<Navigate to="dashboard" replace />} />
 
                 {/* Main Pages */}
@@ -114,9 +117,12 @@ function App() {
 
                 {/* Super Admin */}
                 <Route path="super-admin/dashboard" element={<SuperAdminDashboard />} />
+                <Route path="super-admin/settings" element={<SuperAdminSettings />} />
                 <Route path="super-admin/facility-registrations" element={<FacilityRegistrations />} />
                 <Route path="super-admin/facilities" element={<Facilities />} />
                 <Route path="super-admin/facilities/create" element={<Facilities />} />
+                <Route path="super-admin/facilities/:id/edit" element={<FacilityEdit />} />
+                <Route path="super-admin/permissions" element={<Permissions />} />
 
                 {/* Administration */}
                 <Route path="administration/residents" element={<Residents />} />
@@ -125,6 +131,7 @@ function App() {
                 <Route path="administration/vital-ranges" element={<VitalRanges />} />
                 <Route path="administration/leave-requests" element={<LeaveRequests />} />
                 <Route path="administration/roles" element={<Roles />} />
+                <Route path="administration/facility-permissions" element={<Permissions />} />
                 <Route path="administration/users" element={<Users />} />
                 <Route path="administration/drugs" element={<Drugs />} />
                 <Route path="administration/employee-documents" element={<EmployeeDocuments />} />

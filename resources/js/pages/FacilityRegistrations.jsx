@@ -283,16 +283,16 @@ function ApproveRegistrationModal({ registration, onClose, onSubmit, isLoading }
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Facility Information</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Facility Name *</label>
+                  <label className="block text-sm font-medium text-gray-900 mb-1">Facility Name *</label>
                   <input
                     value={form.facility_name}
                     onChange={(e) => setForm({ ...form, facility_name: e.target.value })}
                     required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-[var(--theme-primary)]"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-[var(--theme-primary)]"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Subdomain *</label>
+                  <label className="block text-sm font-medium text-gray-900 mb-1">Subdomain *</label>
                   <input
                     value={form.subdomain}
                     onChange={(e) => setForm({ ...form, subdomain: e.target.value.replace(/[^a-z0-9-]/g, '').toLowerCase() })}
@@ -302,29 +302,29 @@ function ApproveRegistrationModal({ registration, onClose, onSubmit, isLoading }
                   <p className="text-xs text-gray-500 mt-1">e.g., {form.subdomain}.yourapp.com</p>
                 </div>
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                  <label className="block text-sm font-medium text-gray-900 mb-1">Address</label>
                   <textarea
                     value={form.address}
                     onChange={(e) => setForm({ ...form, address: e.target.value })}
                     rows={2}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-[var(--theme-primary)]"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-[var(--theme-primary)]"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                  <label className="block text-sm font-medium text-gray-900 mb-1">Phone</label>
                   <input
                     value={form.phone}
                     onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-[var(--theme-primary)]"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-[var(--theme-primary)]"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                  <label className="block text-sm font-medium text-gray-900 mb-1">Email</label>
                   <input
                     type="email"
                     value={form.email}
                     onChange={(e) => setForm({ ...form, email: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-[var(--theme-primary)]"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-[var(--theme-primary)]"
                   />
                 </div>
               </div>
@@ -335,12 +335,12 @@ function ApproveRegistrationModal({ registration, onClose, onSubmit, isLoading }
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Branding & Customization</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Logo</label>
+                  <label className="block text-sm font-medium text-gray-900 mb-1">Logo</label>
                   <input
                     type="file"
                     accept="image/*"
                     onChange={handleLogoChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-[var(--theme-primary)]"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-[var(--theme-primary)]"
                   />
                   {logoPreview && (
                     <div className="mt-2">
@@ -350,7 +350,7 @@ function ApproveRegistrationModal({ registration, onClose, onSubmit, isLoading }
                 </div>
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Primary Color</label>
+                    <label className="block text-sm font-medium text-gray-900 mb-1">Primary Color</label>
                     <div className="flex gap-2">
                       <input
                         type="color"
@@ -362,13 +362,13 @@ function ApproveRegistrationModal({ registration, onClose, onSubmit, isLoading }
                         type="text"
                         value={form.primary_color}
                         onChange={(e) => setForm({ ...form, primary_color: e.target.value })}
-                        className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent font-mono text-sm"
+                        className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent font-mono text-sm"
                         placeholder="#25603E"
                       />
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Secondary Color</label>
+                    <label className="block text-sm font-medium text-gray-900 mb-1">Secondary Color</label>
                     <div className="flex gap-2">
                       <input
                         type="color"
@@ -380,13 +380,13 @@ function ApproveRegistrationModal({ registration, onClose, onSubmit, isLoading }
                         type="text"
                         value={form.secondary_color}
                         onChange={(e) => setForm({ ...form, secondary_color: e.target.value })}
-                        className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent font-mono text-sm"
+                        className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent font-mono text-sm"
                         placeholder="#8B4513"
                       />
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Accent Color</label>
+                    <label className="block text-sm font-medium text-gray-900 mb-1">Accent Color</label>
                     <div className="flex gap-2">
                       <input
                         type="color"
@@ -398,7 +398,7 @@ function ApproveRegistrationModal({ registration, onClose, onSubmit, isLoading }
                         type="text"
                         value={form.accent_color}
                         onChange={(e) => setForm({ ...form, accent_color: e.target.value })}
-                        className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent font-mono text-sm"
+                        className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent font-mono text-sm"
                         placeholder="#F5F5DC"
                       />
                     </div>
@@ -412,21 +412,21 @@ function ApproveRegistrationModal({ registration, onClose, onSubmit, isLoading }
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Initial Branch Setup</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Branch Name *</label>
+                  <label className="block text-sm font-medium text-gray-900 mb-1">Branch Name *</label>
                   <input
                     value={form.branch_name}
                     onChange={(e) => setForm({ ...form, branch_name: e.target.value })}
                     required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-[var(--theme-primary)]"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-[var(--theme-primary)]"
                   />
                 </div>
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Branch Address</label>
+                  <label className="block text-sm font-medium text-gray-900 mb-1">Branch Address</label>
                   <textarea
                     value={form.branch_address}
                     onChange={(e) => setForm({ ...form, branch_address: e.target.value })}
                     rows={2}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-[var(--theme-primary)]"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-[var(--theme-primary)]"
                   />
                 </div>
               </div>
@@ -437,31 +437,31 @@ function ApproveRegistrationModal({ registration, onClose, onSubmit, isLoading }
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Facility Owner Account</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Owner Name *</label>
+                  <label className="block text-sm font-medium text-gray-900 mb-1">Owner Name *</label>
                   <input
                     value={form.owner_name}
                     onChange={(e) => setForm({ ...form, owner_name: e.target.value })}
                     required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-[var(--theme-primary)]"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-[var(--theme-primary)]"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Owner Email *</label>
+                  <label className="block text-sm font-medium text-gray-900 mb-1">Owner Email *</label>
                   <input
                     type="email"
                     value={form.owner_email}
                     onChange={(e) => setForm({ ...form, owner_email: e.target.value })}
                     required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-[var(--theme-primary)]"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-[var(--theme-primary)]"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Owner Role *</label>
+                  <label className="block text-sm font-medium text-gray-900 mb-1">Owner Role *</label>
                   <select
                     value={form.owner_role}
                     onChange={(e) => setForm({ ...form, owner_role: e.target.value })}
                     required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-[var(--theme-primary)]"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-[var(--theme-primary)]"
                   >
                     <option value="administrator">Administrator</option>
                     <option value="manager">Manager</option>
@@ -469,14 +469,14 @@ function ApproveRegistrationModal({ registration, onClose, onSubmit, isLoading }
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Password *</label>
+                  <label className="block text-sm font-medium text-gray-900 mb-1">Password *</label>
                   <input
                     type="password"
                     value={form.owner_password}
                     onChange={(e) => setForm({ ...form, owner_password: e.target.value })}
                     required
                     minLength={8}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-[var(--theme-primary)]"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-[var(--theme-primary)]"
                   />
                   <p className="text-xs text-gray-500 mt-1">Minimum 8 characters</p>
                 </div>

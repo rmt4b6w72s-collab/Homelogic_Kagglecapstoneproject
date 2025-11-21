@@ -38,27 +38,27 @@ class SuperAdminSystemOverviewWidget extends BaseWidget
             Stat::make('Total Branches', $totalBranches)
                 ->description('Care locations')
                 ->descriptionIcon('heroicon-o-map-pin')
-                ->color('info')
+                ->color('success')
                 ->chart($this->getBranchChartData()),
             
             Stat::make('Total Residents', $totalResidents)
                 ->description($activeResidents . ' active')
                 ->descriptionIcon('heroicon-o-users')
-                ->color('success')
+                ->color('primary')
                 ->chart($this->getResidentChartData())
                 ->url(route('filament.admin.resources.residents.index')),
             
             Stat::make('System Users', $totalUsers)
                 ->description($activeUsers . ' active')
                 ->descriptionIcon('heroicon-o-user-group')
-                ->color('warning')
+                ->color('success')
                 ->chart($this->getUserChartData())
                 ->url(route('filament.admin.resources.users.index')),
             
             Stat::make('Today\'s Appointments', $todayAppointments)
                 ->description($upcomingAppointments . ' upcoming')
                 ->descriptionIcon('heroicon-o-calendar')
-                ->color('danger')
+                ->color('primary')
                 ->chart($this->getAppointmentChartData())
                 ->url(route('filament.admin.resources.appointments.index')),
         ];

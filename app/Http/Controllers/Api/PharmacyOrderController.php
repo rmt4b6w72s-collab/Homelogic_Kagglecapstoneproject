@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Constants\Modules;
 use App\Http\Controllers\Controller;
 use App\Models\PharmacyOrder;
 use Illuminate\Http\Request;
@@ -12,6 +13,9 @@ class PharmacyOrderController extends BaseApiController
 {
     public function index(Request $request): JsonResponse
     {
+        if ($error = $this->requireModuleAccess(Modules::PHARMACY)) {
+            return $error;
+        }
         $query = PharmacyOrder::with(['branch', 'supplier', 'orderedBy', 'receivedBy', 'items.drug'])
             ->withCount('items');
         
@@ -61,6 +65,10 @@ class PharmacyOrderController extends BaseApiController
     
     public function store(Request $request): JsonResponse
     {
+        if ($error = $this->requireModuleAccess(Modules::PHARMACY)) {
+            return $error;
+        }
+
         $validated = $request->validate([
             'branch_id' => 'required|exists:branches,id',
             'supplier_id' => 'required|exists:pharmacy_suppliers,id',
@@ -104,6 +112,10 @@ class PharmacyOrderController extends BaseApiController
     
     public function show(string $id): JsonResponse
     {
+        if ($error = $this->requireModuleAccess(Modules::PHARMACY)) {
+            return $error;
+        }
+
         $order = PharmacyOrder::with(['branch', 'supplier', 'orderedBy', 'receivedBy', 'items.drug', 'transactions'])
             ->withCount('items')
             ->findOrFail($id);
@@ -113,6 +125,10 @@ class PharmacyOrderController extends BaseApiController
     
     public function update(Request $request, string $id): JsonResponse
     {
+        if ($error = $this->requireModuleAccess(Modules::PHARMACY)) {
+            return $error;
+        }
+
         $order = PharmacyOrder::findOrFail($id);
         
         $validated = $request->validate([
@@ -146,6 +162,10 @@ class PharmacyOrderController extends BaseApiController
     
     public function destroy(string $id): JsonResponse
     {
+        if ($error = $this->requireModuleAccess(Modules::PHARMACY)) {
+            return $error;
+        }
+
         $order = PharmacyOrder::findOrFail($id);
         
         if (!in_array($order->status, ['draft', 'cancelled'])) {
@@ -161,6 +181,10 @@ class PharmacyOrderController extends BaseApiController
     
     public function markAsReceived(Request $request, string $id): JsonResponse
     {
+        if ($error = $this->requireModuleAccess(Modules::PHARMACY)) {
+            return $error;
+        }
+
         $order = PharmacyOrder::with('items')->findOrFail($id);
         
         $validated = $request->validate([

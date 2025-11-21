@@ -1,27 +1,122 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../services/api';
 import { Shield, Plus, Edit, Trash2 } from 'lucide-react';
+import FacilityPermissions from './FacilityPermissions';
 
 export default function Roles() {
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null);
+  const [selectedFacility, setSelectedFacility] = useState(null);
 
+  // Check user role
+  const { data: currentUser, isLoading: userLoading } = useQuery({
+    queryKey: ['current-user'],
+    queryFn: async () => {
+      try {
+        const response = await api.get('/user');
+        return response.data;
+      } catch {
+        return null;
+      }
+    },
+  });
+
+  const isSuperAdmin = currentUser?.role === 'super_admin';
+  const isFacilityAdmin = currentUser?.role === 'administrator' || currentUser?.role === 'admin';
+
+  // ALL hooks must be called before any conditional returns
+  // These queries are only enabled for super admins, but hooks must always be called
   const { data: rolesData, isLoading } = useQuery({
     queryKey: ['roles'],
     queryFn: async () => (await api.get('/roles', { params: { per_page: 50 } })).data,
+    enabled: !userLoading && isSuperAdmin, // Only fetch for super admin
   });
 
   const { data: permissions } = useQuery({
     queryKey: ['permissions'],
     queryFn: async () => (await api.get('/permissions')).data,
+    enabled: !userLoading && isSuperAdmin, // Only fetch for super admin
   });
 
   const deleteMutation = useMutation({
     mutationFn: async (id) => api.delete(`/roles/${id}`),
     onSuccess: () => queryClient.invalidateQueries(['roles']),
   });
+
+  // For facility admin, load their facility using useQuery
+  const { data: facilityData, isLoading: facilityLoading, error: facilityError } = useQuery({
+    queryKey: ['facility', currentUser?.facility_id],
+    queryFn: async () => {
+      try {
+        const res = await api.get(`/facilities/${currentUser.facility_id}`);
+        // Handle different response structures
+        if (res.data?.data) {
+          return res.data.data;
+        } else if (res.data) {
+          return res.data;
+        }
+        return res;
+      } catch (error) {
+        console.error('Error fetching facility:', error);
+        throw error;
+      }
+    },
+    enabled: !userLoading && isFacilityAdmin && !isSuperAdmin && !!currentUser?.facility_id,
+    retry: 1,
+  });
+
+  // Set selected facility when data is loaded
+  useEffect(() => {
+    if (facilityData && !selectedFacility) {
+      setSelectedFacility(facilityData);
+    }
+  }, [facilityData, selectedFacility]);
+
+  // Now we can do conditional returns after all hooks are declared
+  // If facility admin, show modern facility permissions interface
+  if (isFacilityAdmin && !isSuperAdmin) {
+    if (userLoading || facilityLoading || !selectedFacility) {
+      return (
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--theme-primary)]"></div>
+            <p className="mt-4 text-gray-600">Loading permissions...</p>
+          </div>
+        </div>
+      );
+    }
+
+    if (facilityError) {
+      return (
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center bg-white rounded-lg shadow p-6 max-w-md">
+            <p className="text-red-600 mb-4">
+              {facilityError?.response?.data?.message || facilityError?.message || 'Failed to load facility'}
+            </p>
+            <button
+              onClick={() => {
+                queryClient.invalidateQueries(['facility', currentUser?.facility_id]);
+                setSelectedFacility(null);
+              }}
+              className="px-4 py-2 bg-[var(--theme-primary)] text-white rounded-lg hover:bg-[var(--theme-primary-hover)]"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <FacilityPermissions
+        facilityId={selectedFacility.id}
+        facilityName={selectedFacility.name}
+        onBack={null}
+      />
+    );
+  }
 
   return (
     <div>
@@ -126,12 +221,12 @@ function RoleForm({ record, permissions, onClose, onSuccess }) {
           {errors.general && <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg"><p className="text-sm text-red-800">{errors.general}</p></div>}
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Role Name *</label>
-              <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent" />
+              <label className="block text-sm font-medium text-gray-900 mb-1">Role Name *</label>
+              <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent" />
               {errors.name && <p className="text-xs text-red-600 mt-1">{errors.name[0]}</p>}
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-700 mb-2">Permissions</p>
+              <p className="text-sm font-medium text-gray-900 mb-2">Permissions</p>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-72 overflow-y-auto p-2 border rounded">
                 {permissions.map((perm) => (
                   <label key={perm.id} className="flex items-center space-x-2 text-sm text-gray-700">

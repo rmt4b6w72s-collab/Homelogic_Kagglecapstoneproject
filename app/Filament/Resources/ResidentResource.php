@@ -178,18 +178,50 @@ class ResidentResource extends Resource
                     ])
                     ->columns(2),
 
-                Forms\Components\Section::make('Document Upload')
+                Forms\Components\Section::make('Documents')
                     ->schema([
-                        Forms\Components\FileUpload::make('profile_image')
-                            ->label('Profile Image/File')
-                            ->image()
-                            ->directory('resident-files')
-                            ->visibility('private')
-                            ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/gif', 'application/pdf', 'image/webp'])
-                            ->maxSize(5120) // 5MB
-                            ->helperText('Upload profile image or documents (JPG, PNG, GIF, PDF, WebP - Max 5MB)')
-                            ->columnSpanFull(),
-                    ]),
+                        Forms\Components\Repeater::make('documents')
+                            ->label('Upload Documents')
+                            ->schema([
+                                Forms\Components\TextInput::make('document_name')
+                                    ->label('Document Name')
+                                    ->required()
+                                    ->maxLength(255)
+                                    ->placeholder('e.g., Medical Report, Insurance Card, etc.'),
+                                
+                                Forms\Components\Select::make('document_type')
+                                    ->label('Document Type')
+                                    ->options([
+                                        'insurance' => 'Insurance',
+                                        'medical' => 'Medical',
+                                        'legal' => 'Legal',
+                                        'admission' => 'Admission',
+                                        'other' => 'Other',
+                                    ])
+                                    ->required(),
+                                
+                                Forms\Components\FileUpload::make('file_path')
+                                    ->label('Document File')
+                                    ->disk('public')
+                                    ->directory('resident-documents')
+                                    ->acceptedFileTypes(['application/pdf', 'image/jpeg', 'image/png', 'image/gif', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'])
+                                    ->maxSize(10240) // 10MB
+                                    ->required(),
+                                
+                                Forms\Components\Textarea::make('notes')
+                                    ->label('Notes')
+                                    ->rows(2)
+                                    ->placeholder('Additional notes about this document...'),
+                            ])
+                            ->columns(2)
+                            ->itemLabel(fn (array $state): ?string => $state['document_name'] ?? null)
+                            ->collapsible()
+                            ->defaultItems(0)
+                            ->addActionLabel('Add Document')
+                            ->helperText('Upload documents when adding a new resident (optional)'),
+                    ])
+                    ->collapsible()
+                    ->collapsed(),
 
                 Forms\Components\Section::make('Additional Information')
                     ->schema([
@@ -323,7 +355,7 @@ class ResidentResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            RelationManagers\DocumentsRelationManager::class,
         ];
     }
 

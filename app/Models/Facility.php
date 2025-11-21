@@ -28,6 +28,7 @@ class Facility extends Model
         'secondary_color',
         'accent_color',
         'subdomain',
+        'provider_code',
         'registration_status',
         'registered_by_user_id',
         'is_active',
@@ -58,6 +59,185 @@ class Facility extends Model
     public function registrations()
     {
         return $this->hasMany(FacilityRegistration::class, 'facility_name', 'name');
+    }
+
+    public function modules()
+    {
+        return $this->hasMany(FacilityModule::class);
+    }
+
+    public function rolePermissions()
+    {
+        return $this->hasMany(FacilityRolePermission::class);
+    }
+
+    /**
+     * Check if facility has access to a module
+     */
+    public function hasModuleAccess(string $module): bool
+    {
+        $moduleRecord = $this->modules()->where('module', $module)->first();
+        
+        // If no record exists, default to enabled (backward compatibility)
+        if (!$moduleRecord) {
+            return true;
+        }
+        
+        return $moduleRecord->is_enabled;
+    }
+
+    /**
+     * Enable a module for this facility
+     */
+    public function enableModule(string $module): void
+    {
+        $this->modules()->updateOrCreate(
+            ['module' => $module],
+            ['is_enabled' => true]
+        );
+    }
+
+    /**
+     * Disable a module for this facility
+     */
+    public function disableModule(string $module): void
+    {
+        $this->modules()->updateOrCreate(
+            ['module' => $module],
+            ['is_enabled' => false]
+        );
+    }
+
+    /**
+     * Sync modules for this facility
+     */
+    public function syncModules(array $modules): void
+    {
+        foreach ($modules as $module => $enabled) {
+            if ($enabled) {
+                $this->enableModule($module);
+            } else {
+                $this->disableModule($module);
+            }
+        }
+    }
+
+    /**
+     * Get effective role permissions for this facility (facility-specific + global)
+     */
+    public function getEffectiveRolePermissions(int $roleId): array
+    {
+        $role = Role::findOrFail($roleId);
+        
+        // Get global role permissions
+        $globalPermissions = $role->permissions()->pluck('permissions.id', 'permissions.name')->toArray();
+        
+        // Get facility-specific overrides
+        $facilityOverrides = $this->rolePermissions()
+            ->where('role_id', $roleId)
+            ->with('permission')
+            ->get()
+            ->keyBy(function ($item) {
+                return $item->permission->name;
+            });
+        
+        // Merge: facility overrides take precedence
+        $effectivePermissions = $globalPermissions;
+        foreach ($facilityOverrides as $permissionName => $override) {
+            if ($override->is_allowed) {
+                $effectivePermissions[$permissionName] = $override->permission_id;
+            } else {
+                // Remove permission if explicitly denied
+                unset($effectivePermissions[$permissionName]);
+            }
+        }
+        
+        return $effectivePermissions;
+    }
+
+    /**
+     * Set a role permission for this facility
+     */
+    public function setRolePermission(int $roleId, int $permissionId, bool $isAllowed = true): void
+    {
+        $this->rolePermissions()->updateOrCreate(
+            [
+                'role_id' => $roleId,
+                'permission_id' => $permissionId,
+            ],
+            [
+                'is_allowed' => $isAllowed,
+            ]
+        );
+    }
+
+    /**
+     * Sync role permissions for this facility
+     */
+    public function syncRolePermissions(int $roleId, array $permissionNames): void
+    {
+        // Get global role permissions
+        $role = Role::findOrFail($roleId);
+        $globalPermissionNames = $role->permissions()->pluck('permissions.name')->toArray();
+        
+        // Get all permissions by name
+        $allPermissions = Permission::whereIn('name', array_merge($permissionNames, $globalPermissionNames))->get()->keyBy('name');
+        
+        // Remove all existing overrides for this role
+        $this->rolePermissions()->where('role_id', $roleId)->delete();
+        
+        // Create overrides for permissions that differ from global
+        foreach ($allPermissions as $permissionName => $permission) {
+            $isInGlobal = in_array($permissionName, $globalPermissionNames);
+            $isInRequested = in_array($permissionName, $permissionNames);
+            
+            // Only create override if it differs from global
+            if ($isInRequested && !$isInGlobal) {
+                // Permission is granted but not in global
+                $this->rolePermissions()->create([
+                    'role_id' => $roleId,
+                    'permission_id' => $permission->id,
+                    'is_allowed' => true,
+                ]);
+            } elseif (!$isInRequested && $isInGlobal) {
+                // Permission is denied but exists in global
+                $this->rolePermissions()->create([
+                    'role_id' => $roleId,
+                    'permission_id' => $permission->id,
+                    'is_allowed' => false,
+                ]);
+            }
+        }
+    }
+
+    /**
+     * Check if facility has a role permission override
+     */
+    public function hasRolePermissionOverride(int $roleId, int $permissionId): bool
+    {
+        return $this->rolePermissions()
+            ->where('role_id', $roleId)
+            ->where('permission_id', $permissionId)
+            ->exists();
+    }
+
+    /**
+     * Get role permissions for this facility
+     */
+    public function getRolePermissions(int $roleId): array
+    {
+        return $this->rolePermissions()
+            ->where('role_id', $roleId)
+            ->with('permission')
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'permission_id' => $item->permission_id,
+                    'permission_name' => $item->permission->name,
+                    'is_allowed' => $item->is_allowed,
+                ];
+            })
+            ->toArray();
     }
 
     // Scopes

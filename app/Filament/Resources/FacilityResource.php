@@ -149,6 +149,11 @@ class FacilityResource extends Resource
                             ->maxLength(255)
                             ->unique(ignoreRecord: true)
                             ->helperText('Optional subdomain for facility-specific URL (e.g., evergreen.yourapp.com)'),
+                        Forms\Components\TextInput::make('provider_code')
+                            ->label('Provider Code')
+                            ->maxLength(255)
+                            ->unique(ignoreRecord: true)
+                            ->helperText('Optional provider code used for login identification. Users can enter this code during login to identify their facility.'),
                         Forms\Components\ColorPicker::make('primary_color')
                             ->label('Primary Color')
                             ->helperText('Main brand color for the admin panel'),
@@ -161,6 +166,29 @@ class FacilityResource extends Resource
                     ])
                     ->columns(2)
                     ->visible(fn () => auth()->user()->role === 'super_admin'),
+
+                Forms\Components\Section::make('Module Access')
+                    ->schema([
+                        Forms\Components\CheckboxList::make('enabled_modules')
+                            ->label('Enabled Modules')
+                            ->options(\App\Constants\Modules::all())
+                            ->columns(2)
+                            ->gridDirection('row')
+                            ->bulkToggleable()
+                            ->helperText('Select which modules are available for this facility. Users must have both role permissions and facility module access.')
+                            ->default(function ($record) {
+                                if (!$record) {
+                                    return array_keys(\App\Constants\Modules::all());
+                                }
+                                return $record->modules()
+                                    ->where('is_enabled', true)
+                                    ->pluck('module')
+                                    ->toArray();
+                            })
+                            ->dehydrated(true),
+                    ])
+                    ->visible(fn () => auth()->user()->role === 'super_admin')
+                    ->collapsible(),
             ]);
     }
 

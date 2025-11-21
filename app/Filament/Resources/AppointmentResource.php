@@ -6,6 +6,7 @@ use App\Filament\Resources\AppointmentResource\Pages;
 use App\Filament\Resources\AppointmentResource\RelationManagers;
 use App\Models\Appointment;
 use App\Models\Resident;
+use App\Models\ResidentDocument;
 use App\Models\Branch;
 use App\Models\AppointmentType;
 use App\Models\HealthcareProvider;
@@ -319,6 +320,51 @@ class AppointmentResource extends Resource
                             ->label('Appointment Outcome / Notes')
                             ->placeholder('Enter notes about the appointment outcome...')
                             ->rows(4),
+                        
+                        Forms\Components\Section::make('Documents')
+                            ->schema([
+                                Forms\Components\Repeater::make('documents')
+                                    ->label('Upload Documents (Optional)')
+                                    ->schema([
+                                        Forms\Components\TextInput::make('document_name')
+                                            ->label('Document Name')
+                                            ->required()
+                                            ->maxLength(255)
+                                            ->placeholder('e.g., Medical Report, Prescription, etc.'),
+                                        
+                                        Forms\Components\Select::make('document_type')
+                                            ->label('Document Type')
+                                            ->options([
+                                                'medical' => 'Medical',
+                                                'appointment' => 'Appointment',
+                                                'insurance' => 'Insurance',
+                                                'other' => 'Other',
+                                            ])
+                                            ->required()
+                                            ->default('appointment'),
+                                        
+                                        Forms\Components\FileUpload::make('file_path')
+                                            ->label('Document File')
+                                            ->disk('public')
+                                            ->directory('resident-documents')
+                                            ->acceptedFileTypes(['application/pdf', 'image/jpeg', 'image/png', 'image/gif', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'])
+                                            ->maxSize(10240) // 10MB
+                                            ->required(),
+                                        
+                                        Forms\Components\Textarea::make('notes')
+                                            ->label('Notes')
+                                            ->rows(2)
+                                            ->placeholder('Additional notes about this document...'),
+                                    ])
+                                    ->columns(2)
+                                    ->itemLabel(fn (array $state): ?string => $state['document_name'] ?? null)
+                                    ->collapsible()
+                                    ->defaultItems(0)
+                                    ->addActionLabel('Add Document')
+                                    ->helperText('Upload documents received during the appointment'),
+                            ])
+                            ->collapsible()
+                            ->collapsed(),
                     ])
                     ->action(function (Appointment $record, array $data) {
                         $updateData = ['status' => 'completed'];
@@ -327,6 +373,42 @@ class AppointmentResource extends Resource
                             $updateData['notes'] = $existingNotes . "Completed on " . now()->format('Y-m-d H:i:s') . ": " . $data['notes'];
                         }
                         $record->update($updateData);
+                        
+                        // Handle document uploads
+                        if (isset($data['documents']) && is_array($data['documents'])) {
+                            foreach ($data['documents'] as $documentData) {
+                                if (isset($documentData['file_path']) && $documentData['file_path']) {
+                                    $file = $documentData['file_path'];
+                                    
+                                    // Handle TemporaryUploadedFile
+                                    if ($file instanceof \Livewire\Features\SupportFileUploads\TemporaryUploadedFile) {
+                                        $storedPath = $file->store('resident-documents', 'public');
+                                        $fileName = $file->getClientOriginalName();
+                                        $fileSize = $file->getSize();
+                                        $mimeType = $file->getMimeType();
+                                    } else {
+                                        // Handle already stored file path
+                                        $storedPath = $file;
+                                        $fileName = $documentData['file_name'] ?? basename($file);
+                                        $fileSize = \Illuminate\Support\Facades\Storage::disk('public')->size($file);
+                                        $mimeType = \Illuminate\Support\Facades\Storage::disk('public')->mimeType($file);
+                                    }
+
+                                    ResidentDocument::create([
+                                        'resident_id' => $record->resident_id,
+                                        'appointment_id' => $record->id,
+                                        'document_name' => $documentData['document_name'],
+                                        'document_type' => $documentData['document_type'],
+                                        'file_path' => $storedPath,
+                                        'file_name' => $fileName,
+                                        'file_size' => $fileSize,
+                                        'mime_type' => $mimeType,
+                                        'uploaded_by' => auth()->id(),
+                                        'notes' => $documentData['notes'] ?? null,
+                                    ]);
+                                }
+                            }
+                        }
                     })
                     ->requiresConfirmation(),
                 

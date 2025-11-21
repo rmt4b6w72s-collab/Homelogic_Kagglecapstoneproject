@@ -41,6 +41,7 @@ class UserObserver
                 'metadata' => [
                     'user_id' => $user->id,
                     'role' => $user->role,
+                    'facility_id' => $user->facility_id,
                 ],
             ]);
         }

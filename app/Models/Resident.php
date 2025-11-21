@@ -118,6 +118,11 @@ class Resident extends Model
         return $this->hasMany(MedicationAdministration::class);
     }
 
+    public function documents(): HasMany
+    {
+        return $this->hasMany(ResidentDocument::class);
+    }
+
     protected function phone(): Attribute
     {
         return $this->phoneAttribute();

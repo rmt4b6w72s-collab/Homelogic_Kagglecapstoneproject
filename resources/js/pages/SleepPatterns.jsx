@@ -515,19 +515,6 @@ export default function SleepPatterns() {
                     </div>
                 )}
 
-                {/* Debug Info - Remove in production */}
-                {process.env.NODE_ENV === 'development' && residentId && (
-                    <div className="bg-gray-100 rounded-lg p-4 mb-4 text-xs">
-                        <p><strong>Debug Info:</strong></p>
-                        <p>Resident ID: {residentId}</p>
-                        <p>Month: {month}, Year: {year}</p>
-                        <p>Loading: {isLoading ? 'Yes' : 'No'}</p>
-                        <p>Has Pattern Data: {patternData ? 'Yes' : 'No'}</p>
-                        <p>Daily Data Count: {patternData?.daily_data?.length || 0}</p>
-                        <p>Error: {error ? error.message : 'None'}</p>
-                    </div>
-                )}
-
                 {/* Sleep Pattern Data */}
                 {residentId && (
                     <>

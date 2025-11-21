@@ -41,5 +41,15 @@ class DashboardController extends BaseApiController
         $trend = $this->dashboardService->getResidentVitalsTrend($residentId);
         return $this->success($trend);
     }
+
+    public function dailyActivities(\Illuminate\Http\Request $request): JsonResponse
+    {
+        $user = auth()->user();
+        $days = (int) $request->get('days', 30);
+        
+        $activities = $this->dashboardService->getDailyActivities($user, $days);
+        
+        return $this->success($activities);
+    }
 }
 

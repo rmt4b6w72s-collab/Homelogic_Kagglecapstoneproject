@@ -17,6 +17,28 @@ class EditFacility extends EditRecord
         ];
     }
 
+    protected function mutateFormDataBeforeSave(array $data): array
+    {
+        // Remove enabled_modules from data as it's not a database field
+        unset($data['enabled_modules']);
+        return $data;
+    }
+
+    protected function afterSave(): void
+    {
+        // Sync modules after facility is updated
+        $enabledModules = $this->form->getState()['enabled_modules'] ?? [];
+        $allModules = array_keys(\App\Constants\Modules::all());
+        
+        foreach ($allModules as $module) {
+            if (in_array($module, $enabledModules)) {
+                $this->record->enableModule($module);
+            } else {
+                $this->record->disableModule($module);
+            }
+        }
+    }
+
     protected function getFormActions(): array
     {
         $actions = parent::getFormActions();

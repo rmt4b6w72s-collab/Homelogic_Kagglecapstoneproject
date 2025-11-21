@@ -27,6 +27,9 @@ class ResidentObserver
             $branchName = $resident->branch?->name ?? 'Unknown Branch';
             $admissionDate = $resident->admission_date ? Carbon::parse($resident->admission_date)->format('M d, Y') : 'TBD';
             
+            // Get facility_id from branch
+            $facilityId = $resident->branch?->facility_id ?? null;
+            
             Notification::create([
                 'user_id' => $admin->id,
                 'type' => 'resident_created',
@@ -38,6 +41,7 @@ class ResidentObserver
                 'metadata' => [
                     'resident_id' => $resident->id,
                     'branch_id' => $resident->branch_id,
+                    'facility_id' => $facilityId,
                 ],
             ]);
         }

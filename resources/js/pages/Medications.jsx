@@ -599,7 +599,7 @@ export default function Medications() {
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Search:</label>
+                        <label className="block text-sm font-medium text-gray-900 mb-2">Search:</label>
                         <input
                             type="text"
                             placeholder="Search by medication name, resident..."
@@ -609,7 +609,7 @@ export default function Medications() {
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Filter:</label>
+                        <label className="block text-sm font-medium text-gray-900 mb-2">Filter:</label>
                         <button
                             onClick={() => setActiveOnly(!activeOnly)}
                             className={`w-full px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
@@ -622,7 +622,7 @@ export default function Medications() {
                         </button>
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Resident</label>
+                        <label className="block text-sm font-medium text-gray-900 mb-2">Resident</label>
                         <select
                             value={residentFilter}
                             onChange={(e) => setResidentFilter(e.target.value)}
@@ -635,7 +635,7 @@ export default function Medications() {
                         </select>
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Branch</label>
+                        <label className="block text-sm font-medium text-gray-900 mb-2">Branch</label>
                         <select
                             value={branchFilter}
                             onChange={(e) => setBranchFilter(e.target.value)}
@@ -928,7 +928,7 @@ function MedicationAdministrationForm({ medication, onClose, onSuccess }) {
 
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                            <label className="block text-sm font-medium text-gray-900 mb-2">
                                 Medication
                             </label>
                             <input
@@ -940,7 +940,7 @@ function MedicationAdministrationForm({ medication, onClose, onSuccess }) {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                            <label className="block text-sm font-medium text-gray-900 mb-2">
                                 Resident
                             </label>
                             <input
@@ -952,7 +952,7 @@ function MedicationAdministrationForm({ medication, onClose, onSuccess }) {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                            <label className="block text-sm font-medium text-gray-900 mb-2">
                                 Administered At *
                             </label>
                             <input
@@ -967,7 +967,7 @@ function MedicationAdministrationForm({ medication, onClose, onSuccess }) {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                            <label className="block text-sm font-medium text-gray-900 mb-2">
                                 Status *
                             </label>
                             <div className="flex gap-2 mb-2">
@@ -996,7 +996,7 @@ function MedicationAdministrationForm({ medication, onClose, onSuccess }) {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                            <label className="block text-sm font-medium text-gray-900 mb-2">
                                 Dosage Given
                             </label>
                             <input
@@ -1010,7 +1010,7 @@ function MedicationAdministrationForm({ medication, onClose, onSuccess }) {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                            <label className="block text-sm font-medium text-gray-900 mb-2">
                                 Notes
                             </label>
                             <textarea
@@ -1220,7 +1220,7 @@ function MedicationForm({ record, residents, branches, currentUser, isCaregiver,
                     <form onSubmit={handleSubmit} className="space-y-6">
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Branch *</label>
+                                <label className="block text-sm font-medium text-gray-900 mb-2">Branch *</label>
                                 <select
                                     value={formData.branch_id}
                                     onChange={(e) => {
@@ -1244,7 +1244,7 @@ function MedicationForm({ record, residents, branches, currentUser, isCaregiver,
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Resident *</label>
+                                <label className="block text-sm font-medium text-gray-900 mb-2">Resident *</label>
                                 <select
                                     value={formData.resident_id}
                                     onChange={(e) => setFormData({ ...formData, resident_id: e.target.value })}
@@ -1265,7 +1265,7 @@ function MedicationForm({ record, residents, branches, currentUser, isCaregiver,
                             </div>
 
                             <div className="col-span-2">
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Drug *</label>
+                                <label className="block text-sm font-medium text-gray-900 mb-2">Drug *</label>
                                 <select
                                     value={formData.drug_id}
                                     onChange={(e) => {
@@ -1290,7 +1290,7 @@ function MedicationForm({ record, residents, branches, currentUser, isCaregiver,
                             </div>
                             {formData.drug_id && (
                                 <div className="col-span-2">
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">Medication Name (Optional - auto-filled from drug)</label>
+                                    <label className="block text-sm font-medium text-gray-900 mb-2">Medication Name (Optional - auto-filled from drug)</label>
                                     <input
                                         type="text"
                                         value={formData.name}
@@ -1302,7 +1302,7 @@ function MedicationForm({ record, residents, branches, currentUser, isCaregiver,
                             )}
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Quantity</label>
+                                <label className="block text-sm font-medium text-gray-900 mb-2">Quantity</label>
                                 <input
                                     type="text"
                                     value={formData.quantity}
@@ -1314,7 +1314,7 @@ function MedicationForm({ record, residents, branches, currentUser, isCaregiver,
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Select Instructions *</label>
+                                <label className="block text-sm font-medium text-gray-900 mb-2">Select Instructions *</label>
                                 <select
                                     value={formData.instructions}
                                     onChange={(e) => setFormData({ ...formData, instructions: e.target.value })}
@@ -1345,7 +1345,7 @@ function MedicationForm({ record, residents, branches, currentUser, isCaregiver,
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Start Date *</label>
+                                <label className="block text-sm font-medium text-gray-900 mb-2">Start Date *</label>
                                 <input
                                     type="date"
                                     value={formData.start_date}
@@ -1357,7 +1357,7 @@ function MedicationForm({ record, residents, branches, currentUser, isCaregiver,
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">End Date</label>
+                                <label className="block text-sm font-medium text-gray-900 mb-2">End Date</label>
                                 <input
                                     type="date"
                                     value={formData.end_date}
@@ -1369,7 +1369,7 @@ function MedicationForm({ record, residents, branches, currentUser, isCaregiver,
                             </div>
 
                             <div className="col-span-2">
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Diagnosis</label>
+                                <label className="block text-sm font-medium text-gray-900 mb-2">Diagnosis</label>
                                 <input
                                     type="text"
                                     value={formData.diagnosis}
@@ -1387,7 +1387,7 @@ function MedicationForm({ record, residents, branches, currentUser, isCaregiver,
                             <div className="grid grid-cols-4 gap-4">
                                 {[1,2,3,4].slice(0, getTimesNeeded(formData.instructions)).map((idx) => (
                                     <div key={idx}>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">Time {idx}</label>
+                                        <label className="block text-sm font-medium text-gray-900 mb-2">Time {idx}</label>
                                         <TimePicker
                                             value={formData[`time_${idx}`] || ''}
                                             onChange={(value) => setFormData({ ...formData, [`time_${idx}`]: value })}
@@ -2065,7 +2065,7 @@ function QuickAdminister({ medication, onSuccess }) {
                         </div>
                         <div className="px-5 py-4 space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                <label className="block text-sm font-medium text-gray-900 mb-2">
                                     Dosage Given *
                                 </label>
                                 <input
@@ -2088,7 +2088,7 @@ function QuickAdminister({ medication, onSuccess }) {
                                 )}
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                <label className="block text-sm font-medium text-gray-900 mb-2">
                                     Notes (optional)
                                 </label>
                                 <textarea

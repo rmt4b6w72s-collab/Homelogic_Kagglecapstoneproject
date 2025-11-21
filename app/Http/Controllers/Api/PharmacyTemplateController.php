@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Constants\Modules;
 use App\Http\Controllers\Controller;
 use App\Models\PharmacyTemplate;
 use Illuminate\Http\Request;
@@ -11,6 +12,9 @@ class PharmacyTemplateController extends BaseApiController
 {
     public function index(Request $request): JsonResponse
     {
+        if ($error = $this->requireModuleAccess(Modules::PHARMACY)) {
+            return $error;
+        }
         $query = PharmacyTemplate::with(['branch', 'createdBy']);
         $user = $request->user();
         $isCaregiver = $user && in_array($user->role, ['caregiver', 'care_giver', 'nurse', 'registered_nurse', 'licensed_nurse']);
@@ -40,6 +44,10 @@ class PharmacyTemplateController extends BaseApiController
 
     public function store(Request $request): JsonResponse
     {
+        if ($error = $this->requireModuleAccess(Modules::PHARMACY)) {
+            return $error;
+        }
+
         $validated = $request->validate([
             'branch_id' => 'required|exists:branches,id',
             'name' => 'required|string|max:255',
@@ -57,12 +65,20 @@ class PharmacyTemplateController extends BaseApiController
 
     public function show(string $id): JsonResponse
     {
+        if ($error = $this->requireModuleAccess(Modules::PHARMACY)) {
+            return $error;
+        }
+
         $template = PharmacyTemplate::with(['branch', 'createdBy'])->findOrFail($id);
         return response()->json($template);
     }
 
     public function update(Request $request, string $id): JsonResponse
     {
+        if ($error = $this->requireModuleAccess(Modules::PHARMACY)) {
+            return $error;
+        }
+
         $template = PharmacyTemplate::findOrFail($id);
 
         $validated = $request->validate([
@@ -81,6 +97,10 @@ class PharmacyTemplateController extends BaseApiController
 
     public function destroy(string $id): JsonResponse
     {
+        if ($error = $this->requireModuleAccess(Modules::PHARMACY)) {
+            return $error;
+        }
+
         $template = PharmacyTemplate::findOrFail($id);
         $template->delete();
 

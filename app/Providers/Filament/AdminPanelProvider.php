@@ -40,10 +40,10 @@ class AdminPanelProvider extends PanelProvider
             ->login()
             ->colors([
                 'primary' => $branding['primary_color'],
-                'success' => Color::Emerald,
-                'warning' => Color::Amber,
-                'danger' => Color::Red,
-                'info' => Color::Blue,
+                'success' => $branding['secondary_color'] ?? '#86EFAC', // Light green from logo
+                'warning' => $branding['primary_color'], // Use primary for warnings
+                'danger' => $branding['primary_color'], // Use primary for danger
+                'info' => $branding['primary_color'], // Use primary for info
                 'gray' => Color::Slate,
             ])
             ->font('Inter')
@@ -141,6 +141,7 @@ class AdminPanelProvider extends PanelProvider
                 'name' => 'HomeLogic360',
                 'logo' => asset('images/logonew.png'),
                 'primary_color' => '#1E3A5F', // Dark blue from logo
+                'secondary_color' => '#86EFAC', // Light green from logo
             ];
         }
 
@@ -150,6 +151,7 @@ class AdminPanelProvider extends PanelProvider
             'name' => $branding['name'],
             'logo' => $branding['logo'] ?? asset('images/logo.jpeg'),
             'primary_color' => $this->parseColor($branding['primary_color'] ?? '#667eea'),
+            'secondary_color' => $this->parseColor($branding['secondary_color'] ?? '#86EFAC'),
         ];
     }
 

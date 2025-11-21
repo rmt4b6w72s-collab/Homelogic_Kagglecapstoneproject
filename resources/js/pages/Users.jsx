@@ -763,7 +763,7 @@ function UserForm({ record, branches, roles, onClose, onSuccess }) {
                             <h3 className="text-lg font-semibold text-gray-900 mb-4">Personal Information</h3>
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="col-span-2">
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className="block text-sm font-medium text-gray-900 mb-2">
                                         Email *
                                     </label>
                                     <input
@@ -772,14 +772,14 @@ function UserForm({ record, branches, roles, onClose, onSuccess }) {
                                         onChange={(e) => setFormData({...formData, email: e.target.value})}
                                         required
                                         placeholder="staff@serenityafh.com"
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                     />
                                     <p className="text-xs text-gray-500 mt-1">This will be used for login</p>
                                     {errors.email && <p className="text-xs text-red-600 mt-1">{errors.email[0]}</p>}
                                 </div>
 
                                 <div className="col-span-2">
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className="block text-sm font-medium text-gray-900 mb-2">
                                         Profile Picture
                                     </label>
                                     <div className="space-y-3">
@@ -826,7 +826,7 @@ function UserForm({ record, branches, roles, onClose, onSuccess }) {
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className="block text-sm font-medium text-gray-900 mb-2">
                                         First Name *
                                     </label>
                                     <input
@@ -836,13 +836,13 @@ function UserForm({ record, branches, roles, onClose, onSuccess }) {
                                         required
                                         placeholder="Enter first name"
                                         maxLength={255}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                     />
                                     {errors.first_name && <p className="text-xs text-red-600 mt-1">{errors.first_name[0]}</p>}
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className="block text-sm font-medium text-gray-900 mb-2">
                                         Middle Names
                                     </label>
                                     <input
@@ -851,12 +851,12 @@ function UserForm({ record, branches, roles, onClose, onSuccess }) {
                                         onChange={(e) => setFormData({...formData, middle_names: e.target.value})}
                                         placeholder="Enter middle names (optional)"
                                         maxLength={255}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className="block text-sm font-medium text-gray-900 mb-2">
                                         Last Name *
                                     </label>
                                     <input
@@ -866,13 +866,13 @@ function UserForm({ record, branches, roles, onClose, onSuccess }) {
                                         required
                                         placeholder="Enter last name"
                                         maxLength={255}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                     />
                                     {errors.last_name && <p className="text-xs text-red-600 mt-1">{errors.last_name[0]}</p>}
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className="block text-sm font-medium text-gray-900 mb-2">
                                         Phone Number *
                                     </label>
                                     <input
@@ -881,14 +881,14 @@ function UserForm({ record, branches, roles, onClose, onSuccess }) {
                                         onChange={(e) => setFormData({...formData, phone_number: e.target.value})}
                                         required
                                         placeholder="+1 (425) 555-0123"
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                     />
                                     <p className="text-xs text-gray-500 mt-1">Include country code for international format</p>
                                     {errors.phone_number && <p className="text-xs text-red-600 mt-1">{errors.phone_number[0]}</p>}
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className="block text-sm font-medium text-gray-900 mb-2">
                                         Date of Birth *
                                     </label>
                                     <input
@@ -897,20 +897,20 @@ function UserForm({ record, branches, roles, onClose, onSuccess }) {
                                         onChange={(e) => setFormData({...formData, date_of_birth: e.target.value})}
                                         required
                                         max={new Date(Date.now() - 18 * 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                     />
                                     <p className="text-xs text-gray-500 mt-1">Format: MM/DD/YYYY - Must be 18+ years old</p>
                                     {errors.date_of_birth && <p className="text-xs text-red-600 mt-1">{errors.date_of_birth[0]}</p>}
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className="block text-sm font-medium text-gray-900 mb-2">
                                         Marital Status
                                     </label>
                                     <select
                                         value={formData.marital_status}
                                         onChange={(e) => setFormData({...formData, marital_status: e.target.value})}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                     >
                                         <option value="">Choose marital status</option>
                                         <option value="single">Single</option>
@@ -922,7 +922,7 @@ function UserForm({ record, branches, roles, onClose, onSuccess }) {
                                 </div>
 
                                 <div className="col-span-2">
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className="block text-sm font-medium text-gray-900 mb-2">
                                         Sex *
                                     </label>
                                     <div className="flex space-x-6">
@@ -973,7 +973,7 @@ function UserForm({ record, branches, roles, onClose, onSuccess }) {
                             <h3 className="text-lg font-semibold text-gray-900 mb-4">Employment Details</h3>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className="block text-sm font-medium text-gray-900 mb-2">
                                         Credentials
                                     </label>
                                     <input
@@ -982,12 +982,12 @@ function UserForm({ record, branches, roles, onClose, onSuccess }) {
                                         onChange={(e) => setFormData({...formData, credentials: e.target.value})}
                                         placeholder="e.g., RN, LPN, CNA, etc."
                                         maxLength={255}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className="block text-sm font-medium text-gray-900 mb-2">
                                         Credential Details
                                     </label>
                                     <input
@@ -996,12 +996,12 @@ function UserForm({ record, branches, roles, onClose, onSuccess }) {
                                         onChange={(e) => setFormData({...formData, credential_details: e.target.value})}
                                         placeholder="Additional credential information (optional)"
                                         maxLength={255}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className="block text-sm font-medium text-gray-900 mb-2">
                                         Date Employed *
                                     </label>
                                     <input
@@ -1010,14 +1010,14 @@ function UserForm({ record, branches, roles, onClose, onSuccess }) {
                                         onChange={(e) => setFormData({...formData, date_employed: e.target.value})}
                                         required
                                         max={new Date().toISOString().split('T')[0]}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                     />
                                     <p className="text-xs text-gray-500 mt-1">Format: MM/DD/YYYY - Cannot be in the future</p>
                                     {errors.date_employed && <p className="text-xs text-red-600 mt-1">{errors.date_employed[0]}</p>}
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className="block text-sm font-medium text-gray-900 mb-2">
                                         Supervisor Name
                                     </label>
                                     <input
@@ -1026,12 +1026,12 @@ function UserForm({ record, branches, roles, onClose, onSuccess }) {
                                         onChange={(e) => setFormData({...formData, supervisor_name: e.target.value})}
                                         placeholder="Enter supervisor name"
                                         maxLength={255}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className="block text-sm font-medium text-gray-900 mb-2">
                                         Provider Name
                                     </label>
                                     <input
@@ -1040,12 +1040,12 @@ function UserForm({ record, branches, roles, onClose, onSuccess }) {
                                         onChange={(e) => setFormData({...formData, provider_name: e.target.value})}
                                         placeholder="Enter provider name"
                                         maxLength={255}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className="block text-sm font-medium text-gray-900 mb-2">
                                         Role *
                                     </label>
                                     <select
@@ -1056,7 +1056,7 @@ function UserForm({ record, branches, roles, onClose, onSuccess }) {
                                             setFormData({...formData, role: e.target.value});
                                         }}
                                         required
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                     >
                                         <option value="">Choose role</option>
                                         <option value="care_giver">Care Giver</option>
@@ -1073,13 +1073,13 @@ function UserForm({ record, branches, roles, onClose, onSuccess }) {
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className="block text-sm font-medium text-gray-900 mb-2">
                                         Assigned Branch
                                     </label>
                                     <select
                                         value={formData.assigned_branch_id}
                                         onChange={(e) => setFormData({...formData, assigned_branch_id: e.target.value})}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                     >
                                         <option value="">Select branch assignment</option>
                                         {branches.map(branch => (
@@ -1116,7 +1116,7 @@ function UserForm({ record, branches, roles, onClose, onSuccess }) {
                                     onChange={(e) => setFormData({...formData, password: e.target.value})}
                                     required={!record}
                                     placeholder="Enter secure password"
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                 />
                                 <p className="text-xs text-gray-500 mt-1">Minimum 8 characters, include numbers and special characters</p>
                                 {errors.password && <p className="text-xs text-red-600 mt-1">{errors.password[0]}</p>}
@@ -1135,7 +1135,7 @@ function UserForm({ record, branches, roles, onClose, onSuccess }) {
                                     onChange={(e) => setFormData({...formData, notes: e.target.value})}
                                     rows={3}
                                     placeholder="Any additional notes about this staff member..."
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                 />
                             </div>
                         </div>

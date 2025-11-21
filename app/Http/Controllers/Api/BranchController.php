@@ -69,6 +69,81 @@ class BranchController extends BaseApiController
         $branch->delete();
         return response()->json(['message' => 'Branch deleted']);
     }
+
+    /**
+     * Get residents for a branch
+     */
+    public function residents(Request $request, $id): JsonResponse
+    {
+        $branch = Branch::findOrFail($id);
+        
+        $query = $branch->residents()->with(['branch']);
+        
+        // Search
+        if ($request->has('search') && !empty($request->get('search'))) {
+            $search = $request->get('search');
+            $query->where(function($q) use ($search) {
+                $q->where('first_name', 'like', "%{$search}%")
+                  ->orWhere('last_name', 'like', "%{$search}%")
+                  ->orWhere('middle_names', 'like', "%{$search}%")
+                  ->orWhere('name', 'like', "%{$search}%")
+                  ->orWhere('room_number', 'like', "%{$search}%")
+                  ->orWhere('room', 'like', "%{$search}%");
+            });
+        }
+
+        // Filter by active status
+        if ($request->has('is_active')) {
+            $query->where('is_active', $request->get('is_active') === 'true');
+        } else {
+            $query->where('is_active', true); // Default to active only
+        }
+
+        $residents = $query->orderBy('first_name')
+            ->orderBy('last_name')
+            ->paginate($request->get('per_page', 50));
+
+        return response()->json($residents);
+    }
+
+    /**
+     * Transfer residents from one branch to another
+     */
+    public function transferResidents(Request $request, $id): JsonResponse
+    {
+        $branch = Branch::findOrFail($id);
+        
+        $validated = $request->validate([
+            'resident_ids' => 'required|array',
+            'resident_ids.*' => 'required|integer|exists:residents,id',
+            'target_branch_id' => 'required|integer|exists:branches,id',
+        ]);
+
+        $targetBranch = Branch::findOrFail($validated['target_branch_id']);
+        
+        // Verify both branches belong to the same facility
+        if ($branch->facility_id !== $targetBranch->facility_id) {
+            return $this->error('Cannot transfer residents between branches of different facilities.', 400);
+        }
+
+        // Verify all residents belong to the source branch
+        $residents = \App\Models\Resident::whereIn('id', $validated['resident_ids'])
+            ->where('branch_id', $branch->id)
+            ->get();
+
+        if ($residents->count() !== count($validated['resident_ids'])) {
+            return $this->error('Some residents do not belong to this branch.', 400);
+        }
+
+        // Transfer residents
+        \App\Models\Resident::whereIn('id', $validated['resident_ids'])
+            ->update(['branch_id' => $targetBranch->id]);
+
+        return $this->success([
+            'message' => 'Residents transferred successfully',
+            'transferred_count' => $residents->count(),
+        ]);
+    }
 }
 
 

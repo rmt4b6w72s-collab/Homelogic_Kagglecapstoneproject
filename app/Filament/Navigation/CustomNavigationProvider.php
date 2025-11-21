@@ -72,7 +72,13 @@ class CustomNavigationProvider
                             return false;
                         }
                         $user = auth()->user();
-                        return $user->hasRole('administrator') || $user->hasRole('super_admin');
+                        // Super admins bypass all checks
+                        if ($user->hasRole('super_admin')) {
+                            return true;
+                        }
+                        // Check both role and module access
+                        return ($user->hasRole('administrator') || $user->hasRole('admin')) && 
+                               $user->hasModuleAccess(\App\Constants\Modules::ASSESSMENTS);
                     })
                     ->sort(20),
 
@@ -84,6 +90,18 @@ class CustomNavigationProvider
                         request()->is('admin/appointment-history') ||
                         request()->is('admin/appointment-history/*')
                     )
+                    ->visible(function (): bool {
+                        if (!auth()->check()) {
+                            return false;
+                        }
+                        $user = auth()->user();
+                        // Super admins bypass all checks
+                        if ($user->hasRole('super_admin')) {
+                            return true;
+                        }
+                        // Check module access
+                        return $user->hasModuleAccess(\App\Constants\Modules::APPOINTMENTS);
+                    })
                     ->sort(30),
 
                 // Vitals - Fourth item
@@ -92,6 +110,19 @@ class CustomNavigationProvider
                     ->url('/admin/view-vitals')
                     ->isActiveWhen(fn (): bool => request()->is('admin/view-vitals*') || 
                         request()->is('admin/vital-signs*'))
+                    ->visible(function (): bool {
+                        if (!auth()->check()) {
+                            return false;
+                        }
+                        $user = auth()->user();
+                        // Super admins bypass all checks
+                        if ($user->hasRole('super_admin')) {
+                            return true;
+                        }
+                        // Check both permission and module access
+                        return $user->hasPermission('view_vital_signs') && 
+                               $user->hasModuleAccess(\App\Constants\Modules::VITALS);
+                    })
                     ->sort(40),
 
                 // Medication - Fifth item
@@ -104,6 +135,19 @@ class CustomNavigationProvider
                         request()->routeIs('filament.admin.resources.medication-administrations.*') ||
                         request()->routeIs('filament.admin.pages.medication*')
                     )
+                    ->visible(function (): bool {
+                        if (!auth()->check()) {
+                            return false;
+                        }
+                        $user = auth()->user();
+                        // Super admins bypass all checks
+                        if ($user->hasRole('super_admin')) {
+                            return true;
+                        }
+                        // Check both permission and module access
+                        return $user->hasPermission('view_medications') && 
+                               $user->hasModuleAccess(\App\Constants\Modules::MEDICATIONS);
+                    })
                     ->sort(50),
 
                 // Sleep - Sixth item
@@ -111,6 +155,19 @@ class CustomNavigationProvider
                     ->icon('heroicon-o-moon')
                     ->url(route('filament.admin.resources.sleep-records.index'))
                     ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.resources.sleep-records.*'))
+                    ->visible(function (): bool {
+                        if (!auth()->check()) {
+                            return false;
+                        }
+                        $user = auth()->user();
+                        // Super admins bypass all checks
+                        if ($user->hasRole('super_admin')) {
+                            return true;
+                        }
+                        // Check both permission and module access
+                        return $user->hasPermission('view_sleep_records') && 
+                               $user->hasModuleAccess(\App\Constants\Modules::SLEEP);
+                    })
                     ->sort(60),
 
                 // Housekeeping - Seventh item
@@ -140,7 +197,7 @@ class CustomNavigationProvider
                             return false;
                         }
 
-                        return $user->hasPermission('view_cleaning_areas') ||
+                        return ($user->hasPermission('view_cleaning_areas') && $user->hasModuleAccess(\App\Constants\Modules::HOUSEKEEPING)) ||
                                $user->hasRole('administrator') ||
                                $user->hasRole('admin') ||
                                $user->hasRole('super_admin');
@@ -157,8 +214,12 @@ class CustomNavigationProvider
                             return false;
                         }
                         $user = auth()->user();
-                        // Show to all authenticated users (admins, managers, staff)
-                        return true;
+                        // Super admins bypass all checks
+                        if ($user->hasRole('super_admin')) {
+                            return true;
+                        }
+                        // Check module access
+                        return $user->hasModuleAccess(\App\Constants\Modules::FIRE_DRILLS);
                     })
                     ->sort(66),
 
@@ -167,6 +228,18 @@ class CustomNavigationProvider
                     ->icon('heroicon-o-chart-bar-square')
                     ->url('#')
                     ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.pages.*reports*') || request()->routeIs('filament.admin.pages.*charts*'))
+                    ->visible(function (): bool {
+                        if (!auth()->check()) {
+                            return false;
+                        }
+                        $user = auth()->user();
+                        // Super admins bypass all checks
+                        if ($user->hasRole('super_admin')) {
+                            return true;
+                        }
+                        // Check module access
+                        return $user->hasModuleAccess(\App\Constants\Modules::REPORTS);
+                    })
                     ->sort(70)
                     ->childItems([
                         NavigationItem::make('Chart Reports')
@@ -240,14 +313,18 @@ class CustomNavigationProvider
             ]);
             
             // If user is NOT a caregiver AND has admin permissions, show menu
+            // Only check permissions, not roles (except super_admin)
             if (!$isCaregiver && (
+                $user->hasRole('super_admin') ||
                 $user->hasPermission('view_users') ||
                 $user->hasPermission('view_facilities') ||
                 $user->hasPermission('view_branches') ||
                 $user->hasPermission('view_vital_ranges') ||
                 $user->hasPermission('view_roles') ||
-                $user->hasRole('administrator') ||
-                $user->hasRole('super_admin')
+                $user->hasPermission('view_residents') ||
+                $user->hasPermission('view_drugs') ||
+                $user->hasPermission('view_leave_requests') ||
+                $user->hasPermission('view_employee_documents')
             )) {
                 $shouldAddAdminMenu = true;
             }
@@ -273,81 +350,153 @@ class CustomNavigationProvider
                         NavigationItem::make('Facilities')
                             ->url(route('filament.admin.resources.facilities.index'))
                             ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.resources.facilities.*'))
-                            ->visible(fn (): bool => auth()->check() && (
-                                auth()->user()->hasPermission('view_facilities') ||
-                                auth()->user()->hasRole('administrator') ||
-                                auth()->user()->hasRole('super_admin')
-                            )),
+                            ->visible(function (): bool {
+                                if (!auth()->check()) {
+                                    return false;
+                                }
+                                $user = auth()->user();
+                                // Super admins bypass all checks
+                                if ($user->hasRole('super_admin')) {
+                                    return true;
+                                }
+                                // Only check permission, not role
+                                return $user->hasPermission('view_facilities');
+                            }),
                         NavigationItem::make('Branches')
                             ->url(route('filament.admin.resources.branches.index'))
                             ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.resources.branches.*'))
-                            ->visible(fn (): bool => auth()->check() && (
-                                auth()->user()->hasPermission('view_branches') ||
-                                auth()->user()->hasRole('administrator') ||
-                                auth()->user()->hasRole('super_admin')
-                            )),
+                            ->visible(function (): bool {
+                                if (!auth()->check()) {
+                                    return false;
+                                }
+                                $user = auth()->user();
+                                // Super admins bypass all checks
+                                if ($user->hasRole('super_admin')) {
+                                    return true;
+                                }
+                                // Only check permission, not role
+                                return $user->hasPermission('view_branches');
+                            }),
                         NavigationItem::make('Vital Ranges')
                             ->url(route('filament.admin.resources.vital-ranges.index'))
                             ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.resources.vital-ranges.*'))
-                            ->visible(fn (): bool => auth()->check() && (
-                                auth()->user()->hasPermission('view_vital_ranges') ||
-                                auth()->user()->hasRole('administrator') ||
-                                auth()->user()->hasRole('super_admin')
-                            )),
+                            ->visible(function (): bool {
+                                if (!auth()->check()) {
+                                    return false;
+                                }
+                                $user = auth()->user();
+                                // Super admins bypass all checks
+                                if ($user->hasRole('super_admin')) {
+                                    return true;
+                                }
+                                // Only check permission, not role
+                                return $user->hasPermission('view_vital_ranges');
+                            }),
                         NavigationItem::make('Leave Requests')
                             ->url(route('filament.admin.resources.leave-requests.index'))
                             ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.resources.leave-requests.*'))
-                            ->visible(fn (): bool => auth()->check() && (
-                                auth()->user()->hasRole('administrator') ||
-                                auth()->user()->hasRole('super_admin')
-                            )),
+                            ->visible(function (): bool {
+                                if (!auth()->check()) {
+                                    return false;
+                                }
+                                $user = auth()->user();
+                                // Super admins bypass all checks
+                                if ($user->hasRole('super_admin')) {
+                                    return true;
+                                }
+                                // Check permission
+                                return $user->hasPermission('view_leave_requests');
+                            }),
                         NavigationItem::make('Roles & Permissions')
                             ->url(route('filament.admin.resources.roles.index'))
                             ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.resources.roles.*'))
-                            ->visible(fn (): bool => auth()->check() && (
-                                auth()->user()->hasPermission('view_roles') ||
-                                auth()->user()->hasRole('administrator') ||
-                                auth()->user()->hasRole('super_admin')
-                            )),
+                            ->visible(function (): bool {
+                                if (!auth()->check()) {
+                                    return false;
+                                }
+                                $user = auth()->user();
+                                // Super admins bypass all checks
+                                if ($user->hasRole('super_admin')) {
+                                    return true;
+                                }
+                                // Only check permission, not role
+                                return $user->hasPermission('view_roles');
+                            }),
                         NavigationItem::make('Users')
                             ->url(route('filament.admin.resources.users.index'))
                             ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.resources.users.*'))
-                            ->visible(fn (): bool => auth()->check() && (
-                                auth()->user()->hasPermission('view_users') ||
-                                auth()->user()->hasRole('administrator') ||
-                                auth()->user()->hasRole('super_admin')
-                            )),
+                            ->visible(function (): bool {
+                                if (!auth()->check()) {
+                                    return false;
+                                }
+                                $user = auth()->user();
+                                // Super admins bypass all checks
+                                if ($user->hasRole('super_admin')) {
+                                    return true;
+                                }
+                                // Only check permission, not role
+                                return $user->hasPermission('view_users');
+                            }),
                         NavigationItem::make('Drugs')
                             ->url('/app/administration/drugs')
                             ->isActiveWhen(fn (): bool => request()->is('app/administration/drugs') || request()->is('app/administration/drugs/*'))
-                            ->visible(fn (): bool => auth()->check() && (
-                                auth()->user()->hasPermission('view_drugs') ||
-                                auth()->user()->hasRole('administrator') ||
-                                auth()->user()->hasRole('super_admin')
-                            )),
+                            ->visible(function (): bool {
+                                if (!auth()->check()) {
+                                    return false;
+                                }
+                                $user = auth()->user();
+                                // Super admins bypass all checks
+                                if ($user->hasRole('super_admin')) {
+                                    return true;
+                                }
+                                // Only check permission, not role
+                                return $user->hasPermission('view_drugs');
+                            }),
                         NavigationItem::make('Inactive Users')
                             ->url(route('filament.admin.pages.inactive-users'))
                             ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.pages.inactive-users'))
-                            ->visible(fn (): bool => auth()->check() && (
-                                auth()->user()->hasPermission('view_users') ||
-                                auth()->user()->hasRole('administrator') ||
-                                auth()->user()->hasRole('super_admin')
-                            )),
+                            ->visible(function (): bool {
+                                if (!auth()->check()) {
+                                    return false;
+                                }
+                                $user = auth()->user();
+                                // Super admins bypass all checks
+                                if ($user->hasRole('super_admin')) {
+                                    return true;
+                                }
+                                // Only check permission, not role
+                                return $user->hasPermission('view_users');
+                            }),
                         NavigationItem::make('Inactive Residents')
                             ->url(route('filament.admin.pages.inactive-residents'))
                             ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.pages.inactive-residents'))
-                            ->visible(fn (): bool => auth()->check() && (
-                                auth()->user()->hasPermission('view_residents') ||
-                                auth()->user()->hasRole('administrator') ||
-                                auth()->user()->hasRole('super_admin')
-                            )),
+                            ->visible(function (): bool {
+                                if (!auth()->check()) {
+                                    return false;
+                                }
+                                $user = auth()->user();
+                                // Super admins bypass all checks
+                                if ($user->hasRole('super_admin')) {
+                                    return true;
+                                }
+                                // Only check permission, not role
+                                return $user->hasPermission('view_residents');
+                            }),
                         NavigationItem::make('Employee Documents')
                             ->url(route('filament.admin.resources.employee-documents.index'))
                             ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.resources.employee-documents.*'))
-                            ->visible(fn (): bool => auth()->check() && (
-                                auth()->user()->hasRole('administrator') ||
-                                auth()->user()->hasRole('super_admin')
-                            )),
+                            ->visible(function (): bool {
+                                if (!auth()->check()) {
+                                    return false;
+                                }
+                                $user = auth()->user();
+                                // Super admins bypass all checks
+                                if ($user->hasRole('super_admin')) {
+                                    return true;
+                                }
+                                // Check permission
+                                return $user->hasPermission('view_employee_documents');
+                            }),
                         NavigationItem::make('Facility Registrations')
                             ->url(route('filament.admin.resources.facility-registrations.index'))
                             ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.resources.facility-registrations.*'))
