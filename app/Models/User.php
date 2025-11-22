@@ -331,8 +331,6 @@ class User extends Authenticatable implements FilamentUser
     {
         parent::boot();
         
-        static::addGlobalScope(new \App\Models\Scopes\FacilityScope);
-        
         static::creating(function ($user) {
             if (empty($user->name)) {
                 $user->name = trim(implode(' ', array_filter([

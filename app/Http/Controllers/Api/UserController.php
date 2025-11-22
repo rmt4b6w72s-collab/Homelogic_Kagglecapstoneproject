@@ -16,6 +16,12 @@ class UserController extends BaseApiController
     {
         $query = User::with(['assignedBranch', 'roles', 'facility']);
 
+        // Apply facility scope for non-super admins
+        $currentUser = Auth::user();
+        if ($currentUser && $currentUser->role !== 'super_admin') {
+            $query->where('facility_id', $currentUser->facility_id);
+        }
+
         // Filter by status
         if ($request->has('status')) {
             if ($request->get('status') === 'active') {

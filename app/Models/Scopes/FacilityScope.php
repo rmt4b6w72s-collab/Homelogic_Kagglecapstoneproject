@@ -14,6 +14,11 @@ class FacilityScope implements Scope
      */
     public function apply(Builder $builder, Model $model): void
     {
+        // Never apply scope to User model to prevent infinite recursion during auth
+        if ($model instanceof \App\Models\User) {
+            return;
+        }
+
         $user = Auth::user();
         
         // Super admins can see all data (no scope applied)
