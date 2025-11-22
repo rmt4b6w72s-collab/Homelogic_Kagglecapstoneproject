@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../services/api';
 import { Users, Plus, Edit, Trash2, Search, Filter, Upload, X, Eye, Mail, Phone, Calendar, Briefcase, MapPin, Award, Shield, Clock, User as UserIcon, AlertCircle, Building2 } from 'lucide-react';
 
 export default function UsersPage() {
     const queryClient = useQueryClient();
+    const navigate = useNavigate();
     const [search, setSearch] = useState('');
     const [branchFilter, setBranchFilter] = useState('');
     const [facilityFilter, setFacilityFilter] = useState('');
