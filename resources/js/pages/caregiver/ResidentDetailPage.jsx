@@ -105,7 +105,7 @@ function DefinitionItem({ label, children }) {
 function EmptyState({ icon: Icon = AlertCircle, title, description }) {
     return (
         <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50/80 p-8 text-center text-sm text-gray-500">
-            <Icon className="mx-auto h-10 w-10 text-emerald-300" />
+            <Icon className="mx-auto h-10 w-10 text-[var(--theme-primary)] opacity-60" />
             <h3 className="mt-3 text-base font-semibold text-gray-800">{title}</h3>
             <p className="mt-1 text-sm text-gray-500">{description}</p>
         </div>
@@ -328,14 +328,14 @@ export default function ResidentDetailPage() {
                 <div className="flex flex-wrap items-center gap-2">
                     <Link
                         to={`/view-vitals?resident=${resident.id}`}
-                        className="inline-flex items-center gap-2 rounded-lg border border-emerald-600 bg-white px-4 py-2 text-sm font-semibold text-emerald-700 shadow-sm transition hover:bg-emerald-50"
+                        className="inline-flex items-center gap-2 rounded-lg border-2 border-[var(--theme-primary)] bg-white px-4 py-2 text-sm font-semibold text-[var(--theme-primary)] shadow-sm transition hover:bg-[var(--theme-primary)]/10"
                     >
                         <Heart className="h-4 w-4" />
                         View Vitals
                     </Link>
                     <Link
                         to={`/appointments?resident=${resident.id}`}
-                        className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600"
+                        className="inline-flex items-center gap-2 rounded-lg border-2 border-[var(--theme-primary)] bg-[var(--theme-primary)] px-4 py-2 text-sm font-semibold text-[var(--theme-text-on-primary)] shadow-sm transition hover:bg-[var(--theme-primary-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--theme-primary)]"
                     >
                         <Calendar className="h-4 w-4" />
                         Schedule Appointment
@@ -346,7 +346,7 @@ export default function ResidentDetailPage() {
             <section className="rounded-3xl bg-white p-6 shadow-lg ring-1 ring-gray-100">
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                     <div className="flex items-start gap-4">
-                        <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-full border-4 border-emerald-100 bg-emerald-600 text-white">
+                        <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-full border-4 border-[var(--theme-primary)]/20 bg-[var(--theme-primary)] text-white">
                             {resident.profile_image_url || resident.profile_image ? (
                                 <img
                                     src={resident.profile_image_url || `/storage/${resident.profile_image}`}
@@ -378,11 +378,11 @@ export default function ResidentDetailPage() {
                             </p>
                             <div className="mt-3 flex flex-wrap gap-3 text-xs text-gray-500">
                                 <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-3 py-1">
-                                    <Calendar className="h-3.5 w-3.5 text-emerald-500" />
+                                    <Calendar className="h-3.5 w-3.5 text-[var(--theme-primary)]" />
                                     Admitted {formatDate(resident.admission_date)}
                                 </span>
                                 <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-3 py-1">
-                                    <Users className="h-3.5 w-3.5 text-emerald-500" />
+                                    <Users className="h-3.5 w-3.5 text-[var(--theme-primary)]" />
                                     Age {calculateAge(resident.date_of_birth)}
                                 </span>
                             </div>
@@ -418,7 +418,7 @@ export default function ResidentDetailPage() {
                             onClick={() => setActiveTab(id)}
                             className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition ${
                                 isActive
-                                    ? 'bg-emerald-600 text-white shadow-sm'
+                                    ? 'bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] shadow-sm'
                                     : 'text-gray-600 hover:bg-gray-50'
                             }`}
                         >
@@ -553,7 +553,7 @@ export default function ResidentDetailPage() {
                             </div>
                             <Link
                                 to={`/medications?resident=${resident.id}`}
-                                className="rounded-lg border border-emerald-600 px-3 py-2 text-xs font-semibold text-emerald-700 hover:bg-emerald-50"
+                                className="rounded-lg border-2 border-[var(--theme-primary)] bg-[var(--theme-primary)] px-4 py-2 text-sm font-semibold text-[var(--theme-text-on-primary)] hover:bg-[var(--theme-primary-hover)] transition-colors shadow-sm"
                             >
                                 Manage Medications
                             </Link>
@@ -585,7 +585,7 @@ export default function ResidentDetailPage() {
                             </div>
                             <Link
                                 to={`/vitals?resident=${resident.id}`}
-                                className="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700"
+                                className="rounded-lg border-2 border-[var(--theme-primary)] bg-[var(--theme-primary)] px-4 py-2 text-sm font-semibold text-[var(--theme-text-on-primary)] hover:bg-[var(--theme-primary-hover)] transition-colors shadow-sm"
                             >
                                 Log Vitals
                             </Link>
@@ -655,7 +655,7 @@ export default function ResidentDetailPage() {
                             </div>
                             <Link
                                 to={`/appointments?resident=${resident.id}`}
-                                className="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700"
+                                className="rounded-lg border-2 border-[var(--theme-primary)] bg-[var(--theme-primary)] px-4 py-2 text-sm font-semibold text-[var(--theme-text-on-primary)] hover:bg-[var(--theme-primary-hover)] transition-colors shadow-sm"
                             >
                                 Manage Appointments
                             </Link>
@@ -715,7 +715,7 @@ export default function ResidentDetailPage() {
                             </div>
                             <Link
                                 to={`/sleep?resident=${resident.id}`}
-                                className="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700"
+                                className="rounded-lg border-2 border-[var(--theme-primary)] bg-[var(--theme-primary)] px-4 py-2 text-sm font-semibold text-[var(--theme-text-on-primary)] hover:bg-[var(--theme-primary-hover)] transition-colors shadow-sm"
                             >
                                 View Sleep Workspace
                             </Link>

@@ -93,7 +93,7 @@ export default function ResidentDocuments({ residentId }) {
                         setEditing(null);
                         setShowForm(true);
                     }}
-                    className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700"
+                    className="inline-flex items-center gap-2 rounded-lg border-2 border-[var(--theme-primary)] bg-[var(--theme-primary)] px-4 py-2 text-sm font-semibold text-[var(--theme-text-on-primary)] hover:bg-[var(--theme-primary-hover)] transition-colors shadow-sm"
                 >
                     <Plus className="h-4 w-4" />
                     Add Document
@@ -140,7 +140,7 @@ export default function ResidentDocuments({ residentId }) {
             {/* Documents List */}
             {isLoading ? (
                 <div className="flex items-center justify-center py-12">
-                    <div className="h-8 w-8 animate-spin rounded-full border-2 border-emerald-200 border-t-emerald-600" />
+                    <div className="h-8 w-8 animate-spin rounded-full border-2 border-[var(--theme-primary)]/20 border-t-[var(--theme-primary)]" />
                 </div>
             ) : documents.length === 0 ? (
                 <div className="text-center py-12 bg-gray-50 rounded-lg border border-gray-200">
@@ -152,7 +152,7 @@ export default function ResidentDocuments({ residentId }) {
                     {!search && !typeFilter && (
                         <button
                             onClick={() => setShowForm(true)}
-                            className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700"
+                            className="inline-flex items-center gap-2 rounded-lg border-2 border-[var(--theme-primary)] bg-[var(--theme-primary)] px-4 py-2 text-sm font-semibold text-[var(--theme-text-on-primary)] shadow-sm transition hover:bg-[var(--theme-primary-hover)]"
                         >
                             <Plus className="h-4 w-4" />
                             Add Document
@@ -230,7 +230,7 @@ export default function ResidentDocuments({ residentId }) {
                                                 <div className="flex items-center justify-end gap-2">
                                                     <button
                                                         onClick={() => handleDownload(document)}
-                                                        className="text-emerald-600 hover:text-emerald-900"
+                                                        className="text-[var(--theme-primary)] hover:text-[var(--theme-primary-hover)]"
                                                         title="Download"
                                                     >
                                                         <Download className="h-4 w-4" />
@@ -527,7 +527,7 @@ function DocumentFormModal({ residentId, appointments, record, onClose, onSucces
                             <button
                                 type="submit"
                                 disabled={isSubmitting}
-                                className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="px-4 py-2 border-2 border-[var(--theme-primary)] bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] rounded-lg hover:bg-[var(--theme-primary-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
                             >
                                 {isSubmitting ? 'Saving...' : (record ? 'Update' : 'Create')}
                             </button>

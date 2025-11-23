@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { Line } from 'react-chartjs-2';
@@ -14,7 +14,7 @@ import {
     Legend,
     Filler
 } from 'chart.js';
-import { Download, Plus, MoreVertical, Calendar, User, Building2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Download, Plus, MoreVertical, Calendar, User, Building2, ChevronLeft, ChevronRight, CheckCircle, XCircle } from 'lucide-react';
 
 ChartJS.register(
     CategoryScale,
@@ -33,12 +33,15 @@ const years = Array.from({ length: 10 }, (_, i) => currentYear - i);
 
 export default function ViewVitals() {
     const navigate = useNavigate();
+    const queryClient = useQueryClient();
     const [branchId, setBranchId] = useState('');
     const [residentId, setResidentId] = useState('');
     const [year, setYear] = useState(currentYear);
     const [month, setMonth] = useState(new Date().getMonth() + 1);
     const [currentPage, setCurrentPage] = useState(1);
     const [perPage] = useState(10);
+    const [openMenuId, setOpenMenuId] = useState(null);
+    const menuRefs = useRef({});
 
     const { data: currentUser } = useQuery({
         queryKey: ['current-user'],
