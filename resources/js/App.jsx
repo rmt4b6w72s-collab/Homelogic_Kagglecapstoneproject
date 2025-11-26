@@ -15,6 +15,7 @@ import ResidentMedicationsPage from './pages/caregiver/ResidentMedicationsPage';
 import Reports from './pages/Reports';
 import Login from './pages/Login';
 import ProtectedRoute from './components/ProtectedRoute';
+import ModuleProtectedRoute from './components/ModuleProtectedRoute';
 
 // New pages to create
 import Assessments from './pages/Assessments';
@@ -81,9 +82,9 @@ function App() {
                 {/* Main Pages */}
                 <Route path="profile" element={<Profile />} />
                 <Route path="dashboard" element={<Dashboard />} />
-                <Route path="assessments" element={<Assessments />} />
-                <Route path="assessments/:id" element={<AssessmentDetail />} />
-                <Route path="assessments/:id/review" element={<AssessmentReview />} />
+                <Route path="assessments" element={<ModuleProtectedRoute module="assessments"><Assessments /></ModuleProtectedRoute>} />
+                <Route path="assessments/:id" element={<ModuleProtectedRoute module="assessments"><AssessmentDetail /></ModuleProtectedRoute>} />
+                <Route path="assessments/:id/review" element={<ModuleProtectedRoute module="assessments"><AssessmentReview /></ModuleProtectedRoute>} />
                 <Route path="appointments" element={<Appointments />} />
                 <Route path="appointments/create/:residentId" element={<CreateAppointment />} />
                 <Route path="vitals" element={<Vitals />} />

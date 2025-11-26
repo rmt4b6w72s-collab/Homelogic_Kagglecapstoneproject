@@ -1,11 +1,12 @@
 import React, { useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../services/api';
-import { ClipboardList, Plus, Search, Filter, Edit, Trash2, Calendar, User, CheckCircle, XCircle, Clock, FileText } from 'lucide-react';
+import { ClipboardList, Plus, Search, Filter, Edit, Trash2, Calendar, User, CheckCircle, XCircle, Clock, FileText, AlertCircle } from 'lucide-react';
 import SectionCard from '../components/SectionCard';
 import Card from '../components/Card';
 import CalendarComponent from '../components/ui/Calendar';
+import { hasModuleAccess } from '../utils/moduleAccess';
 
 export default function Assessments() {
     const queryClient = useQueryClient();
@@ -15,21 +16,61 @@ export default function Assessments() {
     const [dateFilter, setDateFilter] = useState('all');
     const [showForm, setShowForm] = useState(false);
     const [editing, setEditing] = useState(null);
-    const [currentUser, setCurrentUser] = useState(null);
     const [selectedCalendarDate, setSelectedCalendarDate] = useState(null);
 
-    // Fetch current user
-    React.useEffect(() => {
-        const fetchUser = async () => {
+    // Fetch current user with React Query for better caching
+    const { data: currentUser, isLoading: isLoadingUser } = useQuery({
+        queryKey: ['current-user'],
+        queryFn: async () => {
             try {
                 const response = await api.get('/user');
-                setCurrentUser(response.data);
+                return response.data;
             } catch (err) {
                 console.error('Failed to fetch current user:', err);
+                return null;
             }
-        };
-        fetchUser();
-    }, []);
+        },
+        staleTime: 0, // Always fetch fresh
+        retry: 1,
+    });
+
+    // Check module access
+    const isSuperAdmin = currentUser?.role === 'super_admin';
+    const enabledModules = currentUser?.enabled_modules || [];
+    const hasModuleAccessCheck = isSuperAdmin || hasModuleAccess('/assessments', enabledModules, isSuperAdmin);
+
+    // Show loading state
+    if (isLoadingUser) {
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+                <div className="text-center">
+                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--theme-primary)]"></div>
+                    <p className="mt-4 text-gray-600">Loading...</p>
+                </div>
+            </div>
+        );
+    }
+
+    // Redirect if module access is denied
+    if (!hasModuleAccessCheck) {
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+                <div className="bg-white rounded-lg shadow p-8 max-w-md text-center">
+                    <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+                    <h2 className="text-xl font-semibold text-gray-900 mb-2">Module Not Available</h2>
+                    <p className="text-gray-600 mb-4">
+                        The Assessments module is not available for your facility. Please contact your administrator.
+                    </p>
+                    <Link
+                        to="/dashboard"
+                        className="inline-block px-4 py-2 bg-[var(--theme-primary)] text-white rounded-lg hover:bg-[var(--theme-primary-hover)]"
+                    >
+                        Go to Dashboard
+                    </Link>
+                </div>
+            </div>
+        );
+    }
 
     // Check if user is a caregiver
     const isCaregiver = React.useMemo(() => {

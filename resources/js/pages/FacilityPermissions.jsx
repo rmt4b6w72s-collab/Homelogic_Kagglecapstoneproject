@@ -60,6 +60,8 @@ export default function FacilityPermissions({ facilityId, facilityName, onBack }
       queryClient.invalidateQueries(['facility-permissions']);
       queryClient.invalidateQueries(['facility-permissions-summary']);
       queryClient.invalidateQueries(['facilities']);
+      // Invalidate user data so it refreshes with new module access
+      queryClient.invalidateQueries(['current-user']);
       
       // Force a refetch immediately
       const { data: freshData } = await refetch();
@@ -81,6 +83,8 @@ export default function FacilityPermissions({ facilityId, facilityName, onBack }
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['facility-permissions', facilityId]);
+      // Invalidate user data so it refreshes with new permissions
+      queryClient.invalidateQueries(['current-user']);
       showToast('Role permissions updated successfully', 'success');
     },
     onError: (error) => {
@@ -95,6 +99,8 @@ export default function FacilityPermissions({ facilityId, facilityName, onBack }
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['facility-permissions', facilityId]);
+      // Invalidate user data so it refreshes with new roles/permissions
+      queryClient.invalidateQueries(['current-user']);
       showToast('Roles created successfully. Refreshing...', 'success');
       // Refetch after a short delay to show updated data
       setTimeout(() => {

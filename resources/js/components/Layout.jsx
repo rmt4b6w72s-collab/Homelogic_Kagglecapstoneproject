@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import api from '../services/api';
 import { 
     LayoutDashboard, 
@@ -36,6 +37,7 @@ import NotificationDropdown from './NotificationDropdown';
 import { useToastContext } from '../contexts/ToastContext';
 import { useTheme } from '../contexts/ThemeContext';
 import CommandPalette from './ui/CommandPalette';
+import PageTransition from './PageTransition';
 import { filterNavigationByModuleAccess } from '../utils/moduleAccess';
 import { filterNavigationByPermissionAccess } from '../utils/permissionAccess';
 import {
@@ -179,22 +181,30 @@ export default function Layout() {
     const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
     const toast = useToastContext();
 
-    // Fetch current user data
-    useEffect(() => {
-        const fetchUser = async () => {
+    // Fetch current user data using React Query for better cache management
+    const { data: currentUserData, isLoading: isLoadingUserData } = useQuery({
+        queryKey: ['current-user'],
+        queryFn: async () => {
             try {
-                setIsLoadingUser(true);
                 const response = await api.get('/user');
-                setCurrentUser(response.data);
-                setPacificServerTime(response.data?.app_current_time, response.data?.app_timezone_offset);
+                return response.data;
             } catch (err) {
                 console.error('Failed to fetch current user:', err);
-            } finally {
-                setIsLoadingUser(false);
+                return null;
             }
-        };
-        fetchUser();
-    }, []);
+        },
+        staleTime: 0, // Always fetch fresh data
+        retry: 1,
+    });
+
+    // Update local state when query data changes
+    useEffect(() => {
+        if (currentUserData) {
+            setCurrentUser(currentUserData);
+            setPacificServerTime(currentUserData?.app_current_time, currentUserData?.app_timezone_offset);
+        }
+        setIsLoadingUser(isLoadingUserData);
+    }, [currentUserData, isLoadingUserData]);
 
     // Close user menu on outside click (robust against z-index/stacking contexts)
     useEffect(() => {
@@ -742,7 +752,9 @@ export default function Layout() {
 
                     {/* Page Content */}
                     <main className="flex-1 overflow-y-auto bg-gray-50 p-4 md:p-6">
-                        <Outlet />
+                        <PageTransition>
+                            <Outlet />
+                        </PageTransition>
                     </main>
             </div>
             
