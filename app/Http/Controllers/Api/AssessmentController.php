@@ -13,6 +13,12 @@ class AssessmentController extends BaseApiController
 {
     public function index(Request $request): JsonResponse
     {
+        // Check module access
+        $moduleAccessError = $this->requireModuleAccess(\App\Constants\Modules::ASSESSMENTS);
+        if ($moduleAccessError) {
+            return $moduleAccessError;
+        }
+
         $query = Assessment::with(['resident', 'branch', 'assessor']);
 
         // Apply facility filtering for non-super admins
@@ -92,6 +98,12 @@ class AssessmentController extends BaseApiController
 
     public function show($id): JsonResponse
     {
+        // Check module access
+        $moduleAccessError = $this->requireModuleAccess(\App\Constants\Modules::ASSESSMENTS);
+        if ($moduleAccessError) {
+            return $moduleAccessError;
+        }
+
         $assessment = Assessment::with(['resident', 'branch', 'assessor', 'sections.questions'])
             ->findOrFail($id);
 
@@ -202,6 +214,12 @@ class AssessmentController extends BaseApiController
 
     public function store(Request $request): JsonResponse
     {
+        // Check module access
+        $moduleAccessError = $this->requireModuleAccess(\App\Constants\Modules::ASSESSMENTS);
+        if ($moduleAccessError) {
+            return $moduleAccessError;
+        }
+
         $validated = $request->validate([
             'resident_id' => 'required|exists:residents,id',
             'branch_id' => 'required|exists:branches,id',
@@ -227,6 +245,12 @@ class AssessmentController extends BaseApiController
 
     public function update(Request $request, $id): JsonResponse
     {
+        // Check module access
+        $moduleAccessError = $this->requireModuleAccess(\App\Constants\Modules::ASSESSMENTS);
+        if ($moduleAccessError) {
+            return $moduleAccessError;
+        }
+
         $assessment = Assessment::findOrFail($id);
 
         $validated = $request->validate([
@@ -260,6 +284,12 @@ class AssessmentController extends BaseApiController
 
     public function destroy($id): JsonResponse
     {
+        // Check module access
+        $moduleAccessError = $this->requireModuleAccess(\App\Constants\Modules::ASSESSMENTS);
+        if ($moduleAccessError) {
+            return $moduleAccessError;
+        }
+
         $assessment = Assessment::findOrFail($id);
         $assessment->delete();
 
@@ -268,6 +298,12 @@ class AssessmentController extends BaseApiController
 
     public function updateStatus(Request $request, $id): JsonResponse
     {
+        // Check module access
+        $moduleAccessError = $this->requireModuleAccess(\App\Constants\Modules::ASSESSMENTS);
+        if ($moduleAccessError) {
+            return $moduleAccessError;
+        }
+
         $assessment = Assessment::findOrFail($id);
 
         $validated = $request->validate([
