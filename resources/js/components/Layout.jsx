@@ -564,7 +564,7 @@ export default function Layout() {
                                         <button
                                             onClick={() => setExpandedMenus({...expandedMenus, [item.name]: !isExpanded})}
                                             className={`w-full flex items-center justify-between space-x-3 px-4 py-3 rounded-lg transition-colors ${
-                                                isActive ? 'bg-white shadow-md text-[var(--theme-primary)]' : 'text-[var(--theme-text-on-primary)] hover:text-[var(--theme-text-on-primary)] hover:bg-[var(--theme-primary-light)]'
+                                                isActive ? 'bg-white shadow-md text-[var(--theme-text-on-white)]' : 'text-[var(--theme-text-on-primary)] hover:text-[var(--theme-text-on-primary)] hover:bg-[var(--theme-primary-light)]'
                                             }`}
                                         >
                                             <div className="flex items-center space-x-3">
@@ -587,7 +587,7 @@ export default function Layout() {
                                                             to={child.path}
                                                             onClick={() => setMobileMenuOpen(false)}
                                                                 className={`block px-4 py-2 rounded-lg transition-colors text-sm ${
-                                                                    isChildActive ? 'bg-white shadow-md text-[var(--theme-primary)]' : 'text-[var(--theme-text-on-primary)] hover:text-[var(--theme-text-on-primary)] hover:bg-[var(--theme-primary-light)]'
+                                                                    isChildActive ? 'bg-white shadow-md text-[var(--theme-text-on-white)]' : 'text-[var(--theme-text-on-primary)] hover:text-[var(--theme-text-on-primary)] hover:bg-[var(--theme-primary-light)]'
                                                                 }`}
                                                         >
                                                             {child.name}
@@ -602,7 +602,7 @@ export default function Layout() {
                                         to={item.path}
                                         onClick={() => setMobileMenuOpen(false)}
                                         className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
-                                            isActive ? 'bg-white shadow-md text-[var(--theme-primary)]' : 'text-[var(--theme-text-on-primary)] hover:text-[var(--theme-text-on-primary)] hover:bg-[var(--theme-primary-light)]'
+                                            isActive ? 'bg-white shadow-md text-[var(--theme-text-on-white)]' : 'text-[var(--theme-text-on-primary)] hover:text-[var(--theme-text-on-primary)] hover:bg-[var(--theme-primary-light)]'
                                         }`}
                                     >
                                         <Icon className="w-5 h-5" />
