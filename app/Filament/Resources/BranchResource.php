@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\BranchResource\Pages;
 use App\Filament\Resources\BranchResource\RelationManagers;
 use App\Models\Branch;
+use App\Services\LocationService;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -12,6 +13,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Facades\Log;
 
 class BranchResource extends Resource
 {
@@ -105,6 +107,77 @@ class BranchResource extends Resource
                             ->helperText('Enable this branch for use'),
                     ])
                     ->columns(2),
+                
+                Forms\Components\Section::make('Location Coordinates')
+                    ->description('Coordinates are used for location-based login restrictions. Click "Geocode from Address" to automatically populate coordinates.')
+                    ->schema([
+                        Forms\Components\TextInput::make('latitude')
+                            ->label('Latitude')
+                            ->numeric()
+                            ->step(0.00000001)
+                            ->minValue(-90)
+                            ->maxValue(90)
+                            ->placeholder('e.g., 47.6062')
+                            ->helperText('Latitude coordinate (-90 to 90)'),
+                        Forms\Components\TextInput::make('longitude')
+                            ->label('Longitude')
+                            ->numeric()
+                            ->step(0.00000001)
+                            ->minValue(-180)
+                            ->maxValue(180)
+                            ->placeholder('e.g., -122.3321')
+                            ->helperText('Longitude coordinate (-180 to 180)'),
+                        Forms\Components\Actions::make([
+                            Forms\Components\Actions\Action::make('geocode')
+                                ->label('Geocode from Address')
+                                ->icon('heroicon-o-map-pin')
+                                ->color('primary')
+                                ->action(function (Forms\Get $get, Forms\Set $set) {
+                                    $address = $get('address');
+                                    if (empty($address)) {
+                                        \Filament\Notifications\Notification::make()
+                                            ->title('Address Required')
+                                            ->body('Please enter an address before geocoding.')
+                                            ->warning()
+                                            ->send();
+                                        return;
+                                    }
+
+                                    try {
+                                        $locationService = app(LocationService::class);
+                                        $coordinates = $locationService->geocodeAddress($address);
+                                        
+                                        if ($coordinates) {
+                                            $set('latitude', $coordinates['latitude']);
+                                            $set('longitude', $coordinates['longitude']);
+                                            \Filament\Notifications\Notification::make()
+                                                ->title('Geocoding Successful')
+                                                ->body('Coordinates have been populated from the address.')
+                                                ->success()
+                                                ->send();
+                                        } else {
+                                            \Filament\Notifications\Notification::make()
+                                                ->title('Geocoding Failed')
+                                                ->body('Unable to geocode the address. Please enter coordinates manually.')
+                                                ->warning()
+                                                ->send();
+                                        }
+                                    } catch (\Exception $e) {
+                                        Log::error('Geocoding error in BranchResource', [
+                                            'error' => $e->getMessage(),
+                                            'address' => $address,
+                                        ]);
+                                        \Filament\Notifications\Notification::make()
+                                            ->title('Geocoding Error')
+                                            ->body('An error occurred while geocoding. Please try again or enter coordinates manually.')
+                                            ->danger()
+                                            ->send();
+                                    }
+                                }),
+                        ]),
+                    ])
+                    ->columns(2)
+                    ->collapsible(),
             ]);
     }
 

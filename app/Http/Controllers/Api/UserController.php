@@ -92,9 +92,27 @@ class UserController extends BaseApiController
 
     public function store(Request $request): JsonResponse
     {
+        // Determine facility_id for email uniqueness validation
+        $currentUser = Auth::user();
+        $facilityId = $request->input('facility_id');
+        
+        // For non-super admins, use their facility_id if not provided
+        if ($currentUser && $currentUser->role !== 'super_admin' && !$facilityId) {
+            $facilityId = $currentUser->facility_id;
+        }
+        
+        // Build email validation rule scoped by facility_id
+        $emailRule = 'required|string|email|max:255';
+        if ($facilityId) {
+            $emailRule .= '|unique:users,email,NULL,id,facility_id,' . $facilityId;
+        } else {
+            // For super admins (NULL facility_id), keep global uniqueness
+            $emailRule .= '|unique:users,email,NULL,id,facility_id,NULL';
+        }
+        
         $validated = $request->validate([
             'name' => 'nullable|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users,email',
+            'email' => $emailRule,
             'password' => 'required|string|min:8',
             'first_name' => 'required|string|max:255',
             'middle_names' => 'nullable|string|max:255',
@@ -144,7 +162,6 @@ class UserController extends BaseApiController
         $validated['password'] = Hash::make($validated['password']);
 
         // For non-super admins, ensure facility_id is set to their facility
-        $currentUser = Auth::user();
         if ($currentUser && $currentUser->role !== 'super_admin') {
             // Facility admins can only create users for their own facility
             if (!isset($validated['facility_id']) || $validated['facility_id'] != $currentUser->facility_id) {
@@ -193,9 +210,27 @@ class UserController extends BaseApiController
         // Replace request data with cleaned input for validation
         $request->merge($input);
 
+        // Determine facility_id for email uniqueness validation
+        $currentUser = Auth::user();
+        $facilityId = $request->input('facility_id', $user->facility_id);
+        
+        // For non-super admins updating users, use their facility_id if not provided
+        if ($currentUser && $currentUser->role !== 'super_admin' && !$facilityId) {
+            $facilityId = $currentUser->facility_id;
+        }
+        
+        // Build email validation rule scoped by facility_id
+        $emailRule = 'sometimes|required|string|email|max:255';
+        if ($facilityId) {
+            $emailRule .= '|unique:users,email,' . $user->id . ',id,facility_id,' . $facilityId;
+        } else {
+            // For super admins (NULL facility_id), keep global uniqueness
+            $emailRule .= '|unique:users,email,' . $user->id . ',id,facility_id,NULL';
+        }
+
         $validated = $request->validate([
             'name' => 'nullable|string|max:255',
-            'email' => 'sometimes|required|string|email|max:255|unique:users,email,' . $user->id,
+            'email' => $emailRule,
             'password' => 'nullable|string|min:8',
             'first_name' => 'sometimes|required|string|max:255',
             'middle_names' => 'nullable|string|max:255',

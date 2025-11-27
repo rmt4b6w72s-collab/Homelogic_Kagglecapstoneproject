@@ -121,6 +121,55 @@ export function ensureContrast(foreground, background, minRatio = 4.5) {
 }
 
 /**
+ * Get text color for white backgrounds - always ensures dark, visible color
+ * If the primary color is light, uses a dark variant or black
+ */
+export function getTextColorForWhite(primaryColor) {
+    if (!primaryColor) return '#1E3A5F'; // Default dark blue
+    
+    const luminance = getLuminance(primaryColor);
+    
+    // If the color is light (luminance > 0.5), use a dark variant
+    // Luminance of 0.5 is approximately the midpoint between black (0) and white (1)
+    if (luminance > 0.5) {
+        // Try using a darkened version first
+        const darkened = darkenColor(primaryColor, 50);
+        const darkenedLuminance = getLuminance(darkened);
+        
+        // If darkened version is still too light, use black
+        if (darkenedLuminance > 0.3) {
+            return '#000000';
+        }
+        
+        // Check contrast ratio of darkened color on white
+        const contrast = getContrastRatio(darkened, '#FFFFFF');
+        if (contrast >= 4.5) {
+            return darkened;
+        }
+        
+        // If still not enough contrast, use black
+        return '#000000';
+    }
+    
+    // Color is already dark, check if it has enough contrast
+    const contrast = getContrastRatio(primaryColor, '#FFFFFF');
+    if (contrast >= 4.5) {
+        return primaryColor;
+    }
+    
+    // If not enough contrast, darken it further
+    const darkened = darkenColor(primaryColor, 30);
+    const darkenedContrast = getContrastRatio(darkened, '#FFFFFF');
+    
+    if (darkenedContrast >= 4.5) {
+        return darkened;
+    }
+    
+    // Fallback to black for maximum visibility
+    return '#000000';
+}
+
+/**
  * Mix two colors
  */
 export function mixColors(color1, color2, weight = 0.5) {

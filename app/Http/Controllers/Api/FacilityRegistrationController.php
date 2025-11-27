@@ -54,7 +54,8 @@ class FacilityRegistrationController extends Controller
             'branch_name' => 'required|string|max:255',
             'branch_address' => 'nullable|string',
             'owner_name' => 'required|string|max:255',
-            'owner_email' => 'required|email|unique:users,email',
+            // Email validation - uniqueness will be checked scoped by facility_id when facility is created
+            'owner_email' => 'required|email',
             'owner_role' => 'required|string|in:administrator,manager,clinical_supervisor',
             'owner_password' => 'required|string|min:8',
         ]);

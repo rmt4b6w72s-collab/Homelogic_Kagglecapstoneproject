@@ -46,6 +46,7 @@ class User extends Authenticatable implements FilamentUser
         'facility_id',
         'assigned_branch_id',
         'is_active',
+        'location_check_bypass',
         'hire_date',
         'notes',
         'password',
@@ -82,6 +83,7 @@ class User extends Authenticatable implements FilamentUser
             'date_employed' => 'date',
             'hire_date' => 'date',
             'is_active' => 'boolean',
+            'location_check_bypass' => 'boolean',
         ];
     }
 
@@ -369,6 +371,16 @@ class User extends Authenticatable implements FilamentUser
     }
 
     public function getIsCaregiverAttribute(): bool
+    {
+        return $this->isCaregiver();
+    }
+
+    /**
+     * Check if user is a caregiver
+     * 
+     * @return bool
+     */
+    public function isCaregiver(): bool
     {
         $roleValue = $this->role ? strtolower(trim($this->role)) : null;
         if ($roleValue) {

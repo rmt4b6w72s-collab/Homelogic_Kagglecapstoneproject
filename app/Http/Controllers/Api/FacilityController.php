@@ -53,7 +53,8 @@ class FacilityController extends BaseApiController
         // If owner_email is provided, all owner fields become required
         if ($request->has('owner_email') && !empty(trim($request->input('owner_email')))) {
             $rules['owner_name'] = 'required|string|max:255';
-            $rules['owner_email'] = 'required|email|unique:users,email';
+            // Email validation - we'll check uniqueness scoped by facility_id after facility is created
+            $rules['owner_email'] = 'required|email';
             $rules['owner_role'] = 'required|string|in:administrator,manager,clinical_supervisor';
             $rules['owner_password'] = 'required|string|min:8';
             $rules['branch_name'] = 'required|string|max:255';
@@ -115,6 +116,17 @@ class FacilityController extends BaseApiController
                     'address' => $validated['branch_address'] ?? $validated['address'] ?? null,
                     'is_active' => true,
                 ]);
+                
+                // Check if email already exists in this facility (shouldn't happen for new facility, but check anyway)
+                $existingUser = User::where('email', $validated['owner_email'])
+                    ->where('facility_id', $facility->id)
+                    ->first();
+                
+                if ($existingUser) {
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        'owner_email' => 'This email is already registered in this facility.',
+                    ]);
+                }
                 
                 // Create facility owner account
                 $owner = User::create([
@@ -242,7 +254,8 @@ class FacilityController extends BaseApiController
             'branch_name' => 'required|string|max:255',
             'branch_address' => 'nullable|string',
             'owner_name' => 'required|string|max:255',
-            'owner_email' => 'required|email|unique:users,email',
+            // Email validation - we'll check uniqueness scoped by facility_id after facility is created
+            'owner_email' => 'required|email',
             'owner_role' => 'required|string|in:administrator,manager,clinical_supervisor',
             'owner_password' => 'required|string|min:8',
             'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
@@ -288,6 +301,17 @@ class FacilityController extends BaseApiController
                 'address' => $validated['branch_address'] ?? $validated['address'] ?? null,
                 'is_active' => true,
             ]);
+
+            // Check if email already exists in this facility (shouldn't happen for new facility, but check anyway)
+            $existingUser = User::where('email', $validated['owner_email'])
+                ->where('facility_id', $facility->id)
+                ->first();
+            
+            if ($existingUser) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'owner_email' => 'This email is already registered in this facility.',
+                ]);
+            }
 
             // Create facility owner account
             $owner = User::create([

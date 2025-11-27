@@ -32,10 +32,14 @@ class Facility extends Model
         'registration_status',
         'registered_by_user_id',
         'is_active',
+        'latitude',
+        'longitude',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
+        'latitude' => 'decimal:8',
+        'longitude' => 'decimal:8',
     ];
 
     protected $appends = ['logo_url', 'branding'];
@@ -282,5 +286,18 @@ class Facility extends Model
             'accent_color' => $this->accent_color ?? '#FFFFFF',
             'name' => $this->name,
         ];
+    }
+
+    /**
+     * Check if facility has valid coordinates
+     * 
+     * @return bool
+     */
+    public function hasCoordinates(): bool
+    {
+        return $this->latitude !== null 
+            && $this->longitude !== null
+            && $this->latitude >= -90 && $this->latitude <= 90
+            && $this->longitude >= -180 && $this->longitude <= 180;
     }
 }

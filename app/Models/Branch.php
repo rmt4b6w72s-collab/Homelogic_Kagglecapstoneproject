@@ -27,10 +27,14 @@ class Branch extends Model
         'phone',
         'email',
         'is_active',
+        'latitude',
+        'longitude',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
+        'latitude' => 'decimal:8',
+        'longitude' => 'decimal:8',
     ];
 
     // Relationships
@@ -74,5 +78,18 @@ class Branch extends Model
     protected function phone(): Attribute
     {
         return $this->phoneAttribute();
+    }
+
+    /**
+     * Check if branch has valid coordinates
+     * 
+     * @return bool
+     */
+    public function hasCoordinates(): bool
+    {
+        return $this->latitude !== null 
+            && $this->longitude !== null
+            && $this->latitude >= -90 && $this->latitude <= 90
+            && $this->longitude >= -180 && $this->longitude <= 180;
     }
 }

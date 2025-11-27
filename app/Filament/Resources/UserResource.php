@@ -247,6 +247,11 @@ class UserResource extends Resource
                             ->label('Active Employee')
                             ->default(true)
                             ->helperText('Enable this staff member for work assignments'),
+                        Forms\Components\Toggle::make('location_check_bypass')
+                            ->label('Bypass Location Check')
+                            ->default(false)
+                            ->helperText('Allow this user to log in from any location (bypasses 5km distance restriction)')
+                            ->visible(fn () => auth()->user()->role === 'super_admin' || auth()->user()->hasPermission('edit_users')),
                     ])
                     ->columns(2),
 

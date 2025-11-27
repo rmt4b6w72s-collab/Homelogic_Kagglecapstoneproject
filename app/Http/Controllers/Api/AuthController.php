@@ -4,12 +4,14 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Services\ActivityLogService;
+use App\Services\LocationService;
 use App\Models\Facility;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 
 class AuthController extends Controller
 {
@@ -19,9 +21,63 @@ class AuthController extends Controller
             'email' => 'required|email',
             'password' => 'required',
             'provider_code' => 'nullable|string',
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
         ]);
 
-        if (Auth::attempt($credentials)) {
+        // Check if email exists in multiple facilities
+        $usersWithEmail = \App\Models\User::where('email', $credentials['email'])->get();
+        $facilityIds = $usersWithEmail->pluck('facility_id')->filter()->unique()->values();
+        $hasMultipleFacilities = $facilityIds->count() > 1;
+        
+        // If email exists in multiple facilities, provider_code is required
+        if ($hasMultipleFacilities) {
+            if (!$request->filled('provider_code')) {
+                return response()->json([
+                    'message' => 'This email is registered in multiple facilities. Please provide a provider code.',
+                    'requires_provider_code' => true,
+                ], 422);
+            }
+            
+            // Find facility by provider code
+            $facility = Facility::whereRaw('LOWER(provider_code) = ?', [strtolower($request->provider_code)])->first();
+            
+            if (!$facility) {
+                return response()->json([
+                    'message' => 'Invalid provider code',
+                ], 422);
+            }
+            
+            // Find user with this email in the specified facility
+            $user = \App\Models\User::where('email', $credentials['email'])
+                ->where('facility_id', $facility->id)
+                ->first();
+            
+            if (!$user) {
+                return response()->json([
+                    'message' => 'This email is not registered in the facility with the provided provider code.',
+                ], 401);
+            }
+            
+            // Verify password
+            if (!Hash::check($credentials['password'], $user->password)) {
+                return response()->json([
+                    'message' => 'Invalid credentials',
+                ], 401);
+            }
+            
+            // Manually log in the user
+            Auth::login($user);
+        } else {
+            // Single facility or no facility - use normal authentication
+            if (!Auth::attempt($credentials)) {
+                return response()->json([
+                    'message' => 'Invalid credentials',
+                ], 401);
+            }
+        }
+
+        if (Auth::check()) {
             /** @var \App\Models\User $user */
             $user = Auth::user();
 
@@ -36,8 +92,8 @@ class AuthController extends Controller
                 ], 403);
             }
 
-            // Validate provider code if provided
-            if ($request->filled('provider_code')) {
+            // Validate provider code if provided (for single-facility emails, provider_code is optional but validated if provided)
+            if ($request->filled('provider_code') && !$hasMultipleFacilities) {
                 // Super admins don't have facility_id, so skip provider code validation
                 if ($user->role !== 'super_admin') {
                     // Find facility by provider code (case-insensitive)
@@ -64,6 +120,22 @@ class AuthController extends Controller
                         ], 403);
                     }
                 }
+            }
+
+            // Location-based access control for caregivers
+            $locationService = app(LocationService::class);
+            $locationCheckResult = $this->validateUserLocation($user, $request, $locationService);
+            
+            if ($locationCheckResult !== null) {
+                // Location check failed
+                Auth::logout();
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+
+                return response()->json([
+                    'message' => $locationCheckResult['message'],
+                    'distance' => $locationCheckResult['distance'] ?? null,
+                ], 403);
             }
 
             $token = $user->createToken('api-token')->plainTextToken;
@@ -301,6 +373,126 @@ class AuthController extends Controller
 
         // Remove duplicates
         return collect($effectivePermissions)->unique()->values()->toArray();
+    }
+
+    /**
+     * Validate user location for caregivers
+     * 
+     * @param \App\Models\User $user
+     * @param \Illuminate\Http\Request $request
+     * @param \App\Services\LocationService $locationService
+     * @return array|null Returns error array on failure, null on success
+     */
+    protected function validateUserLocation($user, Request $request, LocationService $locationService): ?array
+    {
+        // Check if location checking is enabled globally
+        if (!config('location.enabled', true)) {
+            return null;
+        }
+
+        // Skip location check for non-caregivers, super admins, or users with bypass enabled
+        if (!$user->isCaregiver() 
+            || $user->role === 'super_admin' 
+            || $user->location_check_bypass) {
+            return null;
+        }
+
+        // Get user's location coordinates (from browser or IP fallback)
+        $userLat = $request->input('latitude');
+        $userLon = $request->input('longitude');
+        $userIp = $request->ip();
+
+        // If browser geolocation not provided, try IP-based geolocation
+        if ($userLat === null || $userLon === null) {
+            $ipLocation = $locationService->getLocationFromIp($userIp);
+            if ($ipLocation) {
+                $userLat = $ipLocation['latitude'];
+                $userLon = $ipLocation['longitude'];
+                Log::info('Using IP-based geolocation for login', [
+                    'user_id' => $user->id,
+                    'ip' => $userIp,
+                ]);
+            } else {
+                // No location available - allow login but log warning
+                Log::warning('Location check skipped - no coordinates available', [
+                    'user_id' => $user->id,
+                    'ip' => $userIp,
+                ]);
+                return null;
+            }
+        }
+
+        // Validate user coordinates
+        if (!$locationService->validateCoordinates($userLat, $userLon)) {
+            Log::warning('Invalid user coordinates provided', [
+                'user_id' => $user->id,
+                'latitude' => $userLat,
+                'longitude' => $userLon,
+            ]);
+            return null; // Allow login if coordinates are invalid (graceful degradation)
+        }
+
+        // Get assigned branch or facility coordinates
+        $branch = $user->assignedBranch;
+        $facility = $user->facility ?? ($branch ? $branch->facility : null);
+
+        $targetLat = null;
+        $targetLon = null;
+        $targetName = null;
+
+        // Prefer branch coordinates, fallback to facility coordinates
+        if ($branch && $branch->hasCoordinates()) {
+            $targetLat = $branch->latitude;
+            $targetLon = $branch->longitude;
+            $targetName = $branch->name;
+        } elseif ($facility && $facility->hasCoordinates()) {
+            $targetLat = $facility->latitude;
+            $targetLon = $facility->longitude;
+            $targetName = $facility->name;
+        }
+
+        // If no coordinates available for branch/facility, allow login but log warning
+        if ($targetLat === null || $targetLon === null) {
+            Log::warning('Location check skipped - branch/facility has no coordinates', [
+                'user_id' => $user->id,
+                'branch_id' => $branch?->id,
+                'facility_id' => $facility?->id,
+            ]);
+            return null;
+        }
+
+        // Calculate distance
+        $distanceKm = $locationService->calculateDistance(
+            $userLat,
+            $userLon,
+            $targetLat,
+            $targetLon
+        );
+
+        // Check if within allowed distance
+        if (!$locationService->isWithinAllowedDistance($distanceKm)) {
+            $formattedDistance = $locationService->formatDistance($distanceKm);
+            
+            Log::warning('Login blocked due to distance', [
+                'user_id' => $user->id,
+                'distance_km' => $distanceKm,
+                'target' => $targetName,
+            ]);
+
+            return [
+                'message' => "You are too far from your assigned location ({$targetName}). You are {$formattedDistance} away, but must be within " . LocationService::MAX_LOGIN_DISTANCE_KM . "km to log in.",
+                'distance' => $distanceKm,
+            ];
+        }
+
+        // Location check passed
+        Log::info('Location check passed', [
+            'user_id' => $user->id,
+            'distance_km' => $distanceKm,
+            'target' => $targetName,
+        ]);
+
+        return null;
     }
 }
 

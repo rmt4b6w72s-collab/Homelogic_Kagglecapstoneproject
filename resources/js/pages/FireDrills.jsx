@@ -10,8 +10,8 @@ import Select from '../components/ui/radix/Select';
 export default function FireDrills() {
     const queryClient = useQueryClient();
     const [search, setSearch] = useState('');
-    const [branchFilter, setBranchFilter] = useState('');
-    const [statusFilter, setStatusFilter] = useState('');
+    const [branchFilter, setBranchFilter] = useState('all');
+    const [statusFilter, setStatusFilter] = useState('all');
     const [dateFrom, setDateFrom] = useState('');
     const [dateTo, setDateTo] = useState('');
     const [viewMode, setViewMode] = useState('list'); // 'list' or 'calendar'
@@ -56,8 +56,8 @@ export default function FireDrills() {
     // Build query params
     const queryParams = useMemo(() => {
         const params = { per_page: 50 };
-        if (branchFilter) params.branch_id = branchFilter;
-        if (statusFilter) params.status = statusFilter;
+        if (branchFilter && branchFilter !== 'all') params.branch_id = branchFilter;
+        if (statusFilter && statusFilter !== 'all') params.status = statusFilter;
         if (dateFrom) params.date_from = dateFrom;
         if (dateTo) params.date_to = dateTo;
         return params;
@@ -231,11 +231,11 @@ export default function FireDrills() {
 
                     {!isCaregiver && (
                         <Select
-                            value={branchFilter}
+                            value={branchFilter || 'all'}
                             onValueChange={setBranchFilter}
                             placeholder="All Branches"
                             options={[
-                                { value: '', label: 'All Branches' },
+                                { value: 'all', label: 'All Branches' },
                                 ...branches.map(branch => ({
                                     value: branch.id.toString(),
                                     label: branch.name,
@@ -246,11 +246,11 @@ export default function FireDrills() {
                     )}
 
                     <Select
-                        value={statusFilter}
+                        value={statusFilter || 'all'}
                         onValueChange={setStatusFilter}
                         placeholder="All Status"
                         options={[
-                            { value: '', label: 'All Status' },
+                            { value: 'all', label: 'All Status' },
                             { value: 'scheduled', label: 'Scheduled' },
                             { value: 'completed', label: 'Completed' },
                             { value: 'cancelled', label: 'Cancelled' },
@@ -542,8 +542,8 @@ function FireDrillForm({ record, branches, isCaregiver, caregiverBranchId, onClo
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Branch *</label>
                                 <Select
-                                    value={formData.branch_id?.toString() || ''}
-                                    onValueChange={(value) => setFormData({ ...formData, branch_id: value })}
+                                    value={formData.branch_id?.toString() || undefined}
+                                    onValueChange={(value) => setFormData({ ...formData, branch_id: value ? parseInt(value) : null })}
                                     placeholder="Select Branch"
                                     options={branches.map(branch => ({
                                         value: branch.id.toString(),

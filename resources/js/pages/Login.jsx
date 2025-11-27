@@ -4,6 +4,7 @@ import { Lock, Mail, Eye, EyeOff, ShieldCheck, ClipboardList, Building2 } from '
 import api from '../services/api';
 import { useAnimateOnMount } from '../hooks/useAnimateOnMount';
 import { slideInLeft, slideInRight, fadeIn, shake, shouldAnimate } from '../utils/animationPresets';
+import { getUserLocation, formatDistance } from '../utils/location';
 
 export default function Login() {
     const navigate = useNavigate();
@@ -13,6 +14,8 @@ export default function Login() {
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+    const [userLocation, setUserLocation] = useState(null);
+    const [locationLoading, setLocationLoading] = useState(false);
     const brandPanelRef = useAnimateOnMount('slideUp', { delay: 0, duration: 600 });
     const formRef = useAnimateOnMount('slideUp', { delay: 200, duration: 600 });
     const errorRef = useRef(null);
@@ -24,6 +27,30 @@ export default function Login() {
             navigate('/dashboard', { replace: true });
         }
     }, [navigate]);
+
+    // Request user location on component mount (non-blocking)
+    useEffect(() => {
+        const requestLocation = async () => {
+            setLocationLoading(true);
+            try {
+                const location = await getUserLocation({
+                    timeout: 10000,
+                    maximumAge: 60000,
+                    enableHighAccuracy: true,
+                });
+                if (location) {
+                    setUserLocation(location);
+                }
+            } catch (err) {
+                // Silently fail - backend will use IP fallback
+                console.warn('Failed to get user location:', err);
+            } finally {
+                setLocationLoading(false);
+            }
+        };
+
+        requestLocation();
+    }, []);
 
     // Animate error message
     useEffect(() => {
@@ -38,11 +65,20 @@ export default function Login() {
         setLoading(true);
 
         try {
-            const response = await api.post('/login', {
+            // Prepare login payload with location if available
+            const loginData = {
                 email,
                 password,
                 provider_code: providerCode || undefined,
-            });
+            };
+
+            // Include location coordinates if available (backend will use IP fallback if not provided)
+            if (userLocation) {
+                loginData.latitude = userLocation.latitude;
+                loginData.longitude = userLocation.longitude;
+            }
+
+            const response = await api.post('/login', loginData);
 
             if (response.data.token) {
                 // Store token and user info
@@ -56,7 +92,16 @@ export default function Login() {
                 navigate('/dashboard');
             }
         } catch (err) {
-            setError(err.response?.data?.message || 'Invalid credentials. Please try again.');
+            // Handle location-based errors with distance information
+            const errorMessage = err.response?.data?.message || 'Invalid credentials. Please try again.';
+            const distance = err.response?.data?.distance;
+            
+            if (distance !== undefined && distance !== null) {
+                // Format the error message to include distance if available
+                setError(errorMessage);
+            } else {
+                setError(errorMessage);
+            }
         } finally {
             setLoading(false);
         }
@@ -215,10 +260,10 @@ export default function Login() {
 
                             <button
                                 type="submit"
-                                disabled={loading}
+                                disabled={loading || locationLoading}
                                 className="w-full bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] py-3 px-4 rounded-lg font-medium hover:bg-[var(--theme-primary-hover)] focus:outline-none focus:ring-2 focus:ring-[var(--theme-primary)] focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
                             >
-                                {loading ? 'Signing in...' : 'Sign In'}
+                                {loading ? 'Signing in...' : locationLoading ? 'Getting location...' : 'Sign In'}
                             </button>
                         </form>
 

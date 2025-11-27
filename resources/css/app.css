@@ -334,6 +334,12 @@ a:hover[style*="background: var(--theme-primary)"] {
     color: var(--theme-primary, #1E3A5F) !important;
 }
 
+/* Ensure text-on-white variable is always applied correctly */
+/* This targets elements using the text-on-white variable */
+[class*="text-\[var\(--theme-text-on-white\)\]"] {
+    color: var(--theme-text-on-white, #000000) !important;
+}
+
 /* Ensure all buttons with primary background maintain white text */
 button[style*="color: #FFFFFF"],
 button[style*="color: white"],
@@ -385,7 +391,7 @@ aside nav a[class*="bg-white"],
 aside nav button[class*="bg-white"],
 aside a[class*="bg-white"],
 aside button[class*="bg-white"] {
-    color: var(--theme-text-on-white, #1E3A5F) !important;
+    color: var(--theme-text-on-white, #000000) !important;
 }
 
 /* Ensure all child elements (text, icons) in active navigation items are visible */
@@ -402,7 +408,7 @@ aside nav a[class*="bg-white"] span,
 aside nav a[class*="bg-white"] svg,
 aside nav button[class*="bg-white"] span,
 aside nav button[class*="bg-white"] svg {
-    color: var(--theme-text-on-white, #1E3A5F) !important;
+    color: var(--theme-text-on-white, #000000) !important;
 }
 
 /* Ensure icons in active navigation items are also visible */
@@ -410,8 +416,8 @@ aside a[class*="bg-white"] svg,
 aside button[class*="bg-white"] svg,
 aside nav a[class*="bg-white"] svg,
 aside nav button[class*="bg-white"] svg {
-    stroke: var(--theme-text-on-white, #1E3A5F) !important;
-    fill: var(--theme-text-on-white, #1E3A5F) !important;
+    stroke: var(--theme-text-on-white, #000000) !important;
+    fill: var(--theme-text-on-white, #000000) !important;
 }
 
 /* Fix gray text on dark backgrounds - use theme text-on-primary instead */
@@ -456,7 +462,7 @@ aside[class*="bg-\[var\(--theme-primary\)\]"] nav a[class*="bg-white"],
 aside[class*="bg-\[var\(--theme-primary\)\]"] nav button[class*="bg-white"],
 aside[class*="bg-\[var\(--theme-primary\)\]"] a[class*="bg-white"],
 aside[class*="bg-\[var\(--theme-primary\)\]"] button[class*="bg-white"] {
-    color: var(--theme-text-on-white, #1E3A5F) !important;
+    color: var(--theme-text-on-white, #000000) !important;
 }
 
 /* CRITICAL: All descendants of active nav links must use text-on-white color (not just direct children) */
@@ -472,7 +478,7 @@ aside[class*="bg-\[var\(--theme-primary\)\]"] nav button[class*="bg-white"] span
 aside[class*="bg-\[var\(--theme-primary\)\]"] nav button[class*="bg-white"] div,
 aside[class*="bg-\[var\(--theme-primary\)\]"] button[class*="bg-white"] span,
 aside[class*="bg-\[var\(--theme-primary\)\]"] button[class*="bg-white"] div {
-    color: var(--theme-text-on-white, #1E3A5F) !important;
+    color: var(--theme-text-on-white, #000000) !important;
 }
 
 /* CRITICAL: Icons in active nav links must use text-on-white color */
@@ -480,9 +486,9 @@ aside[class*="bg-\[var\(--theme-primary\)\]"] nav a[class*="bg-white"] svg,
 aside[class*="bg-\[var\(--theme-primary\)\]"] nav button[class*="bg-white"] svg,
 aside[class*="bg-\[var\(--theme-primary\)\]"] a[class*="bg-white"] svg,
 aside[class*="bg-\[var\(--theme-primary\)\]"] button[class*="bg-white"] svg {
-    color: var(--theme-text-on-white, #1E3A5F) !important;
-    stroke: var(--theme-text-on-white, #1E3A5F) !important;
-    fill: var(--theme-text-on-white, #1E3A5F) !important;
+    color: var(--theme-text-on-white, #000000) !important;
+    stroke: var(--theme-text-on-white, #000000) !important;
+    fill: var(--theme-text-on-white, #000000) !important;
 }
 
 /* CRITICAL: Force black text for labels and inputs in modals with white backgrounds */

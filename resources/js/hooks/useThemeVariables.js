@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { lightenColor, darkenColor, addOpacity, getContrastColor, ensureContrast } from '../utils/colorUtils';
+import { lightenColor, darkenColor, addOpacity, getContrastColor, ensureContrast, getTextColorForWhite } from '../utils/colorUtils';
 
 /**
  * Hook to set CSS custom properties (CSS variables) on the document root
@@ -49,8 +49,9 @@ export function useThemeVariables(theme) {
         root.style.setProperty('--theme-text-on-primary', getContrastColor(primary_color));
         root.style.setProperty('--theme-text-on-secondary', getContrastColor(secondary_color));
         root.style.setProperty('--theme-text-on-accent', getContrastColor(accent_color));
-        // Text color on white backgrounds - ensures sufficient contrast (WCAG 4.5:1 minimum)
-        root.style.setProperty('--theme-text-on-white', ensureContrast(primary_color, '#FFFFFF', 4.5));
+        // Text color on white backgrounds - always ensures dark, visible color
+        // Uses a function that guarantees good contrast even with light theme colors
+        root.style.setProperty('--theme-text-on-white', getTextColorForWhite(primary_color));
         
         // Focus ring colors
         root.style.setProperty('--theme-focus-ring', addOpacity(primary_color, 0.5));

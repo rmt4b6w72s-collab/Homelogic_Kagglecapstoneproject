@@ -64,18 +64,20 @@ export default function Select({
                         <ChevronUp className="w-4 h-4" />
                     </SelectPrimitive.ScrollUpButton>
                     <SelectPrimitive.Viewport className="p-1">
-                        {options.map((option) => (
-                            <SelectPrimitive.Item
-                                key={option.value}
-                                value={option.value}
-                                className="relative flex items-center px-8 py-2 text-sm text-gray-900 rounded cursor-pointer select-none focus:outline-none focus:bg-[var(--theme-primary-bg-light)] focus:text-[var(--theme-primary)] data-[disabled]:opacity-50 data-[disabled]:pointer-events-none"
-                            >
-                                <SelectPrimitive.ItemText>{option.label}</SelectPrimitive.ItemText>
-                                <SelectPrimitive.ItemIndicator className="absolute left-2 flex items-center justify-center">
-                                    <Check className="w-4 h-4 text-[var(--theme-primary)]" />
-                                </SelectPrimitive.ItemIndicator>
-                            </SelectPrimitive.Item>
-                        ))}
+                        {options
+                            .filter((option) => option.value !== '' && option.value != null)
+                            .map((option) => (
+                                <SelectPrimitive.Item
+                                    key={option.value}
+                                    value={option.value}
+                                    className="relative flex items-center px-8 py-2 text-sm text-gray-900 rounded cursor-pointer select-none focus:outline-none focus:bg-[var(--theme-primary-bg-light)] focus:text-[var(--theme-primary)] data-[disabled]:opacity-50 data-[disabled]:pointer-events-none"
+                                >
+                                    <SelectPrimitive.ItemText>{option.label}</SelectPrimitive.ItemText>
+                                    <SelectPrimitive.ItemIndicator className="absolute left-2 flex items-center justify-center">
+                                        <Check className="w-4 h-4 text-[var(--theme-primary)]" />
+                                    </SelectPrimitive.ItemIndicator>
+                                </SelectPrimitive.Item>
+                            ))}
                     </SelectPrimitive.Viewport>
                     <SelectPrimitive.ScrollDownButton className="flex items-center justify-center h-6 bg-white text-gray-700 cursor-default">
                         <ChevronDown className="w-4 h-4" />
