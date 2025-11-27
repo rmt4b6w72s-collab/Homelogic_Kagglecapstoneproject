@@ -37,7 +37,7 @@ import NotificationDropdown from './NotificationDropdown';
 import { useToastContext } from '../contexts/ToastContext';
 import { useTheme } from '../contexts/ThemeContext';
 import CommandPalette from './ui/CommandPalette';
-import PageTransition from './PageTransition';
+import PageTransition from './PageTransition.jsx';
 import DropdownMenu, { DropdownMenuItem, DropdownMenuSeparator } from './ui/radix/DropdownMenu';
 import { filterNavigationByModuleAccess } from '../utils/moduleAccess';
 import { filterNavigationByPermissionAccess } from '../utils/permissionAccess';
