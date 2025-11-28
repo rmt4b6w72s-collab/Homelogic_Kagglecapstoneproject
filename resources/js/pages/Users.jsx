@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../services/api';
 import { Users, Plus, Edit, Trash2, Search, Filter, Upload, X, Eye, Mail, Phone, Calendar, Briefcase, MapPin, Award, Shield, Clock, User as UserIcon, AlertCircle, Building2 } from 'lucide-react';
+import EmptyState from '../components/ui/EmptyState';
 
 export default function UsersPage() {
     const queryClient = useQueryClient();
@@ -184,7 +185,7 @@ export default function UsersPage() {
                         </button>
                         <button
                             onClick={() => handleDelete(user)}
-                            className="p-2 bg-red-500 text-white hover:bg-red-600 rounded-lg transition-all duration-200 border-2 border-red-600 shadow-md hover:shadow-lg transform hover:scale-105"
+                            className="p-2 bg-red-600 text-white hover:bg-red-700 rounded-lg transition-all duration-200 border-2 border-red-600 shadow-md hover:shadow-lg transform hover:scale-105"
                             title="Delete User"
                         >
                             <Trash2 className="w-4 h-4" />
@@ -226,17 +227,10 @@ export default function UsersPage() {
         );
     };
 
-    const renderUsersEmptyState = (title, description, IconComponent = Users) => (
-        <div className="bg-white rounded-lg shadow p-12 text-center">
-            <IconComponent className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600 text-lg font-medium">{title}</p>
-            <p className="text-gray-500 text-sm mt-2">{description}</p>
-        </div>
-    );
 
     return (
         <div>
-            <div className="bg-white rounded-lg shadow p-6 mb-6">
+            <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
                 <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
                     <div>
                         <h2 className="text-xl font-semibold text-gray-900 mb-2">All Users</h2>
@@ -329,10 +323,13 @@ export default function UsersPage() {
                                     {activeUsers.map(renderUserCard)}
                                 </div>
                             ) : (
-                                renderUsersEmptyState(
-                                    'No active users found',
-                                    'Try adjusting your filters or invite a new user.'
-                                )
+                                <div className="bg-white rounded-xl shadow-sm p-6">
+                                    <EmptyState
+                                        icon={Users}
+                                        title="No active users found"
+                                        description="Try adjusting your filters or invite a new user."
+                                    />
+                                </div>
                             )}
                         </div>
                     )}
@@ -348,11 +345,13 @@ export default function UsersPage() {
                                     {inactiveUsers.map(renderUserCard)}
                                 </div>
                             ) : (
-                                renderUsersEmptyState(
-                                    'No deactivated users found',
-                                    'Deactivated user accounts will appear here.',
-                                    AlertCircle
-                                )
+                                <div className="bg-white rounded-xl shadow-sm p-6">
+                                    <EmptyState
+                                        icon={AlertCircle}
+                                        title="No deactivated users found"
+                                        description="Deactivated user accounts will appear here."
+                                    />
+                                </div>
                             )}
                         </div>
                     )}
@@ -380,36 +379,6 @@ export default function UsersPage() {
                         Next
                     </button>
                 </div>
-            )}
-
-            {/* Create/Edit Form Modal */}
-            {showForm && (
-                <UserForm
-                    record={editing}
-                    branches={branchesData?.data || []}
-                    roles={rolesData?.data || []}
-                    facilities={facilitiesData?.data || []}
-                    isSuperAdmin={isSuperAdmin}
-                    onClose={() => {
-                        setShowForm(false);
-                        setEditing(null);
-                    }}
-                    onSuccess={() => {
-                        setShowForm(false);
-                        setEditing(null);
-                        queryClient.invalidateQueries(['users']);
-                    }}
-                />
-            )}
-
-            {/* View Profile Modal */}
-            {viewingProfile && (
-                <UserProfileViewer
-                    user={viewingProfile}
-                    onClose={() => setViewingProfile(null)}
-                    onEdit={handleEditFromProfile}
-                    onToggleActive={handleToggleActive}
-                />
             )}
         </div>
     );
@@ -784,20 +753,18 @@ function UserForm({ record, branches, roles, facilities, isSuperAdmin, onClose, 
     };
 
     return (
-        <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto" style={{ backgroundColor: 'rgba(0, 0, 0, 0.1)' }}>
-            <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto my-8">
-                <div className="p-6">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4 md:mb-6">
-                        <h2 className="text-2xl font-bold text-gray-900">
-                            {record ? 'Edit User' : 'Add User'}
-                        </h2>
-                        <button
-                            onClick={onClose}
-                            className="text-gray-400 hover:text-gray-600 text-2xl"
-                        >
-                            ×
-                        </button>
-                    </div>
+        <div className="bg-white rounded-lg shadow p-6">
+            <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-semibold text-gray-900">
+                    {record ? 'Edit User' : 'Add User'}
+                </h2>
+                <button
+                    onClick={onClose}
+                    className="text-gray-400 hover:text-gray-600"
+                >
+                    <X className="w-6 h-6" />
+                </button>
+            </div>
 
                     {errors.general && (
                         <div className="mb-4 p-4 bg-red-50 border-2 border-red-300 rounded-lg">
@@ -863,7 +830,7 @@ function UserForm({ record, branches, roles, facilities, isSuperAdmin, onClose, 
                                                 <button
                                                     type="button"
                                                     onClick={handleRemoveImage}
-                                                    className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                                                    className="absolute top-0 right-0 bg-red-600 text-white rounded-full p-1 hover:bg-red-700 transition-colors"
                                                     title="Remove image"
                                                 >
                                                     <X className="w-4 h-4" />
@@ -1256,8 +1223,6 @@ function UserForm({ record, branches, roles, facilities, isSuperAdmin, onClose, 
                             </button>
                         </div>
                     </form>
-                </div>
-            </div>
         </div>
     );
 }
@@ -1266,10 +1231,9 @@ function UserForm({ record, branches, roles, facilities, isSuperAdmin, onClose, 
 function UserProfileViewer({ user, onClose, onEdit, onToggleActive }) {
     const [isDeactivating, setIsDeactivating] = React.useState(false);
     return (
-        <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto" style={{ backgroundColor: 'rgba(0, 0, 0, 0.1)' }}>
-            <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[95vh] overflow-y-auto my-8">
-                {/* Header */}
-                <div className="bg-gradient-to-r from-[var(--theme-primary)] to-[#4a7a2a] p-4 md:p-8 text-white rounded-t-xl">
+        <div className="bg-white rounded-lg shadow p-6">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-[var(--theme-primary)] to-[#4a7a2a] p-4 md:p-8 text-white rounded-t-xl mb-6">
                     <div className="flex flex-col md:flex-row md:items-start md:justify-between space-y-4 md:space-y-0">
                         <div className="flex flex-col md:flex-row md:items-center md:space-x-6 space-y-4 md:space-y-0">
                             {/* Profile Picture */}
@@ -1309,7 +1273,7 @@ function UserProfileViewer({ user, onClose, onEdit, onToggleActive }) {
                 </div>
 
                 {/* Body */}
-                <div className="p-4 md:p-8">
+                <div className="p-4 md:p-8 overflow-y-auto flex-1">
                     {/* Personal Information */}
                     <div className="mb-6 md:mb-8">
                         <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-4 flex items-center">
@@ -1524,7 +1488,6 @@ function UserProfileViewer({ user, onClose, onEdit, onToggleActive }) {
                         </div>
                     </div>
                 </div>
-            </div>
         </div>
     );
 }

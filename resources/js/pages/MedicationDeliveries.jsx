@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../services/api';
-import { Truck, Plus, Search, Filter, Edit, Trash2, Calendar, Package, User } from 'lucide-react';
+import { Truck, Plus, Search, Filter, Edit, Trash2, Calendar, Package, User, X } from 'lucide-react';
 import SectionCard from '../components/SectionCard';
 import Card from '../components/Card';
 import Select from '../components/ui/radix/Select';
@@ -54,6 +54,12 @@ export default function MedicationDeliveries() {
     const { data: medicationsData } = useQuery({
         queryKey: ['medications-list'],
         queryFn: async () => (await api.get('/medications', { params: { per_page: 1000 } })).data,
+    });
+
+    // Fetch pharmacy suppliers
+    const { data: pharmacySuppliersData } = useQuery({
+        queryKey: ['pharmacy-suppliers'],
+        queryFn: async () => (await api.get('/pharmacy-suppliers', { params: { per_page: 100, is_active: true } })).data,
     });
 
     // Build query params
@@ -138,6 +144,46 @@ export default function MedicationDeliveries() {
         );
     };
 
+    if (showForm && formMode === 'bulk') {
+        return (
+            <div>
+                <BulkMedicationDeliveryForm
+                    branches={branches}
+                    residents={residents}
+                    medications={medications}
+                    isCaregiver={isCaregiver}
+                    caregiverBranchId={currentUser?.assigned_branch_id}
+                    onClose={handleCloseForm}
+                    onSuccess={() => {
+                        queryClient.invalidateQueries(['medication-deliveries']);
+                        handleCloseForm();
+                    }}
+                />
+            </div>
+        );
+    }
+
+    if (showForm) {
+        return (
+            <div>
+                <MedicationDeliveryForm
+                    record={editing}
+                    branches={branches}
+                    residents={residents}
+                    medications={medications}
+                    isCaregiver={isCaregiver}
+                    caregiverBranchId={currentUser?.assigned_branch_id}
+                    formMode={formMode}
+                    onClose={handleCloseForm}
+                    onSuccess={() => {
+                        queryClient.invalidateQueries(['medication-deliveries']);
+                        handleCloseForm();
+                    }}
+                />
+            </div>
+        );
+    }
+
     return (
         <div>
             <SectionCard>
@@ -164,7 +210,7 @@ export default function MedicationDeliveries() {
                                 setShowForm(true);
                                 setFormMode('quick');
                             }}
-                            className="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2"
+                            className="w-full sm:w-auto px-4 py-2 bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] rounded-lg hover:bg-[var(--theme-primary-hover)] transition-colors flex items-center justify-center space-x-2"
                         >
                             <Plus className="w-4 h-4" />
                             <span>Quick Entry</span>
@@ -407,36 +453,6 @@ export default function MedicationDeliveries() {
                     </>
                 )}
             </SectionCard>
-
-            {showForm && formMode === 'bulk' ? (
-                <BulkMedicationDeliveryForm
-                    branches={branches}
-                    residents={residents}
-                    medications={medications}
-                    isCaregiver={isCaregiver}
-                    caregiverBranchId={currentUser?.assigned_branch_id}
-                    onClose={handleCloseForm}
-                    onSuccess={() => {
-                        queryClient.invalidateQueries(['medication-deliveries']);
-                        handleCloseForm();
-                    }}
-                />
-            ) : showForm ? (
-                <MedicationDeliveryForm
-                    record={editing}
-                    branches={branches}
-                    residents={residents}
-                    medications={medications}
-                    isCaregiver={isCaregiver}
-                    caregiverBranchId={currentUser?.assigned_branch_id}
-                    formMode={formMode}
-                    onClose={handleCloseForm}
-                    onSuccess={() => {
-                        queryClient.invalidateQueries(['medication-deliveries']);
-                        handleCloseForm();
-                    }}
-                />
-            ) : null}
         </div>
     );
 }
@@ -542,22 +558,20 @@ function MedicationDeliveryForm({ record, branches, residents, medications, isCa
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-                <div className="p-6">
-                    <div className="flex items-center justify-between mb-6">
-                        <h2 className="text-xl font-semibold text-gray-900">
-                            {record ? 'Edit Medication Delivery' : formMode === 'quick' ? 'Quick Entry' : 'Add Medication Delivery'}
-                        </h2>
-                        <button
-                            onClick={onClose}
-                            className="text-gray-400 hover:text-gray-600"
-                        >
-                            ×
-                        </button>
-                    </div>
+        <div className="bg-white rounded-lg shadow p-6">
+            <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-semibold text-gray-900">
+                    {record ? 'Edit Medication Delivery' : formMode === 'quick' ? 'Quick Entry' : 'Add Medication Delivery'}
+                </h2>
+                <button
+                    onClick={onClose}
+                    className="text-gray-400 hover:text-gray-600"
+                >
+                    <X className="w-6 h-6" />
+                </button>
+            </div>
 
-                    <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4">
                         {errors.general && (
                             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
                                 {errors.general[0]}
@@ -762,13 +776,11 @@ function MedicationDeliveryForm({ record, branches, residents, medications, isCa
                             </button>
                         </div>
                     </form>
-                </div>
-            </div>
         </div>
     );
 }
 
-function BulkMedicationDeliveryForm({ branches, residents, medications, isCaregiver, caregiverBranchId, onClose, onSuccess }) {
+function BulkMedicationDeliveryForm({ branches, residents, medications, pharmacySuppliers = [], isCaregiver, caregiverBranchId, onClose, onSuccess }) {
     const [commonFields, setCommonFields] = useState({
         branch_id: caregiverBranchId || '',
         pharmacy_name: '',
@@ -792,10 +804,10 @@ function BulkMedicationDeliveryForm({ branches, residents, medications, isCaregi
 
     // Filter residents by branch
     React.useEffect(() => {
-        if (commonFields.branch_id && residents?.data) {
-            setFilteredResidents(residents.data.filter(r => r.branch_id == commonFields.branch_id));
+        if (commonFields.branch_id && residents?.length > 0) {
+            setFilteredResidents(residents.filter(r => r.branch_id == commonFields.branch_id));
         } else {
-            setFilteredResidents(residents?.data || []);
+            setFilteredResidents(residents || []);
         }
     }, [commonFields.branch_id, residents]);
 
@@ -888,20 +900,16 @@ function BulkMedicationDeliveryForm({ branches, residents, medications, isCaregi
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg shadow-xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
-                <div className="p-6">
-                    <div className="flex items-center justify-between mb-6">
-                        <h2 className="text-2xl font-semibold text-gray-900">Bulk Medication Delivery Entry</h2>
-                        <button
-                            onClick={onClose}
-                            className="text-gray-400 hover:text-gray-600 transition-colors"
-                        >
-                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        </button>
-                    </div>
+        <div className="bg-white rounded-lg shadow p-6">
+            <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-semibold text-gray-900">Bulk Medication Delivery Entry</h2>
+                <button
+                    onClick={onClose}
+                    className="text-gray-400 hover:text-gray-600"
+                >
+                    <X className="w-6 h-6" />
+                </button>
+            </div>
 
                     <form onSubmit={handleSubmit}>
                         {/* Common Fields */}
@@ -914,7 +922,7 @@ function BulkMedicationDeliveryForm({ branches, residents, medications, isCaregi
                                         value={commonFields.branch_id?.toString() || ''}
                                         onValueChange={(value) => setCommonFields({ ...commonFields, branch_id: value })}
                                         placeholder="Select Branch"
-                                        options={branches?.data?.map(branch => ({
+                                        options={branches?.map(branch => ({
                                             value: branch.id.toString(),
                                             label: branch.name,
                                         })) || []}
@@ -924,12 +932,15 @@ function BulkMedicationDeliveryForm({ branches, residents, medications, isCaregi
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-900 mb-1">Pharmacy Name *</label>
-                                    <input
-                                        type="text"
-                                        value={commonFields.pharmacy_name}
-                                        onChange={(e) => setCommonFields({ ...commonFields, pharmacy_name: e.target.value })}
-                                        required
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent text-gray-900 bg-white"
+                                    <Select
+                                        value={commonFields.pharmacy_name || ''}
+                                        onValueChange={(value) => setCommonFields({ ...commonFields, pharmacy_name: value })}
+                                        placeholder="Select Pharmacy"
+                                        options={pharmacySuppliers?.map(supplier => ({
+                                            value: supplier.name,
+                                            label: supplier.name,
+                                        })) || []}
+                                        className="w-full"
                                     />
                                 </div>
                                 <div>
@@ -1105,8 +1116,6 @@ function BulkMedicationDeliveryForm({ branches, residents, medications, isCaregi
                             </button>
                         </div>
                     </form>
-                </div>
-            </div>
         </div>
     );
 }

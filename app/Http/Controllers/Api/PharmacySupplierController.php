@@ -50,20 +50,12 @@ class PharmacySupplierController extends BaseApiController
             'phone' => 'nullable|string|max:255',
             'email' => 'nullable|email|max:255',
             'address' => 'nullable|string|max:255',
-            'city' => 'nullable|string|max:255',
-            'state' => 'nullable|string|max:2',
-            'zip' => 'nullable|string|max:10',
-            'fax' => 'nullable|string|max:255',
-            'license_number' => 'nullable|string|max:255',
             'notes' => 'nullable|string',
             'is_active' => 'boolean',
-            'default_discount' => 'nullable|numeric|min:0|max:100',
-            'payment_terms_days' => 'nullable|integer|min:0',
         ]);
         
         $validated['created_by'] = auth()->id();
         $validated['is_active'] = $validated['is_active'] ?? true;
-        $validated['payment_terms_days'] = $validated['payment_terms_days'] ?? 30;
         
         $supplier = PharmacySupplier::create($validated);
         
@@ -97,15 +89,8 @@ class PharmacySupplierController extends BaseApiController
             'phone' => 'nullable|string|max:255',
             'email' => 'sometimes|email|max:255',
             'address' => 'nullable|string|max:255',
-            'city' => 'nullable|string|max:255',
-            'state' => 'nullable|string|max:2',
-            'zip' => 'nullable|string|max:10',
-            'fax' => 'nullable|string|max:255',
-            'license_number' => 'nullable|string|max:255',
             'notes' => 'nullable|string',
             'is_active' => 'sometimes|boolean',
-            'default_discount' => 'nullable|numeric|min:0|max:100',
-            'payment_terms_days' => 'nullable|integer|min:0',
         ]);
         
         $supplier->update($validated);

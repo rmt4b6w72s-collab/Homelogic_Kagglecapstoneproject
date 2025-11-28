@@ -54,9 +54,18 @@ export const MODULE_MAP = {
   // Fire Drills module
   '/fire-drills': 'fire_drills',
   
+  // Incidents module
+  '/incidents': 'incidents',
+  
   // Leave Requests module
   '/leave-requests': 'leave_requests',
   '/administration/leave-requests': 'leave_requests',
+  
+  // Billing & Expenses module
+  '/billing/expense-categories': 'billing_expenses',
+  '/billing/expenses': 'billing_expenses',
+  '/billing/invoices': 'billing_expenses',
+  '/billing/reports': 'billing_expenses',
 };
 
 /**
@@ -68,8 +77,13 @@ export function hasModuleAccess(path, enabledModules, isSuperAdmin) {
     return true;
   }
 
+  // Ensure enabledModules is an array
+  if (!Array.isArray(enabledModules)) {
+    enabledModules = [];
+  }
+
   // If no enabled modules, deny access (unless super admin)
-  if (!enabledModules || enabledModules.length === 0) {
+  if (enabledModules.length === 0) {
     return false;
   }
 

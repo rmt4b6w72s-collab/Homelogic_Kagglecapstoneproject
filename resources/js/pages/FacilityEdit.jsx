@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { useToastContext } from '../contexts/ToastContext';
 import FacilityPermissions from './FacilityPermissions';
+import EmptyState from '../components/ui/EmptyState';
 
 export default function FacilityEdit() {
   const { id } = useParams();
@@ -67,7 +68,7 @@ export default function FacilityEdit() {
 
   if (facilityError || !facility) {
     return (
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="bg-white rounded-xl shadow-sm p-6">
         <div className="flex items-center gap-2 text-red-600 mb-4">
           <AlertCircle className="w-5 h-5" />
           <p>Failed to load facility. Please try again.</p>
@@ -93,7 +94,7 @@ export default function FacilityEdit() {
   return (
     <div>
       {/* Header */}
-      <div className="bg-white rounded-lg shadow p-6 mb-6">
+      <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-4">
             <button
@@ -110,28 +111,29 @@ export default function FacilityEdit() {
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-2 border-b overflow-x-auto">
+        <nav className="flex flex-wrap gap-2 rounded-2xl bg-white p-2 shadow-sm ring-1 ring-gray-100">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             return (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`px-4 py-2 font-medium transition-all duration-200 flex items-center gap-2 whitespace-nowrap ${activeTab === tab.id
-                  ? 'text-[var(--theme-primary)] border-b-2 border-[var(--theme-primary)] font-semibold'
-                  : 'text-gray-600 hover:text-[var(--theme-primary)]'
-                  }`}
+                className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition whitespace-nowrap ${
+                  activeTab === tab.id
+                    ? 'bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] shadow-sm'
+                    : 'text-gray-600 hover:bg-gray-50'
+                }`}
               >
                 <Icon className="w-4 h-4" />
                 <span>{tab.label}</span>
               </button>
             );
           })}
-        </div>
+        </nav>
       </div>
 
       {/* Tab Content */}
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="bg-white rounded-xl shadow-sm p-6">
         {activeTab === 'overview' && <OverviewTab facility={facility} />}
         {activeTab === 'branding' && <BrandingTab facility={facility} />}
         {activeTab === 'modules' && <ModulesTab facilityId={id} />}
@@ -851,9 +853,12 @@ function AccountsTab({ facilityId }) {
           <p className="mt-4 text-gray-600">Loading users...</p>
         </div>
       ) : users.length === 0 ? (
-        <div className="bg-white rounded-lg shadow p-12 text-center">
-          <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-600 text-lg font-medium">No users found</p>
+        <div className="bg-white rounded-xl shadow-sm p-6">
+          <EmptyState
+            icon={Users}
+            title="No users found"
+            description="No users are associated with this facility."
+          />
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1245,8 +1250,8 @@ function UserProfileModal({ user, onClose, onEdit }) {
   }
 
   return (
-    <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto" style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
-      <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[95vh] overflow-y-auto my-8">
+    <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50 p-4" style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }} onClick={onClose}>
+      <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[95vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
         {/* Header with Profile Picture */}
         <div className="bg-gradient-to-r from-[var(--theme-primary)] to-[#4a7a2a] p-4 md:p-8 text-white rounded-t-xl">
           <div className="flex flex-col md:flex-row md:items-start md:justify-between space-y-4 md:space-y-0">
@@ -1280,8 +1285,8 @@ function UserProfileModal({ user, onClose, onEdit }) {
                 )}
                 <div className="mt-2">
                   <span className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${displayUser.is_active
-                    ? 'bg-green-500 text-white'
-                    : 'bg-red-500 text-white'
+                    ? 'bg-green-600 text-white'
+                    : 'bg-red-600 text-white'
                     }`}>
                     {displayUser.is_active ? 'Active' : 'Inactive'}
                   </span>
@@ -1298,7 +1303,7 @@ function UserProfileModal({ user, onClose, onEdit }) {
         </div>
 
         {/* Body */}
-        <div className="p-4 md:p-8">
+        <div className="p-4 md:p-8 overflow-y-auto flex-1">
           {/* Personal Information */}
           <div className="mb-6 md:mb-8">
             <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-4 flex items-center">

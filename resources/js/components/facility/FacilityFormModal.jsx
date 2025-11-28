@@ -207,21 +207,22 @@ export default function FacilityFormModal({
                     </div>
 
                     {/* Tabs */}
-                    <div className="flex space-x-1 mt-4 border-b border-gray-200 overflow-x-auto">
+                    <nav className="flex flex-wrap gap-2 rounded-2xl bg-white p-2 shadow-sm ring-1 ring-gray-100 mt-4">
                         {tabs.map(tab => (
                             <button
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
-                                className={`flex items-center space-x-2 px-4 py-2 border-b-2 transition-colors whitespace-nowrap ${activeTab === tab.id
-                                        ? 'border-blue-600 text-blue-600 font-medium'
-                                        : 'border-transparent text-gray-600 hover:text-gray-900'
-                                    }`}
+                                className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition whitespace-nowrap ${
+                                    activeTab === tab.id
+                                        ? 'bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] shadow-sm'
+                                        : 'text-gray-600 hover:bg-gray-50'
+                                }`}
                             >
                                 {tab.icon}
                                 <span>{tab.label}</span>
                             </button>
                         ))}
-                    </div>
+                    </nav>
                 </div>
 
                 {/* Scrollable Content */}
@@ -322,7 +323,7 @@ export default function FacilityFormModal({
                                 type="submit"
                                 form="facility-form"
                                 disabled={isSubmitting}
-                                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
+                                className="px-6 py-2 bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] rounded-lg hover:bg-[var(--theme-primary-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
                             >
                                 {isSubmitting ? (
                                     <>

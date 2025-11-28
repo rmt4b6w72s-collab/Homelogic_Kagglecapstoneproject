@@ -17,15 +17,8 @@ export default function PharmacySuppliers() {
         phone: '',
         email: '',
         address: '',
-        city: '',
-        state: '',
-        zip: '',
-        fax: '',
-        license_number: '',
         notes: '',
         is_active: true,
-        default_discount: '',
-        payment_terms_days: 30,
     });
     const [errors, setErrors] = useState({});
 
@@ -91,15 +84,8 @@ export default function PharmacySuppliers() {
             phone: '',
             email: '',
             address: '',
-            city: '',
-            state: '',
-            zip: '',
-            fax: '',
-            license_number: '',
             notes: '',
             is_active: true,
-            default_discount: '',
-            payment_terms_days: 30,
         });
         setErrors({});
     };
@@ -112,15 +98,8 @@ export default function PharmacySuppliers() {
             phone: supplier.phone || '',
             email: supplier.email || '',
             address: supplier.address || '',
-            city: supplier.city || '',
-            state: supplier.state || '',
-            zip: supplier.zip || '',
-            fax: supplier.fax || '',
-            license_number: supplier.license_number || '',
             notes: supplier.notes || '',
             is_active: supplier.is_active ?? true,
-            default_discount: supplier.default_discount || '',
-            payment_terms_days: supplier.payment_terms_days || 30,
         });
         setShowForm(true);
     };
@@ -131,8 +110,6 @@ export default function PharmacySuppliers() {
         
         const submitData = {
             ...formData,
-            default_discount: formData.default_discount ? parseFloat(formData.default_discount) : null,
-            payment_terms_days: parseInt(formData.payment_terms_days) || 30,
         };
 
         if (editing) {
@@ -224,96 +201,6 @@ export default function PharmacySuppliers() {
                                     type="text"
                                     value={formData.address}
                                     onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    City
-                                </label>
-                                <input
-                                    type="text"
-                                    value={formData.city}
-                                    onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    State
-                                </label>
-                                <input
-                                    type="text"
-                                    maxLength={2}
-                                    value={formData.state}
-                                    onChange={(e) => setFormData({ ...formData, state: e.target.value.toUpperCase() })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
-                                    placeholder="WA"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    ZIP Code
-                                </label>
-                                <input
-                                    type="text"
-                                    value={formData.zip}
-                                    onChange={(e) => setFormData({ ...formData, zip: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Fax
-                                </label>
-                                <input
-                                    type="text"
-                                    value={formData.fax}
-                                    onChange={(e) => setFormData({ ...formData, fax: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    License Number
-                                </label>
-                                <input
-                                    type="text"
-                                    value={formData.license_number}
-                                    onChange={(e) => setFormData({ ...formData, license_number: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Default Discount (%)
-                                </label>
-                                <input
-                                    type="number"
-                                    step="0.01"
-                                    min="0"
-                                    max="100"
-                                    value={formData.default_discount}
-                                    onChange={(e) => setFormData({ ...formData, default_discount: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Payment Terms (Days)
-                                </label>
-                                <input
-                                    type="number"
-                                    min="0"
-                                    value={formData.payment_terms_days}
-                                    onChange={(e) => setFormData({ ...formData, payment_terms_days: e.target.value })}
                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                 />
                             </div>
@@ -446,10 +333,10 @@ export default function PharmacySuppliers() {
                                             <span>{supplier.email}</span>
                                         </div>
                                     )}
-                                    {(supplier.city || supplier.state) && (
+                                    {supplier.address && (
                                         <div className="flex items-center space-x-2 text-sm text-gray-600">
                                             <MapPin className="w-4 h-4" />
-                                            <span>{supplier.city}{supplier.state ? `, ${supplier.state}` : ''}</span>
+                                            <span>{supplier.address}</span>
                                         </div>
                                     )}
                                 </div>

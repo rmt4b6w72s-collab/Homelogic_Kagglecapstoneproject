@@ -25,6 +25,7 @@ class RolePermissionSeeder extends Seeder
                 'view_medications', 'create_medications', 'edit_medications', 'delete_medications',
                 'view_appointments', 'create_appointments', 'edit_appointments', 'delete_appointments',
                 'view_vital_signs', 'create_vital_signs', 'edit_vital_signs', 'delete_vital_signs',
+                'view_incidents', 'create_incidents', 'edit_incidents', 'delete_incidents',
                 'view_reports', 'export_reports',
             ],
             'caregiver' => [
@@ -36,6 +37,7 @@ class RolePermissionSeeder extends Seeder
                 'view_medications',
                 'view_appointments', 'create_appointments',
                 'view_vital_signs', 'create_vital_signs',
+                'view_incidents', 'create_incidents',
             ],
             'family_member' => [
                 // Very limited access

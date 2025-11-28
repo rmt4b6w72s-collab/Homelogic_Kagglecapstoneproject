@@ -16,13 +16,18 @@ class LogAuthentication
     public function handle(Login|Logout $event): void
     {
         if ($event instanceof Login) {
-            ActivityLogService::login($event->user, [
-                'guard' => $event->guard,
-            ]);
+            if ($event->user) {
+                ActivityLogService::login($event->user, [
+                    'guard' => $event->guard,
+                ]);
+            }
         } elseif ($event instanceof Logout) {
-            ActivityLogService::logout($event->user, [
-                'guard' => $event->guard,
-            ]);
+            // Only log logout if user exists (may be null if already logged out)
+            if ($event->user) {
+                ActivityLogService::logout($event->user, [
+                    'guard' => $event->guard,
+                ]);
+            }
         }
     }
 }

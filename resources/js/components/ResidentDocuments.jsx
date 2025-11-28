@@ -287,24 +287,6 @@ export default function ResidentDocuments({ residentId }) {
                     )}
                 </>
             )}
-
-            {/* Document Form Modal */}
-            {showForm && (
-                <DocumentFormModal
-                    residentId={residentId}
-                    appointments={appointments}
-                    record={editing}
-                    onClose={() => {
-                        setShowForm(false);
-                        setEditing(null);
-                    }}
-                    onSuccess={() => {
-                        setShowForm(false);
-                        setEditing(null);
-                        queryClient.invalidateQueries(['resident-documents']);
-                    }}
-                />
-            )}
         </div>
     );
 }
@@ -406,20 +388,18 @@ function DocumentFormModal({ residentId, appointments, record, onClose, onSucces
     };
 
     return (
-        <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto" style={{ backgroundColor: 'rgba(0, 0, 0, 0.1)' }}>
-            <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto my-8">
-                <div className="p-6">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4 md:mb-6">
-                        <h2 className="text-2xl font-bold text-gray-900">
-                            {record ? 'Edit Document' : 'Add Document'}
-                        </h2>
-                        <button
-                            onClick={onClose}
-                            className="text-gray-400 hover:text-gray-600 text-2xl"
-                        >
-                            <X className="h-6 w-6" />
-                        </button>
-                    </div>
+        <div className="bg-white rounded-lg shadow p-6">
+            <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-semibold text-gray-900">
+                    {record ? 'Edit Document' : 'Add Document'}
+                </h2>
+                <button
+                    onClick={onClose}
+                    className="text-gray-400 hover:text-gray-600"
+                >
+                    <X className="w-6 h-6" />
+                </button>
+            </div>
 
                     {errors.general && (
                         <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
@@ -533,8 +513,6 @@ function DocumentFormModal({ residentId, appointments, record, onClose, onSucces
                             </button>
                         </div>
                     </form>
-                </div>
-            </div>
         </div>
     );
 }

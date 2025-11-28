@@ -9,6 +9,7 @@ import {
     ShieldCheck,
     CheckCircle2,
     XCircle,
+    X,
     Edit3,
     Trash2,
     Building2,
@@ -75,6 +76,7 @@ export default function HousekeepingSchedule() {
             const response = await api.get('/cleaning/areas');
             return response.data.data || [];
         },
+        staleTime: 5 * 60 * 1000, // Cache for 5 minutes
     });
 
     React.useEffect(() => {
@@ -84,11 +86,12 @@ export default function HousekeepingSchedule() {
     }, [areasData, selectedAreaId]);
 
     const { data: currentUser } = useQuery({
-        queryKey: ['housekeeping-current-user'],
+        queryKey: ['current-user'],
         queryFn: async () => {
             const response = await api.get('/user');
             return response.data;
         },
+        staleTime: 5 * 60 * 1000, // Cache for 5 minutes - reuse global user query
     });
 
 const { data: caregiversData } = useQuery({
@@ -99,6 +102,7 @@ const { data: caregiversData } = useQuery({
         });
         return response.data;
     },
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
 });
 const caregivers = caregiversData?.data ?? [];
 
@@ -119,6 +123,7 @@ const caregivers = caregiversData?.data ?? [];
             return response.data?.data ?? [];
         },
         enabled: Boolean(selectedAreaId),
+        staleTime: 30 * 1000, // Cache for 30 seconds
     });
 
     const createTask = useMutation({
@@ -205,12 +210,17 @@ const closeAssignmentModal = () => {
 
     return (
         <div className="space-y-6">
-            <header className="rounded-3xl bg-gradient-to-r from-emerald-600 via-emerald-500 to-emerald-400 p-6 text-white shadow-lg">
+            <header 
+                className="rounded-3xl p-6 text-white shadow-lg" 
+                style={{ 
+                    background: 'linear-gradient(to right, var(--theme-primary), var(--theme-primary-light), var(--theme-primary))'
+                }}
+            >
                 <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div>
-                        <p className="text-sm font-medium uppercase tracking-wide text-emerald-100">Scheduling</p>
+                        <p className="text-sm font-medium uppercase tracking-wide" style={{ color: 'var(--theme-text-on-primary)' }}>Scheduling</p>
                         <h1 className="text-3xl font-semibold">Housekeeping Schedule Builder</h1>
-                        <p className="mt-2 max-w-2xl text-sm text-emerald-50">
+                        <p className="mt-2 max-w-2xl text-sm" style={{ color: 'var(--theme-text-on-primary)' }}>
                             Create and manage cleaning tasks for every room, float, and shift. These tasks flow directly into the daily checklist.
                         </p>
                     </div>
@@ -218,7 +228,8 @@ const closeAssignmentModal = () => {
                         type="button"
                         onClick={openCreateModal}
                         disabled={!selectedAreaId}
-                        className="inline-flex items-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-emerald-600 shadow-lg transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:bg-white/70"
+                        className="inline-flex items-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-semibold shadow-lg transition-colors hover:bg-[var(--theme-primary-bg-light)] disabled:cursor-not-allowed disabled:bg-white/70"
+                        style={{ color: 'var(--theme-primary)' }}
                     >
                         <Plus className="h-4 w-4" />
                         Add Task
@@ -230,7 +241,7 @@ const closeAssignmentModal = () => {
                 <label className="text-sm font-semibold text-gray-700">
                     Assignment Date
                     <div className="mt-2 flex items-center gap-3 rounded-2xl border border-gray-200 px-4 py-2">
-                        <Calendar className="h-5 w-5 text-emerald-500" />
+                        <Calendar className="h-5 w-5" style={{ color: 'var(--theme-primary)' }} />
                         <input
                             type="date"
                             value={assignmentDate}
@@ -258,7 +269,8 @@ const closeAssignmentModal = () => {
                                 setIsAreaModalOpen(true);
                             }}
                             disabled={!branchId}
-                            className="inline-flex items-center gap-1 rounded-xl border border-emerald-200 px-3 py-1.5 text-xs font-semibold text-emerald-600 transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-60"
+                            className="inline-flex items-center gap-1 rounded-xl border px-3 py-1.5 text-xs font-semibold transition-colors hover:bg-[var(--theme-primary-bg-light)] disabled:cursor-not-allowed disabled:opacity-60"
+                            style={{ borderColor: 'var(--theme-primary-bg)', color: 'var(--theme-primary)' }}
                         >
                             <Plus className="h-3 w-3" />
                             Area
@@ -282,7 +294,12 @@ const closeAssignmentModal = () => {
                             {areasData.map((area) => {
                                 const isActive = area.id === selectedAreaId;
                                 return (
-                                    <div key={area.id} className={`w-full rounded-2xl border px-4 py-3 transition cursor-pointer ${isActive ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-gray-100 bg-white text-gray-700 hover:border-emerald-100'}`} onClick={() => setSelectedAreaId(area.id)}>
+                                    <div 
+                                        key={area.id} 
+                                        className={`w-full rounded-2xl border px-4 py-3 transition-all cursor-pointer ${isActive ? '' : 'border-gray-100 bg-white text-gray-700 hover:border-[var(--theme-primary-bg)]'}`}
+                                        style={isActive ? { borderColor: 'var(--theme-primary-bg)', backgroundColor: 'var(--theme-primary-bg)', color: 'var(--theme-primary)' } : {}}
+                                        onClick={() => setSelectedAreaId(area.id)}
+                                    >
                                         <div className="flex items-center justify-between">
                                             <div className="flex-1 min-w-0">
                                                 <div className="font-semibold">{area.name}</div>
@@ -318,7 +335,8 @@ const closeAssignmentModal = () => {
                                                             window.alert(err?.response?.data?.message || err.message);
                                                         }
                                                     }}
-                                                    className="inline-flex items-center rounded-lg border border-emerald-200 p-2 text-emerald-600 hover:bg-emerald-50"
+                                                    className="inline-flex items-center rounded-lg border p-2 transition-colors hover:bg-[var(--theme-primary-bg-light)]"
+                                                    style={{ borderColor: 'var(--theme-primary-bg)', color: 'var(--theme-primary)' }}
                                                     aria-label="Delete area"
                                                 >
                                                     <Trash2 className="h-5 w-5" />
@@ -335,7 +353,7 @@ const closeAssignmentModal = () => {
                 <section className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-gray-100">
                     {!selectedAreaId ? (
                         <div className="flex min-h-[240px] flex-col items-center justify-center text-center text-sm text-gray-500">
-                            <Sparkles className="mb-3 h-10 w-10 text-emerald-200" />
+                            <Sparkles className="mb-3 h-10 w-10" style={{ color: 'var(--theme-primary-bg)' }} />
                             Select an area to start managing its tasks.
                         </div>
                     ) : tasksLoading ? (
@@ -349,7 +367,7 @@ const closeAssignmentModal = () => {
                         </div>
                     ) : !tasksData.length ? (
                         <div className="flex min-h-[240px] flex-col items-center justify-center text-center text-sm text-gray-500">
-                            <Sparkles className="mb-3 h-10 w-10 text-emerald-200" />
+                            <Sparkles className="mb-3 h-10 w-10" style={{ color: 'var(--theme-primary-bg)' }} />
                             No tasks for this area yet. Click “Add Task” to create one.
                         </div>
                     ) : (
@@ -366,7 +384,7 @@ const closeAssignmentModal = () => {
                                                     </span>
                                                 ) : null}
                                                 {task.is_required ? (
-                                                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-600">
+                                                    <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold" style={{ backgroundColor: 'var(--theme-primary-bg)', color: 'var(--theme-primary)' }}>
                                                         <ShieldCheck className="h-3 w-3" />
                                                         Required
                                                     </span>
@@ -376,7 +394,7 @@ const closeAssignmentModal = () => {
                                                 <p className="mt-2 text-sm text-gray-600">{task.instructions}</p>
                                             ) : null}
                                             <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-gray-500">
-                                                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-emerald-700">
+                                                <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5" style={{ backgroundColor: 'var(--theme-primary-bg)', color: 'var(--theme-primary)' }}>
                                                     <Calendar className="h-3 w-3" />
                                                     {task.frequency ? task.frequency.charAt(0).toUpperCase() + task.frequency.slice(1) : 'Daily'}
                                                 </span>
@@ -409,10 +427,11 @@ const closeAssignmentModal = () => {
                                                     task.assignments.map((assignment) => (
                                                         <span
                                                             key={assignment.id}
-                                                            className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-0.5 font-semibold text-emerald-700"
+                                                            className="inline-flex items-center gap-1 rounded-full px-3 py-0.5 font-semibold"
+                                                            style={{ backgroundColor: 'var(--theme-primary-bg)', color: 'var(--theme-primary)' }}
                                                         >
                                                             {assignment.user?.name || 'Caregiver'}
-                                                            <span className="text-[10px] uppercase text-emerald-500">
+                                                            <span className="text-[10px] uppercase" style={{ color: 'var(--theme-primary)' }}>
                                                                 {assignment.status}
                                                             </span>
                                                         </span>
@@ -428,7 +447,8 @@ const closeAssignmentModal = () => {
                                             <button
                                                 type="button"
                                                 onClick={() => openAssignmentModal(task)}
-                                                className="inline-flex items-center gap-1 rounded-lg border border-emerald-200 px-3 py-2 text-sm font-medium text-emerald-600 hover:bg-emerald-50"
+                                                className="inline-flex items-center gap-1 rounded-lg border px-3 py-2 text-sm font-medium transition-colors hover:bg-[var(--theme-primary-bg-light)]"
+                                                style={{ borderColor: 'var(--theme-primary-bg)', color: 'var(--theme-primary)' }}
                                             >
                                                 <Sparkles className="h-4 w-4" />
                                                 Assign
@@ -452,7 +472,8 @@ const closeAssignmentModal = () => {
                                                         }
                                                     }
                                                 }}
-                                                className="inline-flex items-center gap-1 rounded-lg border border-emerald-200 px-3 py-2 text-sm font-medium text-emerald-600 hover:bg-emerald-50"
+                                                className="inline-flex items-center gap-1 rounded-lg border px-3 py-2 text-sm font-medium transition-colors hover:bg-[var(--theme-primary-bg-light)]"
+                                                style={{ borderColor: 'var(--theme-primary-bg)', color: 'var(--theme-primary)' }}
                                             >
                                                 <Trash2 className="h-4 w-4" />
                                                 Delete
@@ -585,11 +606,18 @@ function TaskModal({ onClose, onSubmit, initialValues, isSaving }) {
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+        <div 
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+            onClick={(e) => {
+                if (e.target === e.currentTarget) {
+                    onClose();
+                }
+            }}
+        >
             <div className="max-h-[calc(100vh-2rem)] w-full max-w-2xl overflow-y-auto rounded-3xl bg-white p-6 shadow-2xl">
                 <div className="mb-6 flex items-center justify-between">
                     <div>
-                        <p className="text-xs font-semibold uppercase tracking-wide text-emerald-500">
+                        <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--theme-primary)' }}>
                             {initialValues ? 'Edit Task' : 'Create Task'}
                         </p>
                         <h2 className="text-2xl font-semibold text-gray-900">{initialValues ? initialValues.title : 'New Task'}</h2>
@@ -597,9 +625,10 @@ function TaskModal({ onClose, onSubmit, initialValues, isSaving }) {
                     <button
                         type="button"
                         onClick={onClose}
-                        className="rounded-full border border-gray-200 p-2 text-gray-500 hover:bg-gray-50"
+                        className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-lg hover:bg-gray-100"
+                        aria-label="Close modal"
                     >
-                        <XCircle className="h-5 w-5" />
+                        <X className="w-5 h-5" />
                     </button>
                 </div>
 
@@ -612,7 +641,8 @@ function TaskModal({ onClose, onSubmit, initialValues, isSaving }) {
                             value={formValues.title}
                             onChange={handleChange}
                             required
-                            className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 bg-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+                            className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:border-[var(--theme-primary)]"
+                            style={{ '--tw-ring-color': 'var(--theme-primary-bg)' }}
                         />
                     </div>
 
@@ -623,7 +653,8 @@ function TaskModal({ onClose, onSubmit, initialValues, isSaving }) {
                             value={formValues.instructions}
                             onChange={handleChange}
                             rows={3}
-                            className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 bg-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+                            className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:border-[var(--theme-primary)]"
+                            style={{ '--tw-ring-color': 'var(--theme-primary-bg)' }}
                         />
                     </div>
 
@@ -634,7 +665,8 @@ function TaskModal({ onClose, onSubmit, initialValues, isSaving }) {
                                 name="frequency"
                                 value={formValues.frequency}
                                 onChange={handleChange}
-                                className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 bg-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+                                className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:border-[var(--theme-primary)]"
+                            style={{ '--tw-ring-color': 'var(--theme-primary-bg)' }}
                             >
                                 {frequencyOptions.map((option) => (
                                     <option key={option.value} value={option.value}>
@@ -650,7 +682,8 @@ function TaskModal({ onClose, onSubmit, initialValues, isSaving }) {
                                 name="window_start"
                                 value={formValues.window_start || ''}
                                 onChange={handleChange}
-                                className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 bg-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+                                className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:border-[var(--theme-primary)]"
+                            style={{ '--tw-ring-color': 'var(--theme-primary-bg)' }}
                             />
                         </div>
                         <div>
@@ -660,7 +693,8 @@ function TaskModal({ onClose, onSubmit, initialValues, isSaving }) {
                                 name="window_end"
                                 value={formValues.window_end || ''}
                                 onChange={handleChange}
-                                className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 bg-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+                                className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:border-[var(--theme-primary)]"
+                            style={{ '--tw-ring-color': 'var(--theme-primary-bg)' }}
                             />
                         </div>
                     </div>
@@ -674,7 +708,8 @@ function TaskModal({ onClose, onSubmit, initialValues, isSaving }) {
                                 value={formValues.display_order}
                                 onChange={handleChange}
                                 min={0}
-                                className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 bg-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+                                className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:border-[var(--theme-primary)]"
+                            style={{ '--tw-ring-color': 'var(--theme-primary-bg)' }}
                             />
                         </div>
                         <div>
@@ -685,7 +720,8 @@ function TaskModal({ onClose, onSubmit, initialValues, isSaving }) {
                                 value={formValues.estimated_minutes}
                                 onChange={handleChange}
                                 min={1}
-                                className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 bg-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+                                className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:border-[var(--theme-primary)]"
+                            style={{ '--tw-ring-color': 'var(--theme-primary-bg)' }}
                                 placeholder="e.g. 10"
                             />
                         </div>
@@ -702,9 +738,12 @@ function TaskModal({ onClose, onSubmit, initialValues, isSaving }) {
                                         key={day.value}
                                         className={`flex cursor-pointer items-center gap-2 rounded-xl border px-3 py-2 text-sm ${
                                             checked
-                                                ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                                                ? task.is_required 
+                                                    ? 'border-[var(--theme-primary-bg)] bg-[var(--theme-primary-bg)] text-[var(--theme-primary)]'
+                                                    : ''
                                                 : 'border-gray-200 text-gray-600'
                                         }`}
+                                        style={task.is_required && checked ? { borderColor: 'var(--theme-primary-bg)', backgroundColor: 'var(--theme-primary-bg)', color: 'var(--theme-primary)' } : {}}
                                     >
                                         <input
                                             type="checkbox"
@@ -761,7 +800,8 @@ function TaskModal({ onClose, onSubmit, initialValues, isSaving }) {
                         <button
                             type="submit"
                             disabled={isSaving}
-                            className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-emerald-300"
+                            className="inline-flex items-center gap-2 rounded-xl px-5 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[var(--theme-primary-hover)] disabled:cursor-not-allowed"
+                            style={{ backgroundColor: 'var(--theme-primary)' }}
                         >
                             {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
                             {initialValues ? 'Save Changes' : 'Create Task'}
@@ -810,11 +850,18 @@ function AreaModal({ onClose, branchId, onSaved, initialValues }) {
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+        <div 
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+            onClick={(e) => {
+                if (e.target === e.currentTarget) {
+                    onClose();
+                }
+            }}
+        >
             <div className="max-h-[calc(100vh-2rem)] w-full max-w-lg overflow-y-auto rounded-3xl bg-white p-6 shadow-2xl">
                 <div className="mb-6 flex items-center justify-between">
                     <div>
-                        <p className="text-xs font-semibold uppercase tracking-wide text-emerald-500">
+                        <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--theme-primary)' }}>
                             {initialValues ? 'Edit Area' : 'New Area'}
                         </p>
                         <h2 className="text-2xl font-semibold text-gray-900">Cleaning Area</h2>
@@ -822,9 +869,10 @@ function AreaModal({ onClose, branchId, onSaved, initialValues }) {
                     <button
                         type="button"
                         onClick={onClose}
-                        className="rounded-full border border-gray-200 p-2 text-gray-500 hover:bg-gray-50"
+                        className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-lg hover:bg-gray-100"
+                        aria-label="Close modal"
                     >
-                        <XCircle className="h-5 w-5" />
+                        <X className="w-5 h-5" />
                     </button>
                 </div>
 
@@ -837,7 +885,8 @@ function AreaModal({ onClose, branchId, onSaved, initialValues }) {
                             value={formValues.name}
                             onChange={handleChange}
                             required
-                            className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 bg-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+                            className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:border-[var(--theme-primary)]"
+                            style={{ '--tw-ring-color': 'var(--theme-primary-bg)' }}
                             placeholder="e.g. Kitchen, Float #1"
                         />
                     </div>
@@ -850,7 +899,8 @@ function AreaModal({ onClose, branchId, onSaved, initialValues }) {
                                 name="shift_label"
                                 value={formValues.shift_label}
                                 onChange={handleChange}
-                                className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 bg-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+                                className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:border-[var(--theme-primary)]"
+                            style={{ '--tw-ring-color': 'var(--theme-primary-bg)' }}
                                 placeholder="e.g. Day Shift"
                             />
                         </div>
@@ -861,7 +911,8 @@ function AreaModal({ onClose, branchId, onSaved, initialValues }) {
                                 name="location"
                                 value={formValues.location}
                                 onChange={handleChange}
-                                className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 bg-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+                                className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:border-[var(--theme-primary)]"
+                            style={{ '--tw-ring-color': 'var(--theme-primary-bg)' }}
                                 placeholder="e.g. Main Level"
                             />
                         </div>
@@ -874,7 +925,8 @@ function AreaModal({ onClose, branchId, onSaved, initialValues }) {
                             value={formValues.description}
                             onChange={handleChange}
                             rows={3}
-                            className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 bg-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+                            className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:border-[var(--theme-primary)]"
+                            style={{ '--tw-ring-color': 'var(--theme-primary-bg)' }}
                             placeholder="Responsibilities, reminders, etc."
                         />
                     </div>
@@ -888,7 +940,8 @@ function AreaModal({ onClose, branchId, onSaved, initialValues }) {
                                 value={formValues.display_order}
                                 onChange={handleChange}
                                 min={0}
-                                className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 bg-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+                                className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:border-[var(--theme-primary)]"
+                            style={{ '--tw-ring-color': 'var(--theme-primary-bg)' }}
                             />
                         </div>
                         <label className="flex items-center gap-3 rounded-2xl border border-gray-200 px-4 py-3">
@@ -915,7 +968,8 @@ function AreaModal({ onClose, branchId, onSaved, initialValues }) {
                         </button>
                         <button
                             type="submit"
-                            className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700"
+                            className="inline-flex items-center gap-2 rounded-xl px-5 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[var(--theme-primary-hover)]"
+                            style={{ backgroundColor: 'var(--theme-primary)' }}
                         >
                             <Building2 className="h-4 w-4" />
                             {initialValues ? 'Save Changes' : 'Save Area'}
@@ -945,20 +999,28 @@ function AssignmentModal({ task, date, caregivers, onAssign, onRemove, isSaving,
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+        <div 
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+            onClick={(e) => {
+                if (e.target === e.currentTarget) {
+                    onClose();
+                }
+            }}
+        >
             <div className="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-3xl bg-white p-6 shadow-2xl">
                 <div className="mb-6 flex items-center justify-between">
                     <div>
-                        <p className="text-xs font-semibold uppercase tracking-wide text-emerald-500">Assignments</p>
+                        <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--theme-primary)' }}>Assignments</p>
                         <h2 className="text-2xl font-semibold text-gray-900">{task.title}</h2>
                         <p className="text-sm text-gray-500">For {new Date(date).toLocaleDateString()}</p>
                     </div>
                     <button
                         type="button"
                         onClick={onClose}
-                        className="rounded-full border border-gray-200 p-2 text-gray-500 hover:bg-gray-50"
+                        className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-lg hover:bg-gray-100"
+                        aria-label="Close modal"
                     >
-                        <XCircle className="h-5 w-5" />
+                        <X className="w-5 h-5" />
                     </button>
                 </div>
 
@@ -969,7 +1031,8 @@ function AssignmentModal({ task, date, caregivers, onAssign, onRemove, isSaving,
                             <select
                                 value={selectedCaregiver}
                                 onChange={(event) => setSelectedCaregiver(event.target.value)}
-                                className="flex-1 rounded-2xl border border-gray-200 px-4 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+                                className="flex-1 rounded-2xl border border-gray-200 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:border-[var(--theme-primary)]"
+                                style={{ '--tw-ring-color': 'var(--theme-primary-bg)' }}
                             >
                                 <option value="">Select caregiver</option>
                                 {caregivers.map((caregiver) => (
@@ -981,7 +1044,8 @@ function AssignmentModal({ task, date, caregivers, onAssign, onRemove, isSaving,
                             <button
                                 type="submit"
                                 disabled={isSaving || !selectedCaregiver}
-                                className="inline-flex items-center justify-center rounded-2xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-emerald-300"
+                                className="inline-flex items-center justify-center rounded-2xl px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[var(--theme-primary-hover)] disabled:cursor-not-allowed disabled:bg-[var(--theme-primary-bg)]"
+                                style={{ backgroundColor: 'var(--theme-primary)' }}
                             >
                                 Assign
                             </button>
@@ -1018,7 +1082,8 @@ function AssignmentModal({ task, date, caregivers, onAssign, onRemove, isSaving,
                                                 await onRemove(id);
                                             }}
                                             disabled={isSaving}
-                                            className="rounded-lg border border-emerald-200 px-3 py-1 text-xs font-semibold text-emerald-600 hover:bg-emerald-50 disabled:cursor-not-allowed"
+                                            className="rounded-lg border px-3 py-1 text-xs font-semibold transition-colors hover:bg-[var(--theme-primary-bg-light)] disabled:cursor-not-allowed"
+                                            style={{ borderColor: 'var(--theme-primary-bg)', color: 'var(--theme-primary)' }}
                                         >
                                             Remove
                                         </button>

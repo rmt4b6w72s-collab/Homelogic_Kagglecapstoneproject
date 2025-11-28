@@ -28,6 +28,11 @@ use App\Http\Controllers\Api\CleaningTaskController;
 use App\Http\Controllers\Api\CleaningTaskAssignmentController;
 use App\Http\Controllers\Api\HousekeepingReportController;
 use App\Http\Controllers\Api\SystemSettingsController;
+use App\Http\Controllers\Api\ExpenseCategoryController;
+use App\Http\Controllers\Api\ExpenseController;
+use App\Http\Controllers\Api\BillingInvoiceController;
+use App\Http\Controllers\Api\ExpenseReportController;
+use App\Http\Controllers\Api\PaymentNotificationPreferenceController;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Session\Middleware\StartSession;
@@ -41,7 +46,9 @@ Route::prefix('v1')->middleware([\App\Http\Middleware\SetFacilityContext::class]
             StartSession::class,
         ])->withoutMiddleware([\App\Http\Middleware\SetFacilityContext::class]);
     Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
-    Route::get('/user', [AuthController::class, 'user'])->middleware('auth:sanctum');
+    Route::get('/user', [AuthController::class, 'user'])
+        ->middleware('auth:sanctum')
+        ->withoutMiddleware([\App\Http\Middleware\SetFacilityContext::class]);
     Route::put('/user/password', [AuthController::class, 'changePassword'])->middleware('auth:sanctum');
 
     // Dashboard
@@ -57,6 +64,11 @@ Route::prefix('v1')->middleware([\App\Http\Middleware\SetFacilityContext::class]
     // Appointments
     Route::apiResource('appointments', AppointmentController::class)->middleware('auth:sanctum');
     Route::patch('/appointments/{id}/status', [AppointmentController::class, 'updateStatus'])->middleware('auth:sanctum');
+
+    // Incidents
+    Route::apiResource('incidents', \App\Http\Controllers\Api\IncidentController::class)->middleware('auth:sanctum');
+    Route::post('/incidents/{id}/mark-resolved', [\App\Http\Controllers\Api\IncidentController::class, 'markResolved'])->middleware('auth:sanctum');
+    Route::post('/incidents/{id}/mark-closed', [\App\Http\Controllers\Api\IncidentController::class, 'markClosed'])->middleware('auth:sanctum');
 
     // Vital Signs
     Route::apiResource('vitals', VitalSignController::class)->middleware('auth:sanctum');
@@ -198,6 +210,37 @@ Route::prefix('v1')->middleware([\App\Http\Middleware\SetFacilityContext::class]
         Route::get('/tasks/{cleaningTask}/assignments', [CleaningTaskAssignmentController::class, 'index']);
         Route::post('/tasks/{cleaningTask}/assignments', [CleaningTaskAssignmentController::class, 'store']);
         Route::delete('/task-assignments/{cleaningTaskAssignment}', [CleaningTaskAssignmentController::class, 'destroy']);
+    });
+
+    // Billing & Expenses
+    Route::prefix('billing')->middleware('auth:sanctum')->group(function () {
+        // Expense Categories
+        Route::apiResource('expense-categories', ExpenseCategoryController::class);
+        
+        // Expenses
+        Route::apiResource('expenses', ExpenseController::class);
+        Route::post('/expenses/{id}/approve', [ExpenseController::class, 'approve']);
+        Route::post('/expenses/{id}/mark-paid', [ExpenseController::class, 'markAsPaid']);
+        Route::post('/expenses/{id}/upload-receipt', [ExpenseController::class, 'uploadReceipt']);
+        
+        // Billing Invoices
+        Route::apiResource('invoices', BillingInvoiceController::class);
+        Route::post('/invoices/{id}/send', [BillingInvoiceController::class, 'send']);
+        Route::post('/invoices/{id}/mark-paid', [BillingInvoiceController::class, 'markAsPaid']);
+        
+        // Expense Reports
+        Route::prefix('reports')->group(function () {
+            Route::get('/summary', [ExpenseReportController::class, 'summary']);
+            Route::get('/by-category', [ExpenseReportController::class, 'byCategory']);
+            Route::get('/by-date-range', [ExpenseReportController::class, 'byDateRange']);
+            Route::get('/resident-billing', [ExpenseReportController::class, 'residentBilling']);
+            Route::get('/vendor-payments', [ExpenseReportController::class, 'vendorPayments']);
+        });
+        
+        // Payment Notification Preferences
+        Route::get('/notification-preferences', [PaymentNotificationPreferenceController::class, 'index']);
+        Route::post('/notification-preferences', [PaymentNotificationPreferenceController::class, 'store']);
+        Route::put('/notification-preferences/{id}', [PaymentNotificationPreferenceController::class, 'update']);
     });
 });
 

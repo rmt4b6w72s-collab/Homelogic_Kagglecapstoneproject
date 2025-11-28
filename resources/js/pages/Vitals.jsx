@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../services/api';
-import { Activity, User, Heart, Plus, Thermometer, Droplet, Edit, Trash2, ChevronDown } from 'lucide-react';
+import { Activity, User, Heart, Plus, Thermometer, Droplet, Edit, Trash2, ChevronDown, X } from 'lucide-react';
 import { getLocalDateString } from '../utils/pacificTime';
 import { TableSkeleton, ListSkeleton } from '../components/ui/SkeletonLoader';
 import EmptyState from '../components/ui/EmptyState';
@@ -51,6 +51,26 @@ export default function Vitals() {
             toast.error('Error', error.response?.data?.message || 'Failed to delete vital sign record');
         },
     });
+
+    if (showForm) {
+        return (
+            <div>
+                <VitalSignForm
+                    record={editing}
+                    residents={residentsData?.data || []}
+                    onClose={() => {
+                        setShowForm(false);
+                        setEditing(null);
+                    }}
+                    onSuccess={() => {
+                        setShowForm(false);
+                        setEditing(null);
+                        queryClient.invalidateQueries(['vitals']);
+                    }}
+                />
+            </div>
+        );
+    }
 
     return (
         <div>
@@ -263,22 +283,6 @@ export default function Vitals() {
                     )}
                 </div>
             )}
-
-            {showForm && (
-                <VitalSignForm
-                    record={editing}
-                    residents={residentsData?.data || []}
-                    onClose={() => {
-                        setShowForm(false);
-                        setEditing(null);
-                    }}
-                    onSuccess={() => {
-                        setShowForm(false);
-                        setEditing(null);
-                        queryClient.invalidateQueries(['vitals']);
-                    }}
-                />
-            )}
         </div>
     );
 }
@@ -359,29 +363,27 @@ function VitalSignForm({ record, residents, onClose, onSuccess }) {
     };
 
     return (
-        <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto" style={{ backgroundColor: 'rgba(0, 0, 0, 0.1)' }}>
-            <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto my-8">
-                <div className="p-6">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4 md:mb-6">
-                        <h2 className="text-2xl font-bold text-gray-900">
-                            {record ? 'Edit Vital Sign' : 'Add Vital Sign'}
-                        </h2>
-                        <button
-                            onClick={onClose}
-                            className="text-gray-400 hover:text-gray-600 text-2xl"
-                        >
-                            ×
-                        </button>
-                    </div>
+        <div className="bg-white rounded-lg shadow p-6">
+            <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-semibold text-gray-900">
+                    {record ? 'Edit Vital Sign' : 'Add Vital Sign'}
+                </h2>
+                <button
+                    onClick={onClose}
+                    className="text-gray-400 hover:text-gray-600"
+                >
+                    <X className="w-6 h-6" />
+                </button>
+            </div>
 
                     {errors.general && (
-                        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-                            <p className="text-sm text-red-800">{errors.general}</p>
-                        </div>
-                    )}
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="text-sm text-red-800">{errors.general}</p>
+                </div>
+            )}
 
-                    <form onSubmit={handleSubmit} className="space-y-6">
-                        <div className="grid grid-cols-2 gap-4">
+            <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
                                     Resident *
@@ -560,8 +562,6 @@ function VitalSignForm({ record, residents, onClose, onSuccess }) {
                             </button>
                         </div>
                     </form>
-                </div>
-            </div>
         </div>
     );
 }

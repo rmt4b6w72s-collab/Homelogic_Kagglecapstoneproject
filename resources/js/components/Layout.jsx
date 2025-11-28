@@ -31,7 +31,9 @@ import {
     Flame,
     ShieldCheck,
     Clock,
-    Shield
+    Shield,
+    DollarSign,
+    AlertTriangle
 } from 'lucide-react';
 import NotificationDropdown from './NotificationDropdown';
 import { useToastContext } from '../contexts/ToastContext';
@@ -93,6 +95,7 @@ const navigation = [
     },
     { name: 'Grocery Status', icon: ShoppingCart, path: '/grocery-status', children: null },
     { name: 'Fire Drills', icon: Flame, path: '/fire-drills', children: null },
+    { name: 'Incidents', icon: AlertTriangle, path: '/incidents', children: null },
     { 
         name: 'Pharmacy', 
         icon: Building2, 
@@ -101,6 +104,17 @@ const navigation = [
             { name: 'Suppliers', path: '/pharmacy/suppliers' },
             { name: 'Inventory', path: '/pharmacy/inventory' },
             { name: 'Orders', path: '/pharmacy/orders' },
+        ]
+    },
+    { 
+        name: 'Billing', 
+        icon: DollarSign, 
+        path: '/billing/expense-categories', 
+        children: [
+            { name: 'Expense Categories', path: '/billing/expense-categories' },
+            { name: 'Expenses', path: '/billing/expenses' },
+            { name: 'Invoices', path: '/billing/invoices' },
+            { name: 'Reports', path: '/billing/reports' },
         ]
     },
     { name: 'Reports', icon: FileText, path: '/reports', children: null },
@@ -165,6 +179,7 @@ const caregiverNavigation = [
     { name: 'Housekeeping', icon: Sparkles, path: '/housekeeping', children: null },
     { name: 'Grocery Status', icon: ShoppingCart, path: '/grocery-status', children: null },
     { name: 'Fire Drills', icon: Flame, path: '/fire-drills', children: null },
+    { name: 'Incidents', icon: AlertTriangle, path: '/incidents', children: null },
     { name: 'Appointments', icon: Calendar, path: '/appointments', children: null },
     { name: 'Leave Requests', icon: CalendarClock, path: '/leave-requests', children: null },
 ];
@@ -404,19 +419,27 @@ export default function Layout() {
         // Super admins see everything, no filtering needed
         if (!isSuperAdmin) {
             // First filter by module access
-            if (currentUser?.enabled_modules) {
+            // Ensure enabled_modules is an array
+            const enabledModules = Array.isArray(currentUser?.enabled_modules) 
+                ? currentUser.enabled_modules 
+                : [];
+            if (enabledModules.length > 0) {
                 items = filterNavigationByModuleAccess(
                     items,
-                    currentUser.enabled_modules,
+                    enabledModules,
                     isSuperAdmin
                 );
             }
             
             // Then filter by permissions
-            if (currentUser?.permissions) {
+            // Ensure permissions is an array
+            const permissions = Array.isArray(currentUser?.permissions) 
+                ? currentUser.permissions 
+                : [];
+            if (permissions.length > 0) {
                 items = filterNavigationByPermissionAccess(
                     items,
-                    currentUser.permissions,
+                    permissions,
                     isSuperAdmin
                 );
             }

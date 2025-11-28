@@ -239,15 +239,15 @@ export default function FacilityPermissions({ facilityId, facilityName, onBack }
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-2 border-b">
+        <nav className="flex flex-wrap gap-2 rounded-2xl bg-white p-2 shadow-sm ring-1 ring-gray-100">
           {/* Only show Module Access tab for super admins */}
           {isSuperAdmin && (
             <button
               onClick={() => setActiveTab('modules')}
-              className={`px-4 py-2 font-medium transition-all duration-200 ${
+              className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition ${
                 activeTab === 'modules'
-                  ? 'text-[var(--theme-primary)] border-b-2 border-[var(--theme-primary)] font-semibold'
-                  : 'text-gray-600 hover:text-[var(--theme-primary)]'
+                  ? 'bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] shadow-sm'
+                  : 'text-gray-600 hover:bg-gray-50'
               }`}
             >
               Module Access
@@ -255,25 +255,25 @@ export default function FacilityPermissions({ facilityId, facilityName, onBack }
           )}
           <button
             onClick={() => setActiveTab('admin')}
-            className={`px-4 py-2 font-medium transition-all duration-200 ${
+            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition ${
               activeTab === 'admin'
-                ? 'text-[var(--theme-primary)] border-b-2 border-[var(--theme-primary)] font-semibold'
-                : 'text-gray-600 hover:text-[var(--theme-primary)]'
+                ? 'bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] shadow-sm'
+                : 'text-gray-600 hover:bg-gray-50'
             }`}
           >
             Admin Permissions
           </button>
           <button
             onClick={() => setActiveTab('caregiver')}
-            className={`px-4 py-2 font-medium transition-all duration-200 ${
+            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition ${
               activeTab === 'caregiver'
-                ? 'text-[var(--theme-primary)] border-b-2 border-[var(--theme-primary)] font-semibold'
-                : 'text-gray-600 hover:text-[var(--theme-primary)]'
+                ? 'bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] shadow-sm'
+                : 'text-gray-600 hover:bg-gray-50'
             }`}
           >
             Caregiver Permissions
           </button>
-        </div>
+        </nav>
       </div>
 
       {/* Content */}

@@ -18,6 +18,7 @@ import {
     Filler
 } from 'chart.js';
 import SectionCard from '../components/SectionCard';
+import EmptyState from '../components/ui/EmptyState';
 
 ChartJS.register(
     CategoryScale,
@@ -508,10 +509,12 @@ export default function SleepPatterns() {
 
                 {/* Empty State */}
                 {!residentId && (
-                    <div className="bg-white rounded-lg shadow p-12 text-center">
-                        <HelpCircle className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                        <p className="text-gray-700 text-lg font-semibold mb-2">Select a resident</p>
-                        <p className="text-gray-500">Select a branch and resident to view sleep patterns</p>
+                    <div className="bg-white rounded-xl shadow-sm p-6">
+                        <EmptyState
+                            icon={HelpCircle}
+                            title="Select a resident"
+                            description="Select a branch and resident to view sleep patterns"
+                        />
                     </div>
                 )}
 
@@ -566,7 +569,7 @@ export default function SleepPatterns() {
                                 <button 
                                     onClick={handleDownloadSleepData}
                                     disabled={!patternData?.daily_data || patternData.daily_data.length === 0}
-                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="px-4 py-2 bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] rounded-lg hover:bg-[var(--theme-primary-hover)] transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     <Download className="w-4 h-4" />
                                     Download Sleep Data
@@ -575,7 +578,7 @@ export default function SleepPatterns() {
                         </div>
 
                         {/* Sleep Pattern Preview */}
-                        <div className="bg-white rounded-lg shadow p-6 mb-6">
+                        <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
                             <div className="flex items-center justify-between mb-4">
                                 <h3 className="text-lg font-semibold text-gray-900">Sleep Pattern Preview</h3>
                                 <div className="flex items-center gap-4">
@@ -684,7 +687,7 @@ export default function SleepPatterns() {
                         ) : patternData && (patternData.daily_data && patternData.daily_data.length > 0) ? (
                             <>
                                 {/* Main Chart */}
-                                <div className="bg-white rounded-lg shadow p-6 mb-6">
+                                <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
                                     <div className="flex items-center justify-between mb-4">
                                         <h3 className="text-lg font-semibold text-gray-900">
                                             Sleep Patterns for {selectedResident?.first_name} {selectedResident?.last_name}
@@ -708,21 +711,21 @@ export default function SleepPatterns() {
 
                                 {/* Monthly Summary */}
                                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                                    <div className="bg-white rounded-lg shadow p-6">
+                                    <div className="bg-white rounded-xl shadow-sm p-6">
                                         <p className="text-sm text-gray-600 mb-1">Total Awake Hours</p>
                                         <p className="text-3xl font-bold text-blue-600">
                                             {patternData.pattern?.total_awake_hours ?? 
                                                 (patternData.daily_data ? toNumber(patternData.daily_data.reduce((sum, d) => sum + toNumber(d.awake_hours), 0)).toFixed(1) : 0)}
                                         </p>
                                     </div>
-                                    <div className="bg-white rounded-lg shadow p-6">
+                                    <div className="bg-white rounded-xl shadow-sm p-6">
                                         <p className="text-sm text-gray-600 mb-1">Total Sleep Hours</p>
                                         <p className="text-3xl font-bold text-purple-600">
                                             {patternData.pattern?.total_sleep_hours ?? 
                                                 (patternData.daily_data ? toNumber(patternData.daily_data.reduce((sum, d) => sum + toNumber(d.sleep_hours), 0)).toFixed(1) : 0)}
                                         </p>
                                     </div>
-                                    <div className="bg-white rounded-lg shadow p-6">
+                                    <div className="bg-white rounded-xl shadow-sm p-6">
                                         <p className="text-sm text-gray-600 mb-1">Avg. Sleep Hours / Day</p>
                                         <p className="text-3xl font-bold text-green-600">
                                             {patternData.pattern?.avg_sleep_hours ?? 
@@ -731,7 +734,7 @@ export default function SleepPatterns() {
                                                     : 0)}
                                         </p>
                                     </div>
-                                    <div className="bg-white rounded-lg shadow p-6">
+                                    <div className="bg-white rounded-xl shadow-sm p-6">
                                         <p className="text-sm text-gray-600 mb-1">Days With Records</p>
                                         <p className="text-3xl font-bold text-gray-900">
                                             {patternData.pattern?.days_with_records ?? 
@@ -741,7 +744,7 @@ export default function SleepPatterns() {
                                 </div>
 
                                 {/* Sleep Quality Indicators */}
-                                <div className="bg-white rounded-lg shadow p-6 mb-6">
+                                <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
                                     <h3 className="text-lg font-semibold text-gray-900 mb-4">Sleep Quality Indicators</h3>
                                     <div className="mb-4">
                                         <div className="flex items-center justify-between mb-2">
@@ -787,7 +790,7 @@ export default function SleepPatterns() {
 
                                 {/* Pattern Analysis */}
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                                    <div className="bg-white rounded-lg shadow p-6">
+                                    <div className="bg-white rounded-xl shadow-sm p-6">
                                         <p className="text-sm text-gray-600 mb-2">Common Sleep Time</p>
                                         <p className="text-2xl font-bold text-blue-600">
                                             {patternData.pattern?.common_sleep_time 
@@ -802,7 +805,7 @@ export default function SleepPatterns() {
                                                 : 'N/A'}
                                         </p>
                                     </div>
-                                    <div className="bg-white rounded-lg shadow p-6">
+                                    <div className="bg-white rounded-xl shadow-sm p-6">
                                         <p className="text-sm text-gray-600 mb-2">Common Wake Time</p>
                                         <p className="text-2xl font-bold text-orange-600">
                                             {patternData.pattern?.common_wake_time 
@@ -817,7 +820,7 @@ export default function SleepPatterns() {
                                                 : 'N/A'}
                                         </p>
                                     </div>
-                                    <div className="bg-white rounded-lg shadow p-6">
+                                    <div className="bg-white rounded-xl shadow-sm p-6">
                                         <p className="text-sm text-gray-600 mb-2">Sleep Quality</p>
                                         <p className="text-2xl font-bold text-purple-600">
                                             {patternData.pattern?.sleep_quality_score || 'N/A'}
@@ -828,7 +831,7 @@ export default function SleepPatterns() {
 
                                 {/* Key Observations */}
                                 {patternData.key_observations && patternData.key_observations.length > 0 && (
-                                    <div className="bg-white rounded-lg shadow p-6">
+                                    <div className="bg-white rounded-xl shadow-sm p-6">
                                         <h3 className="text-lg font-semibold text-gray-900 mb-4">Key Observations</h3>
                                         <ul className="space-y-2">
                                             {patternData.key_observations.map((obs, idx) => (
@@ -842,10 +845,12 @@ export default function SleepPatterns() {
                                 )}
                             </>
                         ) : residentId && !isLoading && patternData && (!patternData.daily_data || patternData.daily_data.length === 0) ? (
-                            <div className="bg-white rounded-lg shadow p-12 text-center">
-                                <Moon className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                                <p className="text-gray-700 text-lg font-semibold mb-2">No sleep data found</p>
-                                <p className="text-gray-500">No sleep records found for {selectedResident?.first_name} {selectedResident?.last_name} in {months[month - 1]} {year}</p>
+                            <div className="bg-white rounded-xl shadow-sm p-6">
+                                <EmptyState
+                                    icon={Moon}
+                                    title="No sleep data found"
+                                    description={`No sleep records found for ${selectedResident?.first_name} ${selectedResident?.last_name} in ${months[month - 1]} ${year}`}
+                                />
                             </div>
                         ) : residentId && !isLoading && !patternData ? (
                             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">

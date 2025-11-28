@@ -120,13 +120,13 @@ export default function Modal({
                 {/* Modal */}
                 <DialogPrimitive.Content
                     ref={modalContentRef}
-                    className={`fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-2xl shadow-xl w-full z-50 ${sizeClasses[size]} ${className}`}
+                    className={`fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-2xl shadow-xl w-full max-h-[90vh] z-50 overflow-hidden flex flex-col ${sizeClasses[size]} ${className}`}
                     onClick={(e) => e.stopPropagation()}
                 >
-                    <div ref={modalRef}>
+                    <div ref={modalRef} className="flex flex-col h-full max-h-[90vh]">
                         {/* Header */}
                         {(title || showCloseButton) && (
-                            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+                            <div className="flex items-center justify-between p-6 border-b border-gray-200 flex-shrink-0">
                                 {title && (
                                     <DialogPrimitive.Title
                                         className="text-xl font-semibold text-gray-900"
@@ -145,8 +145,8 @@ export default function Modal({
                             </div>
                         )}
 
-                        {/* Content */}
-                        <div className="p-6">
+                        {/* Content - scrollable */}
+                        <div className="p-6 overflow-y-auto flex-1">
                             {children}
                         </div>
                     </div>

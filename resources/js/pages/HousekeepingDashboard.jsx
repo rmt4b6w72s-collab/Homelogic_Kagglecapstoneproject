@@ -57,6 +57,7 @@ export default function HousekeepingDashboard() {
             return response.data;
         },
         enabled: showCompletionReport,
+        staleTime: 60 * 1000, // Cache for 1 minute - reports don't change as frequently
     });
 
     const summary = data?.summary ?? { total: 0, completed: 0, skipped: 0, pending: 0, required_missing: 0 };
@@ -65,19 +66,25 @@ export default function HousekeepingDashboard() {
 
     return (
         <div className="space-y-6">
-            <header className="rounded-3xl bg-gradient-to-r from-emerald-600 via-emerald-500 to-emerald-400 p-6 text-white shadow-lg">
+            <header 
+                className="rounded-3xl p-6 text-white shadow-lg" 
+                style={{ 
+                    background: 'linear-gradient(to right, var(--theme-primary), var(--theme-primary-light), var(--theme-primary))'
+                }}
+            >
                 <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div>
-                        <p className="text-sm font-semibold uppercase tracking-wide text-emerald-100">Operations Overview</p>
+                        <p className="text-sm font-semibold uppercase tracking-wide" style={{ color: 'var(--theme-text-on-primary)' }}>Operations Overview</p>
                         <h1 className="text-3xl font-semibold">Housekeeping Dashboard</h1>
-                        <p className="mt-2 max-w-2xl text-sm text-emerald-100">
+                        <p className="mt-2 max-w-2xl text-sm" style={{ color: 'var(--theme-text-on-primary)' }}>
                             Monitor the daily checklist, confirm float accountability, and close any pending or skipped chores before shift change.
                         </p>
                     </div>
                     <button
                         type="button"
                         onClick={() => refetch()}
-                        className="inline-flex items-center gap-2 rounded-2xl bg-white px-4 py-2 text-sm font-semibold text-emerald-600 shadow-inner transition hover:bg-emerald-50"
+                        className="inline-flex items-center gap-2 rounded-2xl bg-white px-4 py-2 text-sm font-semibold shadow-inner transition-colors hover:bg-[var(--theme-primary-bg-light)]"
+                        style={{ color: 'var(--theme-primary)' }}
                     >
                         <RefreshCcw className={`h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
                         Refresh
@@ -89,7 +96,7 @@ export default function HousekeepingDashboard() {
                 <label className="text-sm font-semibold text-gray-700">
                     Checklist Date
                     <div className="mt-2 flex items-center gap-3 rounded-2xl border border-gray-200 px-4 py-2">
-                        <CalendarDays className="h-5 w-5 text-emerald-500" />
+                        <CalendarDays className="h-5 w-5" style={{ color: 'var(--theme-primary)' }} />
                         <input
                             type="date"
                             value={selectedDate}
@@ -103,7 +110,8 @@ export default function HousekeepingDashboard() {
                     <select
                         value={areaId}
                         onChange={(event) => setAreaId(event.target.value)}
-                        className="mt-2 w-full rounded-2xl border border-gray-200 px-4 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+                        className="mt-2 w-full rounded-2xl border border-gray-200 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:border-[var(--theme-primary)]"
+                        style={{ '--tw-ring-color': 'var(--theme-primary-bg)' }}
                     >
                         <option value="">All areas</option>
                         {areas.map((area) => (
@@ -118,7 +126,8 @@ export default function HousekeepingDashboard() {
                     <select
                         value={status}
                         onChange={(event) => setStatus(event.target.value)}
-                        className="mt-2 w-full rounded-2xl border border-gray-200 px-4 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+                        className="mt-2 w-full rounded-2xl border border-gray-200 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:border-[var(--theme-primary)]"
+                        style={{ '--tw-ring-color': 'var(--theme-primary-bg)' }}
                     >
                         {statusOptions.map((option) => (
                             <option key={option.value} value={option.value}>
@@ -182,7 +191,7 @@ export default function HousekeepingDashboard() {
                                         <td className="px-4 py-3">
                                             <div className="font-medium text-gray-900">{row.task}</div>
                                             {row.required ? (
-                                                <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700">
+                                                <span className="mt-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold" style={{ backgroundColor: 'var(--theme-primary-bg)', color: 'var(--theme-primary)' }}>
                                                     <ShieldCheck className="h-3 w-3" />
                                                     Required
                                                 </span>
@@ -215,13 +224,14 @@ export default function HousekeepingDashboard() {
             <section className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-gray-100">
                 <div className="flex items-center justify-between mb-4">
                     <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                        <FileText className="h-5 w-5 text-emerald-600" />
+                        <FileText className="h-5 w-5" style={{ color: 'var(--theme-primary)' }} />
                         Task Completion Report
                     </h2>
                     <button
                         type="button"
                         onClick={() => setShowCompletionReport(!showCompletionReport)}
-                        className="text-sm font-medium text-emerald-600 hover:text-emerald-700"
+                        className="text-sm font-medium transition-colors hover:text-[var(--theme-primary-hover)]"
+                        style={{ color: 'var(--theme-primary)' }}
                     >
                         {showCompletionReport ? 'Hide Report' : 'Show Report'}
                     </button>
@@ -236,7 +246,10 @@ export default function HousekeepingDashboard() {
                                     type="date"
                                     value={reportDateFrom}
                                     onChange={(e) => setReportDateFrom(e.target.value)}
-                                    className="mt-2 w-full rounded-2xl border border-gray-200 px-4 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+                                    className="mt-2 w-full rounded-2xl border border-gray-200 px-4 py-2 text-sm focus:outline-none focus:ring-2"
+                                    style={{ '--tw-ring-color': 'var(--theme-primary-bg)' }}
+                                    onFocus={(e) => e.currentTarget.style.borderColor = 'var(--theme-primary)'}
+                                    onBlur={(e) => e.currentTarget.style.borderColor = ''}
                                 />
                             </label>
                             <label className="text-sm font-semibold text-gray-700">
@@ -245,14 +258,17 @@ export default function HousekeepingDashboard() {
                                     type="date"
                                     value={reportDateTo}
                                     onChange={(e) => setReportDateTo(e.target.value)}
-                                    className="mt-2 w-full rounded-2xl border border-gray-200 px-4 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+                                    className="mt-2 w-full rounded-2xl border border-gray-200 px-4 py-2 text-sm focus:outline-none focus:ring-2"
+                                    style={{ '--tw-ring-color': 'var(--theme-primary-bg)' }}
+                                    onFocus={(e) => e.currentTarget.style.borderColor = 'var(--theme-primary)'}
+                                    onBlur={(e) => e.currentTarget.style.borderColor = ''}
                                 />
                             </label>
                         </div>
 
                         {reportLoading ? (
                             <div className="flex items-center justify-center py-12 text-sm text-gray-500">
-                                <div className="h-6 w-6 animate-spin rounded-full border-2 border-emerald-200 border-t-emerald-600"></div>
+                                <div className="h-6 w-6 animate-spin rounded-full border-2" style={{ borderColor: 'var(--theme-primary-bg)', borderTopColor: 'var(--theme-primary)' }}></div>
                                 <span className="ml-3">Loading report...</span>
                             </div>
                         ) : completionReport?.records?.length > 0 ? (
@@ -335,15 +351,25 @@ export default function HousekeepingDashboard() {
 }
 
 function SummaryCard({ label, value, subtext, tone = 'default', icon }) {
-    const toneClasses = {
-        default: 'bg-white text-gray-700',
-        success: 'bg-emerald-50 text-emerald-700',
-        warning: 'bg-amber-50 text-amber-700',
-        danger: 'bg-rose-50 text-rose-700',
-        muted: 'bg-gray-50 text-gray-600',
+    const getToneStyles = (tone) => {
+        switch (tone) {
+            case 'success':
+                return { backgroundColor: 'var(--theme-primary-bg)', color: 'var(--theme-primary)' };
+            case 'warning':
+                return { backgroundColor: 'rgba(251, 191, 36, 0.1)', color: 'rgb(180, 83, 9)' };
+            case 'danger':
+                return { backgroundColor: 'rgba(244, 63, 94, 0.1)', color: 'rgb(190, 18, 60)' };
+            case 'muted':
+                return { backgroundColor: 'rgb(249, 250, 251)', color: 'rgb(75, 85, 99)' };
+            default:
+                return { backgroundColor: 'white', color: 'rgb(55, 65, 81)' };
+        }
     };
+    
+    const styles = getToneStyles(tone);
+    
     return (
-        <div className={`rounded-3xl border border-gray-100 p-4 shadow-sm ${toneClasses[tone]}`}>
+        <div className="rounded-3xl border border-gray-100 p-4 shadow-sm" style={styles}>
             <div className="text-xs font-semibold uppercase tracking-wide text-gray-400">{label}</div>
             <div className="mt-2 flex items-center gap-2">
                 <span className="text-3xl font-semibold">{value}</span>
@@ -355,13 +381,39 @@ function SummaryCard({ label, value, subtext, tone = 'default', icon }) {
 }
 
 function StatusBadge({ status }) {
-    const map = {
-        completed: 'bg-emerald-50 text-emerald-700 ring-emerald-200',
-        skipped: 'bg-amber-50 text-amber-700 ring-amber-200',
-        pending: 'bg-gray-100 text-gray-600 ring-gray-200',
+    const getStatusStyles = (status) => {
+        switch (status) {
+            case 'completed':
+                return { 
+                    backgroundColor: 'var(--theme-primary-bg)', 
+                    color: 'var(--theme-primary)',
+                    borderColor: 'var(--theme-primary-bg)'
+                };
+            case 'skipped':
+                return { 
+                    backgroundColor: 'rgba(251, 191, 36, 0.1)', 
+                    color: 'rgb(180, 83, 9)',
+                    borderColor: 'rgba(251, 191, 36, 0.3)'
+                };
+            case 'pending':
+                return { 
+                    backgroundColor: 'rgb(243, 244, 246)', 
+                    color: 'rgb(75, 85, 99)',
+                    borderColor: 'rgb(229, 231, 235)'
+                };
+            default:
+                return { 
+                    backgroundColor: 'rgb(243, 244, 246)', 
+                    color: 'rgb(75, 85, 99)',
+                    borderColor: 'rgb(229, 231, 235)'
+                };
+        }
     };
+    
+    const styles = getStatusStyles(status);
+    
     return (
-        <span className={`inline-flex items-center rounded-full px-3 py-0.5 text-xs font-semibold ring-1 ${map[status] ?? 'bg-gray-100 text-gray-600 ring-gray-200'}`}>
+        <span className="inline-flex items-center rounded-full px-3 py-0.5 text-xs font-semibold ring-1" style={styles}>
             {status ? status.charAt(0).toUpperCase() + status.slice(1) : '—'}
         </span>
     );

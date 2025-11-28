@@ -44,8 +44,11 @@ export default function ModuleProtectedRoute({ children, module }) {
 
     // Check module access
     const enabledModules = currentUser?.enabled_modules || [];
-    const hasAccess = hasModuleAccess(location.pathname, enabledModules, false) || 
-                      enabledModules.includes(module);
+    const pathHasAccess = hasModuleAccess(location.pathname, enabledModules, currentUser?.role === 'super_admin');
+    const moduleHasAccess = enabledModules.includes(module);
+    
+    // Allow access if either path-based or module-based check passes
+    const hasAccess = pathHasAccess || moduleHasAccess;
 
     if (!hasAccess) {
         return (

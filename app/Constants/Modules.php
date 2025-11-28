@@ -19,6 +19,7 @@ class Modules
     public const EMPLOYEE_DOCUMENTS = 'employee_documents';
     public const GROCERY_STATUS = 'grocery_status';
     public const FIRE_DRILLS = 'fire_drills';
+    public const BILLING_EXPENSES = 'billing_expenses';
 
     /**
      * Get all available modules
@@ -41,6 +42,7 @@ class Modules
             self::EMPLOYEE_DOCUMENTS => 'Employee Documents',
             self::GROCERY_STATUS => 'Grocery Status',
             self::FIRE_DRILLS => 'Fire Drills',
+            self::BILLING_EXPENSES => 'Billing & Expenses',
         ];
     }
 

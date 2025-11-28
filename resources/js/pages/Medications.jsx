@@ -35,6 +35,7 @@ import {
     List,
     Grid,
     Building2,
+    X,
 } from 'lucide-react';
 import CalendarView from '../components/CalendarView';
 
@@ -579,6 +580,49 @@ export default function Medications() {
         );
     }
 
+    if (showForm) {
+        return (
+            <div>
+                <MedicationForm
+                    record={editing}
+                    residents={residentsData?.data || []}
+                    branches={branchesData?.data || []}
+                    currentUser={currentUser}
+                    isCaregiver={isCaregiver}
+                    onClose={() => {
+                        setShowForm(false);
+                        setEditing(null);
+                    }}
+                    onSuccess={() => {
+                        setShowForm(false);
+                        setEditing(null);
+                        queryClient.invalidateQueries(['medications']);
+                    }}
+                />
+            </div>
+        );
+    }
+
+    if (showAdminForm) {
+        return (
+            <div>
+                <MedicationAdministrationForm
+                    medication={data?.data?.find(m => m.id === selectedMedication)}
+                    onClose={() => {
+                        setShowAdminForm(false);
+                        setSelectedMedication(null);
+                    }}
+                    onSuccess={() => {
+                        setShowAdminForm(false);
+                        setSelectedMedication(null);
+                        queryClient.invalidateQueries(['medications']);
+                        queryClient.invalidateQueries(['medication-administrations']);
+                    }}
+                />
+            </div>
+        );
+    }
+
     return (
         <div>
             <div className="bg-white rounded-lg shadow p-6 mb-6">
@@ -821,43 +865,6 @@ export default function Medications() {
                     </div>
                 </div>
             )}
-
-            {/* Administration Form Modal */}
-            {showAdminForm && (
-                <MedicationAdministrationForm
-                    medication={data?.data?.find(m => m.id === selectedMedication)}
-                    onClose={() => {
-                        setShowAdminForm(false);
-                        setSelectedMedication(null);
-                    }}
-                    onSuccess={() => {
-                        setShowAdminForm(false);
-                        setSelectedMedication(null);
-                        queryClient.invalidateQueries(['medications']);
-                        queryClient.invalidateQueries(['medication-administrations']);
-                    }}
-                />
-            )}
-
-            {/* Medication Create/Edit Modal */}
-            {showForm && (
-                <MedicationForm
-                    record={editing}
-                    residents={residentsData?.data || []}
-                    branches={branchesData?.data || []}
-                    currentUser={currentUser}
-                    isCaregiver={isCaregiver}
-                    onClose={() => {
-                        setShowForm(false);
-                        setEditing(null);
-                    }}
-                    onSuccess={() => {
-                        setShowForm(false);
-                        setEditing(null);
-                        queryClient.invalidateQueries(['medications']);
-                    }}
-                />
-            )}
         </div>
     );
 }
@@ -905,26 +912,24 @@ function MedicationAdministrationForm({ medication, onClose, onSuccess }) {
     };
 
     return (
-        <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50 p-4" style={{ backgroundColor: 'rgba(0, 0, 0, 0.1)' }}>
-            <div className="bg-white rounded-lg shadow-xl max-w-lg w-full">
-                <div className="p-6">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4 md:mb-6">
-                        <h2 className="text-2xl font-bold text-gray-900">Record Medication Administration</h2>
-                        <button
-                            onClick={onClose}
-                            className="text-gray-400 hover:text-gray-600 text-2xl"
-                        >
-                            ×
-                        </button>
-                    </div>
+        <div className="bg-white rounded-lg shadow p-6">
+            <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-semibold text-gray-900">Record Medication Administration</h2>
+                <button
+                    onClick={onClose}
+                    className="text-gray-400 hover:text-gray-600"
+                >
+                    <X className="w-6 h-6" />
+                </button>
+            </div>
 
-                    {errors.general && (
-                        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-                            <p className="text-sm text-red-800">{errors.general}</p>
-                        </div>
-                    )}
+            {errors.general && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="text-sm text-red-800">{errors.general}</p>
+                </div>
+            )}
 
-                    <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4">
                         <div>
                             <label className="block text-sm font-medium text-gray-900 mb-2">
                                 Medication
@@ -1039,8 +1044,6 @@ function MedicationAdministrationForm({ medication, onClose, onSuccess }) {
                             </button>
                         </div>
                     </form>
-                </div>
-            </div>
         </div>
     );
 }
@@ -1202,22 +1205,22 @@ function MedicationForm({ record, residents, branches, currentUser, isCaregiver,
     };
 
     return (
-        <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto" style={{ backgroundColor: 'rgba(0, 0, 0, 0.1)' }}>
-            <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto my-8">
-                <div className="p-6">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4 md:mb-6">
-                        <h2 className="text-2xl font-bold text-gray-900">{record ? 'Edit Medication' : 'Add Medication'}</h2>
-                        <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl">×</button>
-                    </div>
+        <div className="bg-white rounded-lg shadow p-6">
+            <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-semibold text-gray-900">{record ? 'Edit Medication' : 'Add Medication'}</h2>
+                <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+                    <X className="w-6 h-6" />
+                </button>
+            </div>
 
-                    {errors.general && (
-                        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-                            <p className="text-sm text-red-800">{errors.general}</p>
-                        </div>
-                    )}
+            {errors.general && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="text-sm text-red-800">{errors.general}</p>
+                </div>
+            )}
 
-                    <form onSubmit={handleSubmit} className="space-y-6">
-                        <div className="grid grid-cols-2 gap-4">
+            <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-900 mb-2">Branch *</label>
                                 <select
@@ -1414,8 +1417,6 @@ function MedicationForm({ record, residents, branches, currentUser, isCaregiver,
                             </div>
                         </div>
                     </form>
-                </div>
-            </div>
         </div>
     );
 }

@@ -4,6 +4,7 @@ import api from '../services/api';
 import { Calendar, ClipboardList, Pill, User, ChevronLeft, ChevronRight, FileText } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import { formatPacificDate as formatDate, formatPacificTime as formatTime } from '../utils/pacificTime';
+import EmptyState from '../components/ui/EmptyState';
 
 const statusOptions = [
     { value: '', label: 'All statuses' },
@@ -126,7 +127,7 @@ export default function MedicationHistory() {
 
     return (
         <div className="space-y-6">
-            <div className="bg-white rounded-lg shadow p-6">
+            <div className="bg-white rounded-xl shadow-sm p-6">
                 <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
                     <div>
                         <h2 className="text-xl font-semibold text-gray-900 mb-2">Medication Administration History</h2>
@@ -203,7 +204,7 @@ export default function MedicationHistory() {
                 </div>
             </div>
 
-            <div className="bg-white rounded-lg shadow overflow-hidden">
+            <div className="bg-white rounded-lg shadow-sm overflow-hidden">
                 {isLoading ? (
                     <div className="py-12 text-center">
                         <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--theme-primary)]"></div>
@@ -214,14 +215,11 @@ export default function MedicationHistory() {
                         {error.message || 'Unable to load medication history.'}
                     </div>
                 ) : history.length === 0 ? (
-                    <div className="py-12 text-center">
-                        <Pill className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                        <p className="text-gray-600 text-lg font-medium">No medication administrations found</p>
-                        <p className="text-gray-500 text-sm mt-2">
-                            Adjust the filters to broaden your search or verify that medication administrations have been recorded for
-                            this resident.
-                        </p>
-                    </div>
+                    <EmptyState
+                        icon={Pill}
+                        title="No medication administrations found"
+                        description="Adjust the filters to broaden your search or verify that medication administrations have been recorded for this resident."
+                    />
                 ) : (
                     <>
                         <div className="overflow-x-auto">

@@ -2,11 +2,12 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
-import { Search, Users, Plus, Edit, XCircle, CheckCircle, Filter, Eye } from 'lucide-react';
+import { Search, Users, Plus, Edit, XCircle, CheckCircle, Filter, Eye, X } from 'lucide-react';
 import Select from '../components/ui/radix/Select';
 import ScrollReveal from '../components/ui/ScrollReveal';
 import Tooltip from '../components/ui/Tooltip';
 import TooltipIcon from '../components/ui/TooltipIcon';
+import EmptyState from '../components/ui/EmptyState';
 
 export default function Residents() {
     const navigate = useNavigate();
@@ -173,7 +174,7 @@ export default function Residents() {
                             className={`p-1.5 rounded-lg transition-all duration-200 border-2 shadow-md hover:shadow-lg transform hover:scale-105 ${
                                 resident.is_active 
                                     ? 'bg-amber-500 text-white hover:bg-amber-600 border-amber-600' 
-                                    : 'bg-green-500 text-white hover:bg-green-600 border-green-600'
+                                    : 'bg-green-600 text-white hover:bg-green-700 border-green-600'
                             }`}
                             title={resident.is_active ? 'Deactivate' : 'Activate'}
                         >
@@ -235,17 +236,29 @@ export default function Residents() {
         );
     };
 
-    const renderResidentsEmptyState = (title, description, IconComponent = Users) => (
-        <div className="bg-white rounded-lg shadow p-12 text-center">
-            <IconComponent className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600 text-lg font-medium">{title}</p>
-            <p className="text-gray-500 text-sm mt-2">{description}</p>
-        </div>
-    );
+    if (showForm) {
+        return (
+            <div>
+                <ResidentForm
+                    record={editing}
+                    branches={branchesData?.data || []}
+                    onClose={() => {
+                        setShowForm(false);
+                        setEditing(null);
+                    }}
+                    onSuccess={() => {
+                        setShowForm(false);
+                        setEditing(null);
+                        queryClient.invalidateQueries(['residents']);
+                    }}
+                />
+            </div>
+        );
+    }
 
     return (
         <div>
-            <div className="bg-white rounded-lg shadow p-6 mb-6">
+            <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
                 <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
                     <div>
                         <h2 className="text-xl font-semibold text-gray-900 mb-2">All Residents</h2>
@@ -333,10 +346,13 @@ export default function Residents() {
                                     {activeResidents.map(renderResidentCard)}
                                 </div>
                             ) : (
-                                renderResidentsEmptyState(
-                                    'No active residents found',
-                                    'Try adjusting your filters or add a new resident.'
-                                )
+                                <div className="bg-white rounded-xl shadow-sm p-6">
+                                    <EmptyState
+                                        icon={Users}
+                                        title="No active residents found"
+                                        description="Try adjusting your filters or add a new resident."
+                                    />
+                                </div>
                             )}
                         </div>
                     )}
@@ -352,32 +368,17 @@ export default function Residents() {
                                     {inactiveResidents.map(renderResidentCard)}
                                 </div>
                             ) : (
-                                renderResidentsEmptyState(
-                                    'No deactivated residents found',
-                                    'Deactivated residents will appear here when available.',
-                                    XCircle
-                                )
+                                <div className="bg-white rounded-xl shadow-sm p-6">
+                                    <EmptyState
+                                        icon={XCircle}
+                                        title="No deactivated residents found"
+                                        description="Deactivated residents will appear here when available."
+                                    />
+                                </div>
                             )}
                         </div>
                     )}
                 </>
-            )}
-
-            {/* Create/Edit Form Modal */}
-            {showForm && (
-                <ResidentForm
-                    record={editing}
-                    branches={branchesData?.data || []}
-                    onClose={() => {
-                        setShowForm(false);
-                        setEditing(null);
-                    }}
-                    onSuccess={() => {
-                        setShowForm(false);
-                        setEditing(null);
-                        queryClient.invalidateQueries(['residents']);
-                    }}
-                />
             )}
         </div>
     );
@@ -753,20 +754,18 @@ function ResidentForm({ record, branches, onClose, onSuccess }) {
     };
 
     return (
-        <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto" style={{ backgroundColor: 'rgba(0, 0, 0, 0.1)' }}>
-            <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto my-8">
-                <div className="p-6">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4 md:mb-6">
-                        <h2 className="text-2xl font-bold text-gray-900">
-                            {record ? 'Edit Resident' : 'Add Resident'}
-                        </h2>
-                        <button
-                            onClick={onClose}
-                            className="text-gray-400 hover:text-gray-600 text-2xl"
-                        >
-                            ×
-                        </button>
-                    </div>
+        <div className="bg-white rounded-lg shadow p-6">
+            <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-semibold text-gray-900">
+                    {record ? 'Edit Resident' : 'Add Resident'}
+                </h2>
+                <button
+                    onClick={onClose}
+                    className="text-gray-400 hover:text-gray-600"
+                >
+                    <X className="w-6 h-6" />
+                </button>
+            </div>
 
                     {successMessage && (
                         <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
@@ -1096,8 +1095,6 @@ function ResidentForm({ record, branches, onClose, onSuccess }) {
                             </button>
                         </div>
                     </form>
-                </div>
-            </div>
         </div>
     );
 }

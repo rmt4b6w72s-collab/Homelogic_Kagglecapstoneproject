@@ -7,7 +7,6 @@ import {
     Shield, MapPin, Award, Clock, Building2, Upload, X, Eye, EyeOff
 } from 'lucide-react';
 import { useToastContext } from '../contexts/ToastContext';
-import Tabs, { TabsList, TabsTrigger, TabsContent } from '../components/ui/radix/Tabs';
 
 // Shared form state context
 const FormContext = React.createContext();
@@ -145,7 +144,7 @@ function PersonalInfoTab() {
                             <button
                                 type="button"
                                 onClick={handleRemoveImage}
-                                className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                                className="absolute top-0 right-0 bg-red-600 text-white rounded-full p-1 hover:bg-red-700 transition-colors"
                                 title="Remove image"
                             >
                                 <X className="w-4 h-4" />
@@ -715,43 +714,43 @@ function UserCreateContent({
             )}
 
             {/* Tabs */}
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="bg-white rounded-lg shadow">
+            <div className="bg-white rounded-lg shadow">
                 <div className="p-6 pb-0">
-                    <TabsList className="w-full justify-start bg-transparent border-b border-gray-200 p-0 h-auto">
+                    <nav className="flex flex-wrap gap-2 rounded-2xl bg-white p-2 shadow-sm ring-1 ring-gray-100">
                         {tabs.map((tab) => {
                             const Icon = tab.icon;
                             return (
-                                <TabsTrigger
+                                <button
                                     key={tab.id}
-                                    value={tab.id}
-                                    className="flex items-center gap-2 whitespace-nowrap data-[state=active]:border-b-2 data-[state=active]:border-[var(--theme-primary)] rounded-none"
+                                    onClick={() => setActiveTab(tab.id)}
+                                    className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition whitespace-nowrap ${
+                                        activeTab === tab.id
+                                            ? 'bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] shadow-sm'
+                                            : 'text-gray-600 hover:bg-gray-50'
+                                    }`}
                                 >
                                     <Icon className="w-4 h-4" />
                                     <span>{tab.label}</span>
-                                </TabsTrigger>
+                                </button>
                             );
                         })}
-                    </TabsList>
+                    </nav>
                 </div>
 
                 {/* Tab Content */}
                 <div className="p-6">
-                    <TabsContent value="personal">
-                        <PersonalInfoTab />
-                    </TabsContent>
-                    <TabsContent value="employment">
+                    {activeTab === 'personal' && <PersonalInfoTab />}
+                    {activeTab === 'employment' && (
                         <EmploymentTab
                             roles={roles}
                             branches={branches}
                             facilities={facilities}
                             isSuperAdmin={isSuperAdmin}
                         />
-                    </TabsContent>
-                    <TabsContent value="security">
-                        <SecurityTab isEditing={false} />
-                    </TabsContent>
+                    )}
+                    {activeTab === 'security' && <SecurityTab isEditing={false} />}
                 </div>
-            </Tabs>
+            </div>
         </div>
     );
 }

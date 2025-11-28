@@ -54,6 +54,11 @@ import SuperAdminDashboard from './pages/SuperAdminDashboard';
 import SuperAdminSettings from './pages/SuperAdminSettings';
 import FacilityRegistrations from './pages/FacilityRegistrations';
 import Permissions from './pages/Permissions';
+import ExpenseCategories from './pages/ExpenseCategories';
+import Expenses from './pages/Expenses';
+import BillingInvoices from './pages/BillingInvoices';
+import ExpenseReports from './pages/reports/ExpenseReports';
+import Incidents from './pages/Incidents';
 
 // Report sub-pages
 import ChartReports from './pages/reports/ChartReports';
@@ -105,9 +110,14 @@ function App() {
                 <Route path="medication-deliveries" element={<MedicationDeliveries />} />
                 <Route path="grocery-status" element={<GroceryStatus />} />
                 <Route path="fire-drills" element={<FireDrills />} />
+                <Route path="incidents" element={<ModuleProtectedRoute module="incidents"><Incidents /></ModuleProtectedRoute>} />
                 <Route path="pharmacy/suppliers" element={<PharmacySuppliers />} />
                 <Route path="pharmacy/inventory" element={<PharmacyInventory />} />
                 <Route path="pharmacy/orders" element={<PharmacyOrders />} />
+                <Route path="billing/expense-categories" element={<ExpenseCategories />} />
+                <Route path="billing/expenses" element={<Expenses />} />
+                <Route path="billing/invoices" element={<BillingInvoices />} />
+                <Route path="billing/reports" element={<ExpenseReports />} />
                 <Route path="housekeeping" element={<Housekeeping />} />
                 <Route path="housekeeping/dashboard" element={<HousekeepingDashboard />} />
                 <Route path="housekeeping/schedule" element={<HousekeepingSchedule />} />

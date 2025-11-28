@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Search, Command, ArrowRight, Clock, FileText, Users, Calendar, Heart, Pill, Moon, ClipboardList, Building2, Settings } from 'lucide-react';
+import { Search, Command, ArrowRight, Clock, FileText, Users, Calendar, Heart, Pill, Moon, ClipboardList, Building2, Settings, AlertTriangle } from 'lucide-react';
 
 const COMMANDS = [
     { id: 'dashboard', label: 'Dashboard', path: '/dashboard', icon: Command, category: 'Navigation' },
@@ -10,6 +10,7 @@ const COMMANDS = [
     { id: 'appointments', label: 'Appointments', path: '/appointments', icon: Calendar, category: 'Care' },
     { id: 'assessments', label: 'Assessments', path: '/assessments', icon: ClipboardList, category: 'Care' },
     { id: 'sleep', label: 'Sleep Records', path: '/sleep', icon: Moon, category: 'Care' },
+    { id: 'incidents', label: 'Incidents', path: '/incidents', icon: AlertTriangle, category: 'Care' },
     { id: 'reports', label: 'Reports', path: '/reports', icon: FileText, category: 'Reports' },
     { id: 'facilities', label: 'Facilities', path: '/administration/facilities', icon: Building2, category: 'Administration' },
     { id: 'users', label: 'Users', path: '/administration/users', icon: Users, category: 'Administration' },

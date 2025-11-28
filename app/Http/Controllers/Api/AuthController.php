@@ -70,11 +70,46 @@ class AuthController extends Controller
             Auth::login($user);
         } else {
             // Single facility or no facility - use normal authentication
-            if (!Auth::attempt($credentials)) {
+            // Try to find the user first to verify they exist
+            $user = \App\Models\User::where('email', $credentials['email'])->first();
+            
+            if (!$user) {
+                \Log::warning('Login attempt failed - user not found', [
+                    'email' => $credentials['email'],
+                    'ip' => $request->ip(),
+                ]);
                 return response()->json([
                     'message' => 'Invalid credentials',
                 ], 401);
             }
+            
+            // Verify password manually
+            if (!Hash::check($credentials['password'], $user->password)) {
+                \Log::warning('Login attempt failed - invalid password', [
+                    'email' => $credentials['email'],
+                    'user_id' => $user->id,
+                    'ip' => $request->ip(),
+                ]);
+                return response()->json([
+                    'message' => 'Invalid credentials',
+                ], 401);
+            }
+            
+            // Check if user is active
+            if (!$user->is_active) {
+                return response()->json([
+                    'message' => 'This account has been deactivated. Please contact an administrator.',
+                ], 403);
+            }
+            
+            // Clear any existing session before logging in to avoid conflicts
+            if ($request->hasSession()) {
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+            }
+            
+            // Manually log in the user
+            Auth::login($user, true);
         }
 
         if (Auth::check()) {
@@ -239,6 +274,7 @@ class AuthController extends Controller
         $user->loadMissing([
             'assignedBranch.facility.modules',
             'facility.modules',
+            'roles.permissions', // Eager load roles and permissions to avoid N+1
         ]);
 
         $appTimezone = config('app.timezone', 'UTC');
@@ -282,7 +318,9 @@ class AuthController extends Controller
 
         // Include effective permissions for navigation checks
         // Get all permissions the user effectively has (considering facility overrides)
-        $payload['permissions'] = $this->getEffectivePermissions($user);
+        // Ensure it's always an array to prevent frontend errors
+        $permissions = $this->getEffectivePermissions($user);
+        $payload['permissions'] = is_array($permissions) ? $permissions : [];
 
         return $payload;
     }
@@ -297,82 +335,112 @@ class AuthController extends Controller
             return \App\Models\Permission::pluck('name')->toArray();
         }
 
-        $userRoles = $user->roles()->get();
+        // Use already loaded roles if available, otherwise load with permissions
+        $userRoles = $user->relationLoaded('roles') 
+            ? $user->roles 
+            : $user->roles()->with('permissions')->get();
         
         if ($userRoles->isEmpty()) {
             return [];
         }
 
-        // Get facility for module access checks
-        $facility = $user->facility ?? ($user->assignedBranch ? $user->assignedBranch->facility : null);
+        // Get facility for module access checks (use already loaded if available)
+        $facility = null;
+        if ($user->relationLoaded('facility') && $user->facility) {
+            $facility = $user->facility;
+        } elseif ($user->relationLoaded('assignedBranch') && $user->assignedBranch) {
+            if ($user->assignedBranch->relationLoaded('facility')) {
+                $facility = $user->assignedBranch->facility;
+            } else {
+                $facility = $user->assignedBranch->facility;
+            }
+        } else {
+            $facility = $user->facility ?? ($user->assignedBranch ? $user->assignedBranch->facility : null);
+        }
         
-        // Get enabled modules for this facility
+        // Get enabled modules for this facility (use already loaded if available)
         $enabledModules = [];
         if ($facility) {
-            $enabledModules = $facility->modules()
-                ->where('is_enabled', true)
-                ->pluck('module')
-                ->toArray();
+            if ($facility->relationLoaded('modules')) {
+                $enabledModules = $facility->modules->where('is_enabled', true)->pluck('module')->toArray();
+            } else {
+                $enabledModules = $facility->modules()->where('is_enabled', true)->pluck('module')->toArray();
+            }
+        }
+
+        // Get ALL facility overrides at once to avoid N+1 queries
+        $allFacilityOverrides = collect();
+        if ($facility) {
+            $roleIds = $userRoles->pluck('id')->toArray();
+            $allFacilityOverrides = $facility->rolePermissions()
+                ->whereIn('role_id', $roleIds)
+                ->with('permission')
+                ->get()
+                ->groupBy('role_id')
+                ->map(function ($items) {
+                    return $items->keyBy(function ($item) {
+                        return $item->permission ? $item->permission->name : null;
+                    })->filter(function ($item) {
+                        return $item->permission !== null;
+                    });
+                });
         }
 
         // Get facility-specific overrides for user's roles
         $effectivePermissions = [];
         
+        // Pre-load module mapping for all permissions to avoid repeated calls
+        $permissionModuleMap = [];
+        
         foreach ($userRoles as $role) {
-            // Get global permissions for this role
-            $roleGlobalPermissions = $role->permissions()->pluck('name')->toArray();
+            // Get global permissions for this role (use already loaded if available)
+            $roleGlobalPermissions = $role->relationLoaded('permissions')
+                ? $role->permissions->pluck('name')->toArray()
+                : $role->permissions()->pluck('name')->toArray();
             
             // Get facility overrides for this role (if facility exists)
-            $facilityOverrides = collect();
-            if ($facility) {
-                $facilityOverrides = $facility->rolePermissions()
-                    ->where('role_id', $role->id)
-                    ->with('permission')
-                    ->get()
-                    ->keyBy(function ($item) {
-                        return $item->permission ? $item->permission->name : null;
-                    })
-                    ->filter(function ($item) {
-                        return $item->permission !== null;
-                    });
-            }
+            $roleFacilityOverrides = $allFacilityOverrides->get($role->id, collect());
 
             // Merge: facility overrides take precedence
             foreach ($roleGlobalPermissions as $permissionName) {
                 $isAllowed = true;
                 
-                if ($facilityOverrides->has($permissionName)) {
+                if ($roleFacilityOverrides->has($permissionName)) {
                     // Facility override exists - use it
-                    $isAllowed = $facilityOverrides[$permissionName]->is_allowed;
+                    $isAllowed = $roleFacilityOverrides[$permissionName]->is_allowed;
                 }
                 
                 if ($isAllowed) {
                     // Check if permission requires module access
-                    try {
-                        $module = \App\Helpers\ModulePermissionMapper::getModuleForPermission($permissionName);
-                        
-                        if ($module === null) {
-                            // Permission doesn't map to a module, allow it
-                            $effectivePermissions[] = $permissionName;
-                        } elseif ($facility && in_array($module, $enabledModules)) {
-                            // Module is enabled, allow permission
-                            $effectivePermissions[] = $permissionName;
+                    // Cache module mapping to avoid repeated calls
+                    if (!isset($permissionModuleMap[$permissionName])) {
+                        try {
+                            $permissionModuleMap[$permissionName] = \App\Helpers\ModulePermissionMapper::getModuleForPermission($permissionName);
+                        } catch (\Exception $e) {
+                            \Log::warning('ModulePermissionMapper error for permission: ' . $permissionName, [
+                                'error' => $e->getMessage(),
+                            ]);
+                            $permissionModuleMap[$permissionName] = null; // Allow permission if mapper fails
                         }
-                        // If module is disabled, don't add permission
-                    } catch (\Exception $e) {
-                        // If ModulePermissionMapper fails, allow the permission to prevent breaking the app
-                        \Log::warning('ModulePermissionMapper error for permission: ' . $permissionName, [
-                            'error' => $e->getMessage(),
-                        ]);
+                    }
+                    
+                    $module = $permissionModuleMap[$permissionName];
+                    
+                    if ($module === null) {
+                        // Permission doesn't map to a module, allow it
+                        $effectivePermissions[] = $permissionName;
+                    } elseif ($facility && in_array($module, $enabledModules)) {
+                        // Module is enabled, allow permission
                         $effectivePermissions[] = $permissionName;
                     }
+                    // If module is disabled, don't add permission
                 }
                 // If explicitly denied, don't add permission
             }
         }
 
-        // Remove duplicates
-        return collect($effectivePermissions)->unique()->values()->toArray();
+        // Remove duplicates and ensure it's a proper array
+        return array_values(array_unique($effectivePermissions));
     }
 
     /**
@@ -479,8 +547,12 @@ class AuthController extends Controller
                 'target' => $targetName,
             ]);
 
+            $maxDistanceFormatted = LocationService::MAX_LOGIN_DISTANCE_KM < 1 
+                ? (LocationService::MAX_LOGIN_DISTANCE_KM * 1000) . ' meters'
+                : LocationService::MAX_LOGIN_DISTANCE_KM . 'km';
+            
             return [
-                'message' => "You are too far from your assigned location ({$targetName}). You are {$formattedDistance} away, but must be within " . LocationService::MAX_LOGIN_DISTANCE_KM . "km to log in.",
+                'message' => "You are too far from your assigned location ({$targetName}). You are {$formattedDistance} away, but must be within {$maxDistanceFormatted} to log in.",
                 'distance' => $distanceKm,
             ];
         }

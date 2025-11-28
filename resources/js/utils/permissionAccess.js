@@ -26,8 +26,13 @@ export function hasPermissionAccess(path, userPermissions, isSuperAdmin) {
     return true;
   }
 
+  // Ensure userPermissions is an array
+  if (!Array.isArray(userPermissions)) {
+    userPermissions = [];
+  }
+
   // If no permissions provided, deny access
-  if (!userPermissions || userPermissions.length === 0) {
+  if (userPermissions.length === 0) {
     return false;
   }
 

@@ -8,9 +8,10 @@ return [
     |
     | The maximum distance (in kilometers) a caregiver can be from their
     | assigned branch or facility to log in.
+    | Default: 0.05 km (50 meters)
     |
     */
-    'max_login_distance_km' => env('MAX_LOGIN_DISTANCE_KM', 5),
+    'max_login_distance_km' => env('MAX_LOGIN_DISTANCE_KM', 0.05),
 
     /*
     |--------------------------------------------------------------------------

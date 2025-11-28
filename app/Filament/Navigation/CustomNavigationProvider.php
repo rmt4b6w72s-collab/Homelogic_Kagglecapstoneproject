@@ -170,7 +170,27 @@ class CustomNavigationProvider
                     })
                     ->sort(60),
 
-                // Housekeeping - Seventh item
+                // Incidents - Seventh item
+                NavigationItem::make('Incidents')
+                    ->icon('heroicon-o-exclamation-triangle')
+                    ->url(route('filament.admin.resources.incidents.index'))
+                    ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.resources.incidents.*'))
+                    ->visible(function (): bool {
+                        if (!auth()->check()) {
+                            return false;
+                        }
+                        $user = auth()->user();
+                        // Super admins bypass all checks
+                        if ($user->hasRole('super_admin')) {
+                            return true;
+                        }
+                        // Check both permission and module access
+                        return $user->hasPermission('view_incidents') && 
+                               $user->hasModuleAccess(\App\Constants\Modules::INCIDENTS);
+                    })
+                    ->sort(61),
+
+                // Housekeeping - Eighth item
                 NavigationItem::make('Housekeeping')
                     ->icon('heroicon-o-sparkles')
                     ->url(route('filament.admin.resources.cleaning-areas.index'))
@@ -204,7 +224,7 @@ class CustomNavigationProvider
                     })
                     ->sort(65),
 
-                // Fire Drills - Eighth item
+                // Fire Drills - Ninth item
                 NavigationItem::make('Fire Drills')
                     ->icon('heroicon-o-fire')
                     ->url(route('filament.admin.resources.fire-drills.index'))

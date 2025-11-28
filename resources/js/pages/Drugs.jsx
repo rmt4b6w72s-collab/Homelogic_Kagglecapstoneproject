@@ -10,6 +10,7 @@ import FormInput from '../components/forms/FormInput';
 import FormTextarea from '../components/forms/FormTextarea';
 import FormCheckbox from '../components/forms/FormCheckbox';
 import { useToastContext } from '../contexts/ToastContext';
+import EmptyState from '../components/ui/EmptyState';
 
 export default function Drugs() {
   const queryClient = useQueryClient();
@@ -49,7 +50,7 @@ export default function Drugs() {
 
   return (
     <div>
-      <div className="bg-white rounded-lg shadow p-6 mb-6">
+      <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
           <div>
             <h2 className="text-xl font-semibold text-gray-900 mb-2">Drugs Management</h2>
@@ -81,7 +82,7 @@ export default function Drugs() {
           <p className="mt-4 text-gray-600">Loading drugs...</p>
         </div>
       ) : (
-        <div className="bg-white rounded-lg shadow overflow-hidden">
+        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
@@ -130,7 +131,7 @@ export default function Drugs() {
                           </button>
                           <button
                             onClick={() => window.confirm('Delete drug?') && deleteMutation.mutate(drug.id)}
-                            className="p-2 bg-red-500 text-white hover:bg-red-600 rounded-lg transition-all duration-200 border-2 border-red-600 shadow-md hover:shadow-lg transform hover:scale-105"
+                            className="p-2 bg-red-600 text-white hover:bg-red-700 rounded-lg transition-all duration-200 border-2 border-red-600 shadow-md hover:shadow-lg transform hover:scale-105"
                             title="Delete"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -141,9 +142,12 @@ export default function Drugs() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="6" className="px-6 py-12 text-center">
-                      <Pill className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                      <p className="text-gray-600 text-lg font-medium">No drugs found</p>
+                    <td colSpan="6" className="px-6 py-12">
+                      <EmptyState
+                        icon={Pill}
+                        title="No drugs found"
+                        description="Add a new drug to get started."
+                      />
                     </td>
                   </tr>
                 )}

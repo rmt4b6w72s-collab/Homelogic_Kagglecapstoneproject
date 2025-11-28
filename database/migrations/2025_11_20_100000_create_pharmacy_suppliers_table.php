@@ -22,15 +22,8 @@ return new class extends Migration
             $table->string('phone')->nullable();
             $table->string('email')->nullable();
             $table->string('address')->nullable();
-            $table->string('city')->nullable();
-            $table->string('state', 2)->nullable();
-            $table->string('zip', 10)->nullable();
-            $table->string('fax')->nullable();
-            $table->string('license_number')->nullable();
             $table->text('notes')->nullable();
             $table->boolean('is_active')->default(true);
-            $table->decimal('default_discount', 5, 2)->nullable()->comment('Default discount percentage');
-            $table->integer('payment_terms_days')->default(30);
             $table->foreignId('created_by')->constrained('users')->onDelete('cascade');
             $table->timestamps();
             $table->softDeletes();

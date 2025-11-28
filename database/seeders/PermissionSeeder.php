@@ -98,6 +98,22 @@ class PermissionSeeder extends Seeder
             ['name' => 'view_notifications', 'group' => 'Notifications', 'description' => 'View notifications'],
             ['name' => 'manage_notifications', 'group' => 'Notifications', 'description' => 'Manage notification settings'],
             ['name' => 'send_notifications', 'group' => 'Notifications', 'description' => 'Send notifications to staff'],
+            
+            // Billing & Expenses
+            ['name' => 'view_expenses', 'group' => 'Billing & Expenses', 'description' => 'View expenses'],
+            ['name' => 'create_expenses', 'group' => 'Billing & Expenses', 'description' => 'Create expenses'],
+            ['name' => 'edit_expenses', 'group' => 'Billing & Expenses', 'description' => 'Edit expenses'],
+            ['name' => 'delete_expenses', 'group' => 'Billing & Expenses', 'description' => 'Delete expenses'],
+            ['name' => 'view_expense_categories', 'group' => 'Billing & Expenses', 'description' => 'View expense categories'],
+            ['name' => 'create_expense_categories', 'group' => 'Billing & Expenses', 'description' => 'Create expense categories'],
+            ['name' => 'edit_expense_categories', 'group' => 'Billing & Expenses', 'description' => 'Edit expense categories'],
+            ['name' => 'delete_expense_categories', 'group' => 'Billing & Expenses', 'description' => 'Delete expense categories'],
+            ['name' => 'view_billing_invoices', 'group' => 'Billing & Expenses', 'description' => 'View billing invoices'],
+            ['name' => 'create_billing_invoices', 'group' => 'Billing & Expenses', 'description' => 'Create billing invoices'],
+            ['name' => 'edit_billing_invoices', 'group' => 'Billing & Expenses', 'description' => 'Edit billing invoices'],
+            ['name' => 'delete_billing_invoices', 'group' => 'Billing & Expenses', 'description' => 'Delete billing invoices'],
+            ['name' => 'approve_expenses', 'group' => 'Billing & Expenses', 'description' => 'Approve expenses'],
+            ['name' => 'view_expense_reports', 'group' => 'Billing & Expenses', 'description' => 'View expense reports'],
         ];
 
         foreach ($permissions as $permission) {

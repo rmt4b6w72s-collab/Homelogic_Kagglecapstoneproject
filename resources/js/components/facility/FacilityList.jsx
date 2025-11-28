@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Building2, Search, Filter, Grid, List, Plus } from 'lucide-react';
 import FacilityCard from './FacilityCard';
+import EmptyState from '../ui/EmptyState';
 
 /**
  * FacilityList Component
@@ -159,25 +160,23 @@ export default function FacilityList({
 
             {/* Empty State */}
             {!isLoading && sortedFacilities.length === 0 && (
-                <div className="bg-white rounded-lg shadow p-12 text-center">
-                    <Building2 className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                        {searchTerm || filterStatus !== 'all' ? 'No facilities found' : 'No facilities yet'}
-                    </h3>
-                    <p className="text-gray-600 mb-6">
-                        {searchTerm || filterStatus !== 'all'
+                <div className="bg-white rounded-xl shadow-sm p-6">
+                    <EmptyState
+                        icon={Building2}
+                        title={searchTerm || filterStatus !== 'all' ? 'No facilities found' : 'No facilities yet'}
+                        description={searchTerm || filterStatus !== 'all'
                             ? 'Try adjusting your search or filters'
                             : 'Get started by creating your first facility'}
-                    </p>
-                    {onCreate && !searchTerm && filterStatus === 'all' && (
-                        <button
-                            onClick={onCreate}
-                            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors inline-flex items-center space-x-2"
-                        >
-                            <Plus className="w-5 h-5" />
-                            <span>Add First Facility</span>
-                        </button>
-                    )}
+                        action={onCreate && !searchTerm && filterStatus === 'all' ? (
+                            <button
+                                onClick={onCreate}
+                                className="px-6 py-3 bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] rounded-lg hover:bg-[var(--theme-primary-hover)] transition-colors inline-flex items-center space-x-2"
+                            >
+                                <Plus className="w-5 h-5" />
+                                <span>Add First Facility</span>
+                            </button>
+                        ) : null}
+                    />
                 </div>
             )}
 

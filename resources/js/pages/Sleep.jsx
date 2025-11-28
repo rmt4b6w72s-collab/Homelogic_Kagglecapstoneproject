@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../services/api';
-import { Moon, Plus, Search, Calendar, Clock, User, Edit, Trash2, Filter, ChevronDown } from 'lucide-react';
+import { Moon, Plus, Search, Calendar, Clock, User, Edit, Trash2, Filter, ChevronDown, X } from 'lucide-react';
 import { getLocalDateString } from '../utils/pacificTime';
 import CalendarComponent from '../components/ui/Calendar';
 
@@ -348,6 +348,30 @@ export default function Sleep() {
         }
     };
 
+    if (showForm) {
+        return (
+            <div>
+                <SleepRecordForm
+                    record={editingRecord}
+                    residents={residentOptions}
+                    isCaregiver={isCaregiver}
+                    caregiverBranchId={caregiverBranchId}
+                    caregiverBranchName={caregiverBranchName}
+                    onClose={() => {
+                        setShowForm(false);
+                        setEditingRecord(null);
+                    }}
+                    onSuccess={() => {
+                        setShowForm(false);
+                        setEditingRecord(null);
+                        queryClient.invalidateQueries(['sleep-records']);
+                        queryClient.invalidateQueries(['sleep-records-calendar']);
+                    }}
+                />
+            </div>
+        );
+    }
+
     return (
         <div>
             {/* Filters */}
@@ -559,27 +583,6 @@ export default function Sleep() {
                     )}
                 </div>
             )}
-
-            {/* Create/Edit Form Modal */}
-            {showForm && (
-                <SleepRecordForm
-                    record={editingRecord}
-                    residents={residentOptions}
-                    isCaregiver={isCaregiver}
-                    caregiverBranchId={caregiverBranchId}
-                    caregiverBranchName={caregiverBranchName}
-                    onClose={() => {
-                        setShowForm(false);
-                        setEditingRecord(null);
-                    }}
-                    onSuccess={() => {
-                        setShowForm(false);
-                        setEditingRecord(null);
-                        queryClient.invalidateQueries(['sleep-records']);
-                        queryClient.invalidateQueries(['sleep-records-calendar']);
-                    }}
-                />
-            )}
         </div>
     );
 }
@@ -677,22 +680,20 @@ function SleepRecordForm({ record, residents, isCaregiver, caregiverBranchId, ca
     };
 
     return (
-        <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50 p-4" style={{ backgroundColor: 'rgba(0, 0, 0, 0.1)' }}>
-            <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
-                <div className="p-6">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4 md:mb-6">
-                        <h2 className="text-2xl font-bold text-gray-900">
-                            {record ? 'Edit Sleep Record' : 'Add Sleep Record'}
-                        </h2>
-                        <button
-                            onClick={onClose}
-                            className="text-gray-400 hover:text-gray-600"
-                        >
-                            ×
-                        </button>
-                    </div>
+        <div className="bg-white rounded-lg shadow p-6">
+            <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-semibold text-gray-900">
+                    {record ? 'Edit Sleep Record' : 'Add Sleep Record'}
+                </h2>
+                <button
+                    onClick={onClose}
+                    className="text-gray-400 hover:text-gray-600"
+                >
+                    <X className="w-6 h-6" />
+                </button>
+            </div>
 
-                    {errors.general && (
+            {errors.general && (
                         <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
                             <p className="text-sm text-red-800">{errors.general}</p>
                         </div>
@@ -866,8 +867,6 @@ function SleepRecordForm({ record, residents, isCaregiver, caregiverBranchId, ca
                             </button>
                         </div>
                     </form>
-                </div>
-            </div>
         </div>
     );
 }

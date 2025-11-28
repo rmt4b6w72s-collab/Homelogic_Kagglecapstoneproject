@@ -10,7 +10,7 @@ class LocationService
     /**
      * Maximum allowed distance for login in kilometers
      */
-    public const MAX_LOGIN_DISTANCE_KM = 5;
+    public const MAX_LOGIN_DISTANCE_KM = 0.05; // 50 meters
 
     /**
      * Earth's radius in kilometers

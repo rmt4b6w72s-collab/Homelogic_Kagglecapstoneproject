@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../services/api';
-import { Flame, Plus, Search, Filter, Edit, Trash2, Calendar, Clock, CheckCircle, XCircle, AlertTriangle, List, Grid } from 'lucide-react';
+import { Flame, Plus, Search, Filter, Edit, Trash2, Calendar, Clock, CheckCircle, XCircle, AlertTriangle, List, Grid, X } from 'lucide-react';
 import SectionCard from '../components/SectionCard';
 import Card from '../components/Card';
 import CalendarView from '../components/CalendarView';
@@ -177,6 +177,24 @@ export default function FireDrills() {
             new Date(d.scheduled_date).toDateString() >= today
         ).slice(0, 3);
     }, [filteredDrills]);
+
+    if (showForm) {
+        return (
+            <div>
+                <FireDrillForm
+                    record={editing}
+                    branches={branches}
+                    isCaregiver={isCaregiver}
+                    caregiverBranchId={currentUser?.assigned_branch_id}
+                    onClose={handleCloseForm}
+                    onSuccess={() => {
+                        handleCloseForm();
+                        queryClient.invalidateQueries(['fire-drills']);
+                    }}
+                />
+            </div>
+        );
+    }
 
     return (
         <div>
@@ -474,7 +492,7 @@ export default function FireDrills() {
 
 function FireDrillForm({ record, branches, isCaregiver, caregiverBranchId, onClose, onSuccess }) {
     const [formData, setFormData] = useState({
-        branch_id: record?.branch_id || caregiverBranchId || '',
+        branch_id: record?.branch_id || caregiverBranchId || null,
         scheduled_date: record?.scheduled_date || new Date().toISOString().split('T')[0],
         scheduled_time: record?.scheduled_time || new Date().toTimeString().slice(0, 5),
         status: record?.status || 'scheduled',
@@ -516,22 +534,20 @@ function FireDrillForm({ record, branches, isCaregiver, caregiverBranchId, onClo
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-                <div className="p-6">
-                    <div className="flex items-center justify-between mb-6">
-                        <h2 className="text-xl font-semibold text-gray-900">
-                            {record ? 'Edit Fire Drill' : 'Schedule Fire Drill'}
-                        </h2>
-                        <button
-                            onClick={onClose}
-                            className="text-gray-400 hover:text-gray-600"
-                        >
-                            ×
-                        </button>
-                    </div>
+        <div className="bg-white rounded-lg shadow p-6">
+            <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-semibold text-gray-900">
+                    {record ? 'Edit Fire Drill' : 'Schedule Fire Drill'}
+                </h2>
+                <button
+                    onClick={onClose}
+                    className="text-gray-400 hover:text-gray-600"
+                >
+                    <X className="w-6 h-6" />
+                </button>
+            </div>
 
-                    <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4">
                         {errors.general && (
                             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
                                 {errors.general[0]}
@@ -626,8 +642,6 @@ function FireDrillForm({ record, branches, isCaregiver, caregiverBranchId, onClo
                             </button>
                         </div>
                     </form>
-                </div>
-            </div>
         </div>
     );
 }

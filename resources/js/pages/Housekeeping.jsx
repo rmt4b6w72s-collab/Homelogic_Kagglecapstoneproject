@@ -4,10 +4,16 @@ import { Sparkles, CalendarDays, RefreshCcw, CheckCircle2, XCircle, Loader2, Sti
 import api from '../services/api';
 import { getLocalDateString } from '../utils/pacificTime';
 
-const statusStyles = {
-    pending: 'bg-gray-100 text-gray-600 ring-gray-200',
-    completed: 'bg-emerald-100 text-emerald-700 ring-emerald-200',
-    skipped: 'bg-amber-100 text-amber-700 ring-amber-200',
+const getStatusStyles = (status) => {
+    switch (status) {
+        case 'completed':
+            return { backgroundColor: 'var(--theme-primary-bg)', color: 'var(--theme-primary)', borderColor: 'var(--theme-primary-bg)' };
+        case 'skipped':
+            return { backgroundColor: 'rgba(251, 191, 36, 0.1)', color: 'rgb(180, 83, 9)', borderColor: 'rgba(251, 191, 36, 0.3)' };
+        case 'pending':
+        default:
+            return { backgroundColor: 'rgb(243, 244, 246)', color: 'rgb(75, 85, 99)', borderColor: 'rgb(229, 231, 235)' };
+    }
 };
 
 export default function Housekeeping() {
@@ -23,6 +29,7 @@ export default function Housekeeping() {
             });
             return response.data;
         },
+        staleTime: 30 * 1000, // Cache for 30 seconds - checklist data changes frequently
         keepPreviousData: true,
     });
 
@@ -98,7 +105,7 @@ export default function Housekeeping() {
     };
 
     const renderTask = (task) => {
-        const badgeStyle = statusStyles[task.status] ?? statusStyles.pending;
+        const badgeStyles = getStatusStyles(task.status);
         const windowOk = isWithinWindow(task);
         const completedOnSelectedDate =
             Boolean(task.completed_at) && String(task.completed_at).slice(0, 10) === selectedDate;
@@ -110,7 +117,7 @@ export default function Housekeeping() {
                     <div>
                         <div className="flex items-center gap-3">
                             <h4 className="text-base font-semibold text-gray-900">{task.title}</h4>
-                            <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ${badgeStyle}`}>
+                            <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1" style={badgeStyles}>
                                 {task.status === 'pending' ? 'Pending' : task.status === 'completed' ? 'Completed' : 'Skipped'}
                             </span>
                         </div>
@@ -141,7 +148,8 @@ export default function Housekeeping() {
                             type="button"
                             disabled={disabled}
                             onClick={() => handleStatusUpdate(task.id, 'completed')}
-                            className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-emerald-300"
+                            className="inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[var(--theme-primary-hover)] disabled:cursor-not-allowed"
+                            style={{ backgroundColor: 'var(--theme-primary)' }}
                         >
                             {mutation.isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
                             Complete
@@ -163,18 +171,23 @@ export default function Housekeeping() {
 
     return (
         <div className="space-y-6">
-            <header className="rounded-3xl bg-gradient-to-r from-emerald-600 via-emerald-500 to-emerald-400 p-6 text-white shadow-lg">
+            <header 
+                className="rounded-3xl p-6 text-white shadow-lg" 
+                style={{ 
+                    background: 'linear-gradient(to right, var(--theme-primary), var(--theme-primary-light), var(--theme-primary))'
+                }}
+            >
                 <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div>
-                        <p className="text-sm font-medium uppercase tracking-wide text-emerald-100">Daily Operations</p>
+                        <p className="text-sm font-medium uppercase tracking-wide" style={{ color: 'var(--theme-text-on-primary)' }}>Daily Operations</p>
                         <h1 className="text-3xl font-semibold">Housekeeping Checklist</h1>
-                        <p className="mt-2 max-w-2xl text-sm text-emerald-50">
+                        <p className="mt-2 max-w-2xl text-sm" style={{ color: 'var(--theme-text-on-primary)' }}>
                             Track cleaning responsibilities across rooms, floats, and shifts. Mark tasks complete to keep the
                             log up to date.
                         </p>
                     </div>
                     <div className="flex flex-col items-end gap-3">
-                        <label className="text-xs uppercase tracking-wide text-emerald-100">Checklist Date</label>
+                        <label className="text-xs uppercase tracking-wide" style={{ color: 'var(--theme-text-on-primary)' }}>Checklist Date</label>
                         <div className="flex items-center gap-3 rounded-2xl bg-white/15 px-4 py-2 shadow-inner backdrop-blur">
                             <CalendarDays className="h-5 w-5 text-white" />
                             <input
@@ -219,7 +232,7 @@ export default function Housekeeping() {
                 </div>
             ) : areas.length === 0 ? (
                 <div className="rounded-3xl border border-dashed border-gray-200 bg-white p-12 text-center shadow-sm">
-                    <Sparkles className="mx-auto h-12 w-12 text-emerald-200" />
+                    <Sparkles className="mx-auto h-12 w-12" style={{ color: 'var(--theme-primary-bg)' }} />
                     <h3 className="mt-4 text-lg font-semibold text-gray-900">No cleaning areas configured</h3>
                     <p className="mt-2 text-sm text-gray-500">
                         Ask an administrator to configure cleaning areas for your branch so you can start tracking daily chores.
@@ -231,7 +244,7 @@ export default function Housekeeping() {
                         <div className="flex flex-col gap-4 border-b border-gray-100 pb-4 md:flex-row md:items-center md:justify-between">
                             <div>
                                 <div className="flex items-center gap-3">
-                                    <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
+                                    <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl" style={{ backgroundColor: 'var(--theme-primary-bg)', color: 'var(--theme-primary)' }}>
                                         <Sparkles className="h-5 w-5" />
                                     </span>
                                     <div>
@@ -266,7 +279,8 @@ export default function Housekeeping() {
                             onChange={(e) => setSkipNotesModal({ ...skipNotesModal, notes: e.target.value })}
                             placeholder="Enter reason for skipping..."
                             rows={4}
-                            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 bg-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+                            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:border-[var(--theme-primary)]"
+                            style={{ '--tw-ring-color': 'var(--theme-primary-bg)' }}
                             maxLength={1000}
                         />
                         <div className="mt-6 flex items-center justify-end gap-3">

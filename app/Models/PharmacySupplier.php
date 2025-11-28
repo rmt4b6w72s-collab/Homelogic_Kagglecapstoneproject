@@ -18,22 +18,13 @@ class PharmacySupplier extends Model
         'phone',
         'email',
         'address',
-        'city',
-        'state',
-        'zip',
-        'fax',
-        'license_number',
         'notes',
         'is_active',
-        'default_discount',
-        'payment_terms_days',
         'created_by',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
-        'default_discount' => 'decimal:2',
-        'payment_terms_days' => 'integer',
     ];
 
     // Relationships
@@ -61,13 +52,7 @@ class PharmacySupplier extends Model
     // Accessors
     public function getFullAddressAttribute(): string
     {
-        $parts = array_filter([
-            $this->address,
-            $this->city,
-            $this->state ? ($this->zip ? "{$this->state} {$this->zip}" : $this->state) : null,
-        ]);
-
-        return implode(', ', $parts) ?: '';
+        return $this->address ?: '';
     }
 }
 

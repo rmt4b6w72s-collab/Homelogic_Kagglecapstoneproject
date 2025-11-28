@@ -15,12 +15,15 @@ export default function ThemeWrapper({ children }) {
                 const response = await api.get('/user');
                 return response.data;
             } catch (err) {
-                console.error('Failed to fetch user for theme:', err);
+                // Don't log 401 errors - they're expected when not logged in
+                if (err.response?.status !== 401) {
+                    console.error('Failed to fetch user for theme:', err);
+                }
                 return null;
             }
         },
         staleTime: 5 * 60 * 1000, // Cache for 5 minutes
-        retry: 1,
+        retry: false, // Don't retry on 401 errors
     });
 
     // Fetch super admin theme if user is super admin

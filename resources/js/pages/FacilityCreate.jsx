@@ -8,7 +8,6 @@ import {
     AlertCircle, Eye, EyeOff
 } from 'lucide-react';
 import { useToastContext } from '../contexts/ToastContext';
-import Tabs, { TabsList, TabsTrigger, TabsContent } from '../components/ui/radix/Tabs';
 
 const AVAILABLE_MODULES = [
     { key: 'pharmacy', name: 'Pharmacy' },
@@ -797,41 +796,37 @@ function FacilityCreateContent({ navigate, showToast, queryClient, isSubmitting,
             </div>
 
             {/* Tabs */}
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="bg-white rounded-lg shadow">
+            <div className="bg-white rounded-lg shadow">
                 <div className="p-6 pb-0">
-                    <TabsList className="w-full justify-start bg-transparent border-b border-gray-200 p-0 h-auto">
+                    <nav className="flex flex-wrap gap-2 rounded-2xl bg-white p-2 shadow-sm ring-1 ring-gray-100">
                         {tabs.map((tab) => {
                             const Icon = tab.icon;
                             return (
-                                <TabsTrigger
+                                <button
                                     key={tab.id}
-                                    value={tab.id}
-                                    className="flex items-center gap-2 whitespace-nowrap data-[state=active]:border-b-2 data-[state=active]:border-[var(--theme-primary)] rounded-none"
+                                    onClick={() => setActiveTab(tab.id)}
+                                    className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition whitespace-nowrap ${
+                                        activeTab === tab.id
+                                            ? 'bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] shadow-sm'
+                                            : 'text-gray-600 hover:bg-gray-50'
+                                    }`}
                                 >
                                     <Icon className="w-4 h-4" />
                                     <span>{tab.label}</span>
-                                </TabsTrigger>
+                                </button>
                             );
                         })}
-                    </TabsList>
+                    </nav>
                 </div>
 
                 {/* Tab Content */}
                 <div className="p-6">
-                    <TabsContent value="overview">
-                        <OverviewTab />
-                    </TabsContent>
-                    <TabsContent value="branding">
-                        <BrandingTab />
-                    </TabsContent>
-                    <TabsContent value="modules">
-                        <ModulesTab />
-                    </TabsContent>
-                    <TabsContent value="owner">
-                        <OwnerAccountTab />
-                    </TabsContent>
+                    {activeTab === 'overview' && <OverviewTab />}
+                    {activeTab === 'branding' && <BrandingTab />}
+                    {activeTab === 'modules' && <ModulesTab />}
+                    {activeTab === 'owner' && <OwnerAccountTab />}
                 </div>
-            </Tabs>
+            </div>
         </div>
     );
 }

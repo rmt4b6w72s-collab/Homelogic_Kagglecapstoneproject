@@ -120,6 +120,22 @@ class ModulePermissionMapper
         'create_employee_documents' => Modules::EMPLOYEE_DOCUMENTS,
         'edit_employee_documents' => Modules::EMPLOYEE_DOCUMENTS,
         'delete_employee_documents' => Modules::EMPLOYEE_DOCUMENTS,
+        
+        // Billing & Expenses module
+        'view_expenses' => Modules::BILLING_EXPENSES,
+        'create_expenses' => Modules::BILLING_EXPENSES,
+        'edit_expenses' => Modules::BILLING_EXPENSES,
+        'delete_expenses' => Modules::BILLING_EXPENSES,
+        'view_expense_categories' => Modules::BILLING_EXPENSES,
+        'create_expense_categories' => Modules::BILLING_EXPENSES,
+        'edit_expense_categories' => Modules::BILLING_EXPENSES,
+        'delete_expense_categories' => Modules::BILLING_EXPENSES,
+        'view_billing_invoices' => Modules::BILLING_EXPENSES,
+        'create_billing_invoices' => Modules::BILLING_EXPENSES,
+        'edit_billing_invoices' => Modules::BILLING_EXPENSES,
+        'delete_billing_invoices' => Modules::BILLING_EXPENSES,
+        'approve_expenses' => Modules::BILLING_EXPENSES,
+        'view_expense_reports' => Modules::BILLING_EXPENSES,
     ];
 
     /**

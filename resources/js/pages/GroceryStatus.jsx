@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../services/api';
-import { ShoppingCart, Plus, Search, Filter, Edit, Trash2, Calendar, Clock, CheckCircle, AlertCircle, Package, List, Grid, TrendingUp } from 'lucide-react';
+import { ShoppingCart, Plus, Search, Filter, Edit, Trash2, Calendar, Clock, CheckCircle, AlertCircle, Package, List, Grid, TrendingUp, X } from 'lucide-react';
 import SectionCard from '../components/SectionCard';
 import Card from '../components/Card';
 import WeeklyCalendarView from '../components/WeeklyCalendarView';
@@ -190,6 +190,24 @@ export default function GroceryStatus() {
         const weekUpdates = updates.filter(u => u.week_start_date === currentWeekMonday);
         return weekUpdates.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0] || null;
     }, [updates, currentWeekMonday]);
+
+    if (showForm) {
+        return (
+            <div>
+                <GroceryStatusForm
+                    record={editing}
+                    branches={branches}
+                    isCaregiver={isCaregiver}
+                    caregiverBranchId={currentUser?.assigned_branch_id}
+                    onClose={handleCloseForm}
+                    onSuccess={() => {
+                        queryClient.invalidateQueries(['grocery-status-updates']);
+                        handleCloseForm();
+                    }}
+                />
+            </div>
+        );
+    }
 
     return (
         <div>
@@ -629,20 +647,6 @@ export default function GroceryStatus() {
                     </div>
                 )}
             </SectionCard>
-
-            {showForm && (
-                <GroceryStatusForm
-                    record={editing}
-                    branches={branches}
-                    isCaregiver={isCaregiver}
-                    caregiverBranchId={currentUser?.assigned_branch_id}
-                    onClose={handleCloseForm}
-                    onSuccess={() => {
-                        queryClient.invalidateQueries(['grocery-status-updates']);
-                        handleCloseForm();
-                    }}
-                />
-            )}
         </div>
     );
 }
@@ -658,7 +662,7 @@ function GroceryStatusForm({ record, branches, isCaregiver, caregiverBranchId, o
     };
 
     const [formData, setFormData] = useState({
-        branch_id: record?.branch_id || caregiverBranchId || '',
+        branch_id: record?.branch_id || caregiverBranchId || null,
         week_start_date: record?.week_start_date || getCurrentMonday(),
         status: record?.status || 'pending',
         items_needed: record?.items_needed || '',
@@ -697,20 +701,18 @@ function GroceryStatusForm({ record, branches, isCaregiver, caregiverBranchId, o
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-                <div className="p-6">
-                    <div className="flex items-center justify-between mb-6">
-                        <h2 className="text-xl font-semibold text-gray-900">
-                            {record ? 'Edit Grocery Status Update' : 'Add Grocery Status Update'}
-                        </h2>
-                        <button
-                            onClick={onClose}
-                            className="text-gray-400 hover:text-gray-600"
-                        >
-                            ×
-                        </button>
-                    </div>
+        <div className="bg-white rounded-lg shadow p-6">
+            <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-semibold text-gray-900">
+                    {record ? 'Edit Grocery Status Update' : 'Add Grocery Status Update'}
+                </h2>
+                <button
+                    onClick={onClose}
+                    className="text-gray-400 hover:text-gray-600"
+                >
+                    <X className="w-6 h-6" />
+                </button>
+            </div>
 
                     <form onSubmit={handleSubmit} className="space-y-4">
                         {errors.general && (
@@ -723,8 +725,8 @@ function GroceryStatusForm({ record, branches, isCaregiver, caregiverBranchId, o
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Branch *</label>
                                 <Select
-                                    value={formData.branch_id?.toString() || ''}
-                                    onValueChange={(value) => setFormData({ ...formData, branch_id: value })}
+                                    value={formData.branch_id?.toString() || undefined}
+                                    onValueChange={(value) => setFormData({ ...formData, branch_id: value ? parseInt(value) : null })}
                                     placeholder="Select Branch"
                                     options={branches.map(branch => ({
                                         value: branch.id.toString(),
@@ -819,8 +821,6 @@ function GroceryStatusForm({ record, branches, isCaregiver, caregiverBranchId, o
                             </button>
                         </div>
                     </form>
-                </div>
-            </div>
         </div>
     );
 }
