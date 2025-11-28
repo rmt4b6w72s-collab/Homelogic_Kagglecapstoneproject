@@ -174,14 +174,23 @@ class IncidentController extends BaseApiController
                     // Direct file upload
                     $file = $attachmentItem;
                     $fileType = $request->input("attachments.{$index}.file_type", 'photo');
-                } elseif (is_array($attachmentItem) && isset($attachmentItem['file']) && $attachmentItem['file'] instanceof \Illuminate\Http\UploadedFile) {
-                    // Nested structure: attachments[0][file]
-                    $file = $attachmentItem['file'];
-                    $fileType = $attachmentItem['file_type'] ?? $request->input("attachments.{$index}.file_type", 'photo');
+                } elseif (is_array($attachmentItem)) {
+                    // Check if 'file' key exists and is an UploadedFile
+                    if (isset($attachmentItem['file']) && $attachmentItem['file'] instanceof \Illuminate\Http\UploadedFile) {
+                        // Nested structure: attachments[0][file]
+                        $file = $attachmentItem['file'];
+                        $fileType = $attachmentItem['file_type'] ?? $request->input("attachments.{$index}.file_type", 'photo');
+                    } else {
+                        // Skip if file is not a valid UploadedFile
+                        continue;
+                    }
+                } else {
+                    // Skip if attachmentItem is neither UploadedFile nor array
+                    continue;
                 }
                 
                 // Process the file if we have a valid UploadedFile
-                if ($file && $file->isValid()) {
+                if ($file instanceof \Illuminate\Http\UploadedFile && $file->isValid()) {
                     $storedPath = $file->store('incident-attachments', 'public');
                     
                     IncidentAttachment::create([

@@ -10,6 +10,7 @@ use App\Models\Permission;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
 
 class FacilityPermissionController extends BaseApiController
 {
@@ -259,7 +260,14 @@ class FacilityPermissionController extends BaseApiController
             });
 
         // Get all permissions grouped by category
-        $allPermissions = Permission::orderBy('group')->orderBy('name')->get();
+        $query = Permission::query();
+        
+        // Check if 'group' column exists before ordering by it
+        if (Schema::hasColumn('permissions', 'group')) {
+            $query->orderBy('group');
+        }
+        
+        $allPermissions = $query->orderBy('name')->get();
         
         if ($allPermissions->isEmpty()) {
             return [
