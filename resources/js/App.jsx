@@ -84,7 +84,9 @@ const PublicStaffClockIn = lazy(() => import('./pages/public/PublicStaffClockIn'
 const StaffClock = lazy(() => import('./pages/StaffClock'));
 const StaffClockInsView = lazy(() => import('./pages/StaffClockInsView'));
 const ResidentSignOut = lazy(() => import('./pages/ResidentSignOut'));
+const ResidentSignOutsView = lazy(() => import('./pages/ResidentSignOutsView'));
 const Visitors = lazy(() => import('./pages/Visitors'));
+const VisitorsView = lazy(() => import('./pages/VisitorsView'));
 const CheckInDashboard = lazy(() => import('./pages/CheckInDashboard'));
 
 function App() {
@@ -145,7 +147,9 @@ function App() {
                 <Route path="staff/clock" element={<Suspense fallback={<PageLoader />}><StaffClock /></Suspense>} />
                 <Route path="staff/clock-ins" element={<Suspense fallback={<PageLoader />}><StaffClockInsView /></Suspense>} />
                 <Route path="residents/sign-out" element={<Suspense fallback={<PageLoader />}><ResidentSignOut /></Suspense>} />
+                <Route path="residents/sign-outs/view-all" element={<Suspense fallback={<PageLoader />}><ResidentSignOutsView /></Suspense>} />
                 <Route path="visitors" element={<Suspense fallback={<PageLoader />}><Visitors /></Suspense>} />
+                <Route path="visitors/view-all" element={<Suspense fallback={<PageLoader />}><VisitorsView /></Suspense>} />
                 <Route path="my-residents" element={<Suspense fallback={<PageLoader />}><MyResidentsPage /></Suspense>} />
                 <Route path="my-residents/:residentId" element={<Suspense fallback={<PageLoader />}><ResidentDetailPage /></Suspense>} />
 

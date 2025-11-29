@@ -17,8 +17,10 @@ import {
     Download,
     Filter,
     Search,
-    X
+    X,
+    Eye
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import SectionCard from '../components/SectionCard';
 import EmptyState from '../components/ui/EmptyState';
 import { getUserLocation } from '../utils/location';
@@ -68,6 +70,7 @@ const ProgressBar = ({ value, max, color = 'var(--theme-primary)', label }) => {
 
 export default function CheckInDashboard() {
     const queryClient = useQueryClient();
+    const navigate = useNavigate();
     const [refreshInterval, setRefreshInterval] = useState(30000); // 30 seconds
     
     // History filters
@@ -458,9 +461,18 @@ export default function CheckInDashboard() {
                             <p className="text-sm text-gray-600">Active staff members currently on duty</p>
                         </div>
                     </div>
-                    <span className="px-3 py-1 rounded-full text-sm font-semibold" style={{ backgroundColor: 'var(--theme-primary-bg)', color: 'var(--theme-primary)' }}>
-                        {activeClockIns?.length || 0}
-                    </span>
+                    <div className="flex items-center gap-3">
+                        <span className="px-3 py-1 rounded-full text-sm font-semibold" style={{ backgroundColor: 'var(--theme-primary-bg)', color: 'var(--theme-primary)' }}>
+                            {activeClockIns?.length || 0}
+                        </span>
+                        <button
+                            onClick={() => navigate('/app/staff/clock-ins')}
+                            className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                        >
+                            <Eye className="w-4 h-4" />
+                            View All
+                        </button>
+                    </div>
                 </div>
 
                 {isLoading ? (
@@ -564,9 +576,18 @@ export default function CheckInDashboard() {
                             <p className="text-sm text-gray-600">Residents currently signed out</p>
                         </div>
                     </div>
-                    <span className="px-3 py-1 rounded-full text-sm font-semibold" style={{ backgroundColor: 'var(--theme-primary-bg)', color: 'var(--theme-primary)' }}>
-                        {activeSignOuts?.length || 0}
-                    </span>
+                    <div className="flex items-center gap-3">
+                        <span className="px-3 py-1 rounded-full text-sm font-semibold" style={{ backgroundColor: 'var(--theme-primary-bg)', color: 'var(--theme-primary)' }}>
+                            {activeSignOuts?.length || 0}
+                        </span>
+                        <button
+                            onClick={() => navigate('/app/residents/sign-outs/view-all')}
+                            className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                        >
+                            <Eye className="w-4 h-4" />
+                            View All
+                        </button>
+                    </div>
                 </div>
 
                 {isLoading ? (
@@ -706,9 +727,18 @@ export default function CheckInDashboard() {
                             <p className="text-sm text-gray-600">Visitors currently checked in</p>
                         </div>
                     </div>
-                    <span className="px-3 py-1 rounded-full text-sm font-semibold" style={{ backgroundColor: 'var(--theme-primary-bg)', color: 'var(--theme-primary)' }}>
-                        {activeVisitors?.length || 0}
-                    </span>
+                    <div className="flex items-center gap-3">
+                        <span className="px-3 py-1 rounded-full text-sm font-semibold" style={{ backgroundColor: 'var(--theme-primary-bg)', color: 'var(--theme-primary)' }}>
+                            {activeVisitors?.length || 0}
+                        </span>
+                        <button
+                            onClick={() => navigate('/app/visitors/view-all')}
+                            className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                        >
+                            <Eye className="w-4 h-4" />
+                            View All
+                        </button>
+                    </div>
                 </div>
 
                 {isLoading ? (
