@@ -4,7 +4,10 @@ import publicApi from '../../services/publicApi';
 import { getUserLocation, isGeolocationSupported } from '../../utils/location';
 
 export default function PublicStaffClockIn() {
-    const [employeeIdentifier, setEmployeeIdentifier] = useState('');
+    // Load saved employee identifier from localStorage
+    const [employeeIdentifier, setEmployeeIdentifier] = useState(() => {
+        return localStorage.getItem('staff_clock_in_identifier') || '';
+    });
     const [clockPin, setClockPin] = useState('');
     const [needsPin, setNeedsPin] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -115,6 +118,15 @@ export default function PublicStaffClockIn() {
             setSuccess('Successfully clocked in!');
             setIsClockedIn(true);
             setCurrentStatus(response.data.clock_in);
+            
+            // Save employee identifier to localStorage for next time
+            if (employeeIdentifier) {
+                localStorage.setItem('staff_clock_in_identifier', employeeIdentifier);
+            }
+            
+            // Clear the input field after successful clock-in
+            setEmployeeIdentifier('');
+            setClockPin('');
         } catch (err) {
             const errorMsg = err.response?.data?.message || 'Failed to clock in';
             setError(errorMsg);
@@ -155,6 +167,15 @@ export default function PublicStaffClockIn() {
             setSuccess('Successfully clocked out!');
             setIsClockedIn(false);
             setCurrentStatus(null);
+            
+            // Save employee identifier to localStorage for next time
+            if (employeeIdentifier) {
+                localStorage.setItem('staff_clock_in_identifier', employeeIdentifier);
+            }
+            
+            // Clear the input field after successful clock-out
+            setEmployeeIdentifier('');
+            setClockPin('');
         } catch (err) {
             const errorMsg = err.response?.data?.message || 'Failed to clock out';
             setError(errorMsg);
