@@ -180,3 +180,4 @@ class ResidentSignOutSeeder extends Seeder
     }
 }
 
+

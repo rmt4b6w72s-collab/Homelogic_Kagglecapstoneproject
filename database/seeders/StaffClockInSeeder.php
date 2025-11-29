@@ -155,3 +155,4 @@ class StaffClockInSeeder extends Seeder
     }
 }
 
+

@@ -118,6 +118,55 @@ class StaffClockInController extends Controller
     }
 
     /**
+     * Clock out a staff member (admin only)
+     */
+    public function clockOutStaff(Request $request, $clockInId): JsonResponse
+    {
+        $user = $request->user();
+        
+        if (!$user) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        // Check if user is admin
+        $isAdmin = $user->role === 'super_admin' || $user->role === 'administrator' || $user->hasRole('administrator');
+        
+        if (!$isAdmin) {
+            return response()->json(['message' => 'Unauthorized. Admin access required.'], 403);
+        }
+
+        $clockIn = StaffClockIn::findOrFail($clockInId);
+
+        if (!$clockIn->is_active) {
+            return response()->json([
+                'message' => 'Staff member is not currently clocked in',
+            ], 422);
+        }
+
+        $validated = $request->validate([
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
+            'notes' => 'nullable|string|max:1000',
+        ]);
+
+        // Clock out
+        $clockIn->clockOut(
+            $validated['latitude'] ?? null,
+            $validated['longitude'] ?? null
+        );
+
+        if (isset($validated['notes'])) {
+            $clockIn->notes = ($clockIn->notes ? $clockIn->notes . "\n" : '') . '[Admin clock-out] ' . $validated['notes'];
+            $clockIn->save();
+        }
+
+        return response()->json([
+            'message' => 'Successfully clocked out staff member',
+            'clock_in' => $clockIn->fresh()->load(['staff', 'branch', 'facility']),
+        ]);
+    }
+
+    /**
      * Get current active clock-in
      */
     public function current(Request $request): JsonResponse

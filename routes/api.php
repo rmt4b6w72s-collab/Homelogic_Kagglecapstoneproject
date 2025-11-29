@@ -263,6 +263,7 @@ Route::prefix('v1')->middleware([\App\Http\Middleware\SetFacilityContext::class]
     Route::prefix('staff')->middleware('auth:sanctum')->group(function () {
         Route::post('/clock-in', [StaffClockInController::class, 'clockIn']);
         Route::post('/clock-out', [StaffClockInController::class, 'clockOut']);
+        Route::post('/clock-ins/{id}/clock-out', [StaffClockInController::class, 'clockOutStaff']);
         Route::get('/clock-ins/current', [StaffClockInController::class, 'current']);
         Route::get('/clock-ins', [StaffClockInController::class, 'index']);
         Route::get('/clock-ins/stats', [StaffClockInController::class, 'stats']);

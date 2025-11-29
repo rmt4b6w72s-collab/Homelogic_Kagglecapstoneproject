@@ -130,3 +130,4 @@ After logging in, navigate to:
 - All clock-ins are logged with location coordinates
 - Clock PIN is optional - if not set, no PIN required for public clock-in
 
+

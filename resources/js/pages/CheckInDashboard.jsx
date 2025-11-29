@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import SectionCard from '../components/SectionCard';
 import EmptyState from '../components/ui/EmptyState';
+import { getUserLocation } from '../utils/location';
 
 // Helper function to calculate time difference in minutes
 const getTimeDifference = (startTime) => {
@@ -204,6 +205,70 @@ export default function CheckInDashboard() {
             queryClient.invalidateQueries(['residents-sign-outs-history']);
         }
     };
+
+    // Staff clock-out mutation (for admins to clock out other staff)
+    const staffClockOutMutation = useMutation({
+        mutationFn: async ({ clockInId }) => {
+            // Try to get location (optional for clock-out)
+            let location = null;
+            try {
+                location = await getUserLocation({
+                    timeout: 5000,
+                    maximumAge: 0,
+                    enableHighAccuracy: true,
+                });
+            } catch (err) {
+                console.warn('Could not get location for clock-out:', err);
+            }
+
+            const payload = {};
+            if (location) {
+                payload.latitude = location.latitude;
+                payload.longitude = location.longitude;
+            }
+
+            // Use admin endpoint to clock out specific staff member
+            return api.post(`/staff/clock-ins/${clockInId}/clock-out`, payload);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries(['staff-clock-ins-active']);
+            queryClient.invalidateQueries(['staff-clock-ins']);
+            alert('Successfully clocked out');
+        },
+        onError: (err) => {
+            alert(err.response?.data?.message || 'Failed to clock out');
+        },
+    });
+
+    // Resident sign-in mutation
+    const residentSignInMutation = useMutation({
+        mutationFn: async ({ residentId }) => {
+            return api.post(`/residents/${residentId}/sign-in`);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries(['residents-sign-outs-active']);
+            queryClient.invalidateQueries(['residents-sign-outs']);
+            alert('Resident signed in successfully');
+        },
+        onError: (err) => {
+            alert(err.response?.data?.message || 'Failed to sign in resident');
+        },
+    });
+
+    // Visitor check-out mutation
+    const visitorCheckOutMutation = useMutation({
+        mutationFn: async ({ visitorId }) => {
+            return api.post(`/visitors/${visitorId}/check-out`);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries(['visitors-active']);
+            queryClient.invalidateQueries(['visitors']);
+            alert('Visitor checked out successfully');
+        },
+        onError: (err) => {
+            alert(err.response?.data?.message || 'Failed to check out visitor');
+        },
+    });
 
     const handleExportHistory = () => {
         if (!historyData?.data || historyData.data.length === 0) {
@@ -457,6 +522,28 @@ export default function CheckInDashboard() {
                                                 )}
                                             </div>
                                         </div>
+                                        <button
+                                            onClick={() => {
+                                                if (window.confirm(`Clock out ${clockIn.staff?.name || 'this staff member'}?`)) {
+                                                    staffClockOutMutation.mutate({ clockInId: clockIn.id });
+                                                }
+                                            }}
+                                            disabled={staffClockOutMutation.isPending}
+                                            className="px-4 py-2 rounded-lg text-sm font-semibold text-white transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                                            style={{ backgroundColor: 'var(--theme-primary)' }}
+                                        >
+                                            {staffClockOutMutation.isPending ? (
+                                                <>
+                                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                                    Clocking out...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <XCircle className="w-4 h-4" />
+                                                    Clock Out
+                                                </>
+                                            )}
+                                        </button>
                                     </div>
                                 </div>
                             );
@@ -577,6 +664,28 @@ export default function CheckInDashboard() {
                                                 )}
                                             </div>
                                         </div>
+                                        <button
+                                            onClick={() => {
+                                                if (window.confirm(`Sign in ${signOut.resident?.name || 'this resident'}?`)) {
+                                                    residentSignInMutation.mutate({ residentId: signOut.resident_id });
+                                                }
+                                            }}
+                                            disabled={residentSignInMutation.isPending}
+                                            className="px-4 py-2 rounded-lg text-sm font-semibold text-white transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                                            style={{ backgroundColor: 'var(--theme-primary)' }}
+                                        >
+                                            {residentSignInMutation.isPending ? (
+                                                <>
+                                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                                    Signing in...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <CheckCircle className="w-4 h-4" />
+                                                    Sign In
+                                                </>
+                                            )}
+                                        </button>
                                     </div>
                                 </div>
                             );
@@ -682,6 +791,28 @@ export default function CheckInDashboard() {
                                                 )}
                                             </div>
                                         </div>
+                                        <button
+                                            onClick={() => {
+                                                if (window.confirm(`Check out ${visitor.first_name} ${visitor.last_name}?`)) {
+                                                    visitorCheckOutMutation.mutate({ visitorId: visitor.id });
+                                                }
+                                            }}
+                                            disabled={visitorCheckOutMutation.isPending}
+                                            className="px-4 py-2 rounded-lg text-sm font-semibold text-white transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                                            style={{ backgroundColor: 'var(--theme-primary)' }}
+                                        >
+                                            {visitorCheckOutMutation.isPending ? (
+                                                <>
+                                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                                    Checking out...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <XCircle className="w-4 h-4" />
+                                                    Check Out
+                                                </>
+                                            )}
+                                        </button>
                                     </div>
                                 </div>
                             );
