@@ -466,7 +466,7 @@ export default function CheckInDashboard() {
                             {activeClockIns?.length || 0}
                         </span>
                         <button
-                            onClick={() => navigate('/app/staff/clock-ins')}
+                            onClick={() => navigate('/staff/clock-ins')}
                             className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
                         >
                             <Eye className="w-4 h-4" />
@@ -581,7 +581,7 @@ export default function CheckInDashboard() {
                             {activeSignOuts?.length || 0}
                         </span>
                         <button
-                            onClick={() => navigate('/app/residents/sign-outs/view-all')}
+                            onClick={() => navigate('/residents/sign-outs/view-all')}
                             className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
                         >
                             <Eye className="w-4 h-4" />
@@ -732,7 +732,7 @@ export default function CheckInDashboard() {
                             {activeVisitors?.length || 0}
                         </span>
                         <button
-                            onClick={() => navigate('/app/visitors/view-all')}
+                            onClick={() => navigate('/visitors/view-all')}
                             className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
                         >
                             <Eye className="w-4 h-4" />
