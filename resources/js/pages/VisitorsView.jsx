@@ -40,10 +40,25 @@ export default function VisitorsView() {
             if (search) params.search = search;
             
             const response = await api.get('/visitors', { params });
-            // Handle paginated response
+            console.log('Visitors API Response:', response.data);
+            // Handle paginated response - Laravel pagination returns data in 'data' key and meta separately
+            if (response.data && Array.isArray(response.data)) {
+                // If it's a direct array (non-paginated)
+                return {
+                    data: response.data,
+                    meta: { total: response.data.length, from: 1, to: response.data.length, last_page: 1, current_page: 1 },
+                };
+            }
+            // Standard Laravel pagination format
             return {
-                data: response.data?.data || response.data || [],
-                meta: response.data?.meta || null,
+                data: response.data?.data || [],
+                meta: {
+                    total: response.data?.total || 0,
+                    from: response.data?.from || 0,
+                    to: response.data?.to || 0,
+                    last_page: response.data?.last_page || 1,
+                    current_page: response.data?.current_page || 1,
+                },
             };
         },
         retry: 1,
