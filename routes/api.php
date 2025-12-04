@@ -39,6 +39,7 @@ use App\Http\Controllers\Api\PublicStaffClockInController;
 use App\Http\Controllers\Api\ResidentSignOutController;
 use App\Http\Controllers\Api\VisitorController;
 use App\Http\Controllers\Api\FacilitySettingsController;
+use App\Http\Controllers\Api\DatabaseManagementController;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Session\Middleware\StartSession;
@@ -293,6 +294,15 @@ Route::prefix('v1')->middleware([\App\Http\Middleware\SetFacilityContext::class]
     Route::prefix('facilities')->middleware('auth:sanctum')->group(function () {
         Route::get('/{facility}/settings/{category}', [FacilitySettingsController::class, 'show']);
         Route::put('/{facility}/settings/{category}', [FacilitySettingsController::class, 'update']);
+    });
+
+    // Database Management
+    Route::prefix('database')->middleware('auth:sanctum')->group(function () {
+        Route::get('/stats', [DatabaseManagementController::class, 'stats']);
+        Route::post('/backup', [DatabaseManagementController::class, 'createBackup']);
+        Route::get('/backups', [DatabaseManagementController::class, 'recentBackups']);
+        Route::post('/restore', [DatabaseManagementController::class, 'restoreBackup']);
+        Route::post('/refresh', [DatabaseManagementController::class, 'refreshData']);
     });
 });
 

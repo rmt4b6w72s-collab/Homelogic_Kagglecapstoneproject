@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Database } from 'lucide-react';
+import { Database, Download, Upload, RefreshCw, HardDrive, Archive } from 'lucide-react';
 import api from '../../services/api';
 import { useToastContext } from '../../contexts/ToastContext';
 
@@ -78,6 +78,85 @@ export default function DatabaseSettings() {
     saveMutation.mutate(values);
   };
 
+  // Fetch database statistics
+  const { data: stats, isLoading: statsLoading, refetch: refetchStats } = useQuery({
+    queryKey: ['database-stats'],
+    queryFn: async () => {
+      const response = await api.get('/database/stats');
+      return response.data?.data || {};
+    },
+  });
+
+  // Fetch recent backups
+  const { data: backups, isLoading: backupsLoading, refetch: refetchBackups } = useQuery({
+    queryKey: ['database-backups'],
+    queryFn: async () => {
+      const response = await api.get('/database/backups');
+      return response.data?.data || [];
+    },
+  });
+
+  // Create backup mutation
+  const createBackupMutation = useMutation({
+    mutationFn: async () => {
+      const response = await api.post('/database/backup');
+      return response.data;
+    },
+    onSuccess: (data) => {
+      toast.showToast('Backup created successfully', 'success');
+      refetchStats();
+      refetchBackups();
+    },
+    onError: (error) => {
+      toast.showToast(
+        error.response?.data?.message || 'Failed to create backup',
+        'error'
+      );
+    },
+  });
+
+  // Restore backup mutation
+  const restoreBackupMutation = useMutation({
+    mutationFn: async (filename) => {
+      const response = await api.post('/database/restore', { filename });
+      return response.data;
+    },
+    onSuccess: () => {
+      toast.showToast('Backup restored successfully', 'success');
+      refetchStats();
+    },
+    onError: (error) => {
+      toast.showToast(
+        error.response?.data?.message || 'Failed to restore backup',
+        'error'
+      );
+    },
+  });
+
+  // Refresh data mutation
+  const refreshDataMutation = useMutation({
+    mutationFn: async () => {
+      const response = await api.post('/database/refresh');
+      return response.data;
+    },
+    onSuccess: () => {
+      toast.showToast('Data refreshed and cache cleared successfully', 'success');
+      refetchStats();
+    },
+    onError: (error) => {
+      toast.showToast(
+        error.response?.data?.message || 'Failed to refresh data',
+        'error'
+      );
+    },
+  });
+
+  const handleRestore = (filename) => {
+    if (window.confirm(`Are you sure you want to restore from ${filename}? This will overwrite the current database.`)) {
+      restoreBackupMutation.mutate(filename);
+    }
+  };
+
   if (!facilityId) {
     return (
       <div className="p-6 bg-white rounded-xl shadow-sm">
@@ -109,6 +188,157 @@ export default function DatabaseSettings() {
           </p>
         </div>
       </div>
+
+      {/* Data Management Overview */}
+      <div className="bg-white rounded-xl shadow-sm p-6">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">Data Management Overview</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="p-4 border border-gray-200 rounded-lg">
+            <div className="flex items-center justify-between mb-2">
+              <Database className="w-5 h-5 text-gray-400" />
+            </div>
+            <div className="text-2xl font-bold text-gray-900 mb-1">
+              {statsLoading ? '...' : (stats?.database_size || 'N/A')}
+            </div>
+            <div className="text-sm text-gray-500">Current database size</div>
+          </div>
+          <div className="p-4 border border-gray-200 rounded-lg">
+            <div className="flex items-center justify-between mb-2">
+              <Archive className="w-5 h-5 text-gray-400" />
+            </div>
+            <div className="text-2xl font-bold text-gray-900 mb-1">
+              {statsLoading ? '...' : (stats?.total_backups || 0)}
+            </div>
+            <div className="text-sm text-gray-500">Available backups</div>
+          </div>
+          <div className="p-4 border border-gray-200 rounded-lg">
+            <div className="flex items-center justify-between mb-2">
+              <HardDrive className="w-5 h-5 text-gray-400" />
+            </div>
+            <div className="text-2xl font-bold text-gray-900 mb-1">
+              {statsLoading ? '...' : (stats?.storage_used || 'N/A')}
+            </div>
+            <div className="text-sm text-gray-500">Total storage usage</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Quick Actions */}
+      <div className="bg-white rounded-xl shadow-sm p-6">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="p-4 border border-gray-200 rounded-lg">
+            <div className="flex items-center space-x-3 mb-2">
+              <Download className="w-5 h-5 text-[var(--theme-primary)]" />
+              <h3 className="font-semibold text-gray-900">Create Backup</h3>
+            </div>
+            <p className="text-sm text-gray-600 mb-4">Create a new database backup</p>
+            <button
+              onClick={() => createBackupMutation.mutate()}
+              disabled={createBackupMutation.isPending}
+              className="w-full px-4 py-2 bg-[var(--theme-primary)] text-white rounded-lg hover:bg-[var(--theme-primary-hover)] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+            >
+              {createBackupMutation.isPending ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <span>Creating...</span>
+                </>
+              ) : (
+                <>
+                  <Download className="w-4 h-4" />
+                  <span>Backup Now</span>
+                </>
+              )}
+            </button>
+          </div>
+
+          <div className="p-4 border border-gray-200 rounded-lg">
+            <div className="flex items-center space-x-3 mb-2">
+              <Upload className="w-5 h-5 text-[var(--theme-primary)]" />
+              <h3 className="font-semibold text-gray-900">Restore Backup</h3>
+            </div>
+            <p className="text-sm text-gray-600 mb-4">Restore from an existing backup</p>
+            <button
+              onClick={() => {
+                if (backups && backups.length > 0) {
+                  const latest = backups[0];
+                  handleRestore(latest.filename);
+                } else {
+                  toast.showToast('No backups available', 'error');
+                }
+              }}
+              disabled={restoreBackupMutation.isPending || !backups || backups.length === 0}
+              className="w-full px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+            >
+              {restoreBackupMutation.isPending ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-gray-600 border-t-transparent rounded-full animate-spin" />
+                  <span>Restoring...</span>
+                </>
+              ) : (
+                <>
+                  <Upload className="w-4 h-4" />
+                  <span>Restore</span>
+                </>
+              )}
+            </button>
+          </div>
+
+          <div className="p-4 border border-gray-200 rounded-lg">
+            <div className="flex items-center space-x-3 mb-2">
+              <RefreshCw className="w-5 h-5 text-[var(--theme-primary)]" />
+              <h3 className="font-semibold text-gray-900">Refresh Data</h3>
+            </div>
+            <p className="text-sm text-gray-600 mb-4">Refresh cache and optimize data</p>
+            <button
+              onClick={() => refreshDataMutation.mutate()}
+              disabled={refreshDataMutation.isPending}
+              className="w-full px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+            >
+              {refreshDataMutation.isPending ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-gray-600 border-t-transparent rounded-full animate-spin" />
+                  <span>Refreshing...</span>
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="w-4 h-4" />
+                  <span>Refresh</span>
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Recent Backups */}
+      {backups && backups.length > 0 && (
+        <div className="bg-white rounded-xl shadow-sm p-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Recent Backups</h2>
+          <div className="space-y-2">
+            {backups.slice(0, 5).map((backup, index) => (
+              <div
+                key={index}
+                className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50"
+              >
+                <div className="flex-1">
+                  <div className="font-medium text-gray-900">{backup.filename}</div>
+                  <div className="text-sm text-gray-500">
+                    {new Date(backup.created_at).toLocaleString()} • {backup.size}
+                  </div>
+                </div>
+                <button
+                  onClick={() => handleRestore(backup.filename)}
+                  disabled={restoreBackupMutation.isPending}
+                  className="px-3 py-1.5 text-sm text-[var(--theme-primary)] border border-[var(--theme-primary)] rounded-lg hover:bg-[var(--theme-primary)]/10 disabled:opacity-50"
+                >
+                  Restore
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm p-6 space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

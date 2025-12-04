@@ -108,7 +108,7 @@ export default function Login() {
     };
 
     return (
-        <div className="min-h-screen flex flex-col md:flex-row bg-[var(--theme-bg-light,#F9FAFB)]">
+        <div className="min-h-screen flex flex-col md:flex-row">
             {/* Brand / Welcome Panel */}
             <div 
                 ref={brandPanelRef}
@@ -163,7 +163,7 @@ export default function Login() {
             </div>
 
             {/* Authentication Panel */}
-            <div className="md:w-1/2 flex items-center justify-center p-6 md:p-12 bg-white">
+            <div className="md:w-1/2 flex items-center justify-center p-6 md:p-12 bg-transparent">
                 <div ref={formRef} className="w-full max-w-md space-y-8">
                     {/* Quick Clock-In Button - Compact */}
                     <button
@@ -182,7 +182,7 @@ export default function Login() {
                         </p>
                     </div>
 
-                    <div className="bg-white border border-[#E3E8E3] rounded-xl shadow-[0_18px_48px_-25px_rgba(27,64,45,0.35)] p-6 space-y-6">
+                    <div className="bg-transparent border border-[#E3E8E3] rounded-xl shadow-[0_18px_48px_-25px_rgba(27,64,45,0.35)] p-6 space-y-6">
                         {error && (
                             <div ref={errorRef} className="p-3 bg-red-50 border border-red-200 rounded-lg">
                                 <p className="text-sm text-red-800">{error}</p>

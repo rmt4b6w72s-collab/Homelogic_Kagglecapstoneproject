@@ -6,7 +6,7 @@ import {
   ArrowLeft, Save, Building2, Palette, Settings, Users, Shield,
   MapPin, Phone, Mail, Image as ImageIcon, CheckCircle, XCircle,
   Plus, Edit, Trash2, Search, Eye, AlertCircle, X, Calendar,
-  Briefcase, Award, Clock, User as UserIcon, Navigation
+  Briefcase, Award, Clock, User as UserIcon, Navigation, Cog
 } from 'lucide-react';
 import { useToastContext } from '../contexts/ToastContext';
 import FacilityPermissions from './FacilityPermissions';
@@ -90,7 +90,7 @@ export default function FacilityEdit() {
     { id: 'modules', label: 'Module Access', icon: Settings },
     { id: 'accounts', label: 'Accounts', icon: Users },
     { id: 'permissions', label: 'Permissions', icon: Shield },
-    { id: 'settings', label: 'Settings', icon: Settings },
+    { id: 'settings', label: 'Settings', icon: Cog },
   ];
 
   return (
