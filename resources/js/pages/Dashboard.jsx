@@ -91,8 +91,8 @@ export default function Dashboard() {
             }
         },
         retry: false,
-        refetchInterval: 30000, // Poll every 30 seconds for real-time updates
-        refetchIntervalInBackground: true,
+        refetchInterval: 60000, // Poll every 60 seconds for real-time updates
+        refetchIntervalInBackground: false, // Don't poll in background to save resources
     });
 
     // Fetch daily activities for calendar (last 30 days)
@@ -112,7 +112,8 @@ export default function Dashboard() {
             }
         },
         retry: false,
-        refetchInterval: 60000, // Poll every minute
+        refetchInterval: 120000, // Poll every 2 minutes
+        refetchIntervalInBackground: false,
     });
 
     // Determine user type early
@@ -132,7 +133,8 @@ export default function Dashboard() {
         },
         retry: false,
         enabled: !isCaregiver && !isLoading, // Only fetch for admins after stats load
-        refetchInterval: 60000,
+        refetchInterval: 180000, // Poll every 3 minutes
+        refetchIntervalInBackground: false,
     });
 
     // Fetch module statistics for admin users
@@ -174,7 +176,8 @@ export default function Dashboard() {
         },
         retry: false,
         enabled: !isCaregiver && !isLoading,
-        refetchInterval: 120000, // Poll every 2 minutes
+        refetchInterval: 300000, // Poll every 5 minutes
+        refetchIntervalInBackground: false,
     });
 
     // Fetch upcoming fire drills

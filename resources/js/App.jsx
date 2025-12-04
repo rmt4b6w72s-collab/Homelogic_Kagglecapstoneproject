@@ -70,7 +70,9 @@ const SuperAdminGeneralSettings = lazy(() => import('./pages/super-admin/General
 const SuperAdminNotificationSettings = lazy(() => import('./pages/super-admin/NotificationSettings'));
 const SuperAdminDatabaseSettings = lazy(() => import('./pages/super-admin/DatabaseSettings'));
 const SuperAdminServerSettings = lazy(() => import('./pages/super-admin/ServerSettings'));
+const SuperAdminBrandingSettings = lazy(() => import('./pages/super-admin/BrandingSettings'));
 const FacilityRegistrations = lazy(() => import('./pages/FacilityRegistrations'));
+const ApproveFacilityRegistration = lazy(() => import('./pages/ApproveFacilityRegistration'));
 const Permissions = lazy(() => import('./pages/Permissions'));
 const ExpenseCategories = lazy(() => import('./pages/ExpenseCategories'));
 const Expenses = lazy(() => import('./pages/Expenses'));
@@ -102,11 +104,12 @@ const Security = lazy(() => import('./pages/public/Security'));
 const About = lazy(() => import('./pages/public/About'));
 const Contact = lazy(() => import('./pages/public/Contact'));
 const Support = lazy(() => import('./pages/public/Support'));
-const Careers = lazy(() => import('./pages/public/Careers'));
 const PrivacyPolicy = lazy(() => import('./pages/public/PrivacyPolicy'));
 const TermsOfService = lazy(() => import('./pages/public/TermsOfService'));
 const HIPAACompliance = lazy(() => import('./pages/public/HIPAACompliance'));
 const CookiePolicy = lazy(() => import('./pages/public/CookiePolicy'));
+const RegisterFacility = lazy(() => import('./pages/public/RegisterFacility'));
+const RegisterFacilitySuccess = lazy(() => import('./pages/public/RegisterFacilitySuccess'));
 
 function App() {
     // Make toast available globally for backward compatibility
@@ -119,6 +122,7 @@ function App() {
 
     return (
         <Routes>
+            {/* Public routes - must be defined before catch-all */}
             <Route path="/" element={<Suspense fallback={<PageLoader />}><Welcome /></Suspense>} />
             <Route path="/login" element={<Login />} />
             <Route path="/features" element={<Suspense fallback={<PageLoader />}><Features /></Suspense>} />
@@ -128,24 +132,24 @@ function App() {
             <Route path="/about" element={<Suspense fallback={<PageLoader />}><About /></Suspense>} />
             <Route path="/contact" element={<Suspense fallback={<PageLoader />}><Contact /></Suspense>} />
             <Route path="/support" element={<Suspense fallback={<PageLoader />}><Support /></Suspense>} />
-            <Route path="/careers" element={<Suspense fallback={<PageLoader />}><Careers /></Suspense>} />
             <Route path="/privacy-policy" element={<Suspense fallback={<PageLoader />}><PrivacyPolicy /></Suspense>} />
             <Route path="/terms-of-service" element={<Suspense fallback={<PageLoader />}><TermsOfService /></Suspense>} />
             <Route path="/hipaa-compliance" element={<Suspense fallback={<PageLoader />}><HIPAACompliance /></Suspense>} />
             <Route path="/cookie-policy" element={<Suspense fallback={<PageLoader />}><CookiePolicy /></Suspense>} />
             <Route path="/staff/clock-in" element={<Suspense fallback={<PageLoader />}><PublicStaffClockIn /></Suspense>} />
-            {/* Public welcome page at /app */}
-            <Route path="/app" element={<Suspense fallback={<PageLoader />}><Welcome /></Suspense>} />
+            <Route path="/register-facility" element={<Suspense fallback={<PageLoader />}><RegisterFacility /></Suspense>} />
+            <Route path="/register-facility/success" element={<Suspense fallback={<PageLoader />}><RegisterFacilitySuccess /></Suspense>} />
+            {/* Protected routes - dashboard and app pages */}
+            {/* Match all paths that aren't public routes (defined above) */}
+            {/* React Router matches in order, so / won't match here since it's defined above */}
             <Route
-                path="/app/*"
+                path="/*"
                 element={
                     <ProtectedRoute>
                         <Layout />
                     </ProtectedRoute>
                 }
             >
-                <Route index element={<Navigate to="dashboard" replace />} />
-
                 {/* Main Pages */}
                 <Route path="profile" element={<Suspense fallback={<PageLoader />}><Profile /></Suspense>} />
                 <Route path="dashboard" element={<Suspense fallback={<PageLoader />}><Dashboard /></Suspense>} />
@@ -208,7 +212,9 @@ function App() {
                 <Route path="super-admin/settings/notification" element={<Suspense fallback={<PageLoader />}><SuperAdminNotificationSettings /></Suspense>} />
                 <Route path="super-admin/settings/database" element={<Suspense fallback={<PageLoader />}><SuperAdminDatabaseSettings /></Suspense>} />
                 <Route path="super-admin/settings/server" element={<Suspense fallback={<PageLoader />}><SuperAdminServerSettings /></Suspense>} />
+                <Route path="super-admin/settings/branding" element={<Suspense fallback={<PageLoader />}><SuperAdminBrandingSettings /></Suspense>} />
                 <Route path="super-admin/facility-registrations" element={<Suspense fallback={<PageLoader />}><FacilityRegistrations /></Suspense>} />
+                <Route path="super-admin/facility-registrations/:id/approve" element={<Suspense fallback={<PageLoader />}><ApproveFacilityRegistration /></Suspense>} />
                 <Route path="super-admin/facilities" element={<Suspense fallback={<PageLoader />}><Facilities /></Suspense>} />
                 <Route path="super-admin/facilities/create" element={<Suspense fallback={<PageLoader />}><FacilityCreate /></Suspense>} />
                 <Route path="super-admin/facilities/:id" element={<Suspense fallback={<PageLoader />}><FacilityView /></Suspense>} />

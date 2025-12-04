@@ -105,7 +105,7 @@ function initApp() {
                         <QueryClientProvider client={queryClient}>
                             <ThemeWrapper>
                                 <ToastProvider>
-                                    <BrowserRouter basename="/app">
+                                    <BrowserRouter>
                                         <App />
                                     </BrowserRouter>
                                 </ToastProvider>

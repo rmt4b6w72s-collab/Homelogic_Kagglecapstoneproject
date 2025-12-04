@@ -65,6 +65,7 @@ export default function FacilityView() {
         phone,
         email,
         logo_url,
+        logo, // Also check raw logo field
         subdomain,
         provider_code,
         is_active,
@@ -79,6 +80,9 @@ export default function FacilityView() {
         updated_at,
         owner,
     } = facility;
+
+    // Determine logo URL - prefer logo_url, fallback to constructing from logo path
+    const displayLogoUrl = logo_url || (logo ? `/storage/${logo}` : null);
 
     return (
         <div>
@@ -112,13 +116,28 @@ export default function FacilityView() {
                 {/* Facility Header Info */}
                 <div className="p-6 border-b bg-gradient-to-r from-gray-50 to-white">
                     <div className="flex items-start space-x-4">
-                        {logo_url && (
-                            <img
-                                src={logo_url}
-                                alt={`${name} logo`}
-                                className="w-24 h-24 object-contain rounded-lg border border-gray-200 bg-white p-2"
-                            />
-                        )}
+                        <div className="flex-shrink-0">
+                            {displayLogoUrl ? (
+                                <img
+                                    src={displayLogoUrl}
+                                    alt={`${name} logo`}
+                                    className="w-24 h-24 object-contain rounded-lg border border-gray-200 bg-white p-2"
+                                    onError={(e) => {
+                                        e.target.style.display = 'none';
+                                        e.target.nextElementSibling.style.display = 'flex';
+                                    }}
+                                />
+                            ) : null}
+                            <div
+                                className={`w-24 h-24 rounded-lg flex items-center justify-center border border-gray-200 bg-white ${displayLogoUrl ? 'hidden' : ''}`}
+                                style={{ backgroundColor: primary_color ? `${primary_color}15` : '#1E3A5F15' }}
+                            >
+                                <Building2
+                                    className="w-12 h-12"
+                                    style={{ color: primary_color || '#1E3A5F' }}
+                                />
+                            </div>
+                        </div>
                         <div>
                             <div className="flex items-center space-x-3 mb-2">
                                 <h1 className="text-3xl font-bold text-gray-900">{name}</h1>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Lock, Mail, Eye, EyeOff, ShieldCheck, ClipboardList, Building2, Clock } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { Lock, Mail, Eye, EyeOff, ShieldCheck, ClipboardList, Building2, Clock, Home, Info } from 'lucide-react';
 import api from '../services/api';
 import { useAnimateOnMount } from '../hooks/useAnimateOnMount';
 import { slideInLeft, slideInRight, fadeIn, shake, shouldAnimate } from '../utils/animationPresets';
@@ -8,6 +8,7 @@ import { getUserLocation, formatDistance } from '../utils/location';
 
 export default function Login() {
     const navigate = useNavigate();
+    const location = useLocation();
     const [providerCode, setProviderCode] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -20,24 +21,71 @@ export default function Login() {
     const formRef = useAnimateOnMount('slideUp', { delay: 200, duration: 600 });
     const errorRef = useRef(null);
 
-    // Redirect if already logged in
+    // Redirect if already logged in (but validate token first)
+    // Only do this if we're actually on the login page
+    // Use a ref to track if component is mounted to prevent redirects after unmount
+    const isMountedRef = React.useRef(true);
+    
     React.useEffect(() => {
+        isMountedRef.current = true;
+        return () => {
+            isMountedRef.current = false;
+        };
+    }, []);
+    
+    React.useEffect(() => {
+        // Only run if we're on the login page and component is still mounted
+        if (location.pathname !== '/login' || !isMountedRef.current) return;
+        
         const token = localStorage.getItem('auth_token');
-        if (token) {
-            navigate('/dashboard', { replace: true });
+        if (token && isMountedRef.current) {
+            // Small delay to ensure any previous redirects have completed
+            const timeoutId = setTimeout(() => {
+                // Triple-check: still on login page, component still mounted, and path hasn't changed
+                if (window.location.pathname === '/login' && isMountedRef.current && location.pathname === '/login') {
+                    // Validate token by making a quick API call
+                    api.get('/user')
+                        .then(() => {
+                            // Token is valid, redirect to dashboard
+                            if (window.location.pathname === '/login' && isMountedRef.current) {
+                                navigate('/dashboard', { replace: true });
+                            }
+                        })
+                        .catch((err) => {
+                            // Token is invalid, clear it and stay on login page
+                            // Only clear if still on login page and component is mounted
+                            if (window.location.pathname === '/login' && isMountedRef.current) {
+                                localStorage.removeItem('auth_token');
+                                localStorage.removeItem('user_name');
+                                localStorage.removeItem('user_role');
+                            }
+                            // Don't show error if it's a 401 (expected when token is invalid)
+                            if (err.response?.status !== 401) {
+                                console.error('Token validation failed:', err);
+                            }
+                        });
+                }
+            }, 100);
+            
+            return () => clearTimeout(timeoutId);
         }
-    }, [navigate]);
+    }, [navigate, location.pathname]);
 
     // Request user location on component mount (non-blocking)
     useEffect(() => {
         const requestLocation = async () => {
             setLocationLoading(true);
             try {
-                const location = await getUserLocation({
-                    timeout: 10000,
-                    maximumAge: 60000,
-                    enableHighAccuracy: true,
-                });
+                const location = await Promise.race([
+                    getUserLocation({
+                        timeout: 5000,
+                        maximumAge: 60000,
+                        enableHighAccuracy: false,
+                    }),
+                    new Promise((_, reject) => 
+                        setTimeout(() => reject(new Error('Location timeout')), 5000)
+                    )
+                ]);
                 if (location) {
                     setUserLocation(location);
                 }
@@ -108,179 +156,198 @@ export default function Login() {
     };
 
     return (
-        <div className="min-h-screen flex flex-col md:flex-row">
-            {/* Brand / Welcome Panel */}
-            <div 
-                ref={brandPanelRef}
-                className="md:w-1/2 relative overflow-hidden flex items-center justify-center text-white p-8 md:p-12" 
-                style={{ background: `linear-gradient(135deg, var(--theme-primary-dark, #152D4A), var(--theme-primary, #1E3A5F), var(--theme-primary-light, #2E5A5F))` }}
-            >
-                <div className="relative z-10 max-w-xl space-y-8 text-center md:text-left">
-                    <div className="flex flex-col md:flex-row md:items-center md:space-x-4 items-center space-y-4 md:space-y-0">
-                        <div className="h-20 w-20 rounded-full shadow-xl ring-2 ring-white/50 overflow-hidden">
-                            <img
-                                src="/images/logonew.png"
-                                alt="HomeLogic360"
-                                className="h-full w-full object-cover"
-                                onError={(e) => {
-                                    e.target.style.display = 'none';
-                                }}
-                            />
-                        </div>
-                        <div>
-                            <p className="uppercase tracking-[0.35em] text-xs font-semibold text-white/70">
-                                HomeLogic360
-                            </p>
-                            <h1 className="text-3xl md:text-4xl font-bold leading-tight">
-                                AFH Management System
-                            </h1>
-                        </div>
-                    </div>
-                    <p className="text-white/85 text-base md:text-lg leading-relaxed">
-                        Streamline resident care, staff communication, and critical operations in one secure platform designed for assisted living excellence.
-                    </p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-white/70">
-                        <div className="flex items-start space-x-3">
-                            <span className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-white/10 backdrop-blur-sm border border-white/20">
-                                <ShieldCheck className="h-5 w-5" />
-                            </span>
-                            <div>
-                                <p className="font-semibold text-white">Enterprise Security</p>
-                                <p className="text-white/55 text-xs leading-relaxed">HIPAA-ready architecture protects every log in and data touchpoint.</p>
-                            </div>
-                        </div>
-                        <div className="flex items-start space-x-3">
-                            <span className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-white/10 backdrop-blur-sm border border-white/20">
-                                <ClipboardList className="h-5 w-5" />
-                            </span>
-                            <div>
-                                <p className="font-semibold text-white">Centralized Operations</p>
-                                <p className="text-white/55 text-xs leading-relaxed">Manage residents, medications, and schedules from a single, intuitive hub.</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Authentication Panel */}
-            <div className="md:w-1/2 flex items-center justify-center p-6 md:p-12 bg-transparent">
-                <div ref={formRef} className="w-full max-w-md space-y-8">
-                    {/* Quick Clock-In Button - Compact */}
-                    <button
-                        onClick={() => window.location.href = '/app/staff/clock-in'}
-                        className="flex items-center justify-center gap-2 w-full max-w-sm mx-auto px-4 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors text-sm md:text-base shadow-md mb-4"
+        <div className="h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 via-blue-50 to-slate-100 overflow-hidden">
+            <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center">
+                <div className="w-full grid lg:grid-cols-2 gap-6 items-center">
+                    {/* Brand / Welcome Panel - Compact with High Contrast */}
+                    <div 
+                        ref={brandPanelRef}
+                        className="hidden lg:flex flex-col items-center justify-center p-8 rounded-2xl shadow-2xl" 
+                        style={{ background: `linear-gradient(135deg, #1e40af, #2563eb, #3b82f6)` }}
                     >
-                        <Clock className="w-5 h-5" />
-                        <span>Quick Clock-In (No Login Required)</span>
-                    </button>
-
-                    <div className="space-y-2 text-center md:text-left">
-                        <p className="text-xs uppercase tracking-[0.4em] text-[var(--theme-primary)] font-semibold">Welcome back</p>
-                        <h2 className="text-2xl md:text-3xl font-semibold text-[var(--theme-primary-dark)]">Sign in to HomeLogic360</h2>
-                        <p className="text-sm text-[#627567] leading-relaxed">
-                            Enter your credentials to access the HomeLogic360 AFH Management System.
-                        </p>
+                        <div className="text-center space-y-6">
+                            <a
+                                href="/"
+                                className="flex flex-col items-center space-y-4 hover:opacity-90 transition-opacity cursor-pointer group no-underline"
+                            >
+                                <div className="h-16 w-16 rounded-full shadow-xl ring-4 ring-white/30 overflow-hidden bg-white/20 backdrop-blur-sm group-hover:ring-white/50 transition-all">
+                                    <img
+                                        src="/images/logonew.png"
+                                        alt="HomeLogic360"
+                                        className="h-full w-full object-cover"
+                                        onError={(e) => {
+                                            e.target.style.display = 'none';
+                                        }}
+                                    />
+                                </div>
+                                <div>
+                                    <p className="uppercase tracking-[0.3em] text-xs font-bold text-white/90 mb-2">
+                                        HomeLogic360
+                                    </p>
+                                    <h1 className="text-2xl font-bold leading-tight text-white drop-shadow-lg">
+                                        AFH Management System
+                                    </h1>
+                                </div>
+                            </a>
+                            <a
+                                href="/"
+                                className="text-xs text-white/90 font-medium hover:text-white underline"
+                            >
+                                Click here to return to welcome page
+                            </a>
+                            <p className="text-white text-sm leading-relaxed max-w-sm font-medium drop-shadow">
+                                Streamline resident care, staff communication, and critical operations in one secure platform.
+                            </p>
+                            <div className="flex flex-col gap-3 text-sm">
+                                <div className="flex items-center justify-center space-x-2 bg-white/10 backdrop-blur-sm rounded-lg px-4 py-2.5 border border-white/20">
+                                    <ShieldCheck className="h-5 w-5 text-white" />
+                                    <span className="text-white font-semibold">Enterprise Security</span>
+                                </div>
+                                <div className="flex items-center justify-center space-x-2 bg-white/10 backdrop-blur-sm rounded-lg px-4 py-2.5 border border-white/20">
+                                    <ClipboardList className="h-5 w-5 text-white" />
+                                    <span className="text-white font-semibold">Centralized Operations</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
-                    <div className="bg-transparent border border-[#E3E8E3] rounded-xl shadow-[0_18px_48px_-25px_rgba(27,64,45,0.35)] p-6 space-y-6">
-                        {error && (
-                            <div ref={errorRef} className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                                <p className="text-sm text-red-800">{error}</p>
-                            </div>
-                        )}
-
-                        <form onSubmit={handleSubmit} className="space-y-5">
-                            <div>
-                                <label htmlFor="email" className="block text-sm font-medium text-[#39463F] mb-2">
-                                    Email Address
-                                </label>
-                                <div className="relative">
-                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <Mail className="h-5 w-5 text-gray-400" />
+                    {/* Authentication Panel - Compact with High Contrast */}
+                    <div className="flex items-center justify-center w-full">
+                        <div ref={formRef} className="w-full max-w-md space-y-5">
+                            {/* Logo and Back to Home Link */}
+                            <div className="flex flex-col items-center mb-4">
+                                <a
+                                    href="/"
+                                    className="flex items-center space-x-3 bg-white/90 backdrop-blur-sm px-4 py-3 rounded-xl shadow-lg border border-gray-200 mb-3 hover:shadow-xl hover:border-blue-300 transition-all group no-underline"
+                                >
+                                    <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center shadow-md group-hover:from-blue-700 group-hover:to-blue-800 transition-all">
+                                        <Building2 className="w-6 h-6 text-white" />
                                     </div>
-                                    <input
-                                        id="email"
-                                        type="email"
-                                        value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
-                                        required
-                                        autoComplete="email"
-                                        className="block w-full pl-11 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-[var(--theme-primary)] outline-none transition-all placeholder:text-gray-400"
-                                        placeholder="your-email@example.com"
-                                    />
-                                </div>
-                            </div>
-
-                            <div>
-                                <label htmlFor="password" className="block text-sm font-medium text-[#39463F] mb-2">
-                                    Password
-                                </label>
-                                <div className="relative">
-                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <Lock className="h-5 w-5 text-gray-400" />
-                                    </div>
-                                    <input
-                                        id="password"
-                                        type={showPassword ? 'text' : 'password'}
-                                        value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
-                                        required
-                                        autoComplete="current-password"
-                                        className="block w-full pl-11 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-[var(--theme-primary)] outline-none transition-all placeholder:text-gray-400"
-                                        placeholder="Enter your password"
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowPassword((prev) => !prev)}
-                                        className="absolute inset-y-0 right-3 flex items-center text-sm font-semibold text-[var(--theme-primary)] hover:text-[var(--theme-primary-hover)] transition-colors"
-                                        aria-label={showPassword ? 'Hide password' : 'Show password'}
-                                    >
-                                        {showPassword ? (
-                                            <EyeOff className="h-5 w-5" />
-                                        ) : (
-                                            <Eye className="h-5 w-5" />
-                                        )}
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div>
-                                <label htmlFor="providerCode" className="block text-sm font-medium text-[#39463F] mb-2">
-                                    Provider Code
-                                </label>
-                                <div className="relative">
-                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <Building2 className="h-5 w-5 text-gray-400" />
-                                    </div>
-                                    <input
-                                        id="providerCode"
-                                        type="text"
-                                        value={providerCode}
-                                        onChange={(e) => setProviderCode(e.target.value)}
-                                        autoComplete="off"
-                                        className="block w-full pl-11 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-[var(--theme-primary)] outline-none transition-all placeholder:text-gray-400"
-                                        placeholder="Enter provider code (optional)"
-                                    />
-                                </div>
-                                <p className="text-xs text-[#6F8276] mt-1">Optional: Enter your facility's provider code</p>
-                            </div>
-
-                            <button
-                                type="submit"
-                                disabled={loading || locationLoading}
-                                className="w-full bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] py-3 px-4 rounded-lg font-medium hover:bg-[var(--theme-primary-hover)] focus:outline-none focus:ring-2 focus:ring-[var(--theme-primary)] focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
-                            >
-                                {loading ? 'Signing in...' : locationLoading ? 'Getting location...' : 'Sign In'}
-                            </button>
-                        </form>
-
-                        <div className="pt-4 border-t border-gray-200">
-                            <p className="text-xs text-[#6F8276] text-center leading-relaxed">
-                                Need help?{' '}
-                                <a href="mailto:support@homelogic360.com" className="text-[var(--theme-primary)] font-semibold hover:text-[var(--theme-primary-hover)] hover:underline transition-colors">
-                                    Contact support
+                                    <span className="text-xl font-bold text-gray-900 group-hover:text-blue-700 transition-colors">HomeLogic360</span>
                                 </a>
-                            </p>
+                                <a
+                                    href="/"
+                                    className="flex items-center space-x-2 text-sm text-blue-700 hover:text-blue-800 font-semibold hover:underline transition-colors no-underline"
+                                >
+                                    <Home className="w-4 h-4" />
+                                    <span>Back to Welcome Page</span>
+                                </a>
+                            </div>
+
+                            {/* Quick Clock-In Button - Compact */}
+                            <button
+                                onClick={() => window.location.href = '/staff/clock-in'}
+                                className="flex items-center justify-center gap-2 w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg font-semibold hover:from-blue-700 hover:to-blue-800 transition-all text-sm shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                            >
+                                <Clock className="w-4 h-4" />
+                                <span>Quick Clock-In (No Login Required)</span>
+                            </button>
+
+                            <div className="text-center space-y-2 bg-white/90 backdrop-blur-sm rounded-xl p-4 shadow-md border border-gray-200">
+                                <p className="text-xs uppercase tracking-[0.3em] text-blue-700 font-bold">Welcome back</p>
+                                <h2 className="text-2xl font-bold text-gray-900">Sign in to HomeLogic360</h2>
+                            </div>
+
+                            <div className="bg-white border-2 border-gray-300 rounded-xl shadow-xl p-6 space-y-4">
+                                {error && (
+                                    <div ref={errorRef} className="p-3 bg-red-100 border-2 border-red-400 rounded-lg">
+                                        <p className="text-sm font-semibold text-red-900">{error}</p>
+                                    </div>
+                                )}
+
+                                <form onSubmit={handleSubmit} className="space-y-4">
+                                    <div>
+                                        <label htmlFor="email" className="block text-sm font-semibold text-gray-900 mb-2">
+                                            Email Address
+                                        </label>
+                                        <div className="relative">
+                                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                <Mail className="h-5 w-5 text-gray-500" />
+                                            </div>
+                                            <input
+                                                id="email"
+                                                type="email"
+                                                value={email}
+                                                onChange={(e) => setEmail(e.target.value)}
+                                                required
+                                                autoComplete="email"
+                                                className="block w-full pl-11 pr-3 py-3 text-sm border-2 border-gray-400 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none transition-all placeholder:text-gray-500 bg-white text-gray-900 font-medium"
+                                                placeholder="your-email@example.com"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label htmlFor="password" className="block text-sm font-semibold text-gray-900 mb-2">
+                                            Password
+                                        </label>
+                                        <div className="relative">
+                                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                <Lock className="h-5 w-5 text-gray-500" />
+                                            </div>
+                                            <input
+                                                id="password"
+                                                type={showPassword ? 'text' : 'password'}
+                                                value={password}
+                                                onChange={(e) => setPassword(e.target.value)}
+                                                required
+                                                autoComplete="current-password"
+                                                className="block w-full pl-11 pr-11 py-3 text-sm border-2 border-gray-400 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none transition-all placeholder:text-gray-500 bg-white text-gray-900 font-medium"
+                                                placeholder="Enter your password"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowPassword((prev) => !prev)}
+                                                className="absolute inset-y-0 right-3 flex items-center text-blue-700 hover:text-blue-800 transition-colors font-semibold"
+                                                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                                            >
+                                                {showPassword ? (
+                                                    <EyeOff className="h-5 w-5" />
+                                                ) : (
+                                                    <Eye className="h-5 w-5" />
+                                                )}
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label htmlFor="providerCode" className="block text-sm font-semibold text-gray-900 mb-2">
+                                            Provider Code <span className="text-gray-600 font-normal text-xs">(optional)</span>
+                                        </label>
+                                        <div className="relative">
+                                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                <Building2 className="h-5 w-5 text-gray-500" />
+                                            </div>
+                                            <input
+                                                id="providerCode"
+                                                type="text"
+                                                value={providerCode}
+                                                onChange={(e) => setProviderCode(e.target.value)}
+                                                autoComplete="off"
+                                                className="block w-full pl-11 pr-3 py-3 text-sm border-2 border-gray-400 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none transition-all placeholder:text-gray-500 bg-white text-gray-900 font-medium"
+                                                placeholder="Enter provider code"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <button
+                                        type="submit"
+                                        disabled={loading || locationLoading}
+                                        className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 px-4 rounded-lg font-bold hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 text-sm"
+                                    >
+                                        {loading ? 'Signing in...' : locationLoading ? 'Getting location...' : 'Sign In'}
+                                    </button>
+                                </form>
+
+                                <div className="pt-4 border-t-2 border-gray-300">
+                                    <p className="text-sm text-gray-700 text-center font-medium">
+                                        Need help?{' '}
+                                        <a href="mailto:support@homelogic360.com" className="text-blue-700 font-bold hover:text-blue-800 hover:underline transition-colors">
+                                            Contact support
+                                        </a>
+                                    </p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

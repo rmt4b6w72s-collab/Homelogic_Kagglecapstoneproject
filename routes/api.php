@@ -153,13 +153,19 @@ Route::prefix('v1')->middleware([\App\Http\Middleware\SetFacilityContext::class]
     // Geocoding endpoint
     Route::post('/geocode', [GeocodingController::class, 'geocode'])->middleware('auth:sanctum');
     
-    // Facility Registrations (Super Admin only)
-    Route::apiResource('facility-registrations', \App\Http\Controllers\Api\FacilityRegistrationController::class)->middleware('auth:sanctum');
+    // Facility Registrations
+    // Public endpoint for submitting registrations
+    Route::post('facility-registrations', [\App\Http\Controllers\Api\FacilityRegistrationController::class, 'store']);
+    // Protected endpoints for super admin
+    Route::get('facility-registrations', [\App\Http\Controllers\Api\FacilityRegistrationController::class, 'index'])->middleware('auth:sanctum');
+    Route::get('facility-registrations/{id}', [\App\Http\Controllers\Api\FacilityRegistrationController::class, 'show'])->middleware('auth:sanctum');
 
     // System Settings (Super Admin only)
     Route::prefix('system-settings')->middleware('auth:sanctum')->group(function () {
         Route::get('/super-admin-theme', [SystemSettingsController::class, 'getSuperAdminTheme']);
         Route::put('/super-admin-theme', [SystemSettingsController::class, 'updateSuperAdminTheme']);
+        Route::get('/branding', [SystemSettingsController::class, 'getBranding']);
+        Route::put('/branding', [SystemSettingsController::class, 'updateBranding']);
         Route::get('/', [SystemSettingsController::class, 'index']);
     });
 
@@ -299,10 +305,11 @@ Route::prefix('v1')->middleware([\App\Http\Middleware\SetFacilityContext::class]
     // Database Management
     Route::prefix('database')->middleware('auth:sanctum')->group(function () {
         Route::get('/stats', [DatabaseManagementController::class, 'stats']);
-        Route::post('/backup', [DatabaseManagementController::class, 'createBackup']);
-        Route::get('/backups', [DatabaseManagementController::class, 'recentBackups']);
-        Route::post('/restore', [DatabaseManagementController::class, 'restoreBackup']);
-        Route::post('/refresh', [DatabaseManagementController::class, 'refreshData']);
+        Route::post('/backup', [DatabaseManagementController::class, 'createBackup']);                                                                          
+        Route::get('/backups', [DatabaseManagementController::class, 'recentBackups']);                                                                         
+        Route::get('/backup/{filename}', [DatabaseManagementController::class, 'downloadBackup']);                                                                         
+        Route::post('/restore', [DatabaseManagementController::class, 'restoreBackup']);                                                                        
+        Route::post('/refresh', [DatabaseManagementController::class, 'refreshData']);                                                                          
     });
 });
 

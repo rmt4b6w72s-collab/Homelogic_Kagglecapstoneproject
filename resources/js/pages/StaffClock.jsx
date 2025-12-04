@@ -18,7 +18,8 @@ export default function StaffClock() {
             const response = await api.get('/staff/clock-ins/current');
             return response.data;
         },
-        refetchInterval: 30000, // Refetch every 30 seconds
+        refetchInterval: 60000, // Refetch every 60 seconds
+        refetchIntervalInBackground: false,
     });
 
     // Get stats
@@ -28,7 +29,8 @@ export default function StaffClock() {
             const response = await api.get('/staff/clock-ins/stats');
             return response.data;
         },
-        refetchInterval: 60000, // Refetch every minute
+        refetchInterval: 120000, // Refetch every 2 minutes
+        refetchIntervalInBackground: false,
     });
 
     // Get recent clock-ins

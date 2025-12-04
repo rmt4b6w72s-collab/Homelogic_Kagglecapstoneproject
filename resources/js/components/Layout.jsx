@@ -736,7 +736,7 @@ export default function Layout() {
                                     } finally {
                                         localStorage.removeItem('auth_token');
                                         localStorage.removeItem('user_name');
-                                        window.location.href = '/app/login';
+                                        window.location.href = '/login';
                                     }
                                 }}
                             >

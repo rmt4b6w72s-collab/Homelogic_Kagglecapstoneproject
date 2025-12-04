@@ -268,7 +268,7 @@ class FacilityController extends BaseApiController
             'accent_color' => 'nullable|string|max:7',
         ]);
 
-        return DB::transaction(function () use ($validated, $registration) {
+        return DB::transaction(function () use ($validated, $registration, $request) {
             // Create facility
             $facilityData = [
                 'name' => $validated['facility_name'],

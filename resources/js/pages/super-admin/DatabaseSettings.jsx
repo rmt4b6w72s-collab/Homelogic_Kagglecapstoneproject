@@ -157,6 +157,50 @@ export default function DatabaseSettings() {
     }
   };
 
+  const handleDownload = (filename) => {
+    // Get the auth token from localStorage
+    const token = localStorage.getItem('auth_token');
+    const baseURL = api.defaults.baseURL || '/api/v1';
+    
+    // Create download URL
+    const downloadUrl = `${baseURL}/database/backup/${encodeURIComponent(filename)}`;
+    
+    // Use fetch to download with authentication
+    fetch(downloadUrl, {
+      method: 'GET',
+      headers: {
+        'Authorization': token ? `Bearer ${token}` : '',
+        'Accept': 'application/sql',
+      },
+      credentials: 'include',
+    })
+      .then((response) => {
+        if (!response.ok) {
+          if (response.status === 401) {
+            throw new Error('Unauthorized. Please log in again.');
+          }
+          throw new Error('Failed to download backup');
+        }
+        return response.blob();
+      })
+      .then((blob) => {
+        // Create a temporary link and trigger download
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        toast.showToast('Backup downloaded successfully', 'success');
+      })
+      .catch((error) => {
+        toast.showToast(error.message || 'Failed to download backup', 'error');
+        console.error('Download error:', error);
+      });
+  };
+
   if (!facilityId) {
     return (
       <div className="p-6 bg-white rounded-xl shadow-sm">
@@ -322,18 +366,28 @@ export default function DatabaseSettings() {
                 className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50"
               >
                 <div className="flex-1">
-                  <div className="font-medium text-gray-900">{backup.filename}</div>
+                  <div className="font-medium text-gray-900">{backup.filename}</div>                                                                            
                   <div className="text-sm text-gray-500">
-                    {new Date(backup.created_at).toLocaleString()} • {backup.size}
+                    {new Date(backup.created_at).toLocaleString()} • {backup.size}                                                                              
                   </div>
                 </div>
-                <button
-                  onClick={() => handleRestore(backup.filename)}
-                  disabled={restoreBackupMutation.isPending}
-                  className="px-3 py-1.5 text-sm text-[var(--theme-primary)] border border-[var(--theme-primary)] rounded-lg hover:bg-[var(--theme-primary)]/10 disabled:opacity-50"
-                >
-                  Restore
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handleDownload(backup.filename)}
+                    className="px-3 py-1.5 text-sm text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center gap-1.5"
+                    title="Download backup"
+                  >
+                    <Download className="w-4 h-4" />
+                    Download
+                  </button>
+                  <button
+                    onClick={() => handleRestore(backup.filename)}
+                    disabled={restoreBackupMutation.isPending}
+                    className="px-3 py-1.5 text-sm text-[var(--theme-primary)] border border-[var(--theme-primary)] rounded-lg hover:bg-[var(--theme-primary)]/10 disabled:opacity-50"                                                            
+                  >
+                    Restore
+                  </button>
+                </div>
               </div>
             ))}
           </div>

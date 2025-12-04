@@ -8,6 +8,7 @@ import {
   Bell,
   Database,
   Server,
+  Palette,
 } from 'lucide-react';
 
 const cards = [
@@ -58,6 +59,14 @@ const cards = [
     icon: Server,
     to: '/super-admin/settings/server',
     accent: 'from-rose-500/10 to-rose-500/0',
+  },
+  {
+    key: 'branding',
+    title: 'Branding Settings',
+    description: 'Customize logo, colors, and company branding',
+    icon: Palette,
+    to: '/super-admin/settings/branding',
+    accent: 'from-indigo-500/10 to-indigo-500/0',
   },
 ];
 

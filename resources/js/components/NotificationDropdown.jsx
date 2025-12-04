@@ -20,8 +20,8 @@ export default function NotificationDropdown() {
             const response = await api.get('/notifications', { params: { limit: 50 } });
             return response.data;
         },
-        refetchInterval: 5000, // Refetch every 5 seconds for real-time updates
-        refetchIntervalInBackground: true, // Continue polling even when tab is in background
+        refetchInterval: 30000, // Refetch every 30 seconds for real-time updates
+        refetchIntervalInBackground: false, // Don't poll when tab is in background to save resources
         refetchOnWindowFocus: true, // Refetch when user returns to the tab
     });
 

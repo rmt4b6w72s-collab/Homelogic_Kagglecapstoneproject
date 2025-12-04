@@ -26,7 +26,8 @@ export default function ResidentSignOut() {
             const response = await api.get('/residents/sign-outs/active');
             return response.data?.data || [];
         },
-        refetchInterval: 60000, // Refetch every minute
+        refetchInterval: 120000, // Refetch every 2 minutes
+        refetchIntervalInBackground: false,
     });
 
     // Fetch overdue sign-outs

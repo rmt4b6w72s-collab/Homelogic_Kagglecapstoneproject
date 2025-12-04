@@ -706,7 +706,7 @@ function ResidentForm({ record, branches, onClose, onSuccess }) {
                 if (error.response.status === 401 || error.response.status === 403) {
                     setErrors({ general: 'Authentication failed. Please log in again.' });
                     setTimeout(() => {
-                        window.location.href = '/app/login';
+                        window.location.href = '/login';
                     }, 2000);
                 } else if (error.response.status === 422) {
                     // Validation errors - show detailed field errors

@@ -1,6 +1,11 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Building2, Target, Users, Award, Heart } from 'lucide-react';
+import {
+  Target, Users, Award, Heart, Shield, Zap, TrendingUp,
+  Building2, CheckCircle, Clock, Globe, BarChart3, Star, ArrowRight
+} from 'lucide-react';
+import PublicNavigation from '../../components/PublicNavigation';
+import PublicFooter from '../../components/PublicFooter';
 
 export default function About() {
   const navigate = useNavigate();
@@ -9,94 +14,248 @@ export default function About() {
     {
       icon: Heart,
       title: 'Care First',
-      description: 'We believe that technology should enhance, not replace, the human touch in caregiving.'
+      description: 'We believe that technology should enhance, not replace, the human touch in caregiving. Every feature we build is designed with the resident\'s well-being at the center.',
+      gradient: 'from-blue-500 to-cyan-500'
     },
     {
       icon: Target,
       title: 'Innovation',
-      description: 'Continuously improving our platform to meet the evolving needs of care facilities.'
+      description: 'Continuously improving our platform to meet the evolving needs of care facilities. We stay ahead of industry trends and regulatory changes.',
+      gradient: 'from-cyan-500 to-blue-500'
     },
     {
       icon: Users,
       title: 'Partnership',
-      description: 'Working closely with facilities to understand their unique challenges and requirements.'
+      description: 'Working closely with facilities to understand their unique challenges and requirements. Your success is our success.',
+      gradient: 'from-blue-600 to-cyan-500'
     },
     {
       icon: Award,
       title: 'Excellence',
-      description: 'Committed to delivering the highest quality software and support services.'
+      description: 'Committed to delivering the highest quality software and support services. We set high standards and consistently exceed them.',
+      gradient: 'from-cyan-600 to-blue-500'
+    },
+  ];
+
+  const stats = [
+    {
+      number: '100+',
+      label: 'Care Facilities',
+      icon: Building2,
+      description: 'Trusted by facilities nationwide'
+    },
+    {
+      number: '10,000+',
+      label: 'Residents Managed',
+      icon: Users,
+      description: 'Daily active users'
+    },
+    {
+      number: '99.9%',
+      label: 'Uptime',
+      icon: Zap,
+      description: 'Reliable service guarantee'
+    },
+    {
+      number: '24/7',
+      label: 'Support',
+      icon: Clock,
+      description: 'Always here when you need us'
+    },
+  ];
+
+  const milestones = [
+    {
+      year: '2020',
+      title: 'Founded',
+      description: 'HomeLogic360 was born from a vision to revolutionize care facility management.'
+    },
+    {
+      year: '2021',
+      title: 'First Launch',
+      description: 'Successfully deployed our platform to the first 10 care facilities.'
+    },
+    {
+      year: '2022',
+      title: 'Rapid Growth',
+      description: 'Expanded to 50+ facilities and introduced advanced analytics features.'
+    },
+    {
+      year: '2023',
+      title: 'Industry Recognition',
+      description: 'Received awards for innovation in healthcare technology and compliance excellence.'
+    },
+    {
+      year: '2024',
+      title: 'Market Leader',
+      description: 'Now serving 100+ facilities with cutting-edge features and unmatched support.'
+    },
+  ];
+
+  const features = [
+    {
+      icon: Shield,
+      title: 'HIPAA Compliant',
+      description: 'Fully compliant with all healthcare data protection regulations'
+    },
+    {
+      icon: BarChart3,
+      title: 'Data-Driven Insights',
+      description: 'Real-time analytics to help you make informed decisions'
+    },
+    {
+      icon: Globe,
+      title: 'Cloud-Based',
+      description: 'Access your data securely from anywhere, anytime'
+    },
+    {
+      icon: TrendingUp,
+      title: 'Scalable Solution',
+      description: 'Grows with your facility from small to enterprise scale'
     },
   ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
       {/* Navigation */}
-      <nav className="bg-white/80 backdrop-blur-md border-b border-gray-200 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <button
-              onClick={() => navigate('/')}
-              className="flex items-center space-x-3 text-gray-700 hover:text-gray-900"
-            >
-              <ArrowLeft className="w-5 h-5" />
-              <span className="font-medium">Back to Home</span>
-            </button>
-            <div className="flex items-center space-x-3">
-              <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
-                <Building2 className="w-6 h-6 text-white" />
-              </div>
-              <span className="text-xl font-bold text-gray-900">HomeLogic360</span>
-            </div>
-            <button
-              onClick={() => navigate('/app/login')}
-              className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-6 py-2 rounded-lg font-semibold hover:from-blue-600 hover:to-cyan-600 transition-all"
-            >
-              Sign In
-            </button>
-          </div>
-        </div>
-      </nav>
+      <PublicNavigation />
 
       {/* Hero Section */}
-      <section className="pt-20 pb-12 bg-gradient-to-br from-blue-50 to-cyan-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-5xl font-bold text-gray-900 mb-4">About HomeLogic360</h1>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Empowering care facilities with comprehensive management solutions
-          </p>
+      <section className="relative overflow-hidden h-screen flex items-center bg-gradient-to-br from-blue-600 via-blue-500 to-cyan-500">
+        {/* Sophisticated Background Elements */}
+        <div className="absolute inset-0 overflow-hidden">
+          {/* Animated Gradient Orbs */}
+          <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-cyan-400/30 rounded-full mix-blend-overlay filter blur-[100px] animate-blob"></div>
+          <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-blue-400/30 rounded-full mix-blend-overlay filter blur-[100px] animate-blob animation-delay-2000"></div>
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-white/5 rounded-full mix-blend-overlay filter blur-[120px] animate-blob animation-delay-4000"></div>
+          
+          {/* Geometric Patterns */}
+          <div className="absolute inset-0 opacity-10">
+            <div className="absolute top-20 left-20 w-32 h-32 border-2 border-white/30 rotate-45"></div>
+            <div className="absolute bottom-20 right-20 w-24 h-24 border-2 border-white/30 rotate-45"></div>
+            <div className="absolute top-1/2 right-10 w-16 h-16 border-2 border-white/20 rotate-45"></div>
+          </div>
+          
+          {/* Grid Pattern */}
+          <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:50px_50px]"></div>
+        </div>
+
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full z-10">
+          <div className="text-center space-y-6">
+            {/* Main Heading */}
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-black text-white leading-[1.1]">
+              <span className="block">Innovating Care,</span>
+              <span className="block bg-gradient-to-r from-cyan-200 via-white to-cyan-200 bg-clip-text text-transparent">
+                Empowering Facilities
+              </span>
+            </h1>
+
+            {/* Subheading */}
+            <p className="text-lg sm:text-xl text-white/90 max-w-3xl mx-auto leading-relaxed">
+              Discover the story behind HomeLogic360 and our commitment to transforming care facility management through innovative technology and unwavering support.
+            </p>
+
+            {/* CTA Buttons */}
+            <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
+              <button
+                onClick={() => navigate('/contact')}
+                className="group relative bg-white text-blue-600 px-6 py-3 rounded-xl font-bold text-base hover:bg-gray-50 transition-all shadow-2xl hover:shadow-cyan-500/50 hover:scale-105 flex items-center justify-center space-x-2 overflow-hidden"
+              >
+                <span className="relative z-10">Get in Touch</span>
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform relative z-10" />
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-cyan-500 opacity-0 group-hover:opacity-10 transition-opacity"></div>
+              </button>
+              <button
+                onClick={() => navigate('/register-facility')}
+                className="bg-white/10 backdrop-blur-md border-2 border-white/30 text-white px-6 py-3 rounded-xl font-bold text-base hover:bg-white/20 transition-all shadow-xl"
+              >
+                Start Free Trial
+              </button>
+            </div>
+
+            {/* Quick Stats - Compact Grid */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto pt-4">
+              {stats.map((stat, index) => {
+                const Icon = stat.icon;
+                return (
+                  <div
+                    key={index}
+                    className="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20 shadow-xl hover:scale-105 transition-transform"
+                  >
+                    <div className="w-10 h-10 rounded-lg bg-white/20 flex items-center justify-center mx-auto mb-2">
+                      <Icon className="w-5 h-5 text-white" />
+                    </div>
+                    <div className="text-2xl font-bold text-white mb-1">{stat.number}</div>
+                    <div className="text-xs font-medium text-white/90">{stat.label}</div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* Mission Section */}
-      <section className="py-20">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-white rounded-xl p-8 shadow-lg">
-            <h2 className="text-3xl font-bold text-gray-900 mb-6">Our Mission</h2>
-            <p className="text-lg text-gray-600 mb-4">
-              HomeLogic360 was founded with a simple mission: to provide care facilities with the tools they need to deliver exceptional care while streamlining operations and ensuring compliance.
-            </p>
-            <p className="text-lg text-gray-600 mb-4">
-              We understand that managing a care facility involves countless moving parts—from resident care and medication management to staff scheduling and regulatory compliance. Our comprehensive platform brings all these elements together in one intuitive system.
-            </p>
-            <p className="text-lg text-gray-600">
-              By automating routine tasks and providing real-time insights, we help care facilities focus on what matters most: providing quality care to residents.
-            </p>
+      {/* Mission & Vision Section */}
+      <section className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+            {/* Mission */}
+            <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl p-8 shadow-lg">
+              <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center mb-6">
+                <Target className="w-8 h-8 text-white" />
+              </div>
+              <h2 className="text-3xl font-bold text-gray-900 mb-4">Our Mission</h2>
+              <p className="text-lg text-gray-700 mb-4 leading-relaxed">
+                HomeLogic360 was founded with a simple mission to provide care facilities with the tools they need to deliver exceptional care while streamlining operations and ensuring compliance.
+              </p>
+              <p className="text-lg text-gray-700 mb-4 leading-relaxed">
+                We understand that managing a care facility involves countless moving partsfrom resident care and medication management to staff scheduling and regulatory compliance. Our comprehensive platform brings all these elements together in one intuitive system.
+              </p>
+              <p className="text-lg text-gray-700 leading-relaxed">
+                By automating routine tasks and providing real-time insights, we help care facilities focus on what matters most: providing quality care to residents.
+              </p>
+            </div>
+
+            {/* Vision */}
+            <div className="bg-gradient-to-br from-cyan-50 to-blue-50 rounded-2xl p-8 shadow-lg">
+              <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center mb-6">
+                <Star className="w-8 h-8 text-white" />
+              </div>
+              <h2 className="text-3xl font-bold text-gray-900 mb-4">Our Vision</h2>
+              <p className="text-lg text-gray-700 mb-4 leading-relaxed">
+                We envision a future where every care facility has access to world-class management tools that enable them to provide the highest quality of care to their residents.
+              </p>
+              <p className="text-lg text-gray-700 mb-4 leading-relaxed">
+                Through continuous innovation and deep partnerships with care facilities, we aim to become the leading platform for care facility management, setting new standards for efficiency, compliance, and resident care.
+              </p>
+              <p className="text-lg text-gray-700 leading-relaxed">
+                Our goal is to make advanced care management accessible to facilities of all sizes, ensuring that every resident receives the attention and care they deserve.
+              </p>
+            </div>
           </div>
         </div>
       </section>
 
       {/* Values Section */}
-      <section className="py-20 bg-white">
+      <section className="py-20 bg-gradient-to-br from-gray-50 to-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-gray-900 text-center mb-12">Our Values</h2>
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">Our Core Values</h2>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              The principles that guide everything we do
+            </p>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {values.map((value, index) => (
-              <div key={index} className="text-center">
-                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center mx-auto mb-4">
+              <div
+                key={index}
+                className="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-all border border-gray-100 hover:border-blue-200"
+              >
+                <div className={`w-16 h-16 rounded-xl bg-gradient-to-br ${value.gradient} flex items-center justify-center mb-4`}>
                   <value.icon className="w-8 h-8 text-white" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">{value.title}</h3>
-                <p className="text-gray-600">{value.description}</p>
+                <h3 className="text-xl font-bold text-gray-900 mb-3">{value.title}</h3>
+                <p className="text-gray-600 leading-relaxed">{value.description}</p>
               </div>
             ))}
           </div>
@@ -104,21 +263,82 @@ export default function About() {
       </section>
 
       {/* Stats Section */}
-      <section className="py-20 bg-gradient-to-br from-blue-50 to-cyan-50">
+      <section className="py-20 bg-gradient-to-r from-blue-500 to-cyan-500">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
-            <div>
-              <div className="text-5xl font-bold text-blue-600 mb-2">100+</div>
-              <div className="text-gray-600">Care Facilities</div>
-            </div>
-            <div>
-              <div className="text-5xl font-bold text-blue-600 mb-2">10,000+</div>
-              <div className="text-gray-600">Residents Managed</div>
-            </div>
-            <div>
-              <div className="text-5xl font-bold text-blue-600 mb-2">99.9%</div>
-              <div className="text-gray-600">Uptime</div>
-            </div>
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold text-white mb-4">By The Numbers</h2>
+            <p className="text-xl text-white/90">Our impact in the care facility industry</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {stats.map((stat, index) => (
+              <div
+                key={index}
+                className="bg-white/10 backdrop-blur-sm rounded-xl p-6 text-center border border-white/20 hover:bg-white/20 transition-all"
+              >
+                <div className="w-12 h-12 rounded-lg bg-white/20 flex items-center justify-center mx-auto mb-4">
+                  <stat.icon className="w-6 h-6 text-white" />
+                </div>
+                <div className="text-5xl font-bold text-white mb-2">{stat.number}</div>
+                <div className="text-lg font-semibold text-white mb-1">{stat.label}</div>
+                <div className="text-sm text-white/80">{stat.description}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Journey/Timeline Section */}
+      <section className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">Our Journey</h2>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              Milestones in our mission to transform care facility management
+            </p>
+          </div>
+          <div className="space-y-8">
+            {milestones.map((milestone, index) => (
+              <div
+                key={index}
+                className="flex items-start space-x-6"
+              >
+                <div className="flex-shrink-0">
+                  <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center shadow-lg">
+                    <div className="text-white font-bold text-lg">{milestone.year}</div>
+                  </div>
+                </div>
+                <div className="flex-1 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl p-6 shadow-lg border border-gray-100">
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">{milestone.title}</h3>
+                  <p className="text-gray-700 leading-relaxed">{milestone.description}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Why Choose Us Section */}
+      <section className="py-20 bg-gradient-to-br from-gray-50 to-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">Why Choose HomeLogic360?</h2>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              What sets us apart in the care facility management industry
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {features.map((feature, index) => (
+              <div
+                key={index}
+                className="bg-white rounded-xl p-6 shadow-md hover:shadow-xl transition-all border border-gray-200 hover:border-blue-300 text-center"
+              >
+                <div className="w-14 h-14 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center mx-auto mb-4">
+                  <feature.icon className="w-7 h-7 text-white" />
+                </div>
+                <h3 className="text-lg font-bold text-gray-900 mb-2">{feature.title}</h3>
+                <p className="text-gray-600 text-sm">{feature.description}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -127,18 +347,28 @@ export default function About() {
       <section className="py-20 bg-gradient-to-r from-blue-500 to-cyan-500">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-4xl font-bold text-white mb-4">Join Our Growing Community</h2>
-          <p className="text-xl text-blue-100 mb-8">
-            See why care facilities trust HomeLogic360 for their management needs.
+          <p className="text-xl text-white/90 mb-8">
+            See why care facilities trust HomeLogic360 for their management needs. Start your free trial today.
           </p>
-          <button
-            onClick={() => navigate('/app/login')}
-            className="bg-white text-blue-600 px-8 py-4 rounded-lg font-semibold text-lg hover:bg-gray-100 transition-all shadow-lg"
-          >
-            Start Free Trial
-          </button>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <button
+              onClick={() => navigate('/register-facility')}
+              className="bg-white text-blue-600 px-8 py-4 rounded-lg font-semibold text-lg hover:bg-gray-100 transition-all shadow-xl hover:shadow-2xl"
+            >
+              Start Free Trial
+            </button>
+            <button
+              onClick={() => navigate('/contact')}
+              className="bg-transparent border-2 border-white text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-white/10 transition-all"
+            >
+              Schedule Demo
+            </button>
+          </div>
         </div>
       </section>
+
+      {/* Footer */}
+      <PublicFooter />
     </div>
   );
 }
-

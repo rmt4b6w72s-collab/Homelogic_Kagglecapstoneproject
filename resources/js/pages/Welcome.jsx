@@ -7,6 +7,8 @@ import {
   Mail, Lock, Bell, Server, UserCheck, MapPin, ShoppingCart,
   DollarSign, Bed, Sparkles, ArrowRight, Check
 } from 'lucide-react';
+import PublicNavigation from '../components/PublicNavigation';
+import PublicFooter from '../components/PublicFooter';
 
 export default function Welcome() {
   const navigate = useNavigate();
@@ -22,67 +24,67 @@ export default function Welcome() {
       icon: Pill,
       title: 'Medication Management',
       description: 'Track medication administration, schedules, and compliance with automated reminders.',
-      color: 'from-purple-500 to-pink-500'
+      color: 'from-blue-600 to-blue-500'
     },
     {
       icon: Heart,
       title: 'Vital Signs Monitoring',
       description: 'Record and track vital signs with customizable ranges and alert thresholds.',
-      color: 'from-red-500 to-rose-500'
+      color: 'from-cyan-500 to-cyan-400'
     },
     {
       icon: Calendar,
       title: 'Appointment Scheduling',
       description: 'Schedule and manage healthcare provider appointments with automated reminders.',
-      color: 'from-green-500 to-emerald-500'
+      color: 'from-blue-500 to-cyan-500'
     },
     {
       icon: ClipboardList,
       title: 'Assessments',
       description: 'Conduct comprehensive resident assessments with customizable forms and templates.',
-      color: 'from-orange-500 to-amber-500'
+      color: 'from-blue-600 to-cyan-500'
     },
     {
       icon: Moon,
       title: 'Sleep Monitoring',
       description: 'Track sleep patterns and quality with detailed analytics and reports.',
-      color: 'from-indigo-500 to-violet-500'
+      color: 'from-cyan-600 to-blue-500'
     },
     {
       icon: UserCheck,
       title: 'Check-In/Check-Out System',
       description: 'Track staff clock-ins, resident sign-outs, and visitor management with real-time monitoring.',
-      color: 'from-teal-500 to-cyan-500'
+      color: 'from-cyan-500 to-blue-500'
     },
     {
       icon: Building2,
       title: 'Housekeeping',
       description: 'Manage cleaning schedules, tasks, and assignments with quality assurance tracking.',
-      color: 'from-yellow-500 to-orange-500'
+      color: 'from-blue-500 to-cyan-500'
     },
     {
       icon: AlertCircle,
       title: 'Incident Reporting',
       description: 'Document and track incidents with detailed reporting and follow-up workflows.',
-      color: 'from-red-500 to-orange-500'
+      color: 'from-blue-600 to-cyan-500'
     },
     {
       icon: BarChart3,
       title: 'Analytics & Reports',
       description: 'Generate comprehensive reports and analytics for compliance and decision-making.',
-      color: 'from-blue-500 to-indigo-500'
+      color: 'from-cyan-500 to-blue-500'
     },
     {
       icon: ShoppingCart,
       title: 'Pharmacy Management',
       description: 'Manage medication inventory, orders, suppliers, and deliveries.',
-      color: 'from-green-500 to-teal-500'
+      color: 'from-blue-500 to-cyan-500'
     },
     {
       icon: DollarSign,
       title: 'Billing & Expenses',
       description: 'Track expenses, generate invoices, and manage financial records.',
-      color: 'from-emerald-500 to-green-500'
+      color: 'from-cyan-600 to-blue-500'
     },
   ];
 
@@ -162,7 +164,7 @@ export default function Welcome() {
         'Custom reporting',
       ],
       popular: false,
-      color: 'from-purple-500 to-pink-500'
+      color: 'from-blue-600 to-cyan-500'
     },
   ];
 
@@ -192,68 +194,149 @@ export default function Welcome() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
       {/* Navigation */}
-      <nav className="bg-white/80 backdrop-blur-md border-b border-gray-200 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-3">
-              <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
-                <Building2 className="w-6 h-6 text-white" />
-              </div>
-              <span className="text-xl font-bold text-gray-900">HomeLogic360</span>
-            </div>
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={() => navigate('/app/login')}
-                className="text-gray-700 hover:text-gray-900 px-4 py-2 text-sm font-medium"
-              >
-                Sign In
-              </button>
-              <button
-                onClick={() => navigate('/app/login')}
-                className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-6 py-2 rounded-lg font-semibold hover:from-blue-600 hover:to-cyan-600 transition-all shadow-lg hover:shadow-xl"
-              >
-                Get Started
-              </button>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <PublicNavigation />
 
       {/* Hero Section */}
-      <section className="relative overflow-hidden pt-20 pb-32">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6">
-              Comprehensive Care Facility
-              <span className="block bg-gradient-to-r from-blue-500 to-cyan-500 bg-clip-text text-transparent">
-                Management System
-              </span>
-            </h1>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
-              Streamline operations, improve care quality, and ensure compliance with our all-in-one
-              platform designed specifically for assisted living and care facilities.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button
-                onClick={() => navigate('/app/login')}
-                className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-8 py-4 rounded-lg font-semibold text-lg hover:from-blue-600 hover:to-cyan-600 transition-all shadow-lg hover:shadow-xl flex items-center justify-center space-x-2"
-              >
-                <span>Start Free Trial</span>
-                <ArrowRight className="w-5 h-5" />
-              </button>
-              <button
-                onClick={() => navigate('/register-facility')}
-                className="bg-white border-2 border-gray-300 text-gray-700 px-8 py-4 rounded-lg font-semibold text-lg hover:border-gray-400 transition-all"
-              >
-                Register Facility
-              </button>
+      <section className="relative overflow-hidden min-h-screen sm:h-screen flex items-center bg-gradient-to-br from-blue-600 via-blue-500 to-cyan-500 py-20 sm:py-0">
+        {/* Sophisticated Background Elements */}
+        <div className="absolute inset-0 overflow-hidden">
+          {/* Animated Gradient Orbs */}
+          <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-cyan-400/30 rounded-full mix-blend-overlay filter blur-[100px] animate-blob"></div>
+          <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-blue-400/30 rounded-full mix-blend-overlay filter blur-[100px] animate-blob animation-delay-2000"></div>
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-white/5 rounded-full mix-blend-overlay filter blur-[120px] animate-blob animation-delay-4000"></div>
+          
+          {/* Geometric Patterns */}
+          <div className="absolute inset-0 opacity-10">
+            <div className="absolute top-20 left-20 w-32 h-32 border-2 border-white/30 rotate-45"></div>
+            <div className="absolute bottom-20 right-20 w-24 h-24 border-2 border-white/30 rotate-45"></div>
+            <div className="absolute top-1/2 right-10 w-16 h-16 border-2 border-white/20 rotate-45"></div>
+          </div>
+          
+          {/* Grid Pattern */}
+          <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:50px_50px]"></div>
+        </div>
+
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full z-10">
+          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+            {/* Left Column - Content */}
+            <div className="text-center lg:text-left space-y-5">
+              {/* Main Heading */}
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-black text-white leading-[1.1]">
+                <span className="block">Comprehensive</span>
+                <span className="block bg-gradient-to-r from-cyan-200 via-white to-cyan-200 bg-clip-text text-transparent">
+                  Care Facility
+                </span>
+                <span className="block text-white">Management</span>
+              </h1>
+
+              {/* Subheading */}
+              <p className="text-lg sm:text-xl text-white/90 max-w-xl mx-auto lg:mx-0 leading-relaxed">
+                Streamline operations, improve care quality, and ensure compliance with our all-in-one platform designed for assisted living facilities.
+              </p>
+
+              {/* CTA Buttons */}
+              <div className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start pt-2">
+                <button
+                  onClick={() => navigate('/register-facility')}
+                  className="group relative bg-white text-blue-600 px-6 py-3 rounded-xl font-bold text-base hover:bg-gray-50 transition-all shadow-2xl hover:shadow-cyan-500/50 hover:scale-105 flex items-center justify-center space-x-2 overflow-hidden"
+                >
+                  <span className="relative z-10">Start Free Trial</span>
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform relative z-10" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-cyan-500 opacity-0 group-hover:opacity-10 transition-opacity"></div>
+                </button>
+                <button
+                  onClick={() => navigate('/login')}
+                  className="bg-white/10 backdrop-blur-md border-2 border-white/30 text-white px-6 py-3 rounded-xl font-bold text-base hover:bg-white/20 transition-all shadow-xl"
+                >
+                  Sign In
+                </button>
+              </div>
+
+              {/* Trust Indicators - Compact */}
+              <div className="flex flex-wrap items-center gap-3 justify-center lg:justify-start pt-2">
+                <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-lg border border-white/20">
+                  <CheckCircle className="w-4 h-4 text-white" />
+                  <span className="text-xs font-medium text-white">14-Day Trial</span>
+                </div>
+                <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-lg border border-white/20">
+                  <Shield className="w-4 h-4 text-white" />
+                  <span className="text-xs font-medium text-white">HIPAA</span>
+                </div>
+                <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-lg border border-white/20">
+                  <Zap className="w-4 h-4 text-white" />
+                  <span className="text-xs font-medium text-white">No Card</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Column - Sophisticated Visual */}
+            <div className="hidden lg:block relative h-full flex items-center">
+              <div className="relative w-full">
+                {/* Main Dashboard Preview Card */}
+                <div className="bg-white/10 backdrop-blur-xl rounded-3xl p-6 border border-white/20 shadow-2xl">
+                  {/* Card Header */}
+                  <div className="flex items-center justify-between mb-4 pb-4 border-b border-white/10">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center">
+                        <Building2 className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <div className="text-white font-semibold text-sm">Dashboard</div>
+                        <div className="text-white/60 text-xs">Real-time Overview</div>
+                      </div>
+                    </div>
+                    <div className="w-2 h-2 rounded-full bg-green-400"></div>
+                  </div>
+                  
+                  {/* Stats Grid */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+                      <div className="flex items-center justify-between mb-2">
+                        <Users className="w-5 h-5 text-white/60" />
+                        <span className="text-xs text-white/40">+12%</span>
+                      </div>
+                      <div className="text-2xl font-bold text-white">10K+</div>
+                      <div className="text-xs text-white/60 mt-1">Residents</div>
+                    </div>
+                    <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+                      <div className="flex items-center justify-between mb-2">
+                        <Building2 className="w-5 h-5 text-white/60" />
+                        <span className="text-xs text-white/40">+5%</span>
+                      </div>
+                      <div className="text-2xl font-bold text-white">100+</div>
+                      <div className="text-xs text-white/60 mt-1">Facilities</div>
+                    </div>
+                    <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+                      <div className="flex items-center justify-between mb-2">
+                        <Heart className="w-5 h-5 text-white/60" />
+                        <span className="text-xs text-green-400">99.9%</span>
+                      </div>
+                      <div className="text-2xl font-bold text-white">Active</div>
+                      <div className="text-xs text-white/60 mt-1">Uptime</div>
+                    </div>
+                    <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+                      <div className="flex items-center justify-between mb-2">
+                        <Shield className="w-5 h-5 text-white/60" />
+                        <span className="text-xs text-white/40">100%</span>
+                      </div>
+                      <div className="text-2xl font-bold text-white">Secure</div>
+                      <div className="text-xs text-white/60 mt-1">HIPAA</div>
+                    </div>
+                  </div>
+                  
+                  {/* Activity Bar */}
+                  <div className="mt-4 pt-4 border-t border-white/10">
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 h-2 bg-white/10 rounded-full overflow-hidden">
+                        <div className="h-full bg-gradient-to-r from-cyan-400 to-blue-500 rounded-full w-3/4"></div>
+                      </div>
+                      <span className="text-xs text-white/60">75% Active</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-        <div className="absolute inset-0 -z-10">
-          <div className="absolute top-0 left-1/4 w-96 h-96 bg-blue-200 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob"></div>
-          <div className="absolute top-0 right-1/4 w-96 h-96 bg-cyan-200 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-2000"></div>
-          <div className="absolute -bottom-8 left-1/3 w-96 h-96 bg-purple-200 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-4000"></div>
         </div>
       </section>
 
@@ -364,13 +447,13 @@ export default function Welcome() {
                 <ul className="space-y-3 mb-8">
                   {plan.features.map((feature, featureIndex) => (
                     <li key={featureIndex} className="flex items-start space-x-3">
-                      <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                      <Check className="w-5 h-5 text-cyan-500 flex-shrink-0 mt-0.5" />
                       <span className="text-gray-700">{feature}</span>
                     </li>
                   ))}
                 </ul>
                 <button
-                  onClick={() => navigate('/app/login')}
+                  onClick={() => navigate('/login')}
                   className={`w-full py-3 rounded-lg font-semibold transition-all ${
                     plan.popular
                       ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white hover:from-blue-600 hover:to-cyan-600 shadow-lg'
@@ -389,12 +472,12 @@ export default function Welcome() {
       <section className="py-20 bg-gradient-to-r from-blue-500 to-cyan-500">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-4xl font-bold text-white mb-4">Ready to Transform Your Facility?</h2>
-          <p className="text-xl text-blue-100 mb-8">
+          <p className="text-xl text-white/90 mb-8">
             Join hundreds of care facilities already using HomeLogic360 to improve operations and care quality.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button
-              onClick={() => navigate('/app/login')}
+              onClick={() => navigate('/register-facility')}
               className="bg-white text-blue-600 px-8 py-4 rounded-lg font-semibold text-lg hover:bg-gray-100 transition-all shadow-lg"
             >
               Start Free Trial
@@ -410,53 +493,7 @@ export default function Welcome() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-gray-300 py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div>
-              <div className="flex items-center space-x-3 mb-4">
-                <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
-                  <Building2 className="w-6 h-6 text-white" />
-                </div>
-                <span className="text-xl font-bold text-white">HomeLogic360</span>
-              </div>
-              <p className="text-sm">
-                Comprehensive care facility management system for modern healthcare facilities.
-              </p>
-            </div>
-            <div>
-              <h4 className="text-white font-semibold mb-4">Product</h4>
-              <ul className="space-y-2 text-sm">
-                <li><a href="/features" onClick={(e) => { e.preventDefault(); navigate('/features'); }} className="hover:text-white">Features</a></li>
-                <li><a href="/pricing" onClick={(e) => { e.preventDefault(); navigate('/pricing'); }} className="hover:text-white">Pricing</a></li>
-                <li><a href="/modules" onClick={(e) => { e.preventDefault(); navigate('/modules'); }} className="hover:text-white">Modules</a></li>
-                <li><a href="/security" onClick={(e) => { e.preventDefault(); navigate('/security'); }} className="hover:text-white">Security</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="text-white font-semibold mb-4">Company</h4>
-              <ul className="space-y-2 text-sm">
-                <li><a href="/about" onClick={(e) => { e.preventDefault(); navigate('/about'); }} className="hover:text-white">About</a></li>
-                <li><a href="/contact" onClick={(e) => { e.preventDefault(); navigate('/contact'); }} className="hover:text-white">Contact</a></li>
-                <li><a href="/support" onClick={(e) => { e.preventDefault(); navigate('/support'); }} className="hover:text-white">Support</a></li>
-                <li><a href="/careers" onClick={(e) => { e.preventDefault(); navigate('/careers'); }} className="hover:text-white">Careers</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="text-white font-semibold mb-4">Legal</h4>
-              <ul className="space-y-2 text-sm">
-                <li><a href="/privacy-policy" onClick={(e) => { e.preventDefault(); navigate('/privacy-policy'); }} className="hover:text-white">Privacy Policy</a></li>
-                <li><a href="/terms-of-service" onClick={(e) => { e.preventDefault(); navigate('/terms-of-service'); }} className="hover:text-white">Terms of Service</a></li>
-                <li><a href="/hipaa-compliance" onClick={(e) => { e.preventDefault(); navigate('/hipaa-compliance'); }} className="hover:text-white">HIPAA Compliance</a></li>
-                <li><a href="/cookie-policy" onClick={(e) => { e.preventDefault(); navigate('/cookie-policy'); }} className="hover:text-white">Cookie Policy</a></li>
-              </ul>
-            </div>
-          </div>
-          <div className="border-t border-gray-800 mt-8 pt-8 text-center text-sm">
-            <p>&copy; {new Date().getFullYear()} HomeLogic360. All rights reserved.</p>
-          </div>
-        </div>
-      </footer>
+      <PublicFooter />
 
       <style>{`
         @keyframes blob {
@@ -470,6 +507,14 @@ export default function Welcome() {
             transform: translate(-20px, 20px) scale(0.9);
           }
         }
+        @keyframes gradient {
+          0%, 100% {
+            background-position: 0% 50%;
+          }
+          50% {
+            background-position: 100% 50%;
+          }
+        }
         .animate-blob {
           animation: blob 7s infinite;
         }
@@ -478,6 +523,13 @@ export default function Welcome() {
         }
         .animation-delay-4000 {
           animation-delay: 4s;
+        }
+        .animation-delay-6000 {
+          animation-delay: 6s;
+        }
+        .animate-gradient {
+          background-size: 200% auto;
+          animation: gradient 3s linear infinite;
         }
       `}</style>
     </div>

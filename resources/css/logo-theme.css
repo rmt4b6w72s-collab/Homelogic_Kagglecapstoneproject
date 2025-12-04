@@ -19,7 +19,15 @@
 
 /* Apply accent background to the main app */
 body {
-    background-color: var(--theme-accent, #F9FAFB) !important;
+    background-color: transparent !important;
+}
+
+html {
+    background-color: transparent !important;
+}
+
+#react-app {
+    background-color: transparent !important;
 }
 
 /* Filament panel background */

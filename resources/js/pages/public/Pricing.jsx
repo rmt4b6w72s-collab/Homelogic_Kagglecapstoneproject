@@ -1,6 +1,8 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Building2, Sparkles, Check, ArrowLeft } from 'lucide-react';
+import PublicNavigation from '../../components/PublicNavigation';
+import PublicFooter from '../../components/PublicFooter';
 
 export default function Pricing() {
   const navigate = useNavigate();
@@ -100,37 +102,13 @@ export default function Pricing() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
       {/* Navigation */}
-      <nav className="bg-white/80 backdrop-blur-md border-b border-gray-200 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <button
-              onClick={() => navigate('/')}
-              className="flex items-center space-x-3 text-gray-700 hover:text-gray-900"
-            >
-              <ArrowLeft className="w-5 h-5" />
-              <span className="font-medium">Back to Home</span>
-            </button>
-            <div className="flex items-center space-x-3">
-              <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
-                <Building2 className="w-6 h-6 text-white" />
-              </div>
-              <span className="text-xl font-bold text-gray-900">HomeLogic360</span>
-            </div>
-            <button
-              onClick={() => navigate('/app/login')}
-              className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-6 py-2 rounded-lg font-semibold hover:from-blue-600 hover:to-cyan-600 transition-all"
-            >
-              Sign In
-            </button>
-          </div>
-        </div>
-      </nav>
+      <PublicNavigation />
 
       {/* Hero Section */}
       <section className="pt-20 pb-12 bg-gradient-to-br from-blue-50 to-cyan-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-5xl font-bold text-gray-900 mb-4">Simple, Transparent Pricing</h1>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-4">Simple, Transparent Pricing</h1>
+          <p className="text-base sm:text-lg lg:text-xl text-gray-600 max-w-3xl mx-auto">
             Choose the plan that fits your facility's needs. All plans include a 14-day free trial with full access.
           </p>
         </div>
@@ -174,7 +152,7 @@ export default function Pricing() {
                   ))}
                 </ul>
                 <button
-                  onClick={() => navigate('/app/login')}
+                  onClick={() => navigate('/register-facility')}
                   className={`w-full py-3 rounded-lg font-semibold transition-all ${
                     plan.popular
                       ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white hover:from-blue-600 hover:to-cyan-600 shadow-lg'
@@ -212,14 +190,18 @@ export default function Pricing() {
             Start your free 14-day trial today. No credit card required.
           </p>
           <button
-            onClick={() => navigate('/app/login')}
+            onClick={() => navigate('/register-facility')}
             className="bg-white text-blue-600 px-8 py-4 rounded-lg font-semibold text-lg hover:bg-gray-100 transition-all shadow-lg"
           >
             Start Free Trial
           </button>
         </div>
       </section>
+
+      {/* Footer */}
+      <PublicFooter />
     </div>
   );
 }
+
 

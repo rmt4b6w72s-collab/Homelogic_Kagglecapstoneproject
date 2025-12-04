@@ -36,7 +36,8 @@ export default function Visitors() {
             const response = await api.get('/visitors/active');
             return response.data?.data || [];
         },
-        refetchInterval: 30000, // Refetch every 30 seconds
+        refetchInterval: 60000, // Refetch every 60 seconds
+        refetchIntervalInBackground: false,
     });
 
     // Fetch all visitors (with filters)

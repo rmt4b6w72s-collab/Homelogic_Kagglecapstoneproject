@@ -95,7 +95,12 @@ class DatabaseManagementController extends Controller
                 );
                 exec($command, $output, $returnVar);
             } elseif ($config['driver'] === 'sqlite') {
-                $sourcePath = database_path($config['database']);
+                // Handle both absolute paths and relative paths
+                $sourcePath = $config['database'];
+                if (!str_starts_with($sourcePath, '/')) {
+                    $sourcePath = database_path($sourcePath);
+                }
+                
                 if (file_exists($sourcePath)) {
                     copy($sourcePath, $backupPath);
                 } else {
@@ -169,6 +174,39 @@ class DatabaseManagementController extends Controller
     }
 
     /**
+     * Download a backup file
+     */
+    public function downloadBackup(Request $request, string $filename): \Symfony\Component\HttpFoundation\BinaryFileResponse|\Illuminate\Http\JsonResponse
+    {
+        $user = Auth::user();
+        
+        if (!$user || ($user->role !== 'super_admin' && $user->role !== 'administrator')) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        try {
+            $backupPath = storage_path("app/backups/{$filename}");
+
+            // Security: Only allow backup files
+            if (!str_starts_with($filename, 'backup_') || !str_ends_with($filename, '.sql')) {
+                return response()->json(['message' => 'Invalid backup file'], 400);
+            }
+
+            if (!file_exists($backupPath)) {
+                return response()->json(['message' => 'Backup file not found'], 404);
+            }
+
+            return response()->download($backupPath, $filename, [
+                'Content-Type' => 'application/sql',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to download backup: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
      * Restore from a backup
      */
     public function restoreBackup(Request $request): JsonResponse
@@ -215,7 +253,11 @@ class DatabaseManagementController extends Controller
                     return response()->json(['message' => 'Failed to restore backup'], 500);
                 }
             } elseif ($config['driver'] === 'sqlite') {
-                $targetPath = database_path($config['database']);
+                // Handle both absolute paths and relative paths
+                $targetPath = $config['database'];
+                if (!str_starts_with($targetPath, '/')) {
+                    $targetPath = database_path($targetPath);
+                }
                 copy($backupPath, $targetPath);
             } else {
                 return response()->json(['message' => 'Unsupported database driver'], 400);
@@ -285,7 +327,11 @@ class DatabaseManagementController extends Controller
                     return $this->formatBytes($result[0]->size_mb * 1024 * 1024);
                 }
             } elseif ($config['driver'] === 'sqlite') {
-                $dbPath = database_path($config['database']);
+                // Handle both absolute paths and relative paths
+                $dbPath = $config['database'];
+                if (!str_starts_with($dbPath, '/')) {
+                    $dbPath = database_path($dbPath);
+                }
                 if (file_exists($dbPath)) {
                     return $this->formatBytes(filesize($dbPath));
                 }

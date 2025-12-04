@@ -534,3 +534,14 @@ div[class*="bg-white"] textarea::placeholder,
     color: #000000 !important;
     opacity: 0.6;
 }
+
+/* Footer Link Color Fix - Override all global link styles */
+footer.bg-gray-900 a,
+footer[class*="bg-gray-900"] a {
+    color: #e5e7eb !important; /* gray-200 */
+}
+
+footer.bg-gray-900 a:hover,
+footer[class*="bg-gray-900"] a:hover {
+    color: #67e8f9 !important; /* cyan-300 */
+}
