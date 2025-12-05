@@ -14,13 +14,58 @@ const FormContext = React.createContext();
 function FormProvider({ children, initialData }) {
     const formatDateForInput = (dateString) => {
         if (!dateString) return '';
+        
+        // If it's already a Date object
         if (dateString instanceof Date) {
-            return dateString.toISOString().split('T')[0];
+            const year = dateString.getFullYear();
+            const month = String(dateString.getMonth() + 1).padStart(2, '0');
+            const day = String(dateString.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
         }
-        if (typeof dateString !== 'string') return '';
-        if (dateString.match(/^\d{4}-\d{2}-\d{2}$/)) return dateString;
-        const date = new Date(dateString);
-        return date.toISOString().split('T')[0];
+        
+        // If it's not a string, try to convert
+        if (typeof dateString !== 'string') {
+            try {
+                const date = new Date(dateString);
+                if (!isNaN(date.getTime())) {
+                    const year = date.getFullYear();
+                    const month = String(date.getMonth() + 1).padStart(2, '0');
+                    const day = String(date.getDate()).padStart(2, '0');
+                    return `${year}-${month}-${day}`;
+                }
+            } catch (e) {
+                console.warn('Failed to parse date (non-string):', dateString, e);
+            }
+            return '';
+        }
+        
+        // If it's already in YYYY-MM-DD format (Laravel date cast format)
+        if (dateString.match(/^\d{4}-\d{2}-\d{2}$/)) {
+            return dateString;
+        }
+        
+        // Handle Laravel ISO datetime format (YYYY-MM-DDTHH:mm:ss.uuuuuuZ or YYYY-MM-DD HH:mm:ss)
+        // Extract just the date part
+        const dateMatch = dateString.match(/^(\d{4}-\d{2}-\d{2})/);
+        if (dateMatch) {
+            return dateMatch[1];
+        }
+        
+        // Try to parse various date formats
+        try {
+            const date = new Date(dateString);
+            if (!isNaN(date.getTime())) {
+                // Format as YYYY-MM-DD for HTML date input
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            }
+        } catch (e) {
+            console.warn('Failed to parse date:', dateString, e);
+        }
+        
+        return '';
     };
 
     const [formData, setFormData] = useState(() => {
@@ -78,6 +123,17 @@ function FormProvider({ children, initialData }) {
     // Update form data when initialData changes (e.g. after fetch)
     useEffect(() => {
         if (initialData && Object.keys(initialData).length > 0) {
+            const formattedDateOfBirth = initialData.date_of_birth ? formatDateForInput(initialData.date_of_birth) : '';
+            const formattedDateEmployed = initialData.date_employed ? formatDateForInput(initialData.date_employed) : '';
+            
+            console.log('UserEdit: Updating form data', {
+                hasInitialData: !!initialData,
+                date_of_birth_raw: initialData.date_of_birth,
+                date_of_birth_formatted: formattedDateOfBirth,
+                date_employed_raw: initialData.date_employed,
+                date_employed_formatted: formattedDateEmployed
+            });
+            
             setFormData(prev => ({
                 ...prev,
                 first_name: initialData.first_name || '',
@@ -86,12 +142,12 @@ function FormProvider({ children, initialData }) {
                 email: initialData.email || '',
                 password: '', // Don't prefill password
                 phone_number: initialData.phone_number || '',
-                date_of_birth: formatDateForInput(initialData.date_of_birth),
+                date_of_birth: formattedDateOfBirth,
                 marital_status: initialData.marital_status || '',
                 sex: initialData.sex || '',
                 credentials: initialData.credentials || '',
                 credential_details: initialData.credential_details || '',
-                date_employed: formatDateForInput(initialData.date_employed),
+                date_employed: formattedDateEmployed,
                 supervisor_name: initialData.supervisor_name || '',
                 provider_name: initialData.provider_name || '',
                 // Ensure role is just the name string if it comes as an object or relation
