@@ -33,15 +33,33 @@ export default defineConfig({
         },
         rollupOptions: {
             // Preserve entry signatures to maintain proper module boundaries
-            preserveEntrySignatures: 'strict',
+            preserveEntrySignatures: 'exports-only',
             output: {
                 // Use ES module format
                 format: 'es',
-                // Let Vite handle chunking automatically - this ensures proper dependency order
-                manualChunks: undefined,
+                // Better chunk naming for production
+                chunkFileNames: 'assets/[name]-[hash].js',
+                entryFileNames: 'assets/[name]-[hash].js',
+                assetFileNames: 'assets/[name]-[hash].[ext]',
+                // Manual chunking strategy for better caching and loading
+                manualChunks: (id) => {
+                    // Vendor chunks
+                    if (id.includes('node_modules')) {
+                        if (id.includes('react') || id.includes('react-dom')) {
+                            return 'vendor-react';
+                        }
+                        if (id.includes('chart.js') || id.includes('react-chartjs-2')) {
+                            return 'vendor-charts';
+                        }
+                        if (id.includes('@tanstack')) {
+                            return 'vendor-query';
+                        }
+                        return 'vendor';
+                    }
+                },
             },
         },
-        // Warn if chunk exceeds 500KB
+        // Warn if chunk exceeds 1000KB
         chunkSizeWarningLimit: 1000, // Increase limit since we're not minifying
         // Disable sourcemaps for production
         sourcemap: false,
@@ -58,6 +76,10 @@ export default defineConfig({
             minifyWhitespace: true, // Only remove whitespace
             // Don't do any code transformations
             treeShaking: false,
+        },
+        // Ensure proper module resolution
+        modulePreload: {
+            polyfill: true,
         },
     },
 });

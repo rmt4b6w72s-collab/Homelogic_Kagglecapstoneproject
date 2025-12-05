@@ -15,101 +15,150 @@ const PageLoader = () => (
     </div>
 );
 
+// Utility function to retry failed dynamic imports
+// This fixes the "Failed to fetch dynamically imported module" error in production
+function retryLazyImport(importFn, retries = 3, delay = 1000) {
+    return new Promise((resolve, reject) => {
+        // Check if we've already tried reloading (prevent infinite loops)
+        const reloadKey = 'module_reload_attempted';
+        const hasReloaded = sessionStorage.getItem(reloadKey);
+        
+        const attempt = (remainingRetries) => {
+            importFn()
+                .then((module) => {
+                    // Clear reload flag on success
+                    if (hasReloaded) {
+                        sessionStorage.removeItem(reloadKey);
+                    }
+                    resolve(module);
+                })
+                .catch((error) => {
+                    if (remainingRetries > 0) {
+                        console.warn(`Failed to load module, retrying... (${retries - remainingRetries + 1}/${retries})`, error);
+                        // Exponential backoff
+                        const backoffDelay = delay * (retries - remainingRetries + 1);
+                        setTimeout(() => attempt(remainingRetries - 1), backoffDelay);
+                    } else {
+                        console.error('Failed to load module after all retries:', error);
+                        // On final failure, try to reload the page only once
+                        if (error.message && error.message.includes('Failed to fetch dynamically imported module') && !hasReloaded) {
+                            console.warn('Module load failed, attempting page reload...');
+                            sessionStorage.setItem(reloadKey, 'true');
+                            // Small delay before reload to avoid infinite loop
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 2000);
+                        } else if (hasReloaded) {
+                            console.error('Module load failed even after reload. This may indicate a build or deployment issue.');
+                        }
+                        reject(error);
+                    }
+                });
+        };
+        attempt(retries);
+    });
+}
+
+// Wrapper for lazy loading with retry logic
+function lazyWithRetry(importFn, retries = 3) {
+    return lazy(() => retryLazyImport(importFn, retries));
+}
+
 // Critical components - load immediately (Login, Layout)
 import Login from './pages/Login';
 
-// Lazy load all page components for code splitting
-const Dashboard = lazy(() => import('./pages/Dashboard'));
-const Residents = lazy(() => import('./pages/Residents'));
-const MyResidentsPage = lazy(() => import('./pages/caregiver/MyResidentsPage'));
-const ResidentDetailPage = lazy(() => import('./pages/caregiver/ResidentDetailPage'));
-const Appointments = lazy(() => import('./pages/Appointments'));
-const CreateAppointment = lazy(() => import('./pages/CreateAppointment'));
-const Vitals = lazy(() => import('./pages/Vitals'));
-const Medications = lazy(() => import('./pages/Medications'));
-const MedicationHistory = lazy(() => import('./pages/MedicationHistory'));
-const CaregiverMedicationsResidents = lazy(() => import('./pages/caregiver/CaregiverMedicationsResidents'));
-const ResidentMedicationsPage = lazy(() => import('./pages/caregiver/ResidentMedicationsPage'));
-const Reports = lazy(() => import('./pages/Reports'));
-const Assessments = lazy(() => import('./pages/Assessments'));
-const AssessmentDetail = lazy(() => import('./pages/AssessmentDetail'));
-const AssessmentReview = lazy(() => import('./pages/AssessmentReview'));
-const Sleep = lazy(() => import('./pages/Sleep'));
-const SleepPatterns = lazy(() => import('./pages/SleepPatterns'));
-const ViewVitals = lazy(() => import('./pages/ViewVitals'));
-const Facilities = lazy(() => import('./pages/Facilities'));
-const FacilityCreate = lazy(() => import('./pages/FacilityCreate'));
-const FacilityView = lazy(() => import('./pages/FacilityView'));
-const FacilityEdit = lazy(() => import('./pages/FacilityEdit'));
-const Branches = lazy(() => import('./pages/Branches'));
-const VitalRanges = lazy(() => import('./pages/VitalRanges'));
-const LeaveRequests = lazy(() => import('./pages/LeaveRequests'));
-const Roles = lazy(() => import('./pages/Roles'));
-const Users = lazy(() => import('./pages/Users'));
-const UserCreate = lazy(() => import('./pages/UserCreate'));
-const UserEdit = lazy(() => import('./pages/UserEdit'));
-const EmployeeDocuments = lazy(() => import('./pages/EmployeeDocuments'));
-const Drugs = lazy(() => import('./pages/Drugs'));
-const Profile = lazy(() => import('./pages/Profile'));
-const ActivityLogs = lazy(() => import('./pages/ActivityLogs'));
-const DeactivatedRecords = lazy(() => import('./pages/DeactivatedRecords'));
-const Housekeeping = lazy(() => import('./pages/Housekeeping'));
-const HousekeepingSchedule = lazy(() => import('./pages/HousekeepingSchedule'));
-const HousekeepingDashboard = lazy(() => import('./pages/HousekeepingDashboard'));
-const MedicationDeliveries = lazy(() => import('./pages/MedicationDeliveries'));
-const GroceryStatus = lazy(() => import('./pages/GroceryStatus'));
-const FireDrills = lazy(() => import('./pages/FireDrills'));
-const PharmacySuppliers = lazy(() => import('./pages/PharmacySuppliers'));
-const PharmacyInventory = lazy(() => import('./pages/PharmacyInventory'));
-const PharmacyOrders = lazy(() => import('./pages/PharmacyOrders'));
-const SuperAdminDashboard = lazy(() => import('./pages/SuperAdminDashboard'));
-const SuperAdminSettings = lazy(() => import('./pages/SuperAdminSettings'));
-const SuperAdminEmailSettings = lazy(() => import('./pages/super-admin/EmailSettings'));
-const SuperAdminSecuritySettings = lazy(() => import('./pages/super-admin/SecuritySettings'));
-const SuperAdminGeneralSettings = lazy(() => import('./pages/super-admin/GeneralSettings'));
-const SuperAdminNotificationSettings = lazy(() => import('./pages/super-admin/NotificationSettings'));
-const SuperAdminDatabaseSettings = lazy(() => import('./pages/super-admin/DatabaseSettings'));
-const SuperAdminServerSettings = lazy(() => import('./pages/super-admin/ServerSettings'));
-const SuperAdminBrandingSettings = lazy(() => import('./pages/super-admin/BrandingSettings'));
-const FacilityRegistrations = lazy(() => import('./pages/FacilityRegistrations'));
-const ApproveFacilityRegistration = lazy(() => import('./pages/ApproveFacilityRegistration'));
-const Permissions = lazy(() => import('./pages/Permissions'));
-const ExpenseCategories = lazy(() => import('./pages/ExpenseCategories'));
-const Expenses = lazy(() => import('./pages/Expenses'));
-const BillingInvoices = lazy(() => import('./pages/BillingInvoices'));
-const ExpenseReports = lazy(() => import('./pages/reports/ExpenseReports'));
-const Incidents = lazy(() => import('./pages/Incidents'));
-const ChartReports = lazy(() => import('./pages/reports/ChartReports'));
-const ResidentCharts = lazy(() => import('./pages/reports/ResidentCharts'));
-const VitalsCharts = lazy(() => import('./pages/reports/VitalsCharts'));
-const VitalsReports = lazy(() => import('./pages/reports/VitalsReports'));
-const AssessmentCharts = lazy(() => import('./pages/reports/AssessmentCharts'));
-const AppointmentsCharts = lazy(() => import('./pages/reports/AppointmentsCharts'));
-const VitalsHistory = lazy(() => import('./pages/reports/VitalsHistory'));
-const SleepCharts = lazy(() => import('./pages/reports/SleepCharts'));
-const StaffCharts = lazy(() => import('./pages/reports/StaffCharts'));
-const PublicStaffClockIn = lazy(() => import('./pages/public/PublicStaffClockIn'));
-const StaffClock = lazy(() => import('./pages/StaffClock'));
-const StaffClockInsView = lazy(() => import('./pages/StaffClockInsView'));
-const ResidentSignOut = lazy(() => import('./pages/ResidentSignOut'));
-const ResidentSignOutsView = lazy(() => import('./pages/ResidentSignOutsView'));
-const Visitors = lazy(() => import('./pages/Visitors'));
-const VisitorsView = lazy(() => import('./pages/VisitorsView'));
-const CheckInDashboard = lazy(() => import('./pages/CheckInDashboard'));
-const Welcome = lazy(() => import('./pages/Welcome'));
-const Features = lazy(() => import('./pages/public/Features'));
-const Pricing = lazy(() => import('./pages/public/Pricing'));
-const Modules = lazy(() => import('./pages/public/Modules'));
-const Security = lazy(() => import('./pages/public/Security'));
-const About = lazy(() => import('./pages/public/About'));
-const Contact = lazy(() => import('./pages/public/Contact'));
-const Support = lazy(() => import('./pages/public/Support'));
-const PrivacyPolicy = lazy(() => import('./pages/public/PrivacyPolicy'));
-const TermsOfService = lazy(() => import('./pages/public/TermsOfService'));
-const HIPAACompliance = lazy(() => import('./pages/public/HIPAACompliance'));
-const CookiePolicy = lazy(() => import('./pages/public/CookiePolicy'));
-const RegisterFacility = lazy(() => import('./pages/public/RegisterFacility'));
-const RegisterFacilitySuccess = lazy(() => import('./pages/public/RegisterFacilitySuccess'));
+// Lazy load all page components for code splitting with retry logic
+const Dashboard = lazyWithRetry(() => import('./pages/Dashboard'), 3);
+const Residents = lazyWithRetry(() => import('./pages/Residents'));
+const MyResidentsPage = lazyWithRetry(() => import('./pages/caregiver/MyResidentsPage'));
+const ResidentDetailPage = lazyWithRetry(() => import('./pages/caregiver/ResidentDetailPage'));
+const Appointments = lazyWithRetry(() => import('./pages/Appointments'));
+const CreateAppointment = lazyWithRetry(() => import('./pages/CreateAppointment'));
+const Vitals = lazyWithRetry(() => import('./pages/Vitals'));
+const Medications = lazyWithRetry(() => import('./pages/Medications'));
+const MedicationHistory = lazyWithRetry(() => import('./pages/MedicationHistory'));
+const CaregiverMedicationsResidents = lazyWithRetry(() => import('./pages/caregiver/CaregiverMedicationsResidents'));
+const ResidentMedicationsPage = lazyWithRetry(() => import('./pages/caregiver/ResidentMedicationsPage'));
+const Reports = lazyWithRetry(() => import('./pages/Reports'));
+const Assessments = lazyWithRetry(() => import('./pages/Assessments'));
+const AssessmentDetail = lazyWithRetry(() => import('./pages/AssessmentDetail'));
+const AssessmentReview = lazyWithRetry(() => import('./pages/AssessmentReview'));
+const Sleep = lazyWithRetry(() => import('./pages/Sleep'));
+const SleepPatterns = lazyWithRetry(() => import('./pages/SleepPatterns'));
+const ViewVitals = lazyWithRetry(() => import('./pages/ViewVitals'));
+const Facilities = lazyWithRetry(() => import('./pages/Facilities'));
+const FacilityCreate = lazyWithRetry(() => import('./pages/FacilityCreate'));
+const FacilityView = lazyWithRetry(() => import('./pages/FacilityView'));
+const FacilityEdit = lazyWithRetry(() => import('./pages/FacilityEdit'));
+const Branches = lazyWithRetry(() => import('./pages/Branches'));
+const VitalRanges = lazyWithRetry(() => import('./pages/VitalRanges'));
+const LeaveRequests = lazyWithRetry(() => import('./pages/LeaveRequests'));
+const Roles = lazyWithRetry(() => import('./pages/Roles'));
+const Users = lazyWithRetry(() => import('./pages/Users'));
+const UserCreate = lazyWithRetry(() => import('./pages/UserCreate'));
+const UserEdit = lazyWithRetry(() => import('./pages/UserEdit'));
+const EmployeeDocuments = lazyWithRetry(() => import('./pages/EmployeeDocuments'));
+const Drugs = lazyWithRetry(() => import('./pages/Drugs'));
+const Profile = lazyWithRetry(() => import('./pages/Profile'));
+const ActivityLogs = lazyWithRetry(() => import('./pages/ActivityLogs'));
+const DeactivatedRecords = lazyWithRetry(() => import('./pages/DeactivatedRecords'));
+const Housekeeping = lazyWithRetry(() => import('./pages/Housekeeping'));
+const HousekeepingSchedule = lazyWithRetry(() => import('./pages/HousekeepingSchedule'));
+const HousekeepingDashboard = lazyWithRetry(() => import('./pages/HousekeepingDashboard'));
+const MedicationDeliveries = lazyWithRetry(() => import('./pages/MedicationDeliveries'));
+const GroceryStatus = lazyWithRetry(() => import('./pages/GroceryStatus'));
+const FireDrills = lazyWithRetry(() => import('./pages/FireDrills'));
+const PharmacySuppliers = lazyWithRetry(() => import('./pages/PharmacySuppliers'));
+const PharmacyInventory = lazyWithRetry(() => import('./pages/PharmacyInventory'));
+const PharmacyOrders = lazyWithRetry(() => import('./pages/PharmacyOrders'));
+const SuperAdminDashboard = lazyWithRetry(() => import('./pages/SuperAdminDashboard'));
+const SuperAdminSettings = lazyWithRetry(() => import('./pages/SuperAdminSettings'));
+const SuperAdminEmailSettings = lazyWithRetry(() => import('./pages/super-admin/EmailSettings'));
+const SuperAdminSecuritySettings = lazyWithRetry(() => import('./pages/super-admin/SecuritySettings'));
+const SuperAdminGeneralSettings = lazyWithRetry(() => import('./pages/super-admin/GeneralSettings'));
+const SuperAdminNotificationSettings = lazyWithRetry(() => import('./pages/super-admin/NotificationSettings'));
+const SuperAdminDatabaseSettings = lazyWithRetry(() => import('./pages/super-admin/DatabaseSettings'));
+const SuperAdminServerSettings = lazyWithRetry(() => import('./pages/super-admin/ServerSettings'));
+const SuperAdminBrandingSettings = lazyWithRetry(() => import('./pages/super-admin/BrandingSettings'));
+const FacilityRegistrations = lazyWithRetry(() => import('./pages/FacilityRegistrations'));
+const ApproveFacilityRegistration = lazyWithRetry(() => import('./pages/ApproveFacilityRegistration'));
+const Permissions = lazyWithRetry(() => import('./pages/Permissions'));
+const ExpenseCategories = lazyWithRetry(() => import('./pages/ExpenseCategories'));
+const Expenses = lazyWithRetry(() => import('./pages/Expenses'));
+const BillingInvoices = lazyWithRetry(() => import('./pages/BillingInvoices'));
+const ExpenseReports = lazyWithRetry(() => import('./pages/reports/ExpenseReports'));
+const Incidents = lazyWithRetry(() => import('./pages/Incidents'));
+const ChartReports = lazyWithRetry(() => import('./pages/reports/ChartReports'));
+const ResidentCharts = lazyWithRetry(() => import('./pages/reports/ResidentCharts'));
+const VitalsCharts = lazyWithRetry(() => import('./pages/reports/VitalsCharts'));
+const VitalsReports = lazyWithRetry(() => import('./pages/reports/VitalsReports'));
+const AssessmentCharts = lazyWithRetry(() => import('./pages/reports/AssessmentCharts'));
+const AppointmentsCharts = lazyWithRetry(() => import('./pages/reports/AppointmentsCharts'));
+const VitalsHistory = lazyWithRetry(() => import('./pages/reports/VitalsHistory'));
+const SleepCharts = lazyWithRetry(() => import('./pages/reports/SleepCharts'));
+const StaffCharts = lazyWithRetry(() => import('./pages/reports/StaffCharts'));
+const PublicStaffClockIn = lazyWithRetry(() => import('./pages/public/PublicStaffClockIn'));
+const StaffClock = lazyWithRetry(() => import('./pages/StaffClock'));
+const StaffClockInsView = lazyWithRetry(() => import('./pages/StaffClockInsView'));
+const ResidentSignOut = lazyWithRetry(() => import('./pages/ResidentSignOut'));
+const ResidentSignOutsView = lazyWithRetry(() => import('./pages/ResidentSignOutsView'));
+const Visitors = lazyWithRetry(() => import('./pages/Visitors'));
+const VisitorsView = lazyWithRetry(() => import('./pages/VisitorsView'));
+const CheckInDashboard = lazyWithRetry(() => import('./pages/CheckInDashboard'));
+const Welcome = lazyWithRetry(() => import('./pages/Welcome'));
+const Features = lazyWithRetry(() => import('./pages/public/Features'));
+const Pricing = lazyWithRetry(() => import('./pages/public/Pricing'));
+const Modules = lazyWithRetry(() => import('./pages/public/Modules'));
+const Security = lazyWithRetry(() => import('./pages/public/Security'));
+const About = lazyWithRetry(() => import('./pages/public/About'));
+const Contact = lazyWithRetry(() => import('./pages/public/Contact'));
+const Support = lazyWithRetry(() => import('./pages/public/Support'));
+const PrivacyPolicy = lazyWithRetry(() => import('./pages/public/PrivacyPolicy'));
+const TermsOfService = lazyWithRetry(() => import('./pages/public/TermsOfService'));
+const HIPAACompliance = lazyWithRetry(() => import('./pages/public/HIPAACompliance'));
+const CookiePolicy = lazyWithRetry(() => import('./pages/public/CookiePolicy'));
+const RegisterFacility = lazyWithRetry(() => import('./pages/public/RegisterFacility'));
+const RegisterFacilitySuccess = lazyWithRetry(() => import('./pages/public/RegisterFacilitySuccess'));
 
 function App() {
     // Make toast available globally for backward compatibility

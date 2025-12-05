@@ -69,6 +69,11 @@ function ErrorFallback({ error, errorInfo, onReset, onReload, onGoToDashboard })
                         <p className="text-sm font-medium text-red-800 mb-1">
                             Error: {error.toString()}
                         </p>
+                        {error.message && error.message.includes('Failed to fetch dynamically imported module') && (
+                            <p className="text-xs text-red-700 mt-2">
+                                This error usually occurs when a module fails to load. The page will automatically reload to retry loading the module.
+                            </p>
+                        )}
                     </div>
                 )}
 
