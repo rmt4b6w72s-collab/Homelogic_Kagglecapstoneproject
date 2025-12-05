@@ -33,7 +33,7 @@ export default defineConfig({
         },
         rollupOptions: {
             // Preserve entry signatures to maintain proper module boundaries
-            preserveEntrySignatures: 'exports-only',
+            preserveEntrySignatures: 'strict',
             output: {
                 // Use ES module format
                 format: 'es',
@@ -41,22 +41,9 @@ export default defineConfig({
                 chunkFileNames: 'assets/[name]-[hash].js',
                 entryFileNames: 'assets/[name]-[hash].js',
                 assetFileNames: 'assets/[name]-[hash].[ext]',
-                // Manual chunking strategy for better caching and loading
-                manualChunks: (id) => {
-                    // Vendor chunks
-                    if (id.includes('node_modules')) {
-                        if (id.includes('react') || id.includes('react-dom')) {
-                            return 'vendor-react';
-                        }
-                        if (id.includes('chart.js') || id.includes('react-chartjs-2')) {
-                            return 'vendor-charts';
-                        }
-                        if (id.includes('@tanstack')) {
-                            return 'vendor-query';
-                        }
-                        return 'vendor';
-                    }
-                },
+                // Simplified chunking to avoid TDZ issues
+                // Let Vite handle chunking automatically to avoid initialization order problems
+                manualChunks: undefined,
             },
         },
         // Warn if chunk exceeds 1000KB
