@@ -273,7 +273,7 @@ class Facility extends Model
             return $this->logo;
         }
 
-        // Return the storage URL
+        // Return the storage URL (uses APP_URL from filesystem config)
         return \Illuminate\Support\Facades\Storage::disk('public')->url($this->logo);
     }
 

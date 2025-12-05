@@ -22,17 +22,18 @@ class SetFacilityContext
 
         // Super admins don't have facility context restrictions
         if ($user && $user->role === 'super_admin') {
-            // First, check if accessing via subdomain
-            $subdomain = $this->extractSubdomain($request);
-            if ($subdomain) {
-                $facility = Facility::where('subdomain', $subdomain)->first();
+            // For super admins, prioritize path-based facility ID extraction
+            // This ensures when editing a facility, that facility's branding is used
+            $facilityId = $this->extractFacilityIdFromPath($request);
+            if ($facilityId) {
+                $facility = Facility::find($facilityId);
             }
             
-            // If no subdomain, check URL path for facility ID (e.g., /super-admin/facilities/10/edit)
+            // If no facility found from path, check subdomain
             if (!$facility) {
-                $facilityId = $this->extractFacilityIdFromPath($request);
-                if ($facilityId) {
-                    $facility = Facility::find($facilityId);
+                $subdomain = $this->extractSubdomain($request);
+                if ($subdomain) {
+                    $facility = Facility::where('subdomain', $subdomain)->first();
                 }
             }
         } elseif ($user) {

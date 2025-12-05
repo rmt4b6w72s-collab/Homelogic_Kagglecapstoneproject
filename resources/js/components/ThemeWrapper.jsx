@@ -8,18 +8,6 @@ import { ThemeProvider } from '../contexts/ThemeContext';
  * This ensures theme is available at the root level
  */
 export default function ThemeWrapper({ children }) {
-    // Use window.location instead of useLocation since ThemeWrapper is outside Router
-    // Read pathname directly - it will be correct on initial render and after page reloads
-    const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
-    
-    // Extract facility ID from URL if viewing a facility page
-    const facilityIdFromUrl = React.useMemo(() => {
-        if (!pathname) return null;
-        const match = pathname.match(/\/facilities\/(\d+)/) || 
-                     pathname.match(/\/super-admin\/facilities\/(\d+)/);
-        return match ? match[1] : null;
-    }, [pathname]);
-    
     const { data: userData } = useQuery({
         queryKey: ['current-user'],
         queryFn: async () => {
@@ -36,21 +24,6 @@ export default function ThemeWrapper({ children }) {
         },
         staleTime: 1 * 60 * 1000, // Reduced to 1 minute for faster updates
         retry: false, // Don't retry on 401 errors
-    });
-    
-    // Fetch facility branding if viewing a specific facility page
-    const { data: facilityData } = useQuery({
-        queryKey: ['facility', facilityIdFromUrl],
-        queryFn: async () => {
-            try {
-                const response = await api.get(`/facilities/${facilityIdFromUrl}`);
-                return response.data;
-            } catch (err) {
-                return null;
-            }
-        },
-        enabled: !!facilityIdFromUrl && userData?.role === 'super_admin', // Only for super admins viewing facilities
-        staleTime: 1 * 60 * 1000,
     });
 
     // Fetch super admin theme if user is super admin
@@ -76,31 +49,32 @@ export default function ThemeWrapper({ children }) {
     // Otherwise, if super admin, use super admin theme colors
     // Otherwise, use user's facility branding
     const facilityBranding = React.useMemo(() => {
-        // If viewing a specific facility as super admin, use that facility's branding
-        if (isSuperAdmin && facilityData) {
+        // Super admins always use HomeLogic360 branding, never facility branding
+        if (isSuperAdmin) {
+            // Use super admin theme if available, otherwise default HomeLogic360 branding
+            if (superAdminTheme) {
+                return {
+                    name: 'HomeLogic360',
+                    logo: superAdminTheme.logo_url || '/images/logonew.png',
+                    primary_color: superAdminTheme.primary_color || '#1E3A5F',
+                    secondary_color: superAdminTheme.secondary_color || '#86EFAC',
+                    accent_color: superAdminTheme.accent_color || '#FFFFFF',
+                };
+            }
+            
+            // Default HomeLogic360 branding for super admin
             return {
-                name: facilityData.name,
-                logo: facilityData.logo_url || facilityData.logo || '/images/logonew.png',
-                primary_color: facilityData.primary_color || '#1E3A5F',
-                secondary_color: facilityData.secondary_color || '#86EFAC',
-                accent_color: facilityData.accent_color || '#FFFFFF',
+                name: 'HomeLogic360',
+                logo: '/images/logonew.png',
+                primary_color: '#1E3A5F',
+                secondary_color: '#86EFAC',
+                accent_color: '#FFFFFF',
             };
         }
         
-        // If super admin with super admin theme, use super admin theme colors
-        if (isSuperAdmin && superAdminTheme) {
-            // For super admin, use super admin theme colors but keep facility branding structure
-            return {
-                ...userData?.facility_branding,
-                primary_color: superAdminTheme.primary_color,
-                secondary_color: superAdminTheme.secondary_color,
-                accent_color: superAdminTheme.accent_color,
-            };
-        }
-        
-        // Otherwise, use user's facility branding
+        // For regular users, use their facility branding
         return userData?.facility_branding || null;
-    }, [userData, isSuperAdmin, superAdminTheme, facilityData]);
+    }, [userData, isSuperAdmin, superAdminTheme]);
 
     return (
         <ThemeProvider facilityBranding={facilityBranding}>

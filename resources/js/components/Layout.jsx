@@ -473,14 +473,48 @@ export default function Layout() {
     // Get theme from ThemeProvider (CSS variables are automatically set)
     const theme = useTheme();
     const facilityBranding = React.useMemo(() => {
+        // Super admins always use HomeLogic360 branding, never facility branding
+        if (isSuperAdmin) {
+            return {
+                name: 'HomeLogic360',
+                logo: '/images/logonew.png',
+                primary_color: '#1E3A5F',
+                secondary_color: '#86EFAC',
+                accent_color: '#FFFFFF',
+            };
+        }
+        
+        // For regular users, use theme from ThemeProvider or user's facility branding
+        if (theme.theme.name && theme.theme.name !== 'HomeLogic360') {
+            return {
+                name: theme.theme.name,
+                logo: theme.theme.logo || '/images/logonew.png',
+                primary_color: theme.theme.primary_color || '#1E3A5F',
+                secondary_color: theme.theme.secondary_color || '#86EFAC',
+                accent_color: theme.theme.accent_color || '#FFFFFF',
+            };
+        }
+        
+        // Fallback to user's facility branding
+        if (currentUser?.facility_branding) {
+            return {
+                name: currentUser.facility_branding.name || 'HomeLogic360',
+                logo: currentUser.facility_branding.logo || '/images/logonew.png',
+                primary_color: currentUser.facility_branding.primary_color || '#1E3A5F',
+                secondary_color: currentUser.facility_branding.secondary_color || '#86EFAC',
+                accent_color: currentUser.facility_branding.accent_color || '#FFFFFF',
+            };
+        }
+        
+        // Default
         return {
-            name: theme.theme.name || currentUser?.facility_branding?.name || 'HomeLogic360',
-            logo: theme.theme.logo || currentUser?.facility_branding?.logo || '/images/logonew.png',
-            primary_color: theme.theme.primary_color || currentUser?.facility_branding?.primary_color || '#1E3A5F',
-            secondary_color: theme.theme.secondary_color || currentUser?.facility_branding?.secondary_color || '#86EFAC',
-            accent_color: theme.theme.accent_color || currentUser?.facility_branding?.accent_color || '#FFFFFF',
+            name: 'HomeLogic360',
+            logo: '/images/logonew.png',
+            primary_color: '#1E3A5F',
+            secondary_color: '#86EFAC',
+            accent_color: '#FFFFFF',
         };
-    }, [theme.theme, currentUser?.facility_branding]);
+    }, [theme.theme, currentUser?.facility_branding, isSuperAdmin]);
 
     return (
         <div className="flex h-screen bg-gray-50">

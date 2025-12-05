@@ -25,27 +25,12 @@ class AdminPanelProvider extends PanelProvider
 {
     public function panel(Panel $panel): Panel
     {
-        // Get facility for branding
-        try {
-            $facility = $this->getCurrentFacility();
-        } catch (\Exception $e) {
-            $facility = null; // Allow seeding/console commands to run
-        }
-        $branding = $this->getBranding($facility);
-
         return $panel
             ->default()
             ->id('admin')
             ->path('admin')
             ->login()
-            ->colors([
-                'primary' => $branding['primary_color'],
-                'success' => $branding['secondary_color'] ?? '#86EFAC', // Light green from logo
-                'warning' => $branding['primary_color'], // Use primary for warnings
-                'danger' => $branding['primary_color'], // Use primary for danger
-                'info' => $branding['primary_color'], // Use primary for info
-                'gray' => Color::Slate,
-            ])
+            ->colors(fn () => $this->getDynamicColors())
             ->font('Inter')
             ->darkMode()
             ->spa()
@@ -61,8 +46,8 @@ class AdminPanelProvider extends PanelProvider
             ->navigation(CustomNavigationProvider::class)
             // Removed navigationGroups to prevent auto-discovery from creating groups
             ->topNavigation()
-            ->brandName($branding['name'])
-            ->brandLogo($branding['logo'])
+            ->brandName(fn () => $this->getDynamicBranding()['name'])
+            ->brandLogo(fn () => $this->getDynamicBranding()['logo'])
             ->brandLogoHeight('2.5rem')
             ->maxContentWidth('full')
             ->sidebarCollapsibleOnDesktop()
@@ -79,7 +64,7 @@ class AdminPanelProvider extends PanelProvider
             )
             ->renderHook(
                 'panels::topbar.start',
-                fn (): string => '
+                fn (): string => view('filament.components.dynamic-branding')->render() . '
                     <link rel="stylesheet" href="' . asset('css/custom-enhancements.css') . '">
                     <style>
                         /* Hide Filament default user menu component */
@@ -116,18 +101,53 @@ class AdminPanelProvider extends PanelProvider
      */
     private function getCurrentFacility(): ?Facility
     {
+        $user = Auth::user();
+        if (!$user) {
+            return null;
+        }
+
+        // Super admins always use default branding (HomeLogic360), never facility branding
+        if ($user->role === 'super_admin') {
+            return null;
+        }
+
         // Try to get from app container (set by middleware)
         if (app()->bound('facility')) {
             return app('facility');
         }
 
         // Fallback to user's facility
-        $user = Auth::user();
-        if ($user && $user->role !== 'super_admin' && $user->facility_id) {
+        if ($user->facility_id) {
             return Facility::find($user->facility_id);
         }
 
         return null;
+    }
+
+
+    /**
+     * Get dynamic branding configuration (evaluated per request)
+     */
+    private function getDynamicBranding(): array
+    {
+        $facility = $this->getCurrentFacility();
+        return $this->getBranding($facility);
+    }
+
+    /**
+     * Get dynamic colors (evaluated per request)
+     */
+    private function getDynamicColors(): array
+    {
+        $branding = $this->getDynamicBranding();
+        return [
+            'primary' => $branding['primary_color'],
+            'success' => $branding['secondary_color'] ?? '#86EFAC', // Light green from logo
+            'warning' => $branding['primary_color'], // Use primary for warnings
+            'danger' => $branding['primary_color'], // Use primary for danger
+            'info' => $branding['primary_color'], // Use primary for info
+            'gray' => Color::Slate,
+        ];
     }
 
     /**
@@ -145,13 +165,14 @@ class AdminPanelProvider extends PanelProvider
             ];
         }
 
+        // Use the branding accessor which handles logo_url properly
         $branding = $facility->branding;
 
         return [
-            'name' => $branding['name'],
-            'logo' => $branding['logo'] ?? asset('images/logo.jpeg'),
-            'primary_color' => $this->parseColor($branding['primary_color'] ?? '#667eea'),
-            'secondary_color' => $this->parseColor($branding['secondary_color'] ?? '#86EFAC'),
+            'name' => $branding['name'] ?? $facility->name,
+            'logo' => $branding['logo'] ?? asset('images/logonew.png'),
+            'primary_color' => $this->parseColor($branding['primary_color'] ?? $facility->primary_color ?? '#667eea'),
+            'secondary_color' => $this->parseColor($branding['secondary_color'] ?? $facility->secondary_color ?? '#86EFAC'),
         ];
     }
 
