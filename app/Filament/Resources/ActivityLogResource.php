@@ -43,14 +43,62 @@ class ActivityLogResource extends Resource
         return auth()->user()->hasPermission('view_activity_logs') ?? auth()->user()->hasRole('administrator');
     }
 
+    public static function canView($record): bool
+    {
+        $currentUser = auth()->user();
+        
+        // Super admins can view all logs
+        if ($currentUser->role === 'super_admin') {
+            return true;
+        }
+        
+        // Caregivers can only view logs from their branch
+        if ($currentUser->hasRole('caregiver')) {
+            return $record->branch_id === $currentUser->assigned_branch_id;
+        }
+        
+        // Facility admins can only view logs from their facility
+        if ($currentUser->facility_id) {
+            $facilityId = $currentUser->facility_id;
+            // Check if the user who performed the action belongs to their facility
+            if ($record->user && $record->user->facility_id === $facilityId) {
+                return true;
+            }
+            // Check if the branch belongs to their facility
+            if ($record->branch && $record->branch->facility_id === $facilityId) {
+                return true;
+            }
+            return false;
+        }
+        
+        return true;
+    }
+
     public static function getEloquentQuery(): Builder
     {
         $query = parent::getEloquentQuery()->latest('logged_at');
         
-        // If user is a caregiver, show logs for their branch only
-        if (auth()->user()->hasRole('caregiver')) {
-            $query->where('branch_id', auth()->user()->assigned_branch_id);
+        $currentUser = auth()->user();
+        
+        // Apply facility/branch filtering based on user role
+        if ($currentUser->hasRole('caregiver')) {
+            // Caregivers see only their branch logs
+            $query->where('branch_id', $currentUser->assigned_branch_id);
+        } elseif ($currentUser->role !== 'super_admin' && $currentUser->facility_id) {
+            // Facility admins see logs from their facility only
+            // Filter by logs where:
+            // 1. The user who performed the action belongs to their facility, OR
+            // 2. The branch associated with the log belongs to their facility
+            $facilityId = $currentUser->facility_id;
+            $query->where(function($q) use ($facilityId) {
+                $q->whereHas('user', function($userQuery) use ($facilityId) {
+                    $userQuery->where('facility_id', $facilityId);
+                })->orWhereHas('branch', function($branchQuery) use ($facilityId) {
+                    $branchQuery->where('facility_id', $facilityId);
+                });
+            });
         }
+        // Super admins see all logs (no filtering)
         
         return $query;
     }

@@ -67,10 +67,27 @@ class ActivityLogController extends BaseApiController
             });
         }
 
-        // If user is a caregiver, show logs for their branch only
-        if (auth()->user()->hasRole('caregiver')) {
-            $query->where('branch_id', auth()->user()->assigned_branch_id);
+        $currentUser = auth()->user();
+        
+        // Apply facility/branch filtering based on user role
+        if ($currentUser->hasRole('caregiver')) {
+            // Caregivers see only their branch logs
+            $query->where('branch_id', $currentUser->assigned_branch_id);
+        } elseif ($currentUser->role !== 'super_admin' && $currentUser->facility_id) {
+            // Facility admins see logs from their facility only
+            // Filter by logs where:
+            // 1. The user who performed the action belongs to their facility, OR
+            // 2. The branch associated with the log belongs to their facility
+            $facilityId = $currentUser->facility_id;
+            $query->where(function($q) use ($facilityId) {
+                $q->whereHas('user', function($userQuery) use ($facilityId) {
+                    $userQuery->where('facility_id', $facilityId);
+                })->orWhereHas('branch', function($branchQuery) use ($facilityId) {
+                    $branchQuery->where('facility_id', $facilityId);
+                });
+            });
         }
+        // Super admins see all logs (no filtering)
 
         $perPage = $request->get('per_page', 50);
         $logs = $query->orderBy('logged_at', 'desc')->paginate($perPage);
@@ -86,12 +103,34 @@ class ActivityLogController extends BaseApiController
         $log = ActivityLog::with(['user', 'branch', 'subject'])
             ->findOrFail($id);
 
-        // Check permission for caregivers
-        if (auth()->user()->hasRole('caregiver')) {
-            if ($log->branch_id !== auth()->user()->assigned_branch_id) {
+        $currentUser = auth()->user();
+        
+        // Check permission based on user role
+        if ($currentUser->hasRole('caregiver')) {
+            // Caregivers can only see logs from their branch
+            if ($log->branch_id !== $currentUser->assigned_branch_id) {
+                abort(403, 'Unauthorized access to this log');
+            }
+        } elseif ($currentUser->role !== 'super_admin' && $currentUser->facility_id) {
+            // Facility admins can only see logs from their facility
+            $facilityId = $currentUser->facility_id;
+            $hasAccess = false;
+            
+            // Check if the user who performed the action belongs to their facility
+            if ($log->user && $log->user->facility_id === $facilityId) {
+                $hasAccess = true;
+            }
+            
+            // Check if the branch belongs to their facility
+            if (!$hasAccess && $log->branch && $log->branch->facility_id === $facilityId) {
+                $hasAccess = true;
+            }
+            
+            if (!$hasAccess) {
                 abort(403, 'Unauthorized access to this log');
             }
         }
+        // Super admins can access all logs
 
         return response()->json($log);
     }
@@ -104,6 +143,24 @@ class ActivityLogController extends BaseApiController
         $query = ActivityLog::with(['user', 'branch'])
             ->forSubject($subjectType, $subjectId)
             ->orderBy('logged_at', 'desc');
+
+        $currentUser = auth()->user();
+        
+        // Apply facility/branch filtering based on user role
+        if ($currentUser->hasRole('caregiver')) {
+            // Caregivers see only their branch logs
+            $query->where('branch_id', $currentUser->assigned_branch_id);
+        } elseif ($currentUser->role !== 'super_admin' && $currentUser->facility_id) {
+            // Facility admins see logs from their facility only
+            $facilityId = $currentUser->facility_id;
+            $query->where(function($q) use ($facilityId) {
+                $q->whereHas('user', function($userQuery) use ($facilityId) {
+                    $userQuery->where('facility_id', $facilityId);
+                })->orWhereHas('branch', function($branchQuery) use ($facilityId) {
+                    $branchQuery->where('facility_id', $facilityId);
+                });
+            });
+        }
 
         $perPage = $request->get('per_page', 50);
         $logs = $query->paginate($perPage);
@@ -118,9 +175,22 @@ class ActivityLogController extends BaseApiController
     {
         $query = ActivityLog::query();
 
-        // If user is a caregiver, show stats for their branch only
-        if (auth()->user()->hasRole('caregiver')) {
-            $query->where('branch_id', auth()->user()->assigned_branch_id);
+        $currentUser = auth()->user();
+        
+        // Apply facility/branch filtering based on user role
+        if ($currentUser->hasRole('caregiver')) {
+            // Caregivers see stats for their branch only
+            $query->where('branch_id', $currentUser->assigned_branch_id);
+        } elseif ($currentUser->role !== 'super_admin' && $currentUser->facility_id) {
+            // Facility admins see stats from their facility only
+            $facilityId = $currentUser->facility_id;
+            $query->where(function($q) use ($facilityId) {
+                $q->whereHas('user', function($userQuery) use ($facilityId) {
+                    $userQuery->where('facility_id', $facilityId);
+                })->orWhereHas('branch', function($branchQuery) use ($facilityId) {
+                    $branchQuery->where('facility_id', $facilityId);
+                });
+            });
         }
 
         // Date range filter
