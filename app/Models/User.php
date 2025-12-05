@@ -431,6 +431,7 @@ class User extends Authenticatable implements FilamentUser
             'divorced' => 'Divorced',
             'widowed' => 'Widowed',
             'separated' => 'Separated',
+            'n/a' => 'N/A',
         ];
     }
 

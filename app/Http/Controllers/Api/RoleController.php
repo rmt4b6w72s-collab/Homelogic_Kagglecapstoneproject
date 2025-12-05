@@ -13,6 +13,14 @@ class RoleController extends BaseApiController
     public function index(Request $request): JsonResponse
     {
         $query = Role::with('permissions');
+        
+        // Filter to only show allowed roles: administrator, caregiver, and nurse
+        $allowedRoles = ['administrator', 'caregiver', 'nurse', 'registered_nurse', 'licensed_nurse', 'care_giver'];
+        $query->whereIn('name', $allowedRoles);
+        
+        // Exclude 'admin' and 'duty roster' roles
+        $query->whereNotIn('name', ['admin', 'duty_roster', 'duty roster']);
+        
         if ($request->has('search')) {
             $search = $request->get('search');
             $query->where('name', 'like', "%{$search}%");

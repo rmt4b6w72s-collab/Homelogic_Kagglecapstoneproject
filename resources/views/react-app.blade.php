@@ -72,7 +72,7 @@
         @endenv
         
         @viteReactRefresh
-        @vite(['resources/js/app.jsx']) {{-- CSS is imported in app.jsx --}}
+        @vite(['resources/css/app.css', 'resources/js/app.jsx'])
     </head>
     <body style="margin: 0; padding: 0;">
         <noscript>

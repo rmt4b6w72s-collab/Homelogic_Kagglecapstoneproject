@@ -819,6 +819,7 @@ function EditPersonalInfo({ user, setUser }) {
                         <option value="divorced">Divorced</option>
                         <option value="widowed">Widowed</option>
                         <option value="separated">Separated</option>
+                        <option value="n/a">N/A</option>
                     </select>
                 </div>
             )}

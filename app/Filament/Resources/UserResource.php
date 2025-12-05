@@ -155,8 +155,8 @@ class UserResource extends Resource
                             ->label('Phone Number')
                             ->tel()
                             ->required()
-                            ->placeholder('+1 (425) 555-0123')
-                            ->helperText('Include country code for international format'),
+                            ->placeholder('(425) 555-0123')
+                            ->helperText('American format: (XXX) XXX-XXXX'),
                         Forms\Components\DatePicker::make('date_of_birth')
                             ->label('Date of Birth')
                             ->required()

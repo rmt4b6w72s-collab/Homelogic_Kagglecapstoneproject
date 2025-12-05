@@ -337,8 +337,10 @@ function PersonalInfoTab() {
                         value={formData.phone_number || ''}
                         onChange={(e) => updateForm({ phone_number: e.target.value })}
                         required
+                        placeholder="(425) 555-0123"
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-[var(--theme-primary)]"
                     />
+                    <p className="text-xs text-gray-500 mt-1">American format: (XXX) XXX-XXXX</p>
                 </div>
                 <div>
                     <label className="block text-sm font-medium text-gray-900 mb-1">Date of Birth *</label>
@@ -377,6 +379,8 @@ function PersonalInfoTab() {
                         <option value="married">Married</option>
                         <option value="divorced">Divorced</option>
                         <option value="widowed">Widowed</option>
+                        <option value="separated">Separated</option>
+                        <option value="n/a">N/A</option>
                     </select>
                 </div>
             </div>
@@ -420,9 +424,25 @@ function EmploymentTab({ roles, branches, facilities, isSuperAdmin }) {
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-[var(--theme-primary)]"
                     >
                         <option value="">Select Role</option>
-                        {roles.map(r => (
-                            <option key={r.id} value={r.name}>{r.name}</option>
-                        ))}
+                        {roles
+                            .filter(r => {
+                                const roleName = r.name?.toLowerCase();
+                                return roleName === 'administrator' || 
+                                       roleName === 'caregiver' || 
+                                       roleName === 'care_giver' ||
+                                       roleName === 'nurse' ||
+                                       roleName === 'registered_nurse' ||
+                                       roleName === 'licensed_nurse';
+                            })
+                            .filter(r => {
+                                const roleName = r.name?.toLowerCase();
+                                return roleName !== 'admin' && 
+                                       roleName !== 'duty_roster' && 
+                                       roleName !== 'duty roster';
+                            })
+                            .map(r => (
+                                <option key={r.id} value={r.name}>{r.name}</option>
+                            ))}
                     </select>
                 </div>
 
