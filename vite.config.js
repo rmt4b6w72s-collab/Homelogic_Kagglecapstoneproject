@@ -7,7 +7,7 @@ export default defineConfig({
     plugins: [
         react(),
         laravel({
-            input: ['resources/js/app.jsx'], // CSS is imported in app.jsx, don't include it here when cssCodeSplit is false
+            input: ['resources/css/app.css', 'resources/js/app.jsx'], // Include both CSS and JS as separate entries
             refresh: true,
         }),
         tailwindcss(),
@@ -65,7 +65,7 @@ export default defineConfig({
             treeShaking: false,
         },
         // CSS handling - ensure CSS is properly extracted and linked
-        cssCodeSplit: false, // Don't split CSS to avoid preload issues
+        cssCodeSplit: true, // Enable CSS code splitting - it works better with Laravel Vite plugin
         cssMinify: true,
     },
 });
