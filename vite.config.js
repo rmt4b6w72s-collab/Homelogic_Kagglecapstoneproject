@@ -77,9 +77,8 @@ export default defineConfig({
             // Don't do any code transformations
             treeShaking: false,
         },
-        // Ensure proper module resolution
-        modulePreload: {
-            polyfill: true,
-        },
+        // CSS handling - ensure CSS is properly extracted and linked
+        cssCodeSplit: false, // Don't split CSS to avoid preload issues
+        cssMinify: true,
     },
 });

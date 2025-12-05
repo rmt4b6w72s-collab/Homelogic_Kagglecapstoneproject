@@ -6,6 +6,7 @@ import App from './App';
 import ErrorBoundary from './components/ErrorBoundary';
 import { ToastProvider } from './contexts/ToastContext';
 import ThemeWrapper from './components/ThemeWrapper';
+// Import CSS - Vite will handle it properly
 import '../css/app.css';
 
 // Suppress Cloudflare cookie warnings - after imports
