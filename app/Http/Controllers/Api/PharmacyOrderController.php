@@ -134,24 +134,48 @@ class PharmacyOrderController extends BaseApiController
         }
         
         try {
-            return DB::transaction(function () use ($validated) {
-                $validated['ordered_by'] = auth()->id();
-                $items = $validated['items'];
-                unset($validated['items']);
-                
-                $order = PharmacyOrder::create($validated);
-                
-                foreach ($items as $itemData) {
-                    $item = $order->items()->create($itemData);
-                    $item->calculateLineTotal();
-                    $item->save();
+            $maxRetries = 3;
+            $retry = 0;
+            
+            while ($retry < $maxRetries) {
+                try {
+                    return DB::transaction(function () use ($validated) {
+                        $validated['ordered_by'] = auth()->id();
+                        $items = $validated['items'];
+                        unset($validated['items']);
+                        
+                        // Clear order_number to force regeneration if retrying
+                        if (isset($validated['order_number'])) {
+                            unset($validated['order_number']);
+                        }
+                        
+                        $order = PharmacyOrder::create($validated);
+                        
+                        foreach ($items as $itemData) {
+                            $item = $order->items()->create($itemData);
+                            $item->calculateLineTotal();
+                            $item->save();
+                        }
+                        
+                        $order->calculateTotal();
+                        $order->save();
+                        
+                        return response()->json($order->load(['branch', 'supplier', 'orderedBy', 'items.drug']), 201);
+                    });
+                } catch (\Illuminate\Database\QueryException $e) {
+                    // Check if it's a duplicate key error for order_number
+                    if ($e->getCode() == 23000 && strpos($e->getMessage(), 'order_number_unique') !== false) {
+                        $retry++;
+                        if ($retry >= $maxRetries) {
+                            throw $e; // Re-throw if we've exhausted retries
+                        }
+                        // Wait a bit before retrying (with some randomness to avoid thundering herd)
+                        usleep(100000 + (rand(0, 100000))); // 100-200ms
+                        continue; // Retry the transaction
+                    }
+                    throw $e; // Re-throw if it's a different error
                 }
-                
-                $order->calculateTotal();
-                $order->save();
-                
-                return response()->json($order->load(['branch', 'supplier', 'orderedBy', 'items.drug']), 201);
-            });
+            }
         } catch (\Exception $e) {
             \Log::error('Error creating pharmacy order: ' . $e->getMessage(), [
                 'exception' => $e,

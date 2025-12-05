@@ -136,22 +136,45 @@ class PharmacyOrder extends Model
     {
         $prefix = 'PO';
         $year = now()->format('Y');
+        $maxAttempts = 10;
+        $attempt = 0;
         
-        // Use withoutGlobalScope to get all orders for number generation
-        // This ensures order numbers are unique across all facilities
-        $lastOrder = static::withoutGlobalScope(\App\Models\Scopes\FacilityScope::class)
-            ->where('order_number', 'like', "{$prefix}-{$year}-%")
-            ->orderBy('id', 'desc')
-            ->first();
+        while ($attempt < $maxAttempts) {
+            // Use database transaction with locking to prevent race conditions
+            $orderNumber = \DB::transaction(function () use ($prefix, $year) {
+                // Lock the table row to prevent concurrent access
+                $lastOrder = static::withoutGlobalScope(\App\Models\Scopes\FacilityScope::class)
+                    ->where('order_number', 'like', "{$prefix}-{$year}-%")
+                    ->lockForUpdate()
+                    ->orderBy('id', 'desc')
+                    ->first();
 
-        if ($lastOrder) {
-            $lastNumber = (int) substr($lastOrder->order_number, -6);
-            $newNumber = $lastNumber + 1;
-        } else {
-            $newNumber = 1;
+                if ($lastOrder) {
+                    $lastNumber = (int) substr($lastOrder->order_number, -6);
+                    $newNumber = $lastNumber + 1;
+                } else {
+                    $newNumber = 1;
+                }
+
+                return sprintf('%s-%s-%06d', $prefix, $year, $newNumber);
+            });
+            
+            // Double-check if this order number already exists
+            $exists = static::withoutGlobalScope(\App\Models\Scopes\FacilityScope::class)
+                ->where('order_number', $orderNumber)
+                ->exists();
+            
+            if (!$exists) {
+                return $orderNumber;
+            }
+            
+            // If it exists, wait a bit and try again with next number
+            $attempt++;
+            usleep(50000 + (rand(0, 50000))); // Random wait between 50-100ms
         }
-
-        return sprintf('%s-%s-%06d', $prefix, $year, $newNumber);
+        
+        // If we've exhausted all attempts, use timestamp-based fallback to ensure uniqueness
+        return sprintf('%s-%s-%s-%s', $prefix, $year, now()->format('His'), rand(1000, 9999));
     }
 }
 
