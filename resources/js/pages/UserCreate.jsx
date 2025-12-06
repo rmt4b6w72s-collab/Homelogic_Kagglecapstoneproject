@@ -7,6 +7,7 @@ import {
     Shield, MapPin, Award, Clock, Building2, Upload, X, Eye, EyeOff
 } from 'lucide-react';
 import { useToastContext } from '../contexts/ToastContext';
+import { formatPhoneNumber } from '../utils/phoneFormatter';
 
 // Shared form state context
 const FormContext = React.createContext();
@@ -220,7 +221,6 @@ function PersonalInfoTab() {
                         type="tel"
                         value={formData.phone_number || ''}
                         onChange={(e) => {
-                            const { formatPhoneNumber } = require('../utils/phoneFormatter');
                             const formatted = formatPhoneNumber(e.target.value);
                             updateForm({ phone_number: formatted });
                         }}

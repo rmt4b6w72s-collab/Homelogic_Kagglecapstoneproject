@@ -4,6 +4,7 @@ import api from '../services/api';
 import { UserPlus, Search, CheckCircle, XCircle, User, Clock } from 'lucide-react';
 import SectionCard from '../components/SectionCard';
 import EmptyState from '../components/ui/EmptyState';
+import { formatPhoneNumber } from '../utils/phoneFormatter';
 
 export default function Visitors() {
     const queryClient = useQueryClient();
@@ -335,7 +336,6 @@ function VisitorCheckInForm({ branches, residents, onClose, onSubmit, isSubmitti
                             type="tel"
                             value={form.phone || ''}
                             onChange={(e) => {
-                                const { formatPhoneNumber } = require('../utils/phoneFormatter');
                                 const formatted = formatPhoneNumber(e.target.value);
                                 setForm({ ...form, phone: formatted });
                             }}

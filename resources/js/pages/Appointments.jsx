@@ -508,18 +508,20 @@ export default function Appointments() {
                                                 )}
 
                                                 {/* Appointment Button */}
-                                                <Link
-                                                    to={`/appointments/create/${resident.id}`}
-                                                    onClick={(e) => {
-                                                        e.preventDefault();
-                                                        e.stopPropagation();
-                                                        window.location.href = `/appointments/create/${resident.id}`;
-                                                    }}
-                                                    className="w-full bg-[var(--theme-primary)] hover:bg-[var(--theme-primary-hover)] text-[var(--theme-text-on-primary)] px-4 py-2 rounded-lg transition-colors flex items-center justify-center space-x-2 no-underline"
-                                                >
-                                                    <Calendar className="w-4 h-4" />
-                                                    <span>Schedule Appointment</span>
-                                                </Link>
+                                                {canCreate && (
+                                                    <Link
+                                                        to={`/appointments/create/${resident.id}`}
+                                                        onClick={(e) => {
+                                                            e.preventDefault();
+                                                            e.stopPropagation();
+                                                            window.location.href = `/appointments/create/${resident.id}`;
+                                                        }}
+                                                        className="w-full bg-[var(--theme-primary)] hover:bg-[var(--theme-primary-hover)] text-[var(--theme-text-on-primary)] px-4 py-2 rounded-lg transition-colors flex items-center justify-center space-x-2 no-underline"
+                                                    >
+                                                        <Calendar className="w-4 h-4" />
+                                                        <span>Schedule Appointment</span>
+                                                    </Link>
+                                                )}
                                             </div>
                                         </div>
                                     );
