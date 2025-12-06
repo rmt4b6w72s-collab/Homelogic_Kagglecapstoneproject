@@ -7,6 +7,7 @@ import {
     Shield, MapPin, Award, Clock, Building2, Upload, X, Eye, EyeOff
 } from 'lucide-react';
 import { useToastContext } from '../contexts/ToastContext';
+import { formatPhoneNumber } from '../utils/phoneFormatter';
 
 // Shared form state context
 const FormContext = React.createContext();
@@ -77,10 +78,7 @@ function FormProvider({ children, initialData }) {
                 last_name: initialData.last_name || '',
                 email: initialData.email || '',
                 password: '', // Never prefill password
-                phone_number: initialData.phone_number ? (() => {
-                    const { formatPhoneNumber } = require('../utils/phoneFormatter');
-                    return formatPhoneNumber(initialData.phone_number);
-                })() : '',
+                phone_number: initialData.phone_number ? formatPhoneNumber(initialData.phone_number) : '',
                 date_of_birth: initialData.date_of_birth ? formatDateForInput(initialData.date_of_birth) : '',
                 marital_status: initialData.marital_status || '',
                 sex: initialData.sex || '',
@@ -142,10 +140,7 @@ function FormProvider({ children, initialData }) {
                 last_name: initialData.last_name || '',
                 email: initialData.email || '',
                 password: '', // Don't prefill password
-                phone_number: initialData.phone_number ? (() => {
-                    const { formatPhoneNumber } = require('../utils/phoneFormatter');
-                    return formatPhoneNumber(initialData.phone_number);
-                })() : '',
+                phone_number: initialData.phone_number ? formatPhoneNumber(initialData.phone_number) : '',
                 date_of_birth: formattedDateOfBirth,
                 marital_status: initialData.marital_status || '',
                 sex: initialData.sex || '',
@@ -340,7 +335,6 @@ function PersonalInfoTab() {
                         type="tel"
                         value={formData.phone_number || ''}
                         onChange={(e) => {
-                            const { formatPhoneNumber } = require('../utils/phoneFormatter');
                             const formatted = formatPhoneNumber(e.target.value);
                             updateForm({ phone_number: formatted });
                         }}

@@ -290,7 +290,7 @@ export default function Vitals() {
                                     ? 'No vital signs recorded today. Get started by recording vital signs for residents.'
                                     : 'Try adjusting your filters or check back later.'
                             }
-                            action={canCreate && (
+                            action={canCreate ? (
                                 <button
                                     onClick={() => {
                                         setEditing(null);
@@ -301,7 +301,7 @@ export default function Vitals() {
                                     <Plus className="w-4 h-4 inline mr-2" />
                                     Add Vitals
                                 </button>
-                            )}
+                            ) : null}
                         />
                     )}
                 </div>
