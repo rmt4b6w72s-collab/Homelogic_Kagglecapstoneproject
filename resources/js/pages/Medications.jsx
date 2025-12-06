@@ -491,32 +491,42 @@ export default function Medications() {
                         )}
 
                         {/* Admin Actions */}
-                        {!isCaregiver && (
-                            <div className="mt-4 pt-4 border-t border-gray-200 flex items-center justify-end gap-2">
-                                <button
-                                    onClick={() => {
-                                        setEditing(medication);
-                                        setShowForm(true);
-                                    }}
-                                    className="px-3 py-1.5 text-sm text-[var(--theme-primary)] border border-[var(--theme-primary)] rounded-lg hover:bg-[var(--theme-primary)] hover:text-[var(--theme-text-on-primary)] transition-colors flex items-center gap-1.5"
-                                >
-                                    <Edit className="w-4 h-4" />
-                                    <span>Edit</span>
-                                </button>
-                                <button
-                                    onClick={() => {
-                                        if (window.confirm(`Are you sure you want to delete the medication "${medication.name}" for ${residentName}? This action cannot be undone.`)) {
-                                            deleteMutation.mutate(medication.id);
-                                        }
-                                    }}
-                                    disabled={deleteMutation.isPending}
-                                    className="px-3 py-1.5 text-sm text-red-600 border border-red-600 rounded-lg hover:bg-red-600 hover:text-white transition-colors flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    <Trash2 className="w-4 h-4" />
-                                    <span>{deleteMutation.isPending ? 'Deleting...' : 'Delete'}</span>
-                                </button>
-                            </div>
-                        )}
+                        {(() => {
+                            const isSuperAdmin = currentUser?.role === 'super_admin';
+                            const permissions = Array.isArray(currentUser?.permissions) ? currentUser.permissions : [];
+                            const canEdit = isSuperAdmin || permissions.includes('edit_medications');
+                            const canDelete = isSuperAdmin || permissions.includes('delete_medications');
+                            return !isCaregiver && (canEdit || canDelete) && (
+                                <div className="mt-4 pt-4 border-t border-gray-200 flex items-center justify-end gap-2">
+                                    {canEdit && (
+                                        <button
+                                            onClick={() => {
+                                                setEditing(medication);
+                                                setShowForm(true);
+                                            }}
+                                            className="px-3 py-1.5 text-sm text-[var(--theme-primary)] border border-[var(--theme-primary)] rounded-lg hover:bg-[var(--theme-primary)] hover:text-[var(--theme-text-on-primary)] transition-colors flex items-center gap-1.5"
+                                        >
+                                            <Edit className="w-4 h-4" />
+                                            <span>Edit</span>
+                                        </button>
+                                    )}
+                                    {canDelete && (
+                                        <button
+                                            onClick={() => {
+                                                if (window.confirm(`Are you sure you want to delete the medication "${medication.name}" for ${residentName}? This action cannot be undone.`)) {
+                                                    deleteMutation.mutate(medication.id);
+                                                }
+                                            }}
+                                            disabled={deleteMutation.isPending}
+                                            className="px-3 py-1.5 text-sm text-red-600 border border-red-600 rounded-lg hover:bg-red-600 hover:text-white transition-colors flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                            <span>{deleteMutation.isPending ? 'Deleting...' : 'Delete'}</span>
+                                        </button>
+                                    )}
+                                </div>
+                            );
+                        })()}
                     </div>
                 </div>
             </div>
@@ -631,15 +641,20 @@ export default function Medications() {
                         <h2 className="text-xl font-semibold text-gray-900 mb-2">Medication Management</h2>
                         <p className="text-gray-600">View and track resident medications.</p>
                     </div>
-                    {!isCaregiver && (
-                        <button
-                            onClick={() => { setEditing(null); setShowForm(true); }}
-                            className="w-full sm:w-auto px-4 py-2 bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] rounded-lg hover:bg-[var(--theme-primary-hover)] transition-colors flex items-center justify-center space-x-2 text-sm md:text-base"
-                        >
-                            <Plus className="w-4 h-4" />
-                            <span>Add Medication</span>
-                        </button>
-                    )}
+                    {(() => {
+                        const isSuperAdmin = currentUser?.role === 'super_admin';
+                        const permissions = Array.isArray(currentUser?.permissions) ? currentUser.permissions : [];
+                        const canCreate = isSuperAdmin || permissions.includes('create_medications');
+                        return !isCaregiver && canCreate && (
+                            <button
+                                onClick={() => { setEditing(null); setShowForm(true); }}
+                                className="w-full sm:w-auto px-4 py-2 bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] rounded-lg hover:bg-[var(--theme-primary-hover)] transition-colors flex items-center justify-center space-x-2 text-sm md:text-base"
+                            >
+                                <Plus className="w-4 h-4" />
+                                <span>Add Medication</span>
+                            </button>
+                        );
+                    })()}
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

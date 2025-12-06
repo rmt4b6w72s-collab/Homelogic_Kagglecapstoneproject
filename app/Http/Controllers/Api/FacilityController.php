@@ -179,6 +179,10 @@ class FacilityController extends BaseApiController
 
     public function update(Request $request, $id): JsonResponse
     {
+        if ($error = $this->requirePermission('edit_facilities')) {
+            return $error;
+        }
+
         $facility = Facility::findOrFail($id);
         
         // Separate file validation from other fields

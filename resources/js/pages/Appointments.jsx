@@ -79,6 +79,13 @@ export default function Appointments() {
         return roleNormalized === 'caregiver' || (role.includes('care') && role.includes('giver'));
     }, [currentUser]);
 
+    // Permission checks
+    const isSuperAdmin = currentUser?.role === 'super_admin';
+    const permissions = Array.isArray(currentUser?.permissions) ? currentUser.permissions : [];
+    const canCreate = isSuperAdmin || permissions.includes('create_appointments');
+    const canEdit = isSuperAdmin || permissions.includes('edit_appointments');
+    const canDelete = isSuperAdmin || permissions.includes('delete_appointments');
+
     // Define queries FIRST before using them in useEffect
     const { data, isLoading, error: appointmentsError, refetch } = useQuery({
         queryKey: ['appointments', residentFilter, branchFilter],

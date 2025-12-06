@@ -59,6 +59,11 @@ export default function UsersPage() {
         return role === 'super_admin' || role === 'superadmin';
     }, [currentUser]);
 
+    const permissions = Array.isArray(currentUser?.permissions) ? currentUser.permissions : [];
+    const canCreate = isSuperAdmin || permissions.includes('create_users');
+    const canEdit = isSuperAdmin || permissions.includes('edit_users');
+    const canDelete = isSuperAdmin || permissions.includes('delete_users');
+
     const { data: facilitiesData } = useQuery({
         queryKey: ['facilities-options'],
         queryFn: async () => (await api.get('/facilities', { params: { per_page: 100 } })).data,
@@ -177,20 +182,24 @@ export default function UsersPage() {
                         >
                             <Eye className="w-4 h-4" />
                         </button>
-                        <button
-                            onClick={() => navigate(`/administration/users/${user.id}/edit`)}
-                            className="p-2 bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] hover:bg-[var(--theme-primary-hover)] rounded-lg transition-all duration-200 border-2 border-[var(--theme-primary)] shadow-md hover:shadow-lg transform hover:scale-105"
-                            title="Edit User"
-                        >
-                            <Edit className="w-4 h-4" />
-                        </button>
-                        <button
-                            onClick={() => handleDelete(user)}
-                            className="p-2 bg-red-600 text-white hover:bg-red-700 rounded-lg transition-all duration-200 border-2 border-red-600 shadow-md hover:shadow-lg transform hover:scale-105"
-                            title="Delete User"
-                        >
-                            <Trash2 className="w-4 h-4" />
-                        </button>
+                        {canEdit && (
+                            <button
+                                onClick={() => navigate(`/administration/users/${user.id}/edit`)}
+                                className="p-2 bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] hover:bg-[var(--theme-primary-hover)] rounded-lg transition-all duration-200 border-2 border-[var(--theme-primary)] shadow-md hover:shadow-lg transform hover:scale-105"
+                                title="Edit User"
+                            >
+                                <Edit className="w-4 h-4" />
+                            </button>
+                        )}
+                        {canDelete && (
+                            <button
+                                onClick={() => handleDelete(user)}
+                                className="p-2 bg-red-600 text-white hover:bg-red-700 rounded-lg transition-all duration-200 border-2 border-red-600 shadow-md hover:shadow-lg transform hover:scale-105"
+                                title="Delete User"
+                            >
+                                <Trash2 className="w-4 h-4" />
+                            </button>
+                        )}
                     </div>
                 </div>
                 <div className="space-y-3 text-sm border-t border-gray-100 pt-4">
@@ -237,13 +246,15 @@ export default function UsersPage() {
                         <h2 className="text-xl font-semibold text-gray-900 mb-2">All Users</h2>
                         <p className="text-gray-600">Search and manage users in the system.</p>
                     </div>
-                    <button
-                        onClick={() => navigate('/administration/users/create')}
-                        className="w-full sm:w-auto px-4 py-2 bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] rounded-lg hover:bg-[var(--theme-primary-hover)] transition-colors flex items-center justify-center space-x-2 text-sm md:text-base"
-                    >
-                        <Plus className="w-4 h-4" />
-                        <span>Add User</span>
-                    </button>
+                    {canCreate && (
+                        <button
+                            onClick={() => navigate('/administration/users/create')}
+                            className="w-full sm:w-auto px-4 py-2 bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] rounded-lg hover:bg-[var(--theme-primary-hover)] transition-colors flex items-center justify-center space-x-2 text-sm md:text-base"
+                        >
+                            <Plus className="w-4 h-4" />
+                            <span>Add User</span>
+                        </button>
+                    )}
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">

@@ -38,6 +38,12 @@ export default function Assessments() {
     const isSuperAdmin = currentUser?.role === 'super_admin';
     const enabledModules = currentUser?.enabled_modules || [];
     const hasModuleAccessCheck = isSuperAdmin || hasModuleAccess('/assessments', enabledModules, isSuperAdmin);
+    
+    // Permission checks
+    const permissions = Array.isArray(currentUser?.permissions) ? currentUser.permissions : [];
+    const canCreate = isSuperAdmin || permissions.includes('create_assessments');
+    const canEdit = isSuperAdmin || permissions.includes('edit_assessments');
+    const canDelete = isSuperAdmin || permissions.includes('delete_assessments');
 
     // Show loading state
     if (isLoadingUser) {
@@ -294,17 +300,17 @@ export default function Assessments() {
                         <h2 className="text-xl font-semibold text-gray-900 mb-2">Assessment Management</h2>
                         <p className="text-gray-600">View and manage resident assessments.</p>
                     </div>
-                    {isAdmin && (
-                    <button
-                        onClick={() => {
-                            setEditing(null);
-                            setShowForm(true);
-                        }}
-                        className="w-full sm:w-auto px-4 py-2 bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] rounded-lg hover:bg-[var(--theme-primary-hover)] transition-colors flex items-center justify-center space-x-2 text-sm md:text-base"
-                    >
-                        <Plus className="w-4 h-4" />
-                        <span>Add Assessment</span>
-                    </button>
+                    {canCreate && (
+                        <button
+                            onClick={() => {
+                                setEditing(null);
+                                setShowForm(true);
+                            }}
+                            className="w-full sm:w-auto px-4 py-2 bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] rounded-lg hover:bg-[var(--theme-primary-hover)] transition-colors flex items-center justify-center space-x-2 text-sm md:text-base"
+                        >
+                            <Plus className="w-4 h-4" />
+                            <span>Add Assessment</span>
+                        </button>
                     )}
                 </div>
 
@@ -465,30 +471,34 @@ export default function Assessments() {
                                     </div>
                                 )}
 
-                                {!isCaregiver && (
-                                <div className="flex space-x-2 mt-4">
-                                    <button
-                                        onClick={() => {
-                                            setEditing(assessment);
-                                            setShowForm(true);
-                                        }}
-                                        className="p-2 text-[var(--theme-secondary)] hover:bg-amber-50 rounded-lg transition-colors"
-                                        title="Edit"
-                                    >
-                                        <Edit className="w-4 h-4" />
-                                    </button>
-                                    <button
-                                        onClick={() => {
-                                            if (window.confirm('Are you sure you want to delete this assessment?')) {
-                                                deleteMutation.mutate(assessment.id);
-                                            }
-                                        }}
-                                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                        title="Delete"
-                                    >
-                                        <Trash2 className="w-4 h-4" />
-                                    </button>
-                                </div>
+                                {!isCaregiver && (canEdit || canDelete) && (
+                                    <div className="flex space-x-2 mt-4">
+                                        {canEdit && (
+                                            <button
+                                                onClick={() => {
+                                                    setEditing(assessment);
+                                                    setShowForm(true);
+                                                }}
+                                                className="p-2 text-[var(--theme-secondary)] hover:bg-amber-50 rounded-lg transition-colors"
+                                                title="Edit"
+                                            >
+                                                <Edit className="w-4 h-4" />
+                                            </button>
+                                        )}
+                                        {canDelete && (
+                                            <button
+                                                onClick={() => {
+                                                    if (window.confirm('Are you sure you want to delete this assessment?')) {
+                                                        deleteMutation.mutate(assessment.id);
+                                                    }
+                                                }}
+                                                className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                title="Delete"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        )}
+                                    </div>
                                 )}
                             </Card>
                         ))

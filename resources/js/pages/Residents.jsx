@@ -42,6 +42,12 @@ export default function Residents() {
         return normalized === 'caregiver' || (role.includes('care') && role.includes('giver'));
     }, [currentUser]);
 
+    const isSuperAdmin = currentUser?.role === 'super_admin';
+    const permissions = Array.isArray(currentUser?.permissions) ? currentUser.permissions : [];
+    const canCreate = isSuperAdmin || permissions.includes('create_residents');
+    const canEdit = isSuperAdmin || permissions.includes('edit_residents');
+    const canDelete = isSuperAdmin || permissions.includes('delete_residents');
+
     React.useEffect(() => {
         if (isCaregiver && currentUser?.assigned_branch_id) {
             setBranchFilter((prev) => prev || String(currentUser.assigned_branch_id));
@@ -155,30 +161,33 @@ export default function Residents() {
                         >
                             <Eye className="w-3.5 h-3.5" />
                         </button>
-                        <button
-                            onClick={() => {
-                                setEditing(resident);
-                                setShowForm(true);
-                            }}
-                            className="p-1.5 bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] hover:bg-[var(--theme-primary-hover)] rounded-lg transition-all duration-200 border-2 border-[var(--theme-primary)] shadow-md hover:shadow-lg transform hover:scale-105"
-                            title="Edit"
-                        >
-                            <Edit className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                            onClick={() => {
-                                const action = resident.is_active ? 'deactivate' : 'activate';
-                                if (window.confirm(`Are you sure you want to ${action} this resident?`)) {
-                                                toggleActiveMutation.mutate({ id: resident.id, isActive: isResidentActive(resident) });
-                                }
-                            }}
-                            className={`p-1.5 rounded-lg transition-all duration-200 border-2 shadow-md hover:shadow-lg transform hover:scale-105 ${
-                                resident.is_active 
-                                    ? 'bg-amber-500 text-white hover:bg-amber-600 border-amber-600' 
-                                    : 'bg-green-600 text-white hover:bg-green-700 border-green-600'
-                            }`}
-                            title={resident.is_active ? 'Deactivate' : 'Activate'}
-                        >
+                        {canEdit && (
+                            <button
+                                onClick={() => {
+                                    setEditing(resident);
+                                    setShowForm(true);
+                                }}
+                                className="p-1.5 bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] hover:bg-[var(--theme-primary-hover)] rounded-lg transition-all duration-200 border-2 border-[var(--theme-primary)] shadow-md hover:shadow-lg transform hover:scale-105"
+                                title="Edit"
+                            >
+                                <Edit className="w-3.5 h-3.5" />
+                            </button>
+                        )}
+                        {canEdit && (
+                            <button
+                                onClick={() => {
+                                    const action = resident.is_active ? 'deactivate' : 'activate';
+                                    if (window.confirm(`Are you sure you want to ${action} this resident?`)) {
+                                        toggleActiveMutation.mutate({ id: resident.id, isActive: isResidentActive(resident) });
+                                    }
+                                }}
+                                className={`p-1.5 rounded-lg transition-all duration-200 border-2 shadow-md hover:shadow-lg transform hover:scale-105 ${
+                                    resident.is_active 
+                                        ? 'bg-amber-500 text-white hover:bg-amber-600 border-amber-600' 
+                                        : 'bg-green-600 text-white hover:bg-green-700 border-green-600'
+                                }`}
+                                title={resident.is_active ? 'Deactivate' : 'Activate'}
+                            >
                             {resident.is_active ? <XCircle className="w-3.5 h-3.5" /> : <CheckCircle className="w-3.5 h-3.5" />}
                         </button>
                     </div>
@@ -265,16 +274,18 @@ export default function Residents() {
                         <h2 className="text-xl font-semibold text-gray-900 mb-2">All Residents</h2>
                         <p className="text-gray-600">Search and view details for all residents in the facility.</p>
                     </div>
-                    <button
-                        onClick={() => {
-                            setEditing(null);
-                            setShowForm(true);
-                        }}
-                        className="w-full sm:w-auto px-4 py-2 bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] rounded-lg hover:bg-[var(--theme-primary-hover)] transition-colors flex items-center justify-center space-x-2 text-sm md:text-base"
-                    >
-                        <Plus className="w-4 h-4" />
-                        <span>Add Resident</span>
-                    </button>
+                    {canCreate && (
+                        <button
+                            onClick={() => {
+                                setEditing(null);
+                                setShowForm(true);
+                            }}
+                            className="w-full sm:w-auto px-4 py-2 bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] rounded-lg hover:bg-[var(--theme-primary-hover)] transition-colors flex items-center justify-center space-x-2 text-sm md:text-base"
+                        >
+                            <Plus className="w-4 h-4" />
+                            <span>Add Resident</span>
+                        </button>
+                    )}
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

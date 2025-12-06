@@ -15,6 +15,25 @@ export default function Vitals() {
     const [showForm, setShowForm] = useState(false);
     const [editing, setEditing] = useState(null);
 
+    // Get current user to check permissions
+    const { data: currentUser } = useQuery({
+        queryKey: ['current-user'],
+        queryFn: async () => {
+            try {
+                const response = await api.get('/user');
+                return response.data;
+            } catch {
+                return null;
+            }
+        },
+    });
+
+    const isSuperAdmin = currentUser?.role === 'super_admin';
+    const permissions = Array.isArray(currentUser?.permissions) ? currentUser.permissions : [];
+    const canCreate = isSuperAdmin || permissions.includes('create_vitals');
+    const canEdit = isSuperAdmin || permissions.includes('edit_vitals');
+    const canDelete = isSuperAdmin || permissions.includes('delete_vitals');
+
     const { data, isLoading } = useQuery({
         queryKey: ['vitals', dateFilter, residentFilter],
         queryFn: async () => {
@@ -170,27 +189,31 @@ export default function Vitals() {
                                             </div>
                                         </div>
                                         <div className="flex space-x-2">
-                                            <button
-                                                onClick={() => {
-                                                    setEditing(vital);
-                                                    setShowForm(true);
-                                                }}
-                                                className="p-2 text-[var(--theme-primary)] hover:bg-green-50 rounded-lg transition-colors"
-                                                title="Edit"
-                                            >
-                                                <Edit className="w-4 h-4" />
-                                            </button>
-                                            <button
-                                                onClick={() => {
-                                                    if (window.confirm('Are you sure you want to delete this vital sign record?')) {
-                                                        deleteMutation.mutate(vital.id);
-                                                    }
-                                                }}
-                                                className="p-2 text-[var(--theme-secondary)] hover:bg-amber-50 rounded-lg transition-colors"
-                                                title="Delete"
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                            </button>
+                                            {canEdit && (
+                                                <button
+                                                    onClick={() => {
+                                                        setEditing(vital);
+                                                        setShowForm(true);
+                                                    }}
+                                                    className="p-2 text-[var(--theme-primary)] hover:bg-green-50 rounded-lg transition-colors"
+                                                    title="Edit"
+                                                >
+                                                    <Edit className="w-4 h-4" />
+                                                </button>
+                                            )}
+                                            {canDelete && (
+                                                <button
+                                                    onClick={() => {
+                                                        if (window.confirm('Are you sure you want to delete this vital sign record?')) {
+                                                            deleteMutation.mutate(vital.id);
+                                                        }
+                                                    }}
+                                                    className="p-2 text-[var(--theme-secondary)] hover:bg-amber-50 rounded-lg transition-colors"
+                                                    title="Delete"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            )}
                                         </div>
                                     </div>
                                     
@@ -267,7 +290,7 @@ export default function Vitals() {
                                     ? 'No vital signs recorded today. Get started by recording vital signs for residents.'
                                     : 'Try adjusting your filters or check back later.'
                             }
-                            action={
+                            action={canCreate && (
                                 <button
                                     onClick={() => {
                                         setEditing(null);
@@ -278,7 +301,7 @@ export default function Vitals() {
                                     <Plus className="w-4 h-4 inline mr-2" />
                                     Add Vitals
                                 </button>
-                            }
+                            )}
                         />
                     )}
                 </div>

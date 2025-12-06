@@ -8,6 +8,25 @@ export default function VitalRanges() {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null);
 
+  // Get current user to check permissions
+  const { data: currentUser } = useQuery({
+    queryKey: ['current-user'],
+    queryFn: async () => {
+      try {
+        const response = await api.get('/user');
+        return response.data;
+      } catch {
+        return null;
+      }
+    },
+  });
+
+  const isSuperAdmin = currentUser?.role === 'super_admin';
+  const permissions = Array.isArray(currentUser?.permissions) ? currentUser.permissions : [];
+  const canCreate = isSuperAdmin || permissions.includes('create_vital_ranges');
+  const canEdit = isSuperAdmin || permissions.includes('edit_vital_ranges');
+  const canDelete = isSuperAdmin || permissions.includes('delete_vital_ranges');
+
   const { data, isLoading } = useQuery({
     queryKey: ['vital-ranges'],
     queryFn: async () => (await api.get('/vital-ranges', { params: { per_page: 50 } })).data,
@@ -26,10 +45,12 @@ export default function VitalRanges() {
             <h2 className="text-xl font-semibold text-gray-900 mb-2">Vital Ranges Management</h2>
             <p className="text-gray-600">View and manage vital sign reference ranges.</p>
           </div>
-          <button onClick={() => { setEditing(null); setShowForm(true); }} className="w-full sm:w-auto px-4 py-2 bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] rounded-lg hover:bg-[var(--theme-primary-hover)] transition-colors flex items-center justify-center space-x-2 text-sm md:text-base">
-            <Plus className="w-4 h-4" />
-            <span>Add Range</span>
-          </button>
+          {canCreate && (
+            <button onClick={() => { setEditing(null); setShowForm(true); }} className="w-full sm:w-auto px-4 py-2 bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] rounded-lg hover:bg-[var(--theme-primary-hover)] transition-colors flex items-center justify-center space-x-2 text-sm md:text-base">
+              <Plus className="w-4 h-4" />
+              <span>Add Range</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -58,8 +79,12 @@ export default function VitalRanges() {
                   <td className="px-6 py-4 whitespace-nowrap">{r.max_normal ?? '-'}</td>
                   <td className="px-6 py-4 whitespace-nowrap">{r.unit ?? '-'}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
-                    <button onClick={() => { setEditing(r); setShowForm(true); }} className="p-2 text-[var(--theme-primary)] hover:bg-green-50 rounded-lg mr-2"><Edit className="w-4 h-4" /></button>
-                    <button onClick={() => window.confirm('Delete range?') && deleteMutation.mutate(r.id)} className="p-2 text-[var(--theme-secondary)] hover:bg-amber-50 rounded-lg"><Trash2 className="w-4 h-4" /></button>
+                    {canEdit && (
+                      <button onClick={() => { setEditing(r); setShowForm(true); }} className="p-2 text-[var(--theme-primary)] hover:bg-green-50 rounded-lg mr-2"><Edit className="w-4 h-4" /></button>
+                    )}
+                    {canDelete && (
+                      <button onClick={() => window.confirm('Delete range?') && deleteMutation.mutate(r.id)} className="p-2 text-[var(--theme-secondary)] hover:bg-amber-50 rounded-lg"><Trash2 className="w-4 h-4" /></button>
+                    )}
                   </td>
                 </tr>
               ))}

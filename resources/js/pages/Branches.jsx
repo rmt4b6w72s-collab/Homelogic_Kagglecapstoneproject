@@ -27,6 +27,11 @@ export default function Branches() {
 
   const isSuperAdmin = currentUser?.role === 'super_admin';
   const isFacilityAdmin = currentUser?.role === 'administrator' || currentUser?.role === 'admin' || currentUser?.role === 'facility_admin';
+  
+  const permissions = Array.isArray(currentUser?.permissions) ? currentUser.permissions : [];
+  const canCreate = isSuperAdmin || permissions.includes('create_branches');
+  const canEdit = isSuperAdmin || permissions.includes('edit_branches');
+  const canDelete = isSuperAdmin || permissions.includes('delete_branches');
 
   const { data: facilities } = useQuery({
     queryKey: ['facilities-options'],
@@ -140,20 +145,24 @@ export default function Branches() {
                     </div>
                     {/* Actions */}
                     <div className="flex space-x-1">
-                      <button
-                        onClick={() => { setEditing(b); setShowForm(true); }}
-                        className="p-2 text-[var(--theme-primary)] hover:bg-green-50 rounded-lg transition-colors"
-                        title="Edit"
-                      >
-                      <Edit className="w-4 h-4" />
-                    </button>
-                      <button
-                        onClick={() => window.confirm('Delete branch?') && deleteMutation.mutate(b.id)}
-                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                        title="Delete"
-                      >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                      {canEdit && (
+                        <button
+                          onClick={() => { setEditing(b); setShowForm(true); }}
+                          className="p-2 text-[var(--theme-primary)] hover:bg-green-50 rounded-lg transition-colors"
+                          title="Edit"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
+                      )}
+                      {canDelete && (
+                        <button
+                          onClick={() => window.confirm('Delete branch?') && deleteMutation.mutate(b.id)}
+                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          title="Delete"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
                     </div>
                   </div>
                   
