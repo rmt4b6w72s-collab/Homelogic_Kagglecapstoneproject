@@ -11,11 +11,27 @@ class LeaveRequestController extends BaseApiController
 {
     public function index(Request $request): JsonResponse
     {
-        $query = LeaveRequest::with(['staff', 'approvedBy']);
+        $query = LeaveRequest::with(['staff', 'approvedBy', 'branch']);
+        $currentUser = auth()->user();
         
         // If user is a caregiver, only show their own leave requests
-        if (auth()->user()->hasRole('caregiver')) {
-            $query->where('staff_id', auth()->id());
+        if ($currentUser->hasRole('caregiver')) {
+            $query->where('staff_id', $currentUser->id);
+        } else {
+            // For non-caregivers, filter by facility
+            // Super admins can see all leave requests
+            if ($currentUser->role !== 'super_admin' && $currentUser->facility_id) {
+                // Filter by leave requests where the staff member belongs to the user's facility
+                // OR where the branch belongs to the user's facility
+                $facilityId = $currentUser->facility_id;
+                $query->where(function($q) use ($facilityId) {
+                    $q->whereHas('staff', function($userQuery) use ($facilityId) {
+                        $userQuery->where('facility_id', $facilityId);
+                    })->orWhereHas('branch', function($branchQuery) use ($facilityId) {
+                        $branchQuery->where('facility_id', $facilityId);
+                    });
+                });
+            }
         }
         
         if ($request->has('status')) {
