@@ -423,7 +423,6 @@ function UserForm({ record, branches, roles, facilities, isSuperAdmin, onClose, 
         credential_details: record?.credential_details || '',
         date_employed: formatDateForInput(record?.date_employed),
         supervisor_name: record?.supervisor_name || '',
-        provider_name: record?.provider_name || '',
         role: getRoleValue(record),
         facility_id: record?.facility_id || '',
         assigned_branch_id: record?.assigned_branch_id || '',
@@ -620,7 +619,6 @@ function UserForm({ record, branches, roles, facilities, isSuperAdmin, onClose, 
                 formDataToSend.append('credential_details', formData.credential_details || '');
                 formDataToSend.append('date_employed', formData.date_employed || '');
                 formDataToSend.append('supervisor_name', formData.supervisor_name || '');
-                formDataToSend.append('provider_name', formData.provider_name || '');
                 formDataToSend.append('role', formData.role || '');
                 if (formData.assigned_branch_id) {
                     formDataToSend.append('assigned_branch_id', formData.assigned_branch_id);
@@ -689,7 +687,6 @@ function UserForm({ record, branches, roles, facilities, isSuperAdmin, onClose, 
                     credential_details: formData.credential_details || null,
                     date_employed: formData.date_employed || null,
                     supervisor_name: formData.supervisor_name || null,
-                    provider_name: formData.provider_name || null,
                     role: formData.role,
                     facility_id: formData.facility_id || null,
                     assigned_branch_id: formData.assigned_branch_id || null,
@@ -1074,20 +1071,6 @@ function UserForm({ record, branches, roles, facilities, isSuperAdmin, onClose, 
 
                                 <div>
                                     <label className="block text-sm font-medium text-gray-900 mb-2">
-                                        Provider Name
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={formData.provider_name}
-                                        onChange={(e) => setFormData({ ...formData, provider_name: e.target.value })}
-                                        placeholder="Enter provider name"
-                                        maxLength={255}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-900 mb-2">
                                         Role *
                                     </label>
                                     <select
@@ -1414,12 +1397,6 @@ function UserProfileViewer({ user, onClose, onEdit, onToggleActive }) {
                                     <div>
                                         <p className="text-sm text-gray-600 mb-1">Supervisor</p>
                                         <p className="font-semibold text-gray-900">{user.supervisor_name}</p>
-                                    </div>
-                                )}
-                                {user.provider_name && (
-                                    <div>
-                                        <p className="text-sm text-gray-600 mb-1">Provider</p>
-                                        <p className="font-semibold text-gray-900">{user.provider_name}</p>
                                     </div>
                                 )}
                                 <div>

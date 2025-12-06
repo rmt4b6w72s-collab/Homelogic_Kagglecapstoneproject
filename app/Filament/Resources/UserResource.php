@@ -198,10 +198,6 @@ class UserResource extends Resource
                             ->label('Name of Supervisor')
                             ->maxLength(255)
                             ->placeholder('Enter supervisor name'),
-                        Forms\Components\TextInput::make('provider_name')
-                            ->label('Name of Provider')
-                            ->maxLength(255)
-                            ->placeholder('Enter provider name'),
                         Forms\Components\Select::make('role')
                             ->label('Role')
                             ->options(User::getRoleOptions())
@@ -425,8 +421,7 @@ class UserResource extends Resource
                         ->orWhere('middle_names', 'like', "%{$search}%")
                         ->orWhere('last_name', 'like', "%{$search}%")
                         ->orWhere('email', 'like', "%{$search}%")
-                        ->orWhere('supervisor_name', 'like', "%{$search}%")
-                        ->orWhere('provider_name', 'like', "%{$search}%");
+                        ->orWhere('supervisor_name', 'like', "%{$search}%");
                 })
             );
     }

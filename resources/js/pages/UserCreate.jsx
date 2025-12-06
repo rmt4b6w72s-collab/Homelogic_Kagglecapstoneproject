@@ -37,7 +37,6 @@ function FormProvider({ children, initialData }) {
         credential_details: '',
         date_employed: '',
         supervisor_name: '',
-        provider_name: '',
         role: '',
         facility_id: '',
         assigned_branch_id: '',
@@ -375,16 +374,6 @@ function EmploymentTab({ roles, branches, facilities, isSuperAdmin }) {
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-900 mb-1">Provider Name</label>
-                    <input
-                        type="text"
-                        value={formData.provider_name}
-                        onChange={(e) => updateForm({ provider_name: e.target.value })}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-[var(--theme-primary)]"
-                    />
-                </div>
-
-                <div>
                     <label className="block text-sm font-medium text-gray-900 mb-1">Credentials</label>
                     <input
                         type="text"
@@ -637,7 +626,6 @@ function UserCreateContent({
                 formDataToSend.append('credential_details', formData.credential_details || '');
                 formDataToSend.append('date_employed', formData.date_employed || '');
                 formDataToSend.append('supervisor_name', formData.supervisor_name || '');
-                formDataToSend.append('provider_name', formData.provider_name || '');
                 formDataToSend.append('role', formData.role || '');
                 if (formData.assigned_branch_id) {
                     formDataToSend.append('assigned_branch_id', formData.assigned_branch_id);
