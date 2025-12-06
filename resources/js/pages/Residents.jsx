@@ -128,7 +128,8 @@ export default function Residents() {
                                     alt={`${resident.first_name} ${resident.last_name}`}
                                     className="w-full h-full object-cover"
                                     onError={(e) => {
-                                        e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(`${resident.first_name} ${resident.last_name}`)}&background=25603E&color=fff&size=128`;
+                                        const fullName = `${resident.first_name} ${resident.last_name}`;
+                                        e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&background=25603E&color=fff&size=128`;
                                     }}
                                 />
                             </div>
@@ -155,7 +156,10 @@ export default function Residents() {
                     </div>
                     <div className="flex space-x-1.5 ml-2 flex-shrink-0">
                         <button
-                            onClick={() => navigate(`/my-residents/${resident.id}`)}
+                            onClick={() => {
+                                const path = '/my-residents/' + resident.id;
+                                navigate(path);
+                            }}
                             className="p-1.5 bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] hover:bg-[var(--theme-primary-hover)] rounded-lg transition-all duration-200 border-2 border-[var(--theme-primary)] shadow-md hover:shadow-lg transform hover:scale-105"
                             title="View Details"
                         >
@@ -181,14 +185,19 @@ export default function Residents() {
                                         toggleActiveMutation.mutate({ id: resident.id, isActive: isResidentActive(resident) });
                                     }
                                 }}
-                                className={`p-1.5 rounded-lg transition-all duration-200 border-2 shadow-md hover:shadow-lg transform hover:scale-105 ${
-                                    resident.is_active 
+                                className={
+                                    'p-1.5 rounded-lg transition-all duration-200 border-2 shadow-md hover:shadow-lg transform hover:scale-105 ' +
+                                    (resident.is_active 
                                         ? 'bg-amber-500 text-white hover:bg-amber-600 border-amber-600' 
-                                        : 'bg-green-600 text-white hover:bg-green-700 border-green-600'
-                                }`}
+                                        : 'bg-green-600 text-white hover:bg-green-700 border-green-600')
+                                }
                                 title={resident.is_active ? 'Deactivate' : 'Activate'}
                             >
-                            {resident.is_active ? <XCircle className="w-3.5 h-3.5" /> : <CheckCircle className="w-3.5 h-3.5" />}
+                            {resident.is_active ? (
+                                <XCircle className="w-3.5 h-3.5" />
+                            ) : (
+                                <CheckCircle className="w-3.5 h-3.5" />
+                            )}
                         </button>
                     </div>
                 </div>
