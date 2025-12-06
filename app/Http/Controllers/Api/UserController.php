@@ -92,6 +92,10 @@ class UserController extends BaseApiController
 
     public function store(Request $request): JsonResponse
     {
+        if ($error = $this->requirePermission('create_users')) {
+            return $error;
+        }
+
         // Determine facility_id for email uniqueness validation
         $currentUser = Auth::user();
         $facilityId = $request->input('facility_id');
@@ -188,6 +192,10 @@ class UserController extends BaseApiController
 
     public function update(Request $request, $id): JsonResponse
     {
+        if ($error = $this->requirePermission('edit_users')) {
+            return $error;
+        }
+
         $user = User::findOrFail($id);
 
         // Convert is_active from FormData string to boolean if present (like residents do)
@@ -375,6 +383,10 @@ class UserController extends BaseApiController
 
     public function destroy($id): JsonResponse
     {
+        if ($error = $this->requirePermission('delete_users')) {
+            return $error;
+        }
+
         $user = User::findOrFail($id);
         
         // Prevent deleting yourself

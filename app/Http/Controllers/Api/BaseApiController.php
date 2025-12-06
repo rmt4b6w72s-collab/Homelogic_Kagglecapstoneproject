@@ -195,6 +195,25 @@ abstract class BaseApiController extends Controller
 
         return false;
     }
+
+    /**
+     * Check if user has a specific permission
+     * Returns null if allowed, JsonResponse error if denied
+     */
+    protected function requirePermission(string $permission, ?object $user = null): ?JsonResponse
+    {
+        $user = $user ?? auth()->user();
+        
+        if (!$user) {
+            return $this->error('Unauthorized.', 401);
+        }
+
+        if (!$user->hasPermission($permission)) {
+            return $this->error("Unauthorized. You do not have permission to perform this action.", 403);
+        }
+
+        return null;
+    }
 }
 
 

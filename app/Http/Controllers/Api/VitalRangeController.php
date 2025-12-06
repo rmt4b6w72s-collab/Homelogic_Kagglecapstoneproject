@@ -18,6 +18,10 @@ class VitalRangeController extends BaseApiController
 
     public function store(Request $request): JsonResponse
     {
+        if ($error = $this->requirePermission('create_vital_ranges')) {
+            return $error;
+        }
+
         $validated = $request->validate([
             'parameter' => 'required|string|max:100',
             'min_normal' => 'nullable|numeric',
@@ -36,6 +40,10 @@ class VitalRangeController extends BaseApiController
 
     public function update(Request $request, $id): JsonResponse
     {
+        if ($error = $this->requirePermission('edit_vital_ranges')) {
+            return $error;
+        }
+
         $range = VitalRange::findOrFail($id);
         $validated = $request->validate([
             'parameter' => 'sometimes|required|string|max:100',
@@ -55,6 +63,10 @@ class VitalRangeController extends BaseApiController
 
     public function destroy($id): JsonResponse
     {
+        if ($error = $this->requirePermission('delete_vital_ranges')) {
+            return $error;
+        }
+
         VitalRange::findOrFail($id)->delete();
         return response()->json(['message' => 'Vital range deleted']);
     }

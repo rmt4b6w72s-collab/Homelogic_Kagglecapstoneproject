@@ -154,6 +154,10 @@ class ResidentController extends BaseApiController
 
     public function store(StoreResidentRequest $request): JsonResponse
     {
+        if ($error = $this->requirePermission('create_residents')) {
+            return $error;
+        }
+
         $validated = $request->validated();
 
         // Generate full name from first_name, middle_names, and last_name
@@ -196,6 +200,10 @@ class ResidentController extends BaseApiController
 
     public function update(UpdateResidentRequest $request, $id): JsonResponse
     {
+        if ($error = $this->requirePermission('edit_residents')) {
+            return $error;
+        }
+
         // Find resident without global scope to check permissions manually
         $resident = Resident::withoutGlobalScope(\App\Models\Scopes\FacilityScope::class)->findOrFail($id);
         $user = $request->user();
@@ -311,6 +319,10 @@ class ResidentController extends BaseApiController
 
     public function destroy($id): JsonResponse
     {
+        if ($error = $this->requirePermission('delete_residents')) {
+            return $error;
+        }
+
         $resident = Resident::findOrFail($id);
         $resident->delete();
 

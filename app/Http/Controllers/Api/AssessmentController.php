@@ -214,6 +214,10 @@ class AssessmentController extends BaseApiController
 
     public function store(Request $request): JsonResponse
     {
+        if ($error = $this->requirePermission('create_assessments')) {
+            return $error;
+        }
+
         // Check module access
         $moduleAccessError = $this->requireModuleAccess(\App\Constants\Modules::ASSESSMENTS);
         if ($moduleAccessError) {
@@ -245,6 +249,10 @@ class AssessmentController extends BaseApiController
 
     public function update(Request $request, $id): JsonResponse
     {
+        if ($error = $this->requirePermission('edit_assessments')) {
+            return $error;
+        }
+
         // Check module access
         $moduleAccessError = $this->requireModuleAccess(\App\Constants\Modules::ASSESSMENTS);
         if ($moduleAccessError) {
@@ -284,6 +292,10 @@ class AssessmentController extends BaseApiController
 
     public function destroy($id): JsonResponse
     {
+        if ($error = $this->requirePermission('delete_assessments')) {
+            return $error;
+        }
+
         // Check module access
         $moduleAccessError = $this->requireModuleAccess(\App\Constants\Modules::ASSESSMENTS);
         if ($moduleAccessError) {

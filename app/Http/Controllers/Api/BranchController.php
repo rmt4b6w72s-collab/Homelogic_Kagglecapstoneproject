@@ -30,6 +30,10 @@ class BranchController extends BaseApiController
 
     public function store(Request $request): JsonResponse
     {
+        if ($error = $this->requirePermission('create_branches')) {
+            return $error;
+        }
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'address' => 'nullable|string|max:1000',
@@ -52,6 +56,10 @@ class BranchController extends BaseApiController
 
     public function update(Request $request, $id): JsonResponse
     {
+        if ($error = $this->requirePermission('edit_branches')) {
+            return $error;
+        }
+
         $branch = Branch::findOrFail($id);
         $validated = $request->validate([
             'name' => 'sometimes|required|string|max:255',
@@ -69,6 +77,10 @@ class BranchController extends BaseApiController
 
     public function destroy($id): JsonResponse
     {
+        if ($error = $this->requirePermission('delete_branches')) {
+            return $error;
+        }
+
         $branch = Branch::findOrFail($id);
         $branch->delete();
         return response()->json(['message' => 'Branch deleted']);

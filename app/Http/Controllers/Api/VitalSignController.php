@@ -107,6 +107,10 @@ class VitalSignController extends BaseApiController
 
     public function store(Request $request): JsonResponse
     {
+        if ($error = $this->requirePermission('create_vitals')) {
+            return $error;
+        }
+
         $validated = $request->validate([
             'resident_id' => 'required|exists:residents,id',
             'branch_id' => 'nullable|exists:branches,id',
@@ -147,6 +151,10 @@ class VitalSignController extends BaseApiController
 
     public function update(Request $request, $id): JsonResponse
     {
+        if ($error = $this->requirePermission('edit_vitals')) {
+            return $error;
+        }
+
         $vital = VitalSign::findOrFail($id);
 
         $validated = $request->validate([
@@ -180,6 +188,10 @@ class VitalSignController extends BaseApiController
 
     public function destroy($id): JsonResponse
     {
+        if ($error = $this->requirePermission('delete_vitals')) {
+            return $error;
+        }
+
         $vital = VitalSign::findOrFail($id);
         $vital->delete();
 

@@ -67,6 +67,10 @@ class MedicationController extends BaseApiController
 
     public function store(Request $request): JsonResponse
     {
+        if ($error = $this->requirePermission('create_medications')) {
+            return $error;
+        }
+
         $validated = $request->validate([
             'resident_id' => 'required|exists:residents,id',
             'branch_id' => 'nullable|exists:branches,id',
@@ -127,6 +131,10 @@ class MedicationController extends BaseApiController
 
     public function update(Request $request, $id): JsonResponse
     {
+        if ($error = $this->requirePermission('edit_medications')) {
+            return $error;
+        }
+
         $medication = Medication::with('resident')->findOrFail($id);
 
         // If user is a caregiver, ensure they can only update medications for residents in their assigned branch
@@ -185,6 +193,10 @@ class MedicationController extends BaseApiController
 
     public function destroy($id): JsonResponse
     {
+        if ($error = $this->requirePermission('delete_medications')) {
+            return $error;
+        }
+
         $medication = Medication::findOrFail($id);
         $medication->delete();
 

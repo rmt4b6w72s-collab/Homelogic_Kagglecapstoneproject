@@ -52,6 +52,10 @@ class AppointmentController extends BaseApiController
 
     public function store(Request $request): JsonResponse
     {
+        if ($error = $this->requirePermission('create_appointments')) {
+            return $error;
+        }
+
         $validated = $request->validate([
             'title' => 'nullable|string|max:255',
             'resident_id' => 'required|exists:residents,id',
