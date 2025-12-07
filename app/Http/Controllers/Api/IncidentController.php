@@ -119,8 +119,13 @@ class IncidentController extends BaseApiController
         $isSuperAdmin = $user && ($user->role === 'super_admin' || $user->hasRole('super_admin'));
         $isAdmin = $user && ($user->role === 'administrator' || $user->role === 'admin');
         
-        // Check permission only if user is not an admin or super admin
-        if (!$isSuperAdmin && !$isAdmin) {
+        // Check if user is a caregiver
+        $isCaregiver = $this->isCaregiver($user);
+        
+        // Caregivers can create incidents for residents in their assigned branch
+        // Admins and super admins can create incidents without specific permission
+        // Other users need the create_incidents permission
+        if (!$isSuperAdmin && !$isAdmin && !$isCaregiver) {
             if ($error = $this->requirePermission('create_incidents')) {
                 return $error;
             }
@@ -157,6 +162,19 @@ class IncidentController extends BaseApiController
             if ($resident) {
                 $validated['branch_id'] = $resident->branch_id;
             }
+        }
+
+        // If user is a caregiver, ensure they can only create incidents for residents in their assigned branch
+        if ($isCaregiver) {
+            $resident = \App\Models\Resident::find($validated['resident_id']);
+            if (!$resident || $resident->branch_id !== $user->assigned_branch_id) {
+                return response()->json([
+                    'message' => 'Unauthorized: You can only create incidents for residents in your assigned branch.',
+                    'errors' => ['resident_id' => ['You can only create incidents for residents in your assigned branch.']]
+                ], 403);
+            }
+            // Force branch_id to caregiver's assigned branch
+            $validated['branch_id'] = $user->assigned_branch_id;
         }
 
         // Set default status if not provided
