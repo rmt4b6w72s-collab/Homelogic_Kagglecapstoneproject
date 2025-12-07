@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { Plus, Edit, Trash2, Eye, X, FileText, Calendar, User, Search, Filter } from 'lucide-react';
+import { Plus, Edit, Trash2, Eye, X, FileText, Calendar, User, Search, Filter, ArrowLeft, AlertTriangle, ExternalLink } from 'lucide-react';
 import api from '../services/api';
 import Card from '../components/Card';
 import { toast } from 'sonner';
@@ -235,6 +235,23 @@ export default function TLogs() {
     const residents = residentsData?.data || [];
     const branches = branchesData?.data || [];
 
+    // If view modal is open, show view as full page
+    if (showViewModal && selectedTLog) {
+        return (
+            <ViewTLog
+                tLog={selectedTLog}
+                onClose={() => {
+                    setShowViewModal(false);
+                    setSelectedTLog(null);
+                }}
+                onEdit={() => {
+                    setShowViewModal(false);
+                    handleOpenForm(selectedTLog);
+                }}
+            />
+        );
+    }
+
     // If form is open, show form as full page (like Expenses/Incidents form)
     if (showForm) {
         return (
@@ -416,21 +433,21 @@ export default function TLogs() {
                                 <div className="flex gap-2 ml-4">
                                     <button
                                         onClick={() => handleView(tLog)}
-                                        className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                                        className="p-2.5 border-2 border-gray-300 bg-white text-gray-700 hover:bg-gray-50 hover:border-gray-400 rounded-lg transition-all shadow-sm"
                                         title="View"
                                     >
                                         <Eye className="w-5 h-5" />
                                     </button>
                                     <button
                                         onClick={() => handleOpenForm(tLog)}
-                                        className="p-2 text-[var(--theme-primary)] hover:bg-[var(--theme-primary-bg)] rounded-lg transition-colors"
+                                        className="p-2.5 border-2 border-[var(--theme-primary)] bg-white text-[var(--theme-primary)] hover:bg-[var(--theme-primary-bg)] hover:border-[var(--theme-primary-dark)] rounded-lg transition-all shadow-sm"
                                         title="Edit"
                                     >
                                         <Edit className="w-5 h-5" />
                                     </button>
                                     <button
                                         onClick={() => handleDelete(tLog.id)}
-                                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                        className="p-2.5 border-2 border-red-400 bg-white text-red-700 hover:bg-red-50 hover:border-red-500 rounded-lg transition-all shadow-sm"
                                         title="Delete"
                                     >
                                         <Trash2 className="w-5 h-5" />
@@ -465,107 +482,285 @@ export default function TLogs() {
                 </div>
             )}
 
-            {/* View Modal */}
-            {showViewModal && selectedTLog && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto">
-                        <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
-                            <h2 className="text-xl font-bold text-gray-900">T-Log Details</h2>
+        </div>
+    );
+}
+
+// View T-Log Component (Full Page View)
+function ViewTLog({ tLog, onClose, onEdit }) {
+    return (
+        <div className="space-y-6">
+            {/* Header */}
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+                <div className="bg-gradient-to-r from-[var(--theme-primary)] to-[var(--theme-primary-hover)] p-6">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
                             <button
-                                onClick={handleCloseView}
-                                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                                onClick={onClose}
+                                className="p-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors text-white"
+                                title="Go back"
                             >
-                                <X className="w-5 h-5" />
+                                <ArrowLeft className="w-5 h-5" />
                             </button>
-                        </div>
-                        <div className="p-6 space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Summary</label>
-                                <p className="text-gray-900">{selectedTLog.summary}</p>
+                                <h1 className="text-3xl font-bold text-white flex items-center gap-3">
+                                    <FileText className="w-8 h-8" />
+                                    T-Log Details
+                                </h1>
+                                <p className="text-white/90 mt-1">Comprehensive T-Log information and documentation</p>
                             </div>
-                            
-                            {selectedTLog.description && (
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                                    <p className="text-gray-900 whitespace-pre-wrap">{selectedTLog.description}</p>
+                        </div>
+                        <button
+                            onClick={onEdit}
+                            className="px-6 py-2 bg-white text-[var(--theme-primary)] rounded-lg hover:bg-gray-50 font-semibold transition-colors flex items-center gap-2"
+                        >
+                            <Edit className="w-4 h-4" />
+                            Edit T-Log
+                        </button>
+                    </div>
+                </div>
+
+                {/* Quick Info Cards */}
+                <div className="p-6 grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-200">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-sm font-medium text-blue-700 mb-1">Types</p>
+                                <div className="flex gap-1.5 flex-wrap">
+                                    {tLog.types?.slice(0, 2).map((type) => (
+                                        <span
+                                            key={type}
+                                            className={`px-2 py-0.5 text-xs font-semibold rounded-md ${TYPE_COLORS[type] || 'bg-gray-100 text-gray-800'}`}
+                                        >
+                                            {type.charAt(0).toUpperCase() + type.slice(1)}
+                                        </span>
+                                    ))}
+                                    {tLog.types?.length > 2 && (
+                                        <span className="px-2 py-0.5 text-xs font-semibold text-blue-700">
+                                            +{tLog.types.length - 2}
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+                            <FileText className="w-8 h-8 text-blue-400 opacity-50" />
+                        </div>
+                    </div>
+
+                    <div className={`bg-gradient-to-br rounded-xl p-4 border ${
+                        tLog.notification_level === 'urgent' ? 'from-red-50 to-red-100 border-red-200' :
+                        tLog.notification_level === 'high' ? 'from-orange-50 to-orange-100 border-orange-200' :
+                        tLog.notification_level === 'medium' ? 'from-yellow-50 to-yellow-100 border-yellow-200' :
+                        'from-green-50 to-green-100 border-green-200'
+                    }`}>
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className={`text-sm font-medium mb-1 ${
+                                    tLog.notification_level === 'urgent' ? 'text-red-700' :
+                                    tLog.notification_level === 'high' ? 'text-orange-700' :
+                                    tLog.notification_level === 'medium' ? 'text-yellow-700' :
+                                    'text-green-700'
+                                }`}>
+                                    Notification Level
+                                </p>
+                                <span className={`inline-block px-3 py-1 text-sm font-bold rounded-md border-2 ${
+                                    NOTIFICATION_LEVEL_COLORS[tLog.notification_level] || 'bg-gray-100 text-gray-800 border-gray-300'
+                                }`}>
+                                    {(tLog.notification_level || 'low').toUpperCase()}
+                                </span>
+                            </div>
+                            <AlertTriangle className={`w-8 h-8 opacity-50 ${
+                                tLog.notification_level === 'urgent' ? 'text-red-400' :
+                                tLog.notification_level === 'high' ? 'text-orange-400' :
+                                tLog.notification_level === 'medium' ? 'text-yellow-400' :
+                                'text-green-400'
+                            }`} />
+                        </div>
+                    </div>
+
+                    <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-4 border border-purple-200">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-sm font-medium text-purple-700 mb-1">Resident</p>
+                                <p className="text-lg font-semibold text-purple-900">
+                                    {tLog.resident?.name || `${tLog.resident?.first_name || ''} ${tLog.resident?.last_name || ''}`.trim() || 'N/A'}
+                                </p>
+                            </div>
+                            <User className="w-8 h-8 text-purple-400 opacity-50" />
+                        </div>
+                    </div>
+
+                    <div className="bg-gradient-to-br from-cyan-50 to-cyan-100 rounded-xl p-4 border border-cyan-200">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-sm font-medium text-cyan-700 mb-1">Reported On</p>
+                                <p className="text-lg font-semibold text-cyan-900">
+                                    {tLog.reported_on 
+                                        ? new Date(tLog.reported_on).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                                        : 'N/A'}
+                                </p>
+                                {tLog.reported_on && (
+                                    <p className="text-xs text-cyan-600 mt-0.5">
+                                        {new Date(tLog.reported_on).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                                    </p>
+                                )}
+                            </div>
+                            <Calendar className="w-8 h-8 text-cyan-400 opacity-50" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Main Content */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Left Column - Main Details */}
+                <div className="lg:col-span-2 space-y-6">
+                    {/* Summary Card */}
+                    <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6">
+                        <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                            <FileText className="w-5 h-5 text-[var(--theme-primary)]" />
+                            Summary
+                        </h2>
+                        <p className="text-gray-700 text-lg leading-relaxed">{tLog.summary}</p>
+                    </div>
+
+                    {/* Description Card */}
+                    {tLog.description && (
+                        <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6">
+                            <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                                <FileText className="w-5 h-5 text-[var(--theme-primary)]" />
+                                Description
+                            </h2>
+                            <div className="prose max-w-none">
+                                <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">{tLog.description}</p>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Types Card */}
+                    {tLog.types && tLog.types.length > 0 && (
+                        <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6">
+                            <h2 className="text-xl font-bold text-gray-900 mb-4">All Types</h2>
+                            <div className="flex flex-wrap gap-2">
+                                {tLog.types.map((type) => (
+                                    <span
+                                        key={type}
+                                        className={`px-4 py-2 text-sm font-semibold rounded-lg ${TYPE_COLORS[type] || 'bg-gray-100 text-gray-800'}`}
+                                    >
+                                        {type.charAt(0).toUpperCase() + type.slice(1)}
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Attachments Card */}
+                    {tLog.attachments && tLog.attachments.length > 0 && (
+                        <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6">
+                            <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                                <FileText className="w-5 h-5 text-[var(--theme-primary)]" />
+                                Attachments ({tLog.attachments.length})
+                            </h2>
+                            <div className="grid grid-cols-1 gap-3">
+                                {tLog.attachments.map((attachment) => (
+                                    <a
+                                        key={attachment.id}
+                                        href={attachment.file_url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="flex items-center gap-4 p-4 border-2 border-gray-200 rounded-lg hover:border-[var(--theme-primary)] hover:bg-[var(--theme-primary-bg)] transition-all group"
+                                    >
+                                        <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-[var(--theme-primary-bg)] to-[var(--theme-primary)] rounded-lg flex items-center justify-center">
+                                            <FileText className="w-6 h-6 text-[var(--theme-primary)] group-hover:text-white transition-colors" />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-semibold text-gray-900 truncate group-hover:text-[var(--theme-primary)] transition-colors">
+                                                {attachment.file_name}
+                                            </p>
+                                            <p className="text-xs text-gray-500 mt-0.5">
+                                                {attachment.file_size_human || 'Unknown size'}
+                                            </p>
+                                        </div>
+                                        <ExternalLink className="w-5 h-5 text-gray-400 group-hover:text-[var(--theme-primary)] transition-colors flex-shrink-0" />
+                                    </a>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {/* Right Column - Metadata */}
+                <div className="space-y-6">
+                    {/* Information Card */}
+                    <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6">
+                        <h2 className="text-xl font-bold text-gray-900 mb-4">Information</h2>
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+                                    Resident
+                                </label>
+                                <p className="text-base font-medium text-gray-900">
+                                    {tLog.resident?.name || `${tLog.resident?.first_name || ''} ${tLog.resident?.last_name || ''}`.trim() || 'N/A'}
+                                </p>
+                                {tLog.resident?.room_number && (
+                                    <p className="text-sm text-gray-500 mt-0.5">Room {tLog.resident.room_number}</p>
+                                )}
+                            </div>
+
+                            <div className="border-t border-gray-200 pt-4">
+                                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+                                    Branch / Program
+                                </label>
+                                <p className="text-base font-medium text-gray-900">{tLog.branch?.name || 'N/A'}</p>
+                            </div>
+
+                            {tLog.reporter && (
+                                <div className="border-t border-gray-200 pt-4">
+                                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+                                        Reporter
+                                    </label>
+                                    <p className="text-base font-medium text-gray-900">
+                                        {tLog.reporter.name || tLog.reporter.email || 'N/A'}
+                                    </p>
                                 </div>
                             )}
 
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Types</label>
-                                    <div className="flex gap-2 flex-wrap">
-                                        {selectedTLog.types?.map((type) => (
-                                            <span
-                                                key={type}
-                                                className={`px-2 py-1 text-xs font-medium rounded ${TYPE_COLORS[type] || 'bg-gray-100 text-gray-800'}`}
-                                            >
-                                                {type.charAt(0).toUpperCase() + type.slice(1)}
-                                            </span>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Notification Level</label>
-                                    <span
-                                        className={`inline-block px-2 py-1 text-xs font-medium rounded border ${NOTIFICATION_LEVEL_COLORS[selectedTLog.notification_level] || 'bg-gray-100 text-gray-800'}`}
-                                    >
-                                        {selectedTLog.notification_level || 'low'}
-                                    </span>
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Resident</label>
-                                    <p className="text-gray-900">
-                                        {selectedTLog.resident?.name || `${selectedTLog.resident?.first_name} ${selectedTLog.resident?.last_name}` || 'N/A'}
+                            {tLog.reported_on && (
+                                <div className="border-t border-gray-200 pt-4">
+                                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+                                        Reported On
+                                    </label>
+                                    <p className="text-base font-medium text-gray-900">
+                                        {new Date(tLog.reported_on).toLocaleDateString('en-US', { 
+                                            weekday: 'long',
+                                            year: 'numeric', 
+                                            month: 'long', 
+                                            day: 'numeric' 
+                                        })}
+                                    </p>
+                                    <p className="text-sm text-gray-500 mt-0.5">
+                                        {new Date(tLog.reported_on).toLocaleTimeString('en-US', { 
+                                            hour: '2-digit', 
+                                            minute: '2-digit',
+                                            second: '2-digit'
+                                        })}
                                     </p>
                                 </div>
+                            )}
 
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Branch</label>
-                                    <p className="text-gray-900">{selectedTLog.branch?.name || 'N/A'}</p>
-                                </div>
-
-                                {selectedTLog.reporter && (
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Reporter</label>
-                                        <p className="text-gray-900">{selectedTLog.reporter.name || selectedTLog.reporter.email}</p>
-                                    </div>
-                                )}
-
-                                {selectedTLog.reported_on && (
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Reported On</label>
-                                        <p className="text-gray-900">{new Date(selectedTLog.reported_on).toLocaleString()}</p>
-                                    </div>
-                                )}
-                            </div>
-
-                            {selectedTLog.attachments && selectedTLog.attachments.length > 0 && (
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">Attachments</label>
-                                    <div className="space-y-2">
-                                        {selectedTLog.attachments.map((attachment) => (
-                                            <a
-                                                key={attachment.id}
-                                                href={attachment.file_url}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="flex items-center gap-2 p-2 border border-gray-200 rounded-lg hover:bg-gray-50"
-                                            >
-                                                <FileText className="w-5 h-5 text-gray-400" />
-                                                <span className="text-sm text-gray-900">{attachment.file_name}</span>
-                                                <span className="text-xs text-gray-500 ml-auto">{attachment.file_size_human}</span>
-                                            </a>
-                                        ))}
-                                    </div>
+                            {tLog.created_at && (
+                                <div className="border-t border-gray-200 pt-4">
+                                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+                                        Created
+                                    </label>
+                                    <p className="text-sm text-gray-600">
+                                        {new Date(tLog.created_at).toLocaleString()}
+                                    </p>
                                 </div>
                             )}
                         </div>
                     </div>
                 </div>
-            )}
+            </div>
         </div>
     );
 }
