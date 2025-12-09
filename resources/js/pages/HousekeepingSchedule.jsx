@@ -740,12 +740,12 @@ function TaskModal({ onClose, onSubmit, initialValues, isSaving }) {
                                         key={day.value}
                                         className={`flex cursor-pointer items-center gap-2 rounded-xl border px-3 py-2 text-sm ${
                                             checked
-                                                ? task.is_required 
+                                                ? formValues.is_required 
                                                     ? 'border-[var(--theme-primary-bg)] bg-[var(--theme-primary-bg)] text-[var(--theme-primary)]'
                                                     : ''
                                                 : 'border-gray-200 text-gray-600'
                                         }`}
-                                        style={task.is_required && checked ? { borderColor: 'var(--theme-primary-bg)', backgroundColor: 'var(--theme-primary-bg)', color: 'var(--theme-primary)' } : {}}
+                                        style={formValues.is_required && checked ? { borderColor: 'var(--theme-primary-bg)', backgroundColor: 'var(--theme-primary-bg)', color: 'var(--theme-primary)' } : {}}
                                     >
                                         <input
                                             type="checkbox"
