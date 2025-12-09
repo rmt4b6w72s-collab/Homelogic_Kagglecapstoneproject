@@ -457,7 +457,7 @@ export default function MedicationDeliveries() {
     );
 }
 
-function MedicationDeliveryForm({ record, branches, residents, medications, isCaregiver, caregiverBranchId, formMode = 'full', onClose, onSuccess }) {
+function MedicationDeliveryForm({ record, branches, residents, medications, pharmacySuppliers = [], isCaregiver, caregiverBranchId, formMode = 'full', onClose, onSuccess }) {
     const [formData, setFormData] = useState({
         branch_id: record?.branch_id || caregiverBranchId || '',
         delivery_type: record?.delivery_type || (formMode === 'quick' ? 'batch' : 'individual'),
@@ -670,33 +670,33 @@ function MedicationDeliveryForm({ record, branches, residents, medications, isCa
                             )}
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-900 mb-1">Pharmacy Template (Optional)</label>
+                                <label className="block text-sm font-medium text-gray-900 mb-1">Pharmacy Supplier (Optional)</label>
                                 <select
                                     value=""
                                     onChange={(e) => {
                                         if (e.target.value) {
-                                            const template = pharmacyTemplates.find(t => t.id == e.target.value);
-                                            if (template) {
+                                            const supplier = availableSuppliers.find(s => s.id == e.target.value);
+                                            if (supplier) {
                                                 setFormData({
                                                     ...formData,
-                                                    pharmacy_name: template.name,
-                                                    notes: template.default_notes || formData.notes,
+                                                    pharmacy_name: supplier.name,
+                                                    notes: supplier.notes || formData.notes,
                                                 });
                                             }
                                         }
                                     }}
                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent mb-2 text-gray-900 bg-white"
                                 >
-                                    <option value="">Select a saved pharmacy...</option>
-                                    {pharmacyTemplates && pharmacyTemplates.length > 0 ? (
-                                        pharmacyTemplates.map(template => (
-                                            <option key={template.id} value={template.id}>
-                                                {template.name}
+                                    <option value="">Select a supplier...</option>
+                                    {availableSuppliers && availableSuppliers.length > 0 ? (
+                                        availableSuppliers.map(supplier => (
+                                            <option key={supplier.id} value={supplier.id}>
+                                                {supplier.name}
                                             </option>
                                         ))
                                     ) : (
                                         <option value="" disabled>
-                                            {pharmacyTemplatesError ? 'Error loading templates' : 'No pharmacy templates available'}
+                                            {pharmacySuppliersError ? 'Error loading suppliers' : 'No suppliers available'}
                                         </option>
                                     )}
                                 </select>
