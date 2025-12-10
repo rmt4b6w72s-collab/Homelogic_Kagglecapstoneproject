@@ -234,9 +234,16 @@ export default function MedicationsReport() {
                                 {administrations.map((item) => (
                                     <tr key={item.id} className="hover:bg-gray-50">
                                         <td className="px-4 py-3 text-sm text-[var(--theme-primary)] font-semibold">
-                                            <a href={item.resident?.id ? `/medications/residents/${item.resident.id}` : '#'} className="hover:underline">
-                                                {item.resident?.name || item.resident?.full_name || 'N/A'}
-                                            </a>
+                                            {(() => {
+                                                const r = item.resident || {};
+                                                const name = r.name || r.full_name || [r.first_name, r.last_name].filter(Boolean).join(' ').trim();
+                                                if (!r.id) return name || 'N/A';
+                                                return (
+                                                    <a href={`/medications/residents/${r.id}`} className="hover:underline">
+                                                        {name || 'N/A'}
+                                                    </a>
+                                                );
+                                            })()}
                                         </td>
                                         <td className="px-4 py-3 text-sm text-gray-900">
                                             {item.medication?.name || item.name || 'N/A'}
