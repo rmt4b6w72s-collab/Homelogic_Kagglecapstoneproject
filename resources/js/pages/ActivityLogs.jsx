@@ -254,7 +254,7 @@ export default function ActivityLogsPage() {
                     </div>
                 ) : (
                     <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200">
+                        <table className="w-full table-auto divide-y divide-gray-200">
                             <thead className="bg-gray-50">
                                 <tr>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
@@ -262,8 +262,8 @@ export default function ActivityLogsPage() {
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User Role</th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Event</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
@@ -312,8 +312,8 @@ export default function ActivityLogsPage() {
                                                     {log.event}
                                                 </span>
                                             </td>
-                                            <td className="px-6 py-4 text-sm text-gray-900">
-                                                <div className="max-w-md truncate" title={log.description}>
+                                            <td className="px-4 py-4 text-sm text-gray-900">
+                                                <div className="max-w-xs truncate" title={log.description}>
                                                     {log.description}
                                                 </div>
                                                 {log.subject_type && (
@@ -322,7 +322,7 @@ export default function ActivityLogsPage() {
                                                     </div>
                                                 )}
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                            <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-right">
                                                 <button
                                                     onClick={() => setExpandedLog(expandedLog === log.id ? null : log.id)}
                                                     className="px-3 py-2 bg-[var(--theme-primary)] text-white rounded-lg hover:bg-[var(--theme-primary-hover)] transition-colors flex items-center gap-2 font-medium"
