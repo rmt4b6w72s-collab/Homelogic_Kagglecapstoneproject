@@ -604,16 +604,19 @@ function SleepRecordForm({ record, residents, isCaregiver, caregiverBranchId, ca
     const [errors, setErrors] = useState({});
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // Get branches from residents
+    // Fetch branches (show all; caregivers will be limited by assigned_branch)
+    const { data: branchesData } = useQuery({
+        queryKey: ['branches-options-sleep'],
+        queryFn: async () => (await api.get('/branches', { params: { per_page: 200 } })).data,
+    });
+
     const branches = React.useMemo(() => {
-        const branchMap = new Map();
-        residents.forEach(resident => {
-            if (resident.branch && !branchMap.has(resident.branch.id)) {
-                branchMap.set(resident.branch.id, resident.branch);
-            }
-        });
-        return Array.from(branchMap.values());
-    }, [residents]);
+        const list = branchesData?.data || [];
+        if (isCaregiver && caregiverBranchId) {
+            return list.filter((b) => String(b.id) === String(caregiverBranchId));
+        }
+        return list;
+    }, [branchesData?.data, isCaregiver, caregiverBranchId]);
 
     React.useEffect(() => {
         if (isCaregiver && caregiverBranchId && formData.branch_id !== caregiverBranchId) {

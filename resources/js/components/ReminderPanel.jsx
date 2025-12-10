@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Bell, Clock3, Check, AlarmClockOff } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 
 export default function ReminderPanel() {
     const [isOpen, setIsOpen] = useState(false);
     const queryClient = useQueryClient();
+    const navigate = useNavigate();
 
     const { data, isLoading, refetch } = useQuery({
         queryKey: ['reminders', 'upcoming'],
@@ -73,6 +75,15 @@ export default function ReminderPanel() {
                                 <h3 className="text-lg font-semibold text-gray-900">Reminders</h3>
                                 <p className="text-xs text-gray-500">Upcoming and due items</p>
                             </div>
+                            <button
+                                onClick={() => {
+                                    setIsOpen(false);
+                                    navigate('/reminders');
+                                }}
+                                className="px-3 py-1.5 text-xs font-semibold rounded-md bg-[var(--theme-primary)] text-white hover:bg-[var(--theme-primary-hover)] transition-colors"
+                            >
+                                Add reminder
+                            </button>
                         </div>
 
                         <div className="overflow-y-auto flex-1">

@@ -20,10 +20,10 @@ ChartJS.register(ArcElement, Tooltip, Legend);
 export default function GroceryStatus() {
     const queryClient = useQueryClient();
     const [search, setSearch] = useState('');
-    const [branchFilter, setBranchFilter] = useState('');
-    const [statusFilter, setStatusFilter] = useState('');
-    const [weekFilter, setWeekFilter] = useState('');
-    const [viewMode, setViewMode] = useState('list'); // 'list' or 'calendar'
+    const [branchFilter, setBranchFilter] = useState(() => localStorage.getItem('grocery-branch') || '');
+    const [statusFilter, setStatusFilter] = useState(() => localStorage.getItem('grocery-status') || '');
+    const [weekFilter, setWeekFilter] = useState(() => localStorage.getItem('grocery-week') || '');
+    const [viewMode, setViewMode] = useState(() => localStorage.getItem('grocery-view') || 'list'); // 'list' or 'calendar'
     const [selectedDate, setSelectedDate] = useState(null);
     const [showForm, setShowForm] = useState(false);
     const [editing, setEditing] = useState(null);
@@ -41,6 +41,23 @@ export default function GroceryStatus() {
         };
         fetchUser();
     }, []);
+
+    // Persist filters
+    React.useEffect(() => {
+        localStorage.setItem('grocery-branch', branchFilter || '');
+    }, [branchFilter]);
+
+    React.useEffect(() => {
+        localStorage.setItem('grocery-status', statusFilter || '');
+    }, [statusFilter]);
+
+    React.useEffect(() => {
+        localStorage.setItem('grocery-week', weekFilter || '');
+    }, [weekFilter]);
+
+    React.useEffect(() => {
+        localStorage.setItem('grocery-view', viewMode || 'list');
+    }, [viewMode]);
 
     // Check if user is a caregiver
     const isCaregiver = React.useMemo(() => {
@@ -61,6 +78,27 @@ export default function GroceryStatus() {
     const { data: branchesData } = useQuery({
         queryKey: ['branches-options'],
         queryFn: async () => (await api.get('/branches', { params: { per_page: 100 } })).data,
+    });
+
+    // Fetch templates
+    const { data: templatesData } = useQuery({
+        queryKey: ['grocery-item-templates', branchFilter],
+        queryFn: async () => {
+            const params = { per_page: 100 };
+            if (branchFilter) params.branch_id = branchFilter;
+            return (await api.get('/grocery-item-templates', { params })).data;
+        },
+    });
+
+    const createTemplateMutation = useMutation({
+        mutationFn: async (payload) => (await api.post('/grocery-item-templates', payload)).data,
+        onSuccess: () => {
+            toast.success('Template saved');
+            queryClient.invalidateQueries(['grocery-item-templates']);
+        },
+        onError: (error) => {
+            toast.error(error?.response?.data?.message || 'Failed to save template');
+        },
     });
 
     // Build query params
@@ -105,6 +143,7 @@ export default function GroceryStatus() {
     });
 
     const updates = data?.data || [];
+    const templates = templatesData?.data || [];
     const branches = branchesData?.data || [];
 
     // Get current week's Monday
@@ -206,11 +245,14 @@ export default function GroceryStatus() {
                 <GroceryStatusForm
                     record={editing}
                     branches={branches}
+                    templates={templates}
                     isCaregiver={isCaregiver}
                     caregiverBranchId={currentUser?.assigned_branch_id}
                     onClose={handleCloseForm}
+                    onSaveTemplate={(payload) => createTemplateMutation.mutateAsync(payload)}
                     onSuccess={() => {
                         queryClient.invalidateQueries(['grocery-status-updates']);
+                        queryClient.invalidateQueries(['grocery-item-templates']);
                         handleCloseForm();
                     }}
                 />
@@ -226,16 +268,30 @@ export default function GroceryStatus() {
                         <h2 className="text-xl font-semibold text-gray-900 mb-2">Grocery Status Updates</h2>
                         <p className="text-gray-600">Track weekly grocery status updates for each branch.</p>
                     </div>
-                    <button
-                        onClick={() => {
-                            setEditing(null);
-                            setShowForm(true);
-                        }}
-                        className="w-full sm:w-auto px-4 py-2 bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] rounded-lg hover:bg-[var(--theme-primary-hover)] transition-colors flex items-center justify-center space-x-2"
-                    >
-                        <Plus className="w-4 h-4" />
-                        <span>Add Update</span>
-                    </button>
+                    <div className="flex flex-col sm:flex-row gap-2">
+                        <button
+                            onClick={() => {
+                                setEditing(null);
+                                setShowForm(true);
+                            }}
+                            className="w-full sm:w-auto px-4 py-2 bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] rounded-lg hover:bg-[var(--theme-primary-hover)] transition-colors flex items-center justify-center space-x-2"
+                        >
+                            <Plus className="w-4 h-4" />
+                            <span>Add Update</span>
+                        </button>
+                        <button
+                            onClick={() => {
+                                setEditing({
+                                    week_start_date: getCurrentWeekMonday().toISOString().split('T')[0],
+                                });
+                                setShowForm(true);
+                            }}
+                            className="w-full sm:w-auto px-4 py-2 border border-[var(--theme-primary)] text-[var(--theme-primary)] rounded-lg hover:bg-[var(--theme-primary-bg-light)] transition-colors flex items-center justify-center space-x-2"
+                        >
+                            <Sparkles className="w-4 h-4" />
+                            <span>Use Template</span>
+                        </button>
+                    </div>
                 </div>
 
                 {/* Current Week Status Highlight */}
@@ -467,8 +523,14 @@ export default function GroceryStatus() {
                 )}
 
                 {isLoading ? (
-                    <div className="text-center py-12">
-                        <p className="text-gray-500">Loading grocery status updates...</p>
+                    <div className="py-6 space-y-3">
+                        {[...Array(4)].map((_, i) => (
+                            <div key={i} className="animate-pulse rounded-lg border border-gray-200 bg-gray-50 p-4">
+                                <div className="h-4 bg-gray-200 rounded w-1/3 mb-2"></div>
+                                <div className="h-3 bg-gray-200 rounded w-1/2 mb-1"></div>
+                                <div className="h-3 bg-gray-200 rounded w-2/3"></div>
+                            </div>
+                        ))}
                     </div>
                 ) : Object.keys(filteredUpdates).length === 0 ? (
                     <div className="text-center py-12">
@@ -660,7 +722,7 @@ export default function GroceryStatus() {
     );
 }
 
-function GroceryStatusForm({ record, branches, isCaregiver, caregiverBranchId, onClose, onSuccess }) {
+function GroceryStatusForm({ record, branches, templates = [], isCaregiver, caregiverBranchId, onClose, onSuccess, onSaveTemplate }) {
     // Get current Monday
     const getCurrentMonday = () => {
         const today = new Date();
@@ -681,6 +743,7 @@ function GroceryStatusForm({ record, branches, isCaregiver, caregiverBranchId, o
 
     const [errors, setErrors] = useState({});
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [selectedTemplateId, setSelectedTemplateId] = useState('');
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -748,11 +811,55 @@ function GroceryStatusForm({ record, branches, isCaregiver, caregiverBranchId, o
                             </div>
 
                             <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Apply Template</label>
+                                <div className="flex gap-2">
+                                    <Select
+                                        value={selectedTemplateId}
+                                        onValueChange={(value) => setSelectedTemplateId(value || '')}
+                                        placeholder="Choose a template"
+                                        options={templates.map(t => ({
+                                            value: t.id.toString(),
+                                            label: t.name + (t.category ? ` (${t.category})` : ''),
+                                        }))}
+                                        className="w-full"
+                                        disabled={!templates.length}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            if (!selectedTemplateId) return;
+                                            const tpl = templates.find(t => t.id === Number(selectedTemplateId));
+                                            if (tpl) {
+                                                setFormData((prev) => ({
+                                                    ...prev,
+                                                    branch_id: tpl.branch_id || prev.branch_id,
+                                                    items_needed: tpl.items_list || prev.items_needed,
+                                                }));
+                                                toast.success('Template applied');
+                                            }
+                                        }}
+                                        className="px-3 py-2 bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] rounded-lg disabled:opacity-50"
+                                        disabled={!selectedTemplateId}
+                                    >
+                                        Apply
+                                    </button>
+                                </div>
+                                <p className="text-xs text-gray-500 mt-1">Templates prefill items needed for a week.</p>
+                            </div>
+
+                            <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Week Start Date (Monday) *</label>
                                 <input
                                     type="date"
                                     value={formData.week_start_date}
-                                    onChange={(e) => setFormData({ ...formData, week_start_date: e.target.value })}
+                                    onChange={(e) => {
+                                        const date = new Date(e.target.value);
+                                        // adjust to Monday
+                                        const day = date.getDay();
+                                        const diff = date.getDate() - day + (day === 0 ? -6 : 1);
+                                        const monday = new Date(date.setDate(diff));
+                                        setFormData({ ...formData, week_start_date: monday.toISOString().split('T')[0] });
+                                    }}
                                     required
                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                 />
@@ -812,6 +919,29 @@ function GroceryStatusForm({ record, branches, isCaregiver, caregiverBranchId, o
                             />
                             {errors.notes && <p className="text-xs text-red-600 mt-1">{errors.notes[0]}</p>}
                         </div>
+
+                        {!isCaregiver && onSaveTemplate && (
+                            <div className="flex items-center justify-end gap-3">
+                                <button
+                                    type="button"
+                                    onClick={async () => {
+                                        if (!formData.branch_id || !formData.items_needed) {
+                                            toast.error('Branch and items needed are required to save a template.');
+                                            return;
+                                        }
+                                        await onSaveTemplate({
+                                            branch_id: Number(formData.branch_id),
+                                            name: 'Grocery Template',
+                                            items_list: formData.items_needed,
+                                            category: 'general',
+                                        });
+                                    }}
+                                    className="px-4 py-2 border border-[var(--theme-primary)] text-[var(--theme-primary)] rounded-lg hover:bg-[var(--theme-primary-bg-light)]"
+                                >
+                                    Save as Template
+                                </button>
+                            </div>
+                        )}
 
                         <div className="flex items-center justify-end space-x-3 pt-4 border-t">
                             <button

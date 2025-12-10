@@ -10,9 +10,15 @@ import Select from '../components/ui/radix/Select';
 export default function MedicationDeliveries() {
     const queryClient = useQueryClient();
     const [search, setSearch] = useState('');
-    const [branchFilter, setBranchFilter] = useState('');
-    const [typeFilter, setTypeFilter] = useState('');
-    const [statusFilter, setStatusFilter] = useState('');
+    const [branchFilter, setBranchFilter] = useState(() => {
+        return localStorage.getItem('med-deliveries-branch') || '';
+    });
+    const [typeFilter, setTypeFilter] = useState(() => {
+        return localStorage.getItem('med-deliveries-type') || '';
+    });
+    const [statusFilter, setStatusFilter] = useState(() => {
+        return localStorage.getItem('med-deliveries-status') || '';
+    });
     const [showForm, setShowForm] = useState(false);
     const [formMode, setFormMode] = useState('full'); // 'full', 'quick', or 'bulk'
     const [editing, setEditing] = useState(null);
@@ -30,6 +36,13 @@ export default function MedicationDeliveries() {
         };
         fetchUser();
     }, []);
+
+    // Persist filters
+    React.useEffect(() => {
+        localStorage.setItem('med-deliveries-branch', branchFilter || '');
+        localStorage.setItem('med-deliveries-type', typeFilter || '');
+        localStorage.setItem('med-deliveries-status', statusFilter || '');
+    }, [branchFilter, typeFilter, statusFilter]);
 
     // Check if user is a caregiver
     const isCaregiver = React.useMemo(() => {
@@ -316,8 +329,14 @@ export default function MedicationDeliveries() {
                 </div>
 
                 {isLoading ? (
-                    <div className="text-center py-12">
-                        <p className="text-gray-500">Loading deliveries...</p>
+                    <div className="py-6 space-y-3">
+                        {[...Array(4)].map((_, i) => (
+                            <div key={i} className="animate-pulse rounded-lg border border-gray-200 bg-gray-50 p-4">
+                                <div className="h-4 bg-gray-200 rounded w-1/3 mb-2"></div>
+                                <div className="h-3 bg-gray-200 rounded w-1/2 mb-1"></div>
+                                <div className="h-3 bg-gray-200 rounded w-2/3"></div>
+                            </div>
+                        ))}
                     </div>
                 ) : filteredDeliveries.length === 0 ? (
                     <div className="text-center py-12">
