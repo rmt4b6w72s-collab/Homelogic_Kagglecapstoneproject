@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Lock, Mail, Eye, EyeOff, ShieldCheck, ClipboardList, Building2, Clock, Home, Info } from 'lucide-react';
+import { Lock, Mail, Eye, EyeOff, ShieldCheck, ClipboardList, Clock, Home, Info } from 'lucide-react';
 import api from '../services/api';
 import { useAnimateOnMount } from '../hooks/useAnimateOnMount';
 import { slideInLeft, slideInRight, fadeIn, shake, shouldAnimate } from '../utils/animationPresets';
@@ -9,7 +9,6 @@ import { getUserLocation, formatDistance } from '../utils/location';
 export default function Login() {
     const navigate = useNavigate();
     const location = useLocation();
-    const [providerCode, setProviderCode] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
@@ -117,7 +116,6 @@ export default function Login() {
             const loginData = {
                 email,
                 password,
-                provider_code: providerCode || undefined,
             };
 
             // Include location coordinates if available (backend will use IP fallback if not provided)
@@ -307,26 +305,6 @@ export default function Login() {
                                                     <Eye className="h-5 w-5" />
                                                 )}
                                             </button>
-                                        </div>
-                                    </div>
-
-                                    <div>
-                                        <label htmlFor="providerCode" className="block text-sm font-semibold text-gray-900 mb-2">
-                                            Provider Code <span className="text-gray-600 font-normal text-xs">(optional)</span>
-                                        </label>
-                                        <div className="relative">
-                                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                                <Building2 className="h-5 w-5 text-gray-500" />
-                                            </div>
-                                            <input
-                                                id="providerCode"
-                                                type="text"
-                                                value={providerCode}
-                                                onChange={(e) => setProviderCode(e.target.value)}
-                                                autoComplete="off"
-                                                className="block w-full pl-11 pr-3 py-3 text-sm border-2 border-gray-400 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none transition-all placeholder:text-gray-500 bg-white text-gray-900 font-medium"
-                                                placeholder="Enter provider code"
-                                            />
                                         </div>
                                     </div>
 

@@ -6,12 +6,19 @@ import {
     Bell, Calendar, Activity, ClipboardList, Pill, Moon, UserCheck, 
     Check, CheckCheck, AlertCircle, Clock, X, User, UserPlus, Building2, Sparkles
 } from 'lucide-react';
+import { 
+    getNotificationPermission, 
+    requestNotificationPermission, 
+    showDesktopNotification 
+} from '../utils/desktopNotifications';
 
 export default function NotificationDropdown() {
     const navigate = useNavigate();
     const queryClient = useQueryClient();
     const [isOpen, setIsOpen] = useState(false);
     const previousUnreadCountRef = useRef(0);
+    const [desktopPermission, setDesktopPermission] = useState(getNotificationPermission());
+    const lastSeenTsRef = useRef(null);
 
     // Fetch notifications with real-time polling
     const { data: notificationsData, isLoading, refetch } = useQuery({
@@ -29,6 +36,15 @@ export default function NotificationDropdown() {
     const unreadCount = notificationsData?.unread_count || 0;
     const previousUnreadCount = previousUnreadCountRef.current;
 
+    // Initialize last seen timestamp for desktop notifications
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+        const stored = window.localStorage.getItem('desktop_notification_last_seen_ts');
+        if (stored) {
+            lastSeenTsRef.current = Number(stored);
+        }
+    }, []);
+
     // Track unread count changes for visual feedback
     useEffect(() => {
         if (unreadCount > previousUnreadCount && previousUnreadCount > 0) {
@@ -37,6 +53,47 @@ export default function NotificationDropdown() {
         }
         previousUnreadCountRef.current = unreadCount;
     }, [unreadCount, previousUnreadCount]);
+
+    // Trigger desktop notifications for new items
+    useEffect(() => {
+        if (desktopPermission !== 'granted') return;
+        if (!notifications?.length) return;
+
+        const lastSeenTs = lastSeenTsRef.current || 0;
+
+        const fresh = notifications.filter((n) => {
+            if (!n?.created_at) return false;
+            const ts = new Date(n.created_at).getTime();
+            return Number.isFinite(ts) && ts > lastSeenTs;
+        });
+
+        if (!fresh.length) return;
+
+        fresh.slice(0, 5).forEach((n) => {
+            showDesktopNotification({
+                title: n.title || 'New notification',
+                body: n.message || '',
+                icon: '/favicon.ico',
+                url: n.action_url || null,
+            });
+        });
+
+        const newestTs = Math.max(
+            lastSeenTs,
+            ...fresh.map((n) => new Date(n.created_at).getTime()).filter(Number.isFinite),
+        );
+        if (Number.isFinite(newestTs)) {
+            lastSeenTsRef.current = newestTs;
+            if (typeof window !== 'undefined') {
+                window.localStorage.setItem('desktop_notification_last_seen_ts', String(newestTs));
+            }
+        }
+    }, [notifications, desktopPermission]);
+
+    const handleRequestDesktopPermission = async () => {
+        const result = await requestNotificationPermission();
+        setDesktopPermission(result);
+    };
 
     // Mark as read mutation
     const markAsReadMutation = useMutation({
@@ -105,6 +162,11 @@ export default function NotificationDropdown() {
         let navUrl = '/dashboard';
         
         switch (notification.type) {
+            case 'reminder':
+            case 'bill_reminder':
+            case 'renewal_reminder':
+                navUrl = '/reminders';
+                break;
             case 'appointment_upcoming':
                 if (metadata.appointment_id && metadata.resident_id) {
                     navUrl = `/appointments?resident_id=${metadata.resident_id}&appointment_id=${metadata.appointment_id}`;
@@ -268,6 +330,10 @@ export default function NotificationDropdown() {
                 return { Icon: Building2, color: 'text-[var(--theme-primary)]' };
             case 'medication_due':
                 return { Icon: Pill, color: 'text-[var(--theme-secondary)]' };
+            case 'reminder':
+            case 'bill_reminder':
+            case 'renewal_reminder':
+                return { Icon: Clock, color: 'text-[var(--theme-primary)]' };
             case 'medication_created':
                 return { Icon: Pill, color: 'text-[var(--theme-secondary)]' };
             case 'medication_administered':
@@ -333,6 +399,17 @@ export default function NotificationDropdown() {
                     
                     {/* Dropdown */}
                     <div className="fixed md:absolute top-16 md:top-auto md:mt-2 right-2 md:right-0 w-[calc(100vw-1rem)] md:w-80 lg:w-96 bg-white rounded-lg shadow-xl border border-gray-200 z-50 max-h-[calc(100vh-5rem)] md:max-h-[600px] overflow-hidden flex flex-col">
+                        {desktopPermission !== 'granted' && (
+                            <div className="p-3 bg-amber-50 border-b border-amber-200 text-xs text-amber-800 flex items-center justify-between gap-3">
+                                <span>Enable desktop alerts to get notified even when the dropdown is closed.</span>
+                                <button
+                                    onClick={handleRequestDesktopPermission}
+                                    className="px-2 py-1 bg-amber-100 text-amber-800 rounded-lg hover:bg-amber-200 transition-colors text-xs font-semibold"
+                                >
+                                    Enable
+                                </button>
+                            </div>
+                        )}
                         {/* Header */}
                         <div className="p-4 border-b border-gray-200 flex items-center justify-between">
                             <h3 className="text-lg font-semibold text-gray-900">Notifications</h3>
