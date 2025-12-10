@@ -15,6 +15,7 @@ const frequencies = [
 
 export default function Reminders() {
     const queryClient = useQueryClient();
+    const inputClass = "mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-base shadow-sm focus:border-[var(--theme-primary)] focus:ring-[var(--theme-primary)]";
     const [form, setForm] = useState({
         title: '',
         category: 'general',
@@ -136,7 +137,7 @@ export default function Reminders() {
                         <label className="block text-sm font-medium text-gray-700">Title</label>
                         <input
                             type="text"
-                            className="mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--theme-primary)] focus:ring-[var(--theme-primary)]"
+                            className={inputClass}
                             value={form.title}
                             onChange={(e) => setForm({ ...form, title: e.target.value })}
                             required
@@ -145,7 +146,7 @@ export default function Reminders() {
                     <div>
                         <label className="block text-sm font-medium text-gray-700">Category</label>
                         <select
-                            className="mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--theme-primary)] focus:ring-[var(--theme-primary)]"
+                            className={inputClass}
                             value={form.category}
                             onChange={(e) => setForm({ ...form, category: e.target.value })}
                         >
@@ -158,7 +159,7 @@ export default function Reminders() {
                     <div>
                         <label className="block text-sm font-medium text-gray-700">Schedule type</label>
                         <select
-                            className="mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--theme-primary)] focus:ring-[var(--theme-primary)]"
+                            className={inputClass}
                             value={form.schedule_type}
                             onChange={(e) => setForm({ ...form, schedule_type: e.target.value })}
                         >
@@ -173,7 +174,7 @@ export default function Reminders() {
                                 <label className="block text-sm font-medium text-gray-700">Date</label>
                                 <input
                                     type="date"
-                                    className="mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--theme-primary)] focus:ring-[var(--theme-primary)]"
+                                    className={inputClass}
                                     value={form.due_date}
                                     onChange={(e) => setForm({ ...form, due_date: e.target.value })}
                                     required
@@ -183,7 +184,7 @@ export default function Reminders() {
                                 <label className="block text-sm font-medium text-gray-700">Time</label>
                                 <input
                                     type="time"
-                                    className="mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--theme-primary)] focus:ring-[var(--theme-primary)]"
+                                    className={inputClass}
                                     value={form.due_time}
                                     onChange={(e) => setForm({ ...form, due_time: e.target.value })}
                                     required
@@ -195,7 +196,7 @@ export default function Reminders() {
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">Frequency</label>
                                 <select
-                                    className="mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--theme-primary)] focus:ring-[var(--theme-primary)]"
+                                    className={inputClass}
                                     value={form.recurrence_pattern.frequency}
                                     onChange={(e) =>
                                         setForm({
@@ -214,7 +215,7 @@ export default function Reminders() {
                                 <input
                                     type="number"
                                     min="1"
-                                    className="mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--theme-primary)] focus:ring-[var(--theme-primary)]"
+                                    className={inputClass}
                                     value={form.recurrence_pattern.interval}
                                     onChange={(e) =>
                                         setForm({
@@ -256,7 +257,7 @@ export default function Reminders() {
                                 <label className="block text-sm font-medium text-gray-700">Time of day</label>
                                 <input
                                     type="time"
-                                    className="mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--theme-primary)] focus:ring-[var(--theme-primary)]"
+                                    className={inputClass}
                                     value={form.recurrence_pattern.time_of_day}
                                     onChange={(e) =>
                                         setForm({

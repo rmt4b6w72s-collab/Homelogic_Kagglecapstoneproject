@@ -67,8 +67,7 @@ export default function SleepPatterns() {
                 }
 
                 const derivedCaregiver =
-                    roles.some((role) => role && role.replace(/[\s_-]+/g, '') === 'caregiver') ||
-                    Boolean(user?.assigned_branch_id);
+                    roles.some((role) => role && role.replace(/[\s_-]+/g, '') === 'caregiver');
 
                 setIsCaregiver(derivedCaregiver);
 
