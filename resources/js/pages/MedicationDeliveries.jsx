@@ -534,7 +534,7 @@ export default function MedicationDeliveries() {
     );
 }
 
-function MedicationDeliveryForm({ record, branches, residents, medications, pharmacySuppliers = [], pharmacyTemplates = [], onSaveTemplate, isCaregiver, caregiverBranchId, formMode = 'full', onClose, onSuccess }) {
+function MedicationDeliveryForm({ record, branches, residents, medications, pharmacySuppliers = [], pharmacyTemplates: initialPharmacyTemplates = [], onSaveTemplate, isCaregiver, caregiverBranchId, formMode = 'full', onClose, onSuccess }) {
     const [formData, setFormData] = useState({
         branch_id: record?.branch_id || caregiverBranchId || '',
         delivery_type: record?.delivery_type || (formMode === 'quick' ? 'batch' : 'individual'),
@@ -641,7 +641,8 @@ function MedicationDeliveryForm({ record, branches, residents, medications, phar
     });
     
     // Extract templates from paginated response
-    const pharmacyTemplates = pharmacyTemplatesData?.data || [];
+    const fetchedPharmacyTemplates = pharmacyTemplatesData?.data || [];
+    const pharmacyTemplates = fetchedPharmacyTemplates.length ? fetchedPharmacyTemplates : initialPharmacyTemplates;
 
     // Use dynamically fetched medications or fallback to passed medications
     const availableMedications = medicationsQueryData?.data || medications || [];
