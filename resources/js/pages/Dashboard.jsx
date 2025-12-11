@@ -601,7 +601,6 @@ export default function Dashboard() {
                     <QuickActionsWidget isCaregiver={isCaregiver} />
                     <ActionableItemsWidget items={actionableItems} />
                     <UpcomingTasksWidget tasks={upcomingTasks} />
-                    <AlertsWidget alerts={alerts} />
                     {!isCaregiver && stats && (
                         <InsightsWidget metrics={{
                             occupancy_rate: stats.occupancy_rate,
@@ -611,6 +610,7 @@ export default function Dashboard() {
                             staff_utilization: stats.staff_utilization,
                         }} />
                     )}
+                    <AlertsWidget alerts={alerts} />
                     <MiniCalendarWidget 
                         calendarData={calendarData}
                         onDateSelect={handleCalendarDateSelect}
@@ -626,6 +626,22 @@ export default function Dashboard() {
                             <p className="text-amber-800 text-sm">
                                 Note: API connection failed. Showing default values. Please check authentication.
                             </p>
+                        </div>
+                    </div>
+                )}
+
+                {!isLoading && stats && stats.facility_context_missing && (
+                    <div className="bg-yellow-50 rounded-xl shadow-sm border-l-4 border-yellow-500 p-4">
+                        <div className="flex items-center space-x-3">
+                            <AlertTriangle className="w-5 h-5 text-yellow-600" />
+                            <div>
+                                <p className="text-yellow-800 text-sm font-medium">
+                                    Facility context missing
+                                </p>
+                                <p className="text-yellow-700 text-xs mt-1">
+                                    Dashboard stats may be incomplete. Please ensure your user account has a facility assigned.
+                                </p>
+                            </div>
                         </div>
                     </div>
                 )}
@@ -646,7 +662,7 @@ export default function Dashboard() {
                             </p>
                         </div>
 
-                        {/* Actionable Items Section */}
+                        {/* Actionable Items Section - Most Important, Show First */}
                         {actionableItems.length > 0 && (
                             <ActionableItemsSection 
                                 items={actionableItems}
@@ -654,7 +670,7 @@ export default function Dashboard() {
                             />
                         )}
 
-                        {/* Stat Cards Grid */}
+                        {/* Key Stat Cards - Primary Metrics */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                             {statCards.map((card, index) => (
                                 <StatCard
@@ -665,32 +681,9 @@ export default function Dashboard() {
                             ))}
                         </div>
 
-                        {/* Trends Chart for Admins */}
-                        {!isCaregiver && trendsData && (
-                            <TrendsChartWidget data={trendsData} />
-                        )}
-
-                        {/* Modules Overview for Admins */}
-                        {!isCaregiver && (
-                            <ModulesOverview 
-                                stats={stats}
-                                moduleStats={moduleStats}
-                                navigate={navigate}
-                            />
-                        )}
-
-                        {/* Resident Vitals Trend Chart - Only for Caregivers */}
-                        {isCaregiver && stats?.resident_list && stats.resident_list.length > 0 && (
-                            <ResidentVitalsTrendSection 
-                                residents={stats.resident_list}
-                                defaultTrend={stats.resident_vitals_trend}
-                            />
-                        )}
-
-                        {/* Upcoming Fire Drills Widget */}
+                        {/* Upcoming Fire Drills Widget - Important Safety Item */}
                         {upcomingFireDrills?.data && upcomingFireDrills.data.length > 0 && (
-                            <div>
-                                <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+                            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
                                     <div className="px-6 py-4 border-b border-gray-200">
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-2">
@@ -782,7 +775,28 @@ export default function Dashboard() {
                                         </div>
                                     </div>
                                 </div>
-                            </div>
+                        )}
+
+                        {/* Trends Chart for Admins - Analytics Section */}
+                        {!isCaregiver && trendsData && (
+                            <TrendsChartWidget data={trendsData} />
+                        )}
+
+                        {/* Resident Vitals Trend Chart - Only for Caregivers */}
+                        {isCaregiver && stats?.resident_list && stats.resident_list.length > 0 && (
+                            <ResidentVitalsTrendSection 
+                                residents={stats.resident_list}
+                                defaultTrend={stats.resident_vitals_trend}
+                            />
+                        )}
+
+                        {/* Modules Overview for Admins - Navigation Section */}
+                        {!isCaregiver && (
+                            <ModulesOverview 
+                                stats={stats}
+                                moduleStats={moduleStats}
+                                navigate={navigate}
+                            />
                         )}
                     </>
                 )}

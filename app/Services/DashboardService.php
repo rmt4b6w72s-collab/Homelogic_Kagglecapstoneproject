@@ -247,40 +247,28 @@ class DashboardService
             });
         }
 
-        // If no facility found, log warning but try to get data anyway (for super admins or debugging)
+        // If no facility found, log warning and try to get data without facility filter
         if (!$facilityId && $user && $user->role !== 'super_admin') {
-            Log::warning('DashboardService: No facility context found for administrator', [
+            Log::warning('DashboardService: No facility context found for administrator - attempting to query without facility filter', [
                 'user_id' => $user->id,
                 'user_role' => $user->role,
                 'user_facility_id' => $user->facility_id,
                 'user_assigned_branch_id' => $user->assigned_branch_id,
+                'app_facility_bound' => app()->bound('facility'),
             ]);
-        }
-        
-        // For super admins without facility context, show all data
-        // For regular admins without facility context, show zeros with warning
-        if (!$facilityId && $user && $user->role !== 'super_admin') {
-            return [
-                'total_residents' => 0,
-                'active_residents' => 0,
-                'today_appointments' => 0,
-                'upcoming_appointments' => 0,
-                'today_vitals' => 0,
-                'last_30_appointments' => 0,
-                'last_30_vitals' => 0,
-                'last_30_assessments' => 0,
-                'total_staff' => 0,
-                'pending_assessments' => 0,
-                'active_medications' => 0,
-                'user_type' => 'admin',
-                'upcoming_appointments_list' => [],
-                'resident_list' => [],
-                'medication_reminders' => [],
-                'facility_context_missing' => true,
-            ];
+            // Continue without facility filter - let queries run without facility scoping
         }
 
+        // Execute queries and log results for debugging
         $totalResidents = $residentsQuery->count();
+        $todayAppointments = $appointmentsQuery->whereDate('appointment_date', today())->count();
+        $upcomingAppointments = $appointmentsQuery->whereDate('appointment_date', '>=', today())
+            ->whereNotIn('status', ['cancelled', 'completed'])
+            ->count();
+        $todayVitals = $vitalsQuery->whereDate('measurement_date', today())->count();
+        $totalStaff = $staffQuery->count();
+        $pendingAssessments = $assessmentsQuery->count();
+        $activeMedications = $activeMedicationsQuery->count();
 
         // Last 30 days filters
         $appointmentsLast30 = (clone $appointmentsQuery)
@@ -296,23 +284,30 @@ class DashboardService
             ->whereBetween('created_at', [$rangeStart, now()])
             ->count();
 
+        // Log results for debugging
+        if ($totalResidents === 0 && $facilityId) {
+            Log::info('DashboardService: Zero residents found', [
+                'facility_id' => $facilityId,
+                'user_id' => $user->id,
+                'user_role' => $user->role,
+            ]);
+        }
+
         // Calculate new metrics
         $newMetrics = $this->calculateNewMetrics($facilityId);
 
         return [
             'total_residents' => $totalResidents,
             'active_residents' => $totalResidents,
-            'today_appointments' => $appointmentsQuery->whereDate('appointment_date', today())->count(),
-            'upcoming_appointments' => $appointmentsQuery->whereDate('appointment_date', '>=', today())
-                ->whereNotIn('status', ['cancelled', 'completed'])
-                ->count(),
-            'today_vitals' => $vitalsQuery->whereDate('measurement_date', today())->count(),
+            'today_appointments' => $todayAppointments,
+            'upcoming_appointments' => $upcomingAppointments,
+            'today_vitals' => $todayVitals,
             'last_30_appointments' => $appointmentsLast30,
             'last_30_vitals' => $vitalsLast30,
             'last_30_assessments' => $assessmentsLast30,
-            'total_staff' => $staffQuery->count(),
-            'pending_assessments' => $assessmentsQuery->count(),
-            'active_medications' => $activeMedicationsQuery->count(),
+            'total_staff' => $totalStaff,
+            'pending_assessments' => $pendingAssessments,
+            'active_medications' => $activeMedications,
             'user_type' => 'admin',
             'upcoming_appointments_list' => $this->getAdminUpcomingAppointments(),
             'resident_list' => $this->getAdminResidentList(),
@@ -323,6 +318,9 @@ class DashboardService
             'medication_adherence_rate' => $newMetrics['medication_adherence_rate'],
             'average_incident_response_time' => $newMetrics['average_incident_response_time'],
             'staff_utilization' => $newMetrics['staff_utilization'],
+            // Debug info
+            'facility_id' => $facilityId,
+            'facility_context_missing' => !$facilityId && $user && $user->role !== 'super_admin',
         ];
     }
 
