@@ -48,6 +48,173 @@ ChartJS.register(
     Filler
 );
 
+// Resident Vitals Chart Component (must be defined before ResidentVitalsTrendSection)
+function ResidentVitalsChart({ data }) {
+    const { primary, secondary } = useTheme();
+    const primaryRgb = hexToRgb(primary || '#25603E');
+    const tooltipBg = primaryRgb ? `rgba(${primaryRgb.r}, ${primaryRgb.g}, ${primaryRgb.b}, 0.9)` : 'rgba(37, 96, 62, 0.9)';
+    
+    const chartData = {
+        labels: data?.map(item => item.day) || [],
+        datasets: [
+            {
+                label: 'Diastolic BP',
+                data: data?.map(item => item.diastolic_bp) || [],
+                borderColor: '#66BB6A',
+                backgroundColor: 'rgba(102, 187, 106, 0.1)',
+                tension: 0.4,
+                fill: true,
+                pointBackgroundColor: '#66BB6A',
+                pointBorderColor: '#ffffff',
+                pointBorderWidth: 2,
+                pointRadius: 4,
+                pointHoverRadius: 6,
+                yAxisID: 'y',
+            },
+            {
+                label: 'Heart Rate',
+                data: data?.map(item => item.heart_rate) || [],
+                borderColor: '#FFB74D',
+                backgroundColor: 'rgba(255, 183, 77, 0.1)',
+                tension: 0.4,
+                fill: true,
+                pointBackgroundColor: '#FFB74D',
+                pointBorderColor: '#ffffff',
+                pointBorderWidth: 2,
+                pointRadius: 4,
+                pointHoverRadius: 6,
+                yAxisID: 'y',
+            },
+            {
+                label: 'Systolic BP',
+                data: data?.map(item => item.systolic_bp) || [],
+                borderColor: '#9575CD',
+                backgroundColor: 'rgba(149, 117, 205, 0.1)',
+                tension: 0.4,
+                fill: true,
+                pointBackgroundColor: '#9575CD',
+                pointBorderColor: '#ffffff',
+                pointBorderWidth: 2,
+                pointRadius: 4,
+                pointHoverRadius: 6,
+                yAxisID: 'y',
+            },
+        ],
+    };
+
+    const options = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: true,
+                position: 'top',
+            },
+            tooltip: {
+                backgroundColor: tooltipBg,
+                titleColor: '#ffffff',
+                bodyColor: '#ffffff',
+                borderColor: primary || '#25603E',
+                borderWidth: 1,
+                callbacks: {
+                    label: function(context) {
+                        return `${context.dataset.label}: ${context.parsed.y}`;
+                    }
+                }
+            },
+        },
+        scales: {
+            y: {
+                beginAtZero: false,
+                grid: {
+                    color: 'rgba(0, 0, 0, 0.1)',
+                },
+            },
+            x: {
+                grid: {
+                    display: false,
+                },
+            },
+        },
+    };
+
+    if (!data || data.length === 0) {
+        return (
+            <div className="flex items-center justify-center py-12">
+                <Heart className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                <p className="text-sm text-gray-500">No vital signs data available</p>
+            </div>
+        );
+    }
+
+    return (
+        <Line data={chartData} options={options} />
+    );
+}
+
+// Resident Vitals Trend Section Component  
+function ResidentVitalsTrendSection({ residents, defaultTrend }) {
+    const [selectedResident, setSelectedResident] = useState(residents[0]?.id || null);
+    const [vitalsData, setVitalsData] = useState(defaultTrend);
+    const [isLoading, setIsLoading] = useState(false);
+
+    useEffect(() => {
+        if (residents[0]?.id) {
+            setSelectedResident(residents[0].id);
+            setVitalsData(defaultTrend);
+        }
+    }, [residents, defaultTrend]);
+
+    const handleResidentChange = async (residentId) => {
+        setSelectedResident(residentId);
+        setIsLoading(true);
+        try {
+            const response = await api.get(`/dashboard/resident-vitals/${residentId}`);
+            setVitalsData(response.data);
+        } catch (err) {
+            console.error('Failed to fetch vitals trend:', err);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    return (
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-200">
+                <div className="flex items-center justify-between">
+                    <h2 className="text-lg font-bold text-[var(--theme-primary)]">Resident Vitals Trend</h2>
+                    {residents.length > 1 && (
+                        <Select
+                            value={selectedResident?.toString()}
+                            onValueChange={(value) => handleResidentChange(Number(value))}
+                            options={residents.map(r => ({
+                                value: r.id.toString(),
+                                label: `${r.first_name} ${r.last_name}`,
+                            }))}
+                            placeholder="Select resident"
+                            className="w-48"
+                        />
+                    )}
+                </div>
+            </div>
+            <div className="p-6">
+                {isLoading ? (
+                    <div className="flex items-center justify-center py-12">
+                        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--theme-primary)]"></div>
+                    </div>
+                ) : vitalsData ? (
+                    <ResidentVitalsChart data={vitalsData} />
+                ) : (
+                    <div className="text-center py-12">
+                        <Heart className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                        <p className="text-sm text-gray-500">No vital signs data available</p>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
+
 export default function Dashboard() {
     const navigate = useNavigate();
     
@@ -584,7 +751,7 @@ export default function Dashboard() {
         <div className="min-h-screen bg-gray-50">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
                 <div className="space-y-6">
-                {error && (
+                    {error && (
                     <div className="bg-white rounded-xl shadow-sm border-l-4 border-amber-500 p-4">
                         <div className="flex items-center space-x-3">
                             <AlertCircle className="w-5 h-5 text-amber-600" />
@@ -836,211 +1003,14 @@ export default function Dashboard() {
                             </div>
                         )}
                     </>
-                )}
-            </div>
-        </div>
-    );
-}
-
-// Resident Vitals Trend Section Component
-const ResidentVitalsTrendSection = ({ residents, defaultTrend }) => {
-    const [selectedResident, setSelectedResident] = useState(residents[0]?.id || null);
-    const [vitalsData, setVitalsData] = useState(defaultTrend);
-    const [isLoading, setIsLoading] = useState(false);
-
-    useEffect(() => {
-        if (residents[0]?.id) {
-            setSelectedResident(residents[0].id);
-            setVitalsData(defaultTrend);
-        }
-    }, [residents, defaultTrend]);
-
-    const handleResidentChange = async (residentId) => {
-        setSelectedResident(residentId);
-        setIsLoading(true);
-        try {
-            const response = await api.get(`/dashboard/resident-vitals/${residentId}`);
-            setVitalsData(response.data);
-        } catch (err) {
-            console.error('Failed to fetch vitals trend:', err);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    return (
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-                <h2 className="text-xl font-bold text-[var(--theme-primary)]">Resident Vitals Trend</h2>
-                <div className="flex items-center">
-                    {isLoading && (
-                        <div className="inline-flex items-center mr-2">
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[var(--theme-primary)]"></div>
-                        </div>
                     )}
-                    <Select
-                        value={selectedResident?.toString() || ''}
-                        onValueChange={(value) => handleResidentChange(value)}
-                        placeholder="Select resident..."
-                        options={residents.map((resident) => ({
-                            value: resident.id.toString(),
-                            label: resident.name,
-                        }))}
-                        className="w-48"
-                    />
                 </div>
             </div>
-            <div className="p-6">
-                <ResidentVitalsChart data={vitalsData} />
-            </div>
         </div>
     );
 }
 
-// Resident Vitals Chart Component
-function ResidentVitalsChart({ data }) {
-    const { primary, secondary } = useTheme();
-    const primaryRgb = hexToRgb(primary || '#25603E');
-    const tooltipBg = primaryRgb ? `rgba(${primaryRgb.r}, ${primaryRgb.g}, ${primaryRgb.b}, 0.9)` : 'rgba(37, 96, 62, 0.9)';
-    
-    const chartData = {
-        labels: data?.map(item => item.day) || [],
-        datasets: [
-            {
-                label: 'Diastolic BP',
-                data: data?.map(item => item.diastolic_bp) || [],
-                borderColor: '#66BB6A', // Green
-                backgroundColor: 'rgba(102, 187, 106, 0.1)',
-                tension: 0.4,
-                fill: true,
-                pointBackgroundColor: '#66BB6A',
-                pointBorderColor: '#ffffff',
-                pointBorderWidth: 2,
-                pointRadius: 4,
-                pointHoverRadius: 6,
-                yAxisID: 'y',
-            },
-            {
-                label: 'Heart Rate',
-                data: data?.map(item => item.heart_rate) || [],
-                borderColor: '#FFB74D', // Orange
-                backgroundColor: 'rgba(255, 183, 77, 0.1)',
-                tension: 0.4,
-                fill: true,
-                pointBackgroundColor: '#FFB74D',
-                pointBorderColor: '#ffffff',
-                pointBorderWidth: 2,
-                pointRadius: 4,
-                pointHoverRadius: 6,
-                yAxisID: 'y',
-            },
-            {
-                label: 'Systolic BP',
-                data: data?.map(item => item.systolic_bp) || [],
-                borderColor: '#9575CD', // Purple
-                backgroundColor: 'rgba(149, 117, 205, 0.1)',
-                tension: 0.4,
-                fill: true,
-                pointBackgroundColor: '#9575CD',
-                pointBorderColor: '#ffffff',
-                pointBorderWidth: 2,
-                pointRadius: 4,
-                pointHoverRadius: 6,
-                yAxisID: 'y',
-            },
-        ],
-    };
-
-    const options = {
-        responsive: true,
-        maintainAspectRatio: false,
-        interaction: {
-            mode: 'index',
-            intersect: false,
-        },
-        plugins: {
-            legend: {
-                display: true,
-                position: 'bottom',
-                labels: {
-                    usePointStyle: true,
-                    padding: 20,
-                    font: {
-                        size: 12,
-                        weight: '500',
-                    },
-                    color: primary || '#25603E',
-                },
-            },
-            tooltip: {
-                backgroundColor: tooltipBg,
-                padding: 12,
-                titleFont: {
-                    size: 13,
-                    weight: '600',
-                },
-                bodyFont: {
-                    size: 12,
-                },
-                callbacks: {
-                    label: function(context) {
-                        return `${context.dataset.label}: ${context.parsed.y}`;
-                    }
-                }
-            },
-        },
-        scales: {
-            x: {
-                display: true,
-                grid: {
-                    display: true,
-                    drawBorder: false,
-                    color: 'rgba(0, 0, 0, 0.05)',
-                },
-                ticks: {
-                    font: {
-                        size: 11,
-                        weight: '500',
-                    },
-                    color: secondary || '#8B4513',
-                },
-            },
-            y: {
-                display: true,
-                beginAtZero: false,
-                grid: {
-                    display: true,
-                    drawBorder: false,
-                    color: 'rgba(0, 0, 0, 0.05)',
-                },
-                ticks: {
-                    font: {
-                        size: 11,
-                        weight: '500',
-                    },
-                    color: secondary || '#8B4513',
-                },
-            },
-        },
-    };
-
-    if (!data || data.length === 0) {
-        return (
-            <div className="text-center py-12">
-                <Activity className="w-12 h-12 text-gray-300 mx-auto mb-2" />
-                <p className="text-sm text-gray-500">No vital signs data available</p>
-            </div>
-        );
-    }
-
-    return (
-        <div style={{ height: '300px' }}>
-            <Line data={chartData} options={options} />
-        </div>
-    );
-}
-
-// Modules Overview Component
+// Modules Overview Component  
 function ModulesOverview({ stats, moduleStats, navigate }) {
     const modules = [
         {
