@@ -85,18 +85,29 @@ export default function LeaveRequests() {
             <p className="text-gray-600">View and manage staff leave requests.</p>
           </div>
           <div className="flex items-center gap-3">
-            <button onClick={() => { setEditing(null); setShowForm(true); }} className="w-full sm:w-auto px-4 py-2 bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] rounded-lg hover:bg-[var(--theme-primary-hover)] transition-colors flex items-center justify-center space-x-2 text-sm md:text-base">
+            <button 
+              onClick={() => { 
+                setEditing(null); 
+                setShowForm(true); 
+              }} 
+              className="w-full sm:w-auto px-4 py-2 bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] rounded-lg hover:bg-[var(--theme-primary-hover)] transition-colors flex items-center justify-center space-x-2 text-sm md:text-base"
+            >
               <Plus className="w-4 h-4" />
               <span>New Request</span>
             </button>
           </div>
         </div>
 
-          <div className="flex flex-wrap gap-2">
-            {['all', 'pending', 'approved', 'rejected'].map((s) => (
-              <button key={s} onClick={() => setStatusFilter(s)} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors capitalize ${statusFilter === s ? 'bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)]' : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'}`}>{s}</button>
-            ))}
-          </div>
+        <div className="flex flex-wrap gap-2">
+          {['all', 'pending', 'approved', 'rejected'].map((s) => (
+            <button 
+              key={s} 
+              onClick={() => setStatusFilter(s)} 
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors capitalize ${statusFilter === s ? 'bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)]' : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'}`}
+            >
+              {s}
+            </button>
+          ))}
         </div>
       </div>
 
