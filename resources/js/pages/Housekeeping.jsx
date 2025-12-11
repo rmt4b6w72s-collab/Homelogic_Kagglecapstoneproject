@@ -279,11 +279,12 @@ export default function Housekeeping() {
                                 Add a note explaining why this task is being skipped (optional)
                             </p>
                         </div>
-                        <div>
-                            <label className="block text-sm font-semibold text-gray-900 mb-2">
-                                Reason
+                        <div className="space-y-2">
+                            <label htmlFor="skip-reason" className="block text-sm font-bold text-gray-900" style={{ color: '#111827' }}>
+                                Reason <span className="text-gray-400 font-normal text-xs">(optional)</span>
                             </label>
                             <textarea
+                                id="skip-reason"
                                 value={skipNotesModal.notes}
                                 onChange={(e) => setSkipNotesModal({ ...skipNotesModal, notes: e.target.value })}
                                 placeholder="Enter reason for skipping..."
@@ -292,7 +293,7 @@ export default function Housekeeping() {
                                 style={{ '--tw-ring-color': 'var(--theme-primary-bg)' }}
                                 maxLength={1000}
                             />
-                            <p className="mt-1 text-xs text-gray-400">
+                            <p className="text-xs text-gray-500">
                                 {skipNotesModal.notes.length}/1000 characters
                             </p>
                         </div>
