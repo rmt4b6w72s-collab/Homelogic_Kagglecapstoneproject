@@ -159,7 +159,7 @@ class DashboardService
      */
     public function getAdminStats(?User $user = null): array
     {
-        // Get facility from user or app context to ensure proper filtering
+        // Get facility from user, context, or assigned branch
         $facilityId = null;
         if ($user && $user->facility_id) {
             $facilityId = $user->facility_id;
@@ -183,29 +183,58 @@ class DashboardService
             }
         }
         
-        // Build queries - FacilityScope should automatically filter, but if it's not working,
-        // we'll filter by facility through the branch relationship as a fallback
-        $residentsQuery = Resident::where('is_active', true);
-        
-        // If FacilityScope isn't working (returns 0 but we have a facility), 
-        // filter through branch relationship as fallback
-        $totalResidents = $residentsQuery->count();
-        if ($totalResidents === 0 && $facilityId) {
-            // Try filtering through branch relationship
-            $residentsQuery = Resident::withoutGlobalScopes()
-                ->where('is_active', true)
-                ->whereHas('branch', function($q) use ($facilityId) {
-                    $q->where('facility_id', $facilityId);
-                });
-            $totalResidents = $residentsQuery->count();
-        }
-        
+        // Build queries without global scopes and apply explicit facility filters
+        $residentsQuery = Resident::withoutGlobalScopes()->where('is_active', true);
         $rangeStart = now()->subDays(30)->startOfDay();
-        $appointmentsQuery = Appointment::query();
-        $vitalsQuery = VitalSign::query();
-        $staffQuery = User::where('is_active', true)->where('role', '!=', 'super_admin');
-        $assessmentsQuery = Assessment::whereNotIn('status', ['approved', 'archived']);
-        $activeMedicationsQuery = Medication::where('is_active', true);
+        $appointmentsQuery = Appointment::withoutGlobalScopes();
+        $vitalsQuery = VitalSign::withoutGlobalScopes();
+        $staffQuery = User::withoutGlobalScopes()->where('is_active', true)->where('role', '!=', 'super_admin');
+        $assessmentsQuery = Assessment::withoutGlobalScopes()->whereNotIn('status', ['approved', 'archived']);
+        $activeMedicationsQuery = Medication::withoutGlobalScopes()->where('is_active', true);
+
+        if ($facilityId) {
+            $residentsQuery->where(function ($q) use ($facilityId) {
+                $q->where('facility_id', $facilityId)
+                    ->orWhereHas('branch', function ($b) use ($facilityId) {
+                        $b->where('facility_id', $facilityId);
+                    });
+            });
+
+            $appointmentsQuery->whereHas('branch', function ($q) use ($facilityId) {
+                $q->where('facility_id', $facilityId);
+            });
+
+            $vitalsQuery->whereHas('resident', function ($q) use ($facilityId) {
+                $q->where(function ($r) use ($facilityId) {
+                    $r->where('facility_id', $facilityId)
+                        ->orWhereHas('branch', function ($b) use ($facilityId) {
+                            $b->where('facility_id', $facilityId);
+                        });
+                })->where('is_active', true);
+            });
+
+            $assessmentsQuery->whereHas('resident', function ($q) use ($facilityId) {
+                $q->where(function ($r) use ($facilityId) {
+                    $r->where('facility_id', $facilityId)
+                        ->orWhereHas('branch', function ($b) use ($facilityId) {
+                            $b->where('facility_id', $facilityId);
+                        });
+                })->where('is_active', true);
+            });
+
+            $staffQuery->where('facility_id', $facilityId);
+
+            $activeMedicationsQuery->whereHas('resident', function ($q) use ($facilityId) {
+                $q->where(function ($r) use ($facilityId) {
+                    $r->where('facility_id', $facilityId)
+                        ->orWhereHas('branch', function ($b) use ($facilityId) {
+                            $b->where('facility_id', $facilityId);
+                        });
+                })->where('is_active', true);
+            });
+        }
+
+        $totalResidents = $residentsQuery->count();
 
         // Ensure facility scoping across related models (appointments, vitals, assessments, medications)
         if ($facilityId) {

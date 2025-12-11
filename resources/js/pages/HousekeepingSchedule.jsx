@@ -864,113 +864,125 @@ function AreaForm({ onClose, branchId, initialValues, onSuccess }) {
     };
 
     return (
-        <div 
-            className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 p-4"
-            onClick={(e) => {
-                if (e.target === e.currentTarget) {
-                    onClose();
-                }
-            }}
-        >
-            <div className="max-h-[calc(100vh-2rem)] w-full max-w-2xl overflow-y-auto rounded-3xl bg-white p-6 shadow-2xl">
-                {/* Header */}
-                <div className="mb-6 flex items-center justify-between">
-                    <div>
-                        <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--theme-primary)' }}>
-                            {initialValues ? 'Edit Area' : 'New Area'}
-                        </p>
-                        <h2 className="text-2xl font-semibold text-gray-900">Cleaning Area</h2>
-                    </div>
+        <div className="fixed inset-0 z-[70] overflow-y-auto bg-gray-50">
+            <div className="mx-auto flex min-h-screen max-w-4xl flex-col px-4 py-8 sm:px-6 lg:px-8">
+                <div className="flex items-center gap-3">
                     <button
                         type="button"
                         onClick={onClose}
-                        className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-lg hover:bg-gray-100"
-                        aria-label="Close modal"
+                        className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-100"
                     >
-                        <X className="w-5 h-5" />
+                        <ArrowLeft className="h-4 w-4" />
+                        Back to schedule
                     </button>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                        {initialValues ? 'Edit Area' : 'New Area'}
+                    </p>
                 </div>
 
-                {/* Form */}
-                <FormProvider {...methods}>
-                    <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-6">
-                        <FormInput
-                            name="name"
-                            label="Area Name"
-                            placeholder="e.g. Kitchen, Float #1"
-                            required
-                        />
-
-                        <div className="grid gap-4 md:grid-cols-2">
-                            <FormInput
-                                name="shift_label"
-                                label="Shift / Assignment Label"
-                                placeholder="e.g. Day Shift"
-                            />
-                            <FormInput
-                                name="location"
-                                label="Location"
-                                placeholder="e.g. Main Level"
-                            />
-                        </div>
-
-                        <FormTextarea
-                            name="description"
-                            label="Description / Notes"
-                            placeholder="Responsibilities, reminders, etc."
-                            rows={3}
-                        />
-
-                        <div className="grid gap-4 md:grid-cols-2">
-                            <FormInput
-                                name="display_order"
-                                label="Display Order"
-                                type="number"
-                                min={0}
-                            />
+                <div className="mt-4 rounded-3xl bg-white shadow-lg ring-1 ring-gray-100">
+                    <div
+                        className="rounded-t-3xl px-6 py-5 text-white"
+                        style={{
+                            background: 'linear-gradient(90deg, var(--theme-primary), var(--theme-primary-light))',
+                            color: 'var(--theme-text-on-primary)',
+                        }}
+                    >
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                             <div>
-                                <div className="text-sm font-medium text-gray-700 mb-2">Status</div>
-                                <div className="rounded-lg border border-gray-300 px-4 py-3 hover:bg-gray-50">
-                                    <div className="flex items-center gap-3">
-                                        <FormCheckbox
-                                            name="is_active"
-                                            label="Active area"
-                                        />
-                                    </div>
-                                    <p className="text-xs text-gray-500 mt-2 ml-7">Inactive areas stay hidden but aren't deleted.</p>
-                                </div>
+                                <h2 className="text-2xl font-semibold leading-6">Cleaning Area</h2>
+                                <p className="text-sm opacity-90">
+                                    Define the space and shift label used across the housekeeping schedule.
+                                </p>
+                            </div>
+                            <div className="hidden rounded-xl bg-white/20 px-3 py-1 text-xs font-semibold sm:inline-block">
+                                Branch required
                             </div>
                         </div>
+                    </div>
 
-                        <div className="flex justify-end gap-3 pt-4 border-t">
-                            <button
-                                type="button"
-                                onClick={onClose}
-                                className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                type="submit"
-                                disabled={isSubmitting}
-                                className="inline-flex items-center gap-2 px-5 py-2 text-sm font-semibold text-white rounded-lg shadow-sm transition-colors hover:bg-[var(--theme-primary-hover)] disabled:opacity-50 disabled:cursor-not-allowed"
-                                style={{ backgroundColor: 'var(--theme-primary)' }}
-                            >
-                                {isSubmitting ? (
-                                    <>
-                                        <Loader2 className="h-4 w-4 animate-spin" />
-                                        Saving...
-                                    </>
-                                ) : (
-                                    <>
-                                        <Building2 className="h-4 w-4" />
-                                        {initialValues ? 'Save Changes' : 'Save Area'}
-                                    </>
-                                )}
-                            </button>
-                        </div>
-                    </form>
-                </FormProvider>
+                    <div className="space-y-6 px-6 py-6 sm:px-8 sm:py-8">
+                        <FormProvider {...methods}>
+                            <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-6">
+                                <FormInput
+                                    name="name"
+                                    label="Area Name"
+                                    placeholder="e.g. Kitchen, Float #1"
+                                    required
+                                />
+
+                                <div className="grid gap-4 md:grid-cols-2">
+                                    <FormInput
+                                        name="shift_label"
+                                        label="Shift / Assignment Label"
+                                        placeholder="e.g. Day Shift"
+                                    />
+                                    <FormInput
+                                        name="location"
+                                        label="Location"
+                                        placeholder="e.g. Main Level"
+                                    />
+                                </div>
+
+                                <FormTextarea
+                                    name="description"
+                                    label="Description / Notes"
+                                    placeholder="Responsibilities, reminders, etc."
+                                    rows={3}
+                                />
+
+                                <div className="grid gap-4 md:grid-cols-2">
+                                    <FormInput
+                                        name="display_order"
+                                        label="Display Order"
+                                        type="number"
+                                        min={0}
+                                    />
+                                    <div>
+                                        <div className="mb-2 text-sm font-medium text-gray-700">Status</div>
+                                        <div className="rounded-2xl border border-gray-200 px-4 py-3 transition hover:bg-gray-50">
+                                            <div className="flex items-center gap-3">
+                                                <FormCheckbox
+                                                    name="is_active"
+                                                    label="Active area"
+                                                />
+                                            </div>
+                                            <p className="mt-2 ml-7 text-xs text-gray-500">Inactive areas stay hidden but are never deleted.</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-end">
+                                    <button
+                                        type="button"
+                                        onClick={onClose}
+                                        className="inline-flex items-center justify-center rounded-xl border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={isSubmitting}
+                                        className="inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--theme-primary-hover)] disabled:cursor-not-allowed disabled:opacity-60"
+                                        style={{ backgroundColor: 'var(--theme-primary)' }}
+                                    >
+                                        {isSubmitting ? (
+                                            <>
+                                                <Loader2 className="h-4 w-4 animate-spin" />
+                                                Saving...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Building2 className="h-4 w-4" />
+                                                {initialValues ? 'Save Changes' : 'Save Area'}
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
+                            </form>
+                        </FormProvider>
+                    </div>
+                </div>
             </div>
         </div>
     );
