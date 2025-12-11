@@ -66,3 +66,5 @@ class DrugResource extends JsonResource
 
 
 
+
+

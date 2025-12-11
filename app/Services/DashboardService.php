@@ -9,6 +9,7 @@ use App\Models\LeaveRequest;
 use App\Models\Medication;
 use App\Models\MedicationAdministration;
 use App\Models\Resident;
+use App\Models\Branch;
 use App\Models\User;
 use App\Models\VitalSign;
 use Carbon\Carbon;
@@ -41,6 +42,25 @@ class DashboardService
     {
         $userId = $user->id;
         $branchId = $user->assigned_branch_id;
+
+        // Fallback: if caregiver has no assigned branch, attempt to use facility's first active branch
+        if (!$branchId) {
+            $facilityId = $user->facility_id;
+            if (!$facilityId) {
+                try {
+                    $facility = app()->bound('facility') ? app('facility') : null;
+                    $facilityId = $facility?->id;
+                } catch (\Exception $e) {
+                    $facilityId = null;
+                }
+            }
+
+            if ($facilityId) {
+                $branchId = Branch::where('facility_id', $facilityId)
+                    ->where('is_active', true)
+                    ->value('id');
+            }
+        }
 
         // If no branch assigned, return empty stats
         if (!$branchId) {
