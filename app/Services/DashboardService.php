@@ -14,6 +14,9 @@ use App\Models\VitalSign;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use App\Models\FireDrill;
+use App\Models\GroceryStatusUpdate;
+use App\Models\CleaningTaskAssignment;
 
 class DashboardService
 {
@@ -832,6 +835,303 @@ class DashboardService
         $metrics['staff_utilization'] = $totalStaff;
 
         return $metrics;
+    }
+
+    /**
+     * Get upcoming events from all modules
+     */
+    public function getUpcomingEvents(User $user, int $limit = 20): array
+    {
+        $events = [];
+        $facility = $this->getCurrentFacility($user);
+        $facilityId = $facility ? $facility->id : null;
+        $isCaregiver = UserRoles::isCaregiverRole($user->role);
+        $branchId = $isCaregiver ? $user->assigned_branch_id : null;
+
+        // 1. Upcoming Appointments
+        $appointmentsQuery = Appointment::withoutGlobalScopes()
+            ->with(['resident', 'branch', 'appointmentType'])
+            ->whereDate('appointment_date', '>=', today())
+            ->whereNotIn('status', ['cancelled', 'completed']);
+        
+        if ($facilityId) {
+            $appointmentsQuery->whereHas('branch', function ($q) use ($facilityId) {
+                $q->where('facility_id', $facilityId);
+            });
+        }
+        if ($branchId) {
+            $appointmentsQuery->where('branch_id', $branchId);
+        }
+
+        $appointmentsQuery->orderBy('appointment_date', 'asc')
+            ->orderBy('appointment_time', 'asc')
+            ->limit($limit)
+            ->get()
+            ->each(function ($appointment) use (&$events) {
+                $dateTime = \Carbon\Carbon::parse($appointment->appointment_date->format('Y-m-d') . ' ' . ($appointment->appointment_time ?? '00:00:00'));
+                $events[] = [
+                    'id' => 'appointment_' . $appointment->id,
+                    'type' => 'appointment',
+                    'title' => $appointment->title ?? ($appointment->appointmentType?->name ?? 'Appointment'),
+                    'description' => $appointment->resident ? $appointment->resident->first_name . ' ' . $appointment->resident->last_name : 'No resident',
+                    'date' => $appointment->appointment_date->toDateString(),
+                    'time' => $appointment->appointment_time,
+                    'datetime' => $dateTime->toIso8601String(),
+                    'location' => $appointment->location,
+                    'branch' => $appointment->branch?->name,
+                    'link' => '/appointments',
+                    'icon' => 'calendar',
+                    'color' => 'blue',
+                ];
+            });
+
+        // 2. Upcoming Fire Drills
+        if (!$isCaregiver || $facilityId) {
+            $fireDrillsQuery = FireDrill::withoutGlobalScopes()
+                ->with(['branch'])
+                ->where('status', 'scheduled')
+                ->whereDate('scheduled_date', '>=', today());
+            
+            if ($facilityId) {
+                $fireDrillsQuery->whereHas('branch', function ($q) use ($facilityId) {
+                    $q->where('facility_id', $facilityId);
+                });
+            }
+            if ($branchId) {
+                $fireDrillsQuery->where('branch_id', $branchId);
+            }
+
+            $fireDrillsQuery->orderBy('scheduled_date', 'asc')
+                ->orderBy('scheduled_time', 'asc')
+                ->limit($limit)
+                ->get()
+                ->each(function ($drill) use (&$events) {
+                    $dateTime = \Carbon\Carbon::parse($drill->scheduled_date->format('Y-m-d') . ' ' . ($drill->scheduled_time ?? '10:00:00'));
+                    $events[] = [
+                        'id' => 'firedrill_' . $drill->id,
+                        'type' => 'fire_drill',
+                        'title' => 'Fire Drill: ' . ($drill->branch?->name ?? 'Unknown Branch'),
+                        'description' => $drill->notes ?? 'Scheduled fire drill',
+                        'date' => $drill->scheduled_date->toDateString(),
+                        'time' => $drill->scheduled_time,
+                        'datetime' => $dateTime->toIso8601String(),
+                        'branch' => $drill->branch?->name,
+                        'link' => '/fire-drills',
+                        'icon' => 'flame',
+                        'color' => 'orange',
+                    ];
+                });
+        }
+
+        // 3. Pending Assessments (due soon or overdue)
+        $assessmentsQuery = Assessment::withoutGlobalScopes()
+            ->with(['resident', 'resident.branch'])
+            ->whereNotIn('status', ['approved', 'archived', 'completed']);
+        
+        if ($facilityId) {
+            $assessmentsQuery->whereHas('resident', function ($q) use ($facilityId) {
+                $q->where(function ($r) use ($facilityId) {
+                    $r->where('facility_id', $facilityId)
+                        ->orWhereHas('branch', function ($b) use ($facilityId) {
+                            $b->where('facility_id', $facilityId);
+                        });
+                })->where('is_active', true);
+            });
+        }
+        if ($branchId) {
+            $assessmentsQuery->whereHas('resident', function ($q) use ($branchId) {
+                $q->where('branch_id', $branchId)->where('is_active', true);
+            });
+        }
+
+        $assessmentsQuery->orderBy('created_at', 'desc')
+            ->limit($limit)
+            ->get()
+            ->each(function ($assessment) use (&$events) {
+                $events[] = [
+                    'id' => 'assessment_' . $assessment->id,
+                    'type' => 'assessment',
+                    'title' => 'Assessment: ' . ($assessment->resident ? $assessment->resident->first_name . ' ' . $assessment->resident->last_name : 'Unknown'),
+                    'description' => 'Status: ' . ucfirst($assessment->status),
+                    'date' => $assessment->assessment_date?->toDateString() ?? $assessment->created_at->toDateString(),
+                    'time' => null,
+                    'datetime' => ($assessment->assessment_date ?? $assessment->created_at)->toIso8601String(),
+                    'branch' => $assessment->resident?->branch?->name,
+                    'link' => '/assessments/' . $assessment->id,
+                    'icon' => 'clipboard',
+                    'color' => 'purple',
+                ];
+            });
+
+        // 4. Due Medication Administrations (next 7 days)
+        $medicationsQuery = Medication::withoutGlobalScopes()
+            ->with(['resident', 'resident.branch', 'drug'])
+            ->where('is_active', true)
+            ->whereHas('resident', function ($q) use ($facilityId, $branchId) {
+                $q->where('is_active', true);
+                if ($facilityId) {
+                    $q->where(function ($r) use ($facilityId) {
+                        $r->where('facility_id', $facilityId)
+                            ->orWhereHas('branch', function ($b) use ($facilityId) {
+                                $b->where('facility_id', $facilityId);
+                            });
+                    });
+                }
+                if ($branchId) {
+                    $q->where('branch_id', $branchId);
+                }
+            });
+
+        $medicationsQuery->limit($limit)
+            ->get()
+            ->each(function ($medication) use (&$events) {
+                // Estimate next due date (simplified - assumes daily)
+                $nextDue = now()->addDay();
+                $medicationName = $medication->drug?->name ?? $medication->name ?? 'Unknown Medication';
+                $timeStr = $medication->time_1 ?? '09:00:00';
+                $events[] = [
+                    'id' => 'medication_' . $medication->id,
+                    'type' => 'medication',
+                    'title' => 'Medication: ' . $medicationName,
+                    'description' => $medication->resident ? $medication->resident->first_name . ' ' . $medication->resident->last_name : 'No resident',
+                    'date' => $nextDue->toDateString(),
+                    'time' => $timeStr,
+                    'datetime' => $nextDue->setTimeFromTimeString($timeStr)->toIso8601String(),
+                    'branch' => $medication->resident?->branch?->name,
+                    'link' => '/medications',
+                    'icon' => 'pill',
+                    'color' => 'green',
+                ];
+            });
+
+        // 5. Pending Grocery Status Updates (current and next week)
+        if (!$isCaregiver || $facilityId) {
+            $currentWeekStart = now()->startOfWeek();
+            $nextWeekStart = $currentWeekStart->copy()->addWeek();
+            
+            $groceryQuery = GroceryStatusUpdate::withoutGlobalScopes()
+                ->with(['branch'])
+                ->whereIn('status', ['pending', 'in_progress'])
+                ->whereIn('week_start_date', [$currentWeekStart->toDateString(), $nextWeekStart->toDateString()]);
+            
+            if ($facilityId) {
+                $groceryQuery->whereHas('branch', function ($q) use ($facilityId) {
+                    $q->where('facility_id', $facilityId);
+                });
+            }
+            if ($branchId) {
+                $groceryQuery->where('branch_id', $branchId);
+            }
+
+            $groceryQuery->orderBy('week_start_date', 'asc')
+                ->limit($limit)
+                ->get()
+                ->each(function ($grocery) use (&$events) {
+                    $events[] = [
+                        'id' => 'grocery_' . $grocery->id,
+                        'type' => 'grocery',
+                        'title' => 'Grocery Status: ' . ($grocery->branch?->name ?? 'Unknown Branch'),
+                        'description' => 'Week of ' . $grocery->week_start_date->format('M d') . ' - Status: ' . ucfirst($grocery->status),
+                        'date' => $grocery->week_start_date->toDateString(),
+                        'time' => null,
+                        'datetime' => $grocery->week_start_date->toIso8601String(),
+                        'branch' => $grocery->branch?->name,
+                        'link' => '/grocery-status',
+                        'icon' => 'shopping-cart',
+                        'color' => 'yellow',
+                    ];
+                });
+        }
+
+        // 6. Scheduled Cleaning Task Assignments
+        if (!$isCaregiver || $facilityId) {
+            $cleaningQuery = CleaningTaskAssignment::withoutGlobalScopes()
+                ->with(['task.area.branch', 'user'])
+                ->where('status', 'assigned')
+                ->whereDate('scheduled_date', '>=', today())
+                ->whereDate('scheduled_date', '<=', now()->addDays(7));
+            
+            if ($facilityId) {
+                $cleaningQuery->whereHas('task.area.branch', function ($q) use ($facilityId) {
+                    $q->where('facility_id', $facilityId);
+                });
+            }
+            if ($branchId) {
+                // Filter by branch if task area has branch_id
+                $cleaningQuery->whereHas('task.area', function ($q) use ($branchId) {
+                    $q->where('branch_id', $branchId);
+                });
+            }
+
+            $cleaningQuery->orderBy('scheduled_date', 'asc')
+                ->limit($limit)
+                ->get()
+                ->each(function ($assignment) use (&$events) {
+                    $events[] = [
+                        'id' => 'cleaning_' . $assignment->id,
+                        'type' => 'cleaning',
+                        'title' => 'Cleaning: ' . ($assignment->task?->title ?? 'Task'),
+                        'description' => $assignment->task?->area?->name ?? 'Housekeeping',
+                        'date' => $assignment->scheduled_date->toDateString(),
+                        'time' => null,
+                        'datetime' => $assignment->scheduled_date->toIso8601String(),
+                        'branch' => $assignment->task?->area?->branch?->name,
+                        'link' => '/housekeeping',
+                        'icon' => 'sparkles',
+                        'color' => 'indigo',
+                    ];
+                });
+        }
+
+        // Sort all events by datetime
+        usort($events, function ($a, $b) {
+            return strtotime($a['datetime']) - strtotime($b['datetime']);
+        });
+
+        // Return limited results
+        return array_slice($events, 0, $limit);
+    }
+
+    /**
+     * Get current facility for user (helper method)
+     */
+    private function getCurrentFacility(?User $user = null): ?\App\Models\Facility
+    {
+        $user = $user ?? auth()->user();
+        if (!$user) {
+            return null;
+        }
+
+        // Super admins can float between facilities; prefer explicit context
+        if ($user->role === 'super_admin') {
+            try {
+                return app()->bound('facility') ? app('facility') : null;
+            } catch (\Exception $e) {
+                return null;
+            }
+        }
+
+        // Try facility from current request context (set by middleware)
+        try {
+            $facility = app()->bound('facility') ? app('facility') : null;
+        } catch (\Exception $e) {
+            $facility = null;
+        }
+
+        // Fallback to user's facility_id
+        if (!$facility && $user->facility_id) {
+            $facility = \App\Models\Facility::find($user->facility_id);
+        }
+
+        // Derive facility from assigned branch if still unknown
+        if (!$facility && $user->assigned_branch_id) {
+            $branch = \App\Models\Branch::find($user->assigned_branch_id);
+            if ($branch && $branch->facility_id) {
+                $facility = \App\Models\Facility::find($branch->facility_id);
+            }
+        }
+
+        return $facility;
     }
 }
 

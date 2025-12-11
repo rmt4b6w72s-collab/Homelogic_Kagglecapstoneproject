@@ -122,43 +122,43 @@ export default function ReminderPanel() {
                                                 className={`p-4 transition-colors ${isFireDrill ? 'hover:bg-orange-50 cursor-pointer' : 'hover:bg-gray-50'}`}
                                                 onClick={() => isFireDrill && handleEventClick(event)}
                                             >
-                                                <div className="flex items-start justify-between space-x-3">
+                                            <div className="flex items-start justify-between space-x-3">
                                                     <div className="flex-1 flex items-start gap-2">
                                                         {isFireDrill && (
                                                             <Flame className="w-4 h-4 text-orange-500 mt-0.5 flex-shrink-0" />
                                                         )}
-                                                        <div className="flex-1">
+                                                <div className="flex-1">
                                                             <p className={`text-sm font-semibold ${isFireDrill ? 'text-orange-900' : 'text-gray-900'}`}>
                                                                 {event.title}
                                                             </p>
                                                             <p className={`text-xs capitalize ${isFireDrill ? 'text-orange-600' : 'text-gray-500'}`}>
                                                                 {event.category === 'fire_drill' ? 'Fire Drill' : event.category || 'general'} • {formatWhen(event.scheduled_for)}
-                                                            </p>
-                                                        </div>
+                                                    </p>
+                                                </div>
                                                     </div>
                                                     {!isFireDrill && (
-                                                        <div className="flex items-center space-x-2">
-                                                            <button
+                                                <div className="flex items-center space-x-2">
+                                                    <button
                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
                                                                     acknowledge(event.id);
                                                                 }}
-                                                                className="p-2 rounded-full bg-green-50 text-green-700 hover:bg-green-100 transition-colors"
-                                                                title="Acknowledge"
-                                                            >
-                                                                <Check className="w-4 h-4" />
-                                                            </button>
-                                                            <button
+                                                        className="p-2 rounded-full bg-green-50 text-green-700 hover:bg-green-100 transition-colors"
+                                                        title="Acknowledge"
+                                                    >
+                                                        <Check className="w-4 h-4" />
+                                                    </button>
+                                                    <button
                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
                                                                     snooze(event.id);
                                                                 }}
-                                                                className="p-2 rounded-full bg-amber-50 text-amber-700 hover:bg-amber-100 transition-colors"
-                                                                title="Snooze 15m"
-                                                            >
-                                                                <AlarmClockOff className="w-4 h-4" />
-                                                            </button>
-                                                        </div>
+                                                        className="p-2 rounded-full bg-amber-50 text-amber-700 hover:bg-amber-100 transition-colors"
+                                                        title="Snooze 15m"
+                                                    >
+                                                    <AlarmClockOff className="w-4 h-4" />
+                                                    </button>
+                                                </div>
                                                     )}
                                                 </div>
                                                 {(event.metadata?.note || event.metadata?.notes) && (

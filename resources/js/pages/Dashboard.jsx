@@ -35,6 +35,7 @@ import ScrollReveal from '../components/ui/ScrollReveal';
 import StatCard from '../components/dashboard/StatCard';
 import ActionableItemsSection from '../components/dashboard/ActionableItemsSection';
 import MobileDashboard from '../components/dashboard/MobileDashboard';
+import UpcomingEventsWidget from '../components/dashboard/UpcomingEventsWidget';
 
 // Register Chart.js components
 ChartJS.register(
@@ -812,6 +813,9 @@ export default function Dashboard() {
                                 />
                             ))}
                         </div>
+
+                        {/* Upcoming Events from All Modules */}
+                        <UpcomingEventsWidget limit={15} />
 
                         {/* Upcoming Fire Drills Widget - Important Safety Item */}
                         {upcomingFireDrills?.data && upcomingFireDrills.data.length > 0 && (

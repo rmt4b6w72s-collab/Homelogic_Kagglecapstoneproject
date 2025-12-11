@@ -153,13 +153,13 @@ class ReminderController extends BaseApiController
             'id' => 'reminder_' . $event->id,
             'type' => 'reminder',
             'reminder_id' => $event->id,
-            'title' => $event->reminder?->title,
+                'title' => $event->reminder?->title,
             'category' => $event->reminder?->category ?? 'general',
-            'status' => $event->status,
-            'scheduled_for' => $event->scheduled_for,
-            'snoozed_until' => $event->snoozed_until,
+                'status' => $event->status,
+                'scheduled_for' => $event->scheduled_for,
+                'snoozed_until' => $event->snoozed_until,
             'action_url' => $event->reminder?->action_url ?? '/reminders',
-            'metadata' => $event->reminder?->metadata,
+                'metadata' => $event->reminder?->metadata,
         ]);
 
         // Format fire drills

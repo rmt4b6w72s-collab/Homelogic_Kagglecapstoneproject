@@ -51,5 +51,16 @@ class DashboardController extends BaseApiController
         
         return $this->success($activities);
     }
+
+    public function upcomingEvents(\Illuminate\Http\Request $request): JsonResponse
+    {
+        $user = auth()->user();
+        $limit = (int) $request->get('limit', 20);
+        
+        $events = $this->dashboardService->getUpcomingEvents($user, $limit);
+        
+        return $this->success($events);
+    }
 }
+
 
