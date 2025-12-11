@@ -214,6 +214,18 @@ const closeAssignmentModal = () => {
     const selectedArea = areasData?.find((area) => area.id === selectedAreaId);
     const branchId = currentUser?.assigned_branch_id ?? currentUser?.assigned_branch?.id ?? null;
 
+    // If task form is open, show the form instead of the main content
+    if (isModalOpen) {
+        return (
+            <TaskForm
+                onClose={closeModal}
+                onSubmit={handleSubmit}
+                initialValues={editingTask}
+                isSaving={createTask.isLoading || updateTask.isLoading}
+            />
+        );
+    }
+
     return (
         <div className="space-y-6">
             <header 
@@ -499,15 +511,6 @@ const closeAssignmentModal = () => {
                 </section>
             </section>
 
-            {isModalOpen ? (
-                <TaskModal
-                    onClose={closeModal}
-                    onSubmit={handleSubmit}
-                    initialValues={editingTask}
-                    isSaving={createTask.isLoading || updateTask.isLoading}
-                />
-            ) : null}
-
             {isAreaModalOpen ? (
                 <AreaForm
                     onClose={() => {
@@ -557,52 +560,48 @@ const closeAssignmentModal = () => {
     );
 }
 
-function TaskModal({ onClose, onSubmit, initialValues, isSaving }) {
-    const [formValues, setFormValues] = React.useState(() => ({
-        title: initialValues?.title ?? '',
-        instructions: initialValues?.instructions ?? '',
-        frequency: initialValues?.frequency ?? 'daily',
-        window_start: initialValues?.window_start ?? '',
-        window_end: initialValues?.window_end ?? '',
-        days_of_week: initialValues?.days_of_week ?? [],
-        estimated_minutes: initialValues?.estimated_minutes ?? '',
-        display_order: initialValues?.display_order ?? 0,
-        is_required: initialValues?.is_required ?? true,
-        is_active: initialValues?.is_active ?? true,
-    }));
+function TaskForm({ onClose, onSubmit, initialValues, isSaving }) {
+    const methods = useForm({
+        defaultValues: {
+            title: initialValues?.title ?? '',
+            instructions: initialValues?.instructions ?? '',
+            frequency: initialValues?.frequency ?? 'daily',
+            window_start: initialValues?.window_start ?? '',
+            window_end: initialValues?.window_end ?? '',
+            days_of_week: initialValues?.days_of_week ?? [],
+            estimated_minutes: initialValues?.estimated_minutes ?? '',
+            display_order: initialValues?.display_order ?? 0,
+            is_required: initialValues?.is_required ?? true,
+            is_active: initialValues?.is_active ?? true,
+        },
+    });
 
-    const handleChange = (event) => {
-        const { name, value, type, checked } = event.target;
-        setFormValues((prev) => ({
-            ...prev,
-            [name]: type === 'checkbox' && name !== 'is_required' && name !== 'is_active' ? value : type === 'checkbox' ? checked : value,
-        }));
-    };
+    const { watch, setValue } = methods;
+    const daysOfWeek = watch('days_of_week') || [];
+    const isRequired = watch('is_required');
 
     const toggleDay = (day) => {
-        setFormValues((prev) => {
-            const current = Array.isArray(prev.days_of_week) ? prev.days_of_week : [];
-            if (current.includes(day)) {
-                return { ...prev, days_of_week: current.filter((value) => value !== day) };
-            }
-            return { ...prev, days_of_week: [...current, day] };
-        });
+        const current = Array.isArray(daysOfWeek) ? daysOfWeek : [];
+        if (current.includes(day)) {
+            setValue('days_of_week', current.filter((value) => value !== day), { shouldValidate: true });
+        } else {
+            setValue('days_of_week', [...current, day], { shouldValidate: true });
+        }
     };
 
-    const handleSubmit = async (event) => {
-        event.preventDefault();
+    const handleSubmit = async (data) => {
         try {
             await onSubmit({
-                title: formValues.title.trim(),
-                instructions: formValues.instructions?.trim() || null,
-                frequency: formValues.frequency,
-                window_start: formValues.window_start || null,
-                window_end: formValues.window_end || null,
-                days_of_week: formValues.days_of_week,
-                estimated_minutes: formValues.estimated_minutes ? Number(formValues.estimated_minutes) : null,
-                display_order: Number(formValues.display_order ?? 0),
-                is_required: Boolean(formValues.is_required),
-                is_active: Boolean(formValues.is_active),
+                title: data.title.trim(),
+                instructions: data.instructions?.trim() || null,
+                frequency: data.frequency,
+                window_start: data.window_start || null,
+                window_end: data.window_end || null,
+                days_of_week: data.days_of_week,
+                estimated_minutes: data.estimated_minutes ? Number(data.estimated_minutes) : null,
+                display_order: Number(data.display_order ?? 0),
+                is_required: Boolean(data.is_required),
+                is_active: Boolean(data.is_active),
             });
         } catch (err) {
             window.alert(err?.response?.data?.message || err.message);
@@ -610,208 +609,162 @@ function TaskModal({ onClose, onSubmit, initialValues, isSaving }) {
     };
 
     return (
-        <div 
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-            onClick={(e) => {
-                if (e.target === e.currentTarget) {
-                    onClose();
-                }
-            }}
-        >
-            <div className="max-h-[calc(100vh-2rem)] w-full max-w-2xl overflow-y-auto rounded-3xl bg-white p-6 shadow-2xl">
-                <div className="mb-6 flex items-center justify-between">
-                    <div>
-                        <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--theme-primary)' }}>
-                            {initialValues ? 'Edit Task' : 'Create Task'}
-                        </p>
-                        <h2 className="text-2xl font-semibold text-gray-900">{initialValues ? initialValues.title : 'New Task'}</h2>
-                    </div>
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-lg hover:bg-gray-100"
-                        aria-label="Close modal"
-                    >
-                        <X className="w-5 h-5" />
-                    </button>
+        <div className="space-y-6">
+            <div className="flex items-center gap-3">
+                <button
+                    type="button"
+                    onClick={onClose}
+                    className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-100"
+                >
+                    <ArrowLeft className="h-4 w-4" />
+                    Back to schedule
+                </button>
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                    {initialValues ? 'Edit Task' : 'New Task'}
+                </p>
+            </div>
+
+            <div className="rounded-3xl bg-white shadow-lg ring-1 ring-gray-100">
+                <div className="border-b border-gray-100 px-6 py-4 sm:px-8 sm:py-5">
+                    <h2 className="text-xl font-semibold text-gray-900">
+                        {initialValues ? initialValues.title : 'Create New Task'}
+                    </h2>
+                    <p className="mt-1 text-sm text-gray-500">
+                        {initialValues ? 'Update task details below.' : 'Fill in the details to create a new cleaning task.'}
+                    </p>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-6">
-                    <div>
-                        <label className="block text-sm font-semibold text-gray-900 mb-2">Task Title *</label>
-                        <input
-                            type="text"
-                            name="title"
-                            value={formValues.title}
-                            onChange={handleChange}
-                            required
-                            className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:border-[var(--theme-primary)]"
-                            style={{ '--tw-ring-color': 'var(--theme-primary-bg)' }}
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-semibold text-gray-900 mb-2">Instructions</label>
-                        <textarea
-                            name="instructions"
-                            value={formValues.instructions}
-                            onChange={handleChange}
-                            rows={3}
-                            className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:border-[var(--theme-primary)]"
-                            style={{ '--tw-ring-color': 'var(--theme-primary-bg)' }}
-                        />
-                    </div>
-
-                    <div className="grid gap-4 md:grid-cols-3">
-                        <div>
-                            <label className="block text-sm font-semibold text-gray-900 mb-2">Frequency</label>
-                            <select
-                                name="frequency"
-                                value={formValues.frequency}
-                                onChange={handleChange}
-                                className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:border-[var(--theme-primary)]"
-                                style={{ '--tw-ring-color': 'var(--theme-primary-bg)' }}
-                            >
-                                {frequencyOptions.map((option) => (
-                                    <option key={option.value} value={option.value}>
-                                        {option.label}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-                        <div>
-                            <label className="block text-sm font-semibold text-gray-900 mb-2">Start Window</label>
-                            <input
-                                type="time"
-                                name="window_start"
-                                value={formValues.window_start || ''}
-                                onChange={handleChange}
-                                className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:border-[var(--theme-primary)]"
-                                style={{ '--tw-ring-color': 'var(--theme-primary-bg)' }}
+                <div className="px-6 py-6 sm:px-8 sm:py-8">
+                    <FormProvider {...methods}>
+                        <form onSubmit={methods.handleSubmit(handleSubmit)} className="space-y-6">
+                            <FormInput
+                                name="title"
+                                label="Task Title"
+                                placeholder="e.g. Clean kitchen counters"
+                                required
                             />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-semibold text-gray-900 mb-2">End Window</label>
-                            <input
-                                type="time"
-                                name="window_end"
-                                value={formValues.window_end || ''}
-                                onChange={handleChange}
-                                className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:border-[var(--theme-primary)]"
-                                style={{ '--tw-ring-color': 'var(--theme-primary-bg)' }}
-                            />
-                        </div>
-                    </div>
 
-                    <div className="grid gap-4 md:grid-cols-2">
-                        <div>
-                            <label className="block text-sm font-semibold text-gray-900 mb-2">Display Order</label>
-                            <input
-                                type="number"
-                                name="display_order"
-                                value={formValues.display_order}
-                                onChange={handleChange}
-                                min={0}
-                                className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:border-[var(--theme-primary)]"
-                                style={{ '--tw-ring-color': 'var(--theme-primary-bg)' }}
+                            <FormTextarea
+                                name="instructions"
+                                label="Instructions"
+                                placeholder="Detailed instructions for completing this task..."
+                                rows={4}
                             />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-semibold text-gray-900 mb-2">Estimated Minutes</label>
-                            <input
-                                type="number"
-                                name="estimated_minutes"
-                                value={formValues.estimated_minutes}
-                                onChange={handleChange}
-                                min={1}
-                                className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:border-[var(--theme-primary)]"
-                                style={{ '--tw-ring-color': 'var(--theme-primary-bg)' }}
-                                placeholder="e.g. 10"
-                            />
-                        </div>
-                    </div>
 
-                    <div>
-                        <label className="block text-sm font-semibold text-gray-900 mb-2">Days of Week</label>
-                        <p className="text-xs text-gray-500 mb-3">Leave blank to show on every day.</p>
-                        <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
-                            {dayOptions.map((day) => {
-                                const checked = Array.isArray(formValues.days_of_week) && formValues.days_of_week.includes(day.value);
-                                return (
-                                    <label
-                                        key={day.value}
-                                        className={`flex cursor-pointer items-center gap-2 rounded-xl border px-3 py-2 text-sm ${
-                                            checked
-                                                ? formValues.is_required 
-                                                    ? 'border-[var(--theme-primary-bg)] bg-[var(--theme-primary-bg)] text-[var(--theme-primary)]'
-                                                    : ''
-                                                : 'border-gray-200 text-gray-600'
-                                        }`}
-                                        style={formValues.is_required && checked ? { borderColor: 'var(--theme-primary-bg)', backgroundColor: 'var(--theme-primary-bg)', color: 'var(--theme-primary)' } : {}}
-                                    >
-                                        <input
-                                            type="checkbox"
-                                            checked={checked}
-                                            onChange={() => toggleDay(day.value)}
-                                        />
-                                        {day.label}
-                                    </label>
-                                );
-                            })}
-                        </div>
-                    </div>
-
-                    <div className="grid gap-4 md:grid-cols-2">
-                        <label className="flex items-center gap-3 rounded-2xl border border-gray-200 px-4 py-3">
-                            <input
-                                type="checkbox"
-                                name="is_required"
-                                checked={Boolean(formValues.is_required)}
-                                onChange={(event) =>
-                                    setFormValues((prev) => ({ ...prev, is_required: event.target.checked }))
-                                }
-                            />
-                            <div>
-                                <div className="text-sm font-semibold text-gray-800">Required before shift ends</div>
-                                <p className="text-xs text-gray-500">Task must be marked complete before closing the shift.</p>
+                            <div className="grid gap-4 md:grid-cols-3">
+                                <FormSelect
+                                    name="frequency"
+                                    label="Frequency"
+                                    options={frequencyOptions}
+                                />
+                                <FormInput
+                                    name="window_start"
+                                    label="Start Window"
+                                    type="time"
+                                />
+                                <FormInput
+                                    name="window_end"
+                                    label="End Window"
+                                    type="time"
+                                />
                             </div>
-                        </label>
 
-                        <label className="flex items-center gap-3 rounded-2xl border border-gray-200 px-4 py-3">
-                            <input
-                                type="checkbox"
-                                name="is_active"
-                                checked={Boolean(formValues.is_active)}
-                                onChange={(event) =>
-                                    setFormValues((prev) => ({ ...prev, is_active: event.target.checked }))
-                                }
-                            />
-                            <div>
-                                <div className="text-sm font-semibold text-gray-800">Active task</div>
-                                <p className="text-xs text-gray-500">Inactive tasks are hidden from daily checklists.</p>
+                            <div className="grid gap-4 md:grid-cols-2">
+                                <FormInput
+                                    name="display_order"
+                                    label="Display Order"
+                                    type="number"
+                                    min={0}
+                                />
+                                <FormInput
+                                    name="estimated_minutes"
+                                    label="Estimated Minutes"
+                                    type="number"
+                                    min={1}
+                                    placeholder="e.g. 10"
+                                />
                             </div>
-                        </label>
-                    </div>
 
-                    <div className="flex justify-end gap-3 pt-4">
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            className="rounded-xl border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-600 hover:bg-gray-50"
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            type="submit"
-                            disabled={isSaving}
-                            className="inline-flex items-center gap-2 rounded-xl px-5 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[var(--theme-primary-hover)] disabled:cursor-not-allowed"
-                            style={{ backgroundColor: 'var(--theme-primary)' }}
-                        >
-                            {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-                            {initialValues ? 'Save Changes' : 'Create Task'}
-                        </button>
-                    </div>
-                </form>
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-900 mb-2">
+                                    Days of Week
+                                </label>
+                                <p className="text-xs text-gray-500 mb-3">Leave blank to show on every day.</p>
+                                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                                    {dayOptions.map((day) => {
+                                        const checked = Array.isArray(daysOfWeek) && daysOfWeek.includes(day.value);
+                                        return (
+                                            <label
+                                                key={day.value}
+                                                className={`flex cursor-pointer items-center gap-2 rounded-xl border px-3 py-2 text-sm transition-colors ${
+                                                    checked
+                                                        ? isRequired
+                                                            ? 'border-[var(--theme-primary-bg)] bg-[var(--theme-primary-bg)] text-[var(--theme-primary)]'
+                                                            : 'border-gray-300 bg-gray-100 text-gray-700'
+                                                        : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                                                }`}
+                                                style={checked && isRequired ? { borderColor: 'var(--theme-primary-bg)', backgroundColor: 'var(--theme-primary-bg)', color: 'var(--theme-primary)' } : {}}
+                                            >
+                                                <input
+                                                    type="checkbox"
+                                                    checked={checked}
+                                                    onChange={() => toggleDay(day.value)}
+                                                    className="rounded border-gray-300"
+                                                />
+                                                {day.label}
+                                            </label>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            <div className="grid gap-4 md:grid-cols-2">
+                                <label className="flex items-center gap-3 rounded-2xl border border-gray-200 px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors">
+                                    <input
+                                        type="checkbox"
+                                        {...methods.register('is_required')}
+                                        className="rounded border-gray-300"
+                                    />
+                                    <div>
+                                        <div className="text-sm font-semibold text-gray-800">Required before shift ends</div>
+                                        <p className="text-xs text-gray-500">Task must be marked complete before closing the shift.</p>
+                                    </div>
+                                </label>
+
+                                <label className="flex items-center gap-3 rounded-2xl border border-gray-200 px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors">
+                                    <input
+                                        type="checkbox"
+                                        {...methods.register('is_active')}
+                                        className="rounded border-gray-300"
+                                    />
+                                    <div>
+                                        <div className="text-sm font-semibold text-gray-800">Active task</div>
+                                        <p className="text-xs text-gray-500">Inactive tasks are hidden from daily checklists.</p>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
+                                <button
+                                    type="button"
+                                    onClick={onClose}
+                                    className="rounded-xl border border-gray-200 px-5 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={isSaving}
+                                    className="inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[var(--theme-primary-hover)] disabled:cursor-not-allowed disabled:opacity-50"
+                                    style={{ backgroundColor: 'var(--theme-primary)' }}
+                                >
+                                    {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                                    {initialValues ? 'Save Changes' : 'Create Task'}
+                                </button>
+                            </div>
+                        </form>
+                    </FormProvider>
+                </div>
             </div>
         </div>
     );
