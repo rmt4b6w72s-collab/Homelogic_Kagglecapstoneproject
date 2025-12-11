@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Constants\UserRoles;
 use App\Models\CleaningArea;
 use App\Models\CleaningTask;
 use App\Models\CleaningTaskAssignment;
@@ -104,7 +105,11 @@ class CleaningChecklistController extends BaseApiController
         $task = CleaningTask::with('area')->findOrFail($data['task_id']);
         $user = $request->user();
 
-        if ($user->assigned_branch_id && $user->assigned_branch_id !== $task->area->branch_id) {
+        $isCaregiver = \App\Constants\UserRoles::isCaregiverRole($user->role ?? null);
+        $isAdmin = in_array(strtolower($user->role ?? ''), ['super_admin', 'administrator', 'admin'], true);
+
+        // Only caregivers are restricted to their assigned branch; admins/super admins can update any branch
+        if ($isCaregiver && $user->assigned_branch_id && $user->assigned_branch_id !== $task->area->branch_id) {
             abort(403, 'You are not allowed to update tasks for this branch.');
         }
 
