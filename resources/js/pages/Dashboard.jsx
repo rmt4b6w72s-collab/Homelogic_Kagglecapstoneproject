@@ -430,8 +430,14 @@ export default function Dashboard() {
         // Upcoming fire drills (from upcomingFireDrills)
         if (upcomingFireDrills?.data && upcomingFireDrills.data.length > 0) {
             const todayDrills = upcomingFireDrills.data.filter(drill => {
-                const drillDate = new Date(drill.scheduled_date);
-                return drillDate.toDateString() === new Date().toDateString();
+                if (!drill.scheduled_date) return false;
+                try {
+                    const drillDate = new Date(drill.scheduled_date);
+                    if (isNaN(drillDate.getTime())) return false;
+                    return drillDate.toDateString() === new Date().toDateString();
+                } catch (error) {
+                    return false;
+                }
             });
             if (todayDrills.length > 0) {
                 items.push({
@@ -449,8 +455,14 @@ export default function Dashboard() {
         // Medication reminders
         if (stats?.medication_reminders && stats.medication_reminders.length > 0) {
             const dueToday = stats.medication_reminders.filter(m => {
-                const dueDate = new Date(m.due_at || m.scheduled_for);
-                return dueDate.toDateString() === new Date().toDateString();
+                if (!m.due_at && !m.scheduled_for) return false;
+                try {
+                    const dueDate = new Date(m.due_at || m.scheduled_for);
+                    if (isNaN(dueDate.getTime())) return false;
+                    return dueDate.toDateString() === new Date().toDateString();
+                } catch (error) {
+                    return false;
+                }
             });
             if (dueToday.length > 0) {
                 items.push({
@@ -503,18 +515,41 @@ export default function Dashboard() {
         // Upcoming fire drills
         if (upcomingFireDrills?.data && upcomingFireDrills.data.length > 0) {
             upcomingFireDrills.data.slice(0, 3).forEach(drill => {
-                const drillDateTime = new Date(`${drill.scheduled_date}T${drill.scheduled_time || '10:00:00'}`);
-                tasks.push({
-                    id: `fire-drill-${drill.id}`,
-                    type: 'fire_drill',
-                    title: `Fire Drill: ${drill.branch?.name || 'Unknown'}`,
-                    time: drillDateTime.toISOString(),
-                    link: '/fire-drills',
-                });
+                if (!drill.scheduled_date) return;
+                try {
+                    const timeStr = drill.scheduled_time || '10:00:00';
+                    const dateStr = drill.scheduled_date instanceof Date 
+                        ? drill.scheduled_date.toISOString().split('T')[0]
+                        : drill.scheduled_date;
+                    const drillDateTime = new Date(`${dateStr}T${timeStr}`);
+                    if (isNaN(drillDateTime.getTime())) {
+                        console.warn('Invalid fire drill date:', drill);
+                        return;
+                    }
+                    tasks.push({
+                        id: `fire-drill-${drill.id}`,
+                        type: 'fire_drill',
+                        title: `Fire Drill: ${drill.branch?.name || 'Unknown'}`,
+                        time: drillDateTime.toISOString(),
+                        link: '/fire-drills',
+                    });
+                } catch (error) {
+                    console.error('Error processing fire drill task:', error, drill);
+                }
             });
         }
 
-        return tasks.sort((a, b) => new Date(a.time) - new Date(b.time));
+        return tasks.sort((a, b) => {
+            if (!a.time || !b.time) return 0;
+            try {
+                const dateA = new Date(a.time);
+                const dateB = new Date(b.time);
+                if (isNaN(dateA.getTime()) || isNaN(dateB.getTime())) return 0;
+                return dateA - dateB;
+            } catch (error) {
+                return 0;
+            }
+        });
     }, [stats, isCaregiver, upcomingFireDrills]);
 
     // Build alerts
@@ -673,7 +708,15 @@ export default function Dashboard() {
                                     <div className="p-4">
                                         <div className="space-y-3">
                                             {upcomingFireDrills.data.slice(0, 5).map((drill) => {
-                                                const drillDate = new Date(drill.scheduled_date);
+                                                if (!drill.scheduled_date) return null;
+                                                let drillDate;
+                                                try {
+                                                    drillDate = new Date(drill.scheduled_date);
+                                                    if (isNaN(drillDate.getTime())) return null;
+                                                } catch (error) {
+                                                    console.error('Invalid drill date:', drill);
+                                                    return null;
+                                                }
                                                 const today = new Date();
                                                 today.setHours(0, 0, 0, 0);
                                                 const tomorrow = new Date(today);
@@ -698,9 +741,17 @@ export default function Dashboard() {
                                                     urgencyText = `${daysUntil} days`;
                                                 }
 
-                                                const timeStr = drill.scheduled_time 
-                                                    ? new Date(`2000-01-01T${drill.scheduled_time}`).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
-                                                    : 'TBD';
+                                                let timeStr = 'TBD';
+                                                if (drill.scheduled_time) {
+                                                    try {
+                                                        const timeDate = new Date(`2000-01-01T${drill.scheduled_time}`);
+                                                        if (!isNaN(timeDate.getTime())) {
+                                                            timeStr = timeDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+                                                        }
+                                                    } catch (error) {
+                                                        console.error('Error formatting drill time:', error);
+                                                    }
+                                                }
 
                                                 return (
                                                     <div 

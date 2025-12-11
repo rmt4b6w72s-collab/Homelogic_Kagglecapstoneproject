@@ -35,12 +35,20 @@ export default function UpcomingTasksWidget({ tasks = [] }) {
 
     const formatTime = (dateTime) => {
         if (!dateTime) return '';
-        const date = new Date(dateTime);
-        return date.toLocaleTimeString('en-US', { 
-            hour: 'numeric', 
-            minute: '2-digit',
-            hour12: true 
-        });
+        try {
+            const date = new Date(dateTime);
+            if (isNaN(date.getTime())) {
+                return '';
+            }
+            return date.toLocaleTimeString('en-US', { 
+                hour: 'numeric', 
+                minute: '2-digit',
+                hour12: true 
+            });
+        } catch (error) {
+            console.error('Error formatting time:', error, dateTime);
+            return '';
+        }
     };
 
     return (
