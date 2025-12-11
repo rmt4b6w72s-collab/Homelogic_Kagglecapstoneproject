@@ -1,12 +1,16 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useForm, FormProvider } from 'react-hook-form';
 import api from '../services/api';
 import { toast } from 'sonner';
-import { Flame, Plus, Search, Filter, Edit, Trash2, Calendar, Clock, CheckCircle, XCircle, AlertTriangle, List, Grid, X, Sparkles, ClipboardList } from 'lucide-react';
+import { Flame, Plus, Search, Filter, Edit, Trash2, Calendar, Clock, CheckCircle, XCircle, AlertTriangle, List, Grid, X, Sparkles, ClipboardList, ArrowLeft, Loader2 } from 'lucide-react';
 import SectionCard from '../components/SectionCard';
 import Card from '../components/Card';
 import CalendarView from '../components/CalendarView';
 import Select from '../components/ui/radix/Select';
+import FormInput from '../components/forms/FormInput';
+import FormTextarea from '../components/forms/FormTextarea';
+import FormSelect from '../components/forms/FormSelect';
 
 export default function FireDrills() {
     const queryClient = useQueryClient();
@@ -576,18 +580,18 @@ export default function FireDrills() {
 }
 
 function FireDrillForm({ record, branches, templates = [], isCaregiver, caregiverBranchId, onClose, onSuccess, onOpenTemplateModal }) {
-    const [formData, setFormData] = useState({
-        branch_id: record?.branch_id || caregiverBranchId || null,
-        scheduled_date: record?.scheduled_date || new Date().toISOString().split('T')[0],
-        scheduled_time: record?.scheduled_time || new Date().toTimeString().slice(0, 5),
-        status: record?.status || 'scheduled',
-        notes: record?.notes || '',
-    });
-
     const [selectedTemplateId, setSelectedTemplateId] = useState(null);
-
-    const [errors, setErrors] = useState({});
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const methods = useForm({
+        defaultValues: {
+            branch_id: record?.branch_id || caregiverBranchId || null,
+            scheduled_date: record?.scheduled_date || new Date().toISOString().split('T')[0],
+            scheduled_time: record?.scheduled_time || new Date().toTimeString().slice(0, 5),
+            status: record?.status || 'scheduled',
+            notes: record?.notes || '',
+        },
+    });
 
     const applyTemplate = (templateId) => {
         const template = templates.find(t => t.id === Number(templateId));
@@ -603,29 +607,26 @@ function FireDrillForm({ record, branches, templates = [], isCaregiver, caregive
             }
         }
 
-        setFormData((prev) => ({
-            ...prev,
-            branch_id: template.branch_id,
-            scheduled_time: time,
-            scheduled_date: nextDate.toISOString().split('T')[0],
-            notes: template.notes || prev.notes,
-            status: prev.status || 'scheduled',
-        }));
+        methods.setValue('branch_id', template.branch_id);
+        methods.setValue('scheduled_time', time);
+        methods.setValue('scheduled_date', nextDate.toISOString().split('T')[0]);
+        methods.setValue('notes', template.notes || methods.getValues('notes'));
         setSelectedTemplateId(templateId);
         toast.success('Template applied');
     };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setErrors({});
+    const onSubmit = async (data) => {
         setIsSubmitting(true);
-
         try {
             // Format time to HH:mm:ss
-            const timeParts = formData.scheduled_time.split(':');
+            const timeParts = data.scheduled_time.split(':');
             const formattedTime = `${timeParts[0]}:${timeParts[1]}:00`;
 
-            const payload = { ...formData, scheduled_time: formattedTime };
+            const payload = {
+                ...data,
+                branch_id: data.branch_id ? parseInt(data.branch_id) : null,
+                scheduled_time: formattedTime,
+            };
             
             if (record) {
                 await api.put(`/fire-drills/${record.id}`, payload);
@@ -633,166 +634,168 @@ function FireDrillForm({ record, branches, templates = [], isCaregiver, caregive
                 await api.post('/fire-drills', payload);
             }
 
+            toast.success(record ? 'Fire drill updated successfully' : 'Fire drill created successfully');
             onSuccess();
         } catch (error) {
             console.error('Error saving fire drill:', error);
-            if (error.response?.data?.errors) {
-                setErrors(error.response.data.errors);
-            } else {
-                setErrors({ general: [error.response?.data?.message || 'Failed to save fire drill'] });
-            }
+            const errorMessage = error.response?.data?.message || 'Failed to save fire drill';
+            toast.error(errorMessage);
         } finally {
             setIsSubmitting(false);
         }
     };
 
     return (
-        <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-gray-900">
-                    {record ? 'Edit Fire Drill' : 'Schedule Fire Drill'}
-                </h2>
+        <div className="space-y-6">
+            <div className="flex items-center gap-3">
                 <button
+                    type="button"
                     onClick={onClose}
-                    className="text-gray-400 hover:text-gray-600"
+                    className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-100"
                 >
-                    <X className="w-6 h-6" />
+                    <ArrowLeft className="h-4 w-4" />
+                    Back to fire drills
                 </button>
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                    {record ? 'Edit Fire Drill' : 'Schedule Fire Drill'}
+                </p>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-                        {errors.general && (
-                            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-                                {errors.general[0]}
-                            </div>
-                        )}
+            <div className="rounded-3xl bg-white shadow-lg ring-1 ring-gray-100">
+                <div className="border-b border-gray-100 px-6 py-4 sm:px-8 sm:py-5">
+                    <h2 className="text-xl font-semibold text-gray-900">
+                        {record ? 'Edit Fire Drill' : 'Schedule New Fire Drill'}
+                    </h2>
+                    <p className="mt-1 text-sm text-gray-500">
+                        {record ? 'Update fire drill details below.' : 'Fill in the details to schedule a new fire drill.'}
+                    </p>
+                </div>
 
-                        {templates.length > 0 && (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Apply Template</label>
-                                    <div className="flex gap-2">
-                                        <Select
-                                            value={selectedTemplateId?.toString() || ''}
-                                            onValueChange={(value) => setSelectedTemplateId(value || null)}
-                                            placeholder="Choose a template"
-                                            options={templates.map(t => ({
-                                                value: t.id.toString(),
-                                                label: `${t.name} (${t.frequency})`,
-                                            }))}
-                                            className="w-full"
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() => selectedTemplateId && applyTemplate(selectedTemplateId)}
-                                            className="px-3 py-2 bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] rounded-lg disabled:opacity-50"
-                                            disabled={!selectedTemplateId}
-                                        >
-                                            Apply
-                                        </button>
+                <div className="px-6 py-6 sm:px-8 sm:py-8">
+                    <FormProvider {...methods}>
+                        <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-6">
+                            {templates.length > 0 && (
+                                <div className="rounded-2xl border border-gray-200 bg-gray-50 p-5">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-semibold text-gray-900 mb-2">Apply Template</label>
+                                            <div className="flex gap-2">
+                                                <Select
+                                                    value={selectedTemplateId?.toString() || ''}
+                                                    onValueChange={(value) => setSelectedTemplateId(value || null)}
+                                                    placeholder="Choose a template"
+                                                    options={templates.map(t => ({
+                                                        value: t.id.toString(),
+                                                        label: `${t.name} (${t.frequency})`,
+                                                    }))}
+                                                    className="flex-1"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => selectedTemplateId && applyTemplate(selectedTemplateId)}
+                                                    className="inline-flex items-center justify-center rounded-xl px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[var(--theme-primary-hover)] disabled:opacity-50 disabled:cursor-not-allowed"
+                                                    style={{ backgroundColor: 'var(--theme-primary)' }}
+                                                    disabled={!selectedTemplateId}
+                                                >
+                                                    Apply
+                                                </button>
+                                            </div>
+                                            <p className="text-xs text-gray-500 mt-2">Prefill branch, date, time, and notes from a saved template.</p>
+                                        </div>
+                                        <div className="flex items-end">
+                                            <button
+                                                type="button"
+                                                onClick={onOpenTemplateModal}
+                                                className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+                                            >
+                                                + New Template
+                                            </button>
+                                        </div>
                                     </div>
-                                    <p className="text-xs text-gray-500 mt-1">Prefill branch, date, time, and notes from a saved template.</p>
                                 </div>
-                                <div className="flex items-end">
-                                    <button
-                                        type="button"
-                                        onClick={onOpenTemplateModal}
-                                        className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 w-full md:w-auto"
-                                    >
-                                        + New Template
-                                    </button>
-                                </div>
-                            </div>
-                        )}
+                            )}
 
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Branch *</label>
-                                <Select
-                                    value={formData.branch_id?.toString() || undefined}
-                                    onValueChange={(value) => setFormData({ ...formData, branch_id: value ? parseInt(value) : null })}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <FormSelect
+                                    name="branch_id"
+                                    label="Branch"
                                     placeholder="Select Branch"
+                                    required
+                                    disabled={isCaregiver}
                                     options={branches.map(branch => ({
                                         value: branch.id.toString(),
                                         label: branch.name,
                                     }))}
-                                    disabled={isCaregiver}
-                                    className="w-full"
                                 />
-                                {errors.branch_id && <p className="text-xs text-red-600 mt-1">{errors.branch_id[0]}</p>}
-                            </div>
 
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Status *</label>
-                                <Select
-                                    value={formData.status || 'scheduled'}
-                                    onValueChange={(value) => setFormData({ ...formData, status: value })}
+                                <FormSelect
+                                    name="status"
+                                    label="Status"
                                     placeholder="Select Status"
+                                    required
                                     options={[
                                         { value: 'scheduled', label: 'Scheduled' },
                                         { value: 'completed', label: 'Completed' },
                                         { value: 'cancelled', label: 'Cancelled' },
                                     ]}
-                                    className="w-full"
                                 />
-                                {errors.status && <p className="text-xs text-red-600 mt-1">{errors.status[0]}</p>}
                             </div>
 
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Scheduled Date *</label>
-                                <input
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <FormInput
+                                    name="scheduled_date"
+                                    label="Scheduled Date"
                                     type="date"
-                                    value={formData.scheduled_date}
-                                    onChange={(e) => setFormData({ ...formData, scheduled_date: e.target.value })}
                                     required
                                     min={new Date().toISOString().split('T')[0]}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                 />
-                                {errors.scheduled_date && <p className="text-xs text-red-600 mt-1">{errors.scheduled_date[0]}</p>}
-                            </div>
 
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Scheduled Time *</label>
-                                <input
+                                <FormInput
+                                    name="scheduled_time"
+                                    label="Scheduled Time"
                                     type="time"
-                                    value={formData.scheduled_time}
-                                    onChange={(e) => setFormData({ ...formData, scheduled_time: e.target.value })}
                                     required
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                 />
-                                {errors.scheduled_time && <p className="text-xs text-red-600 mt-1">{errors.scheduled_time[0]}</p>}
                             </div>
-                        </div>
 
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-                            <textarea
-                                value={formData.notes}
-                                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                                rows={3}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
-                                placeholder="Enter any additional notes..."
+                            <FormTextarea
+                                name="notes"
+                                label="Notes"
+                                placeholder="Enter any additional notes, guidelines, assembly points, etc."
+                                rows={4}
                             />
-                            {errors.notes && <p className="text-xs text-red-600 mt-1">{errors.notes[0]}</p>}
-                        </div>
 
-                        <div className="flex items-center justify-end space-x-3 pt-4 border-t">
-                            <button
-                                type="button"
-                                onClick={onClose}
-                                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                type="submit"
-                                disabled={isSubmitting}
-                                className="px-4 py-2 bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] rounded-lg hover:bg-[var(--theme-primary-hover)] disabled:opacity-50"
-                            >
-                                {isSubmitting ? 'Saving...' : (record ? 'Update' : 'Create')}
-                            </button>
-                        </div>
-                    </form>
+                            <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
+                                <button
+                                    type="button"
+                                    onClick={onClose}
+                                    className="rounded-xl border border-gray-200 px-5 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={isSubmitting}
+                                    className="inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[var(--theme-primary-hover)] disabled:opacity-50 disabled:cursor-not-allowed"
+                                    style={{ backgroundColor: 'var(--theme-primary)' }}
+                                >
+                                    {isSubmitting ? (
+                                        <>
+                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                            Saving...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Sparkles className="h-4 w-4" />
+                                            {record ? 'Update' : 'Create'}
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        </form>
+                    </FormProvider>
+                </div>
+            </div>
         </div>
     );
 }
