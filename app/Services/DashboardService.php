@@ -14,6 +14,7 @@ use App\Models\VitalSign;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use App\Models\FireDrill;
 use App\Models\GroceryStatusUpdate;
 use App\Models\CleaningTaskAssignment;
@@ -198,6 +199,18 @@ class DashboardService
         }
         
         $facilityId = $facility ? $facility->id : null;
+
+        // Bind facility into container so downstream code can use app('facility')
+        if ($facility) {
+            try {
+                app()->instance('facility', $facility);
+            } catch (\Exception $e) {
+                Log::warning('DashboardService: failed to bind facility into container', [
+                    'facility_id' => $facilityId,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
         
         // Build queries without global scopes and apply explicit facility filters
         $residentsQuery = Resident::withoutGlobalScopes()->where('is_active', true);
@@ -848,45 +861,47 @@ class DashboardService
         $isCaregiver = UserRoles::isCaregiverRole($user->role);
         $branchId = $isCaregiver ? $user->assigned_branch_id : null;
 
-        // 1. Upcoming Appointments
-        $appointmentsQuery = Appointment::withoutGlobalScopes()
-            ->with(['resident', 'branch', 'appointmentType'])
-            ->whereDate('appointment_date', '>=', today())
-            ->whereNotIn('status', ['cancelled', 'completed']);
-        
-        if ($facilityId) {
-            $appointmentsQuery->whereHas('branch', function ($q) use ($facilityId) {
-                $q->where('facility_id', $facilityId);
-            });
-        }
-        if ($branchId) {
-            $appointmentsQuery->where('branch_id', $branchId);
-        }
+        // 1. Upcoming Appointments (guard table existence)
+        if (Schema::hasTable('appointments')) {
+            $appointmentsQuery = Appointment::withoutGlobalScopes()
+                ->with(['resident', 'branch', 'appointmentType'])
+                ->whereDate('appointment_date', '>=', today())
+                ->whereNotIn('status', ['cancelled', 'completed']);
+            
+            if ($facilityId) {
+                $appointmentsQuery->whereHas('branch', function ($q) use ($facilityId) {
+                    $q->where('facility_id', $facilityId);
+                });
+            }
+            if ($branchId) {
+                $appointmentsQuery->where('branch_id', $branchId);
+            }
 
-        $appointmentsQuery->orderBy('appointment_date', 'asc')
-            ->orderBy('appointment_time', 'asc')
-            ->limit($limit)
-            ->get()
-            ->each(function ($appointment) use (&$events) {
-                $dateTime = \Carbon\Carbon::parse($appointment->appointment_date->format('Y-m-d') . ' ' . ($appointment->appointment_time ?? '00:00:00'));
-                $events[] = [
-                    'id' => 'appointment_' . $appointment->id,
-                    'type' => 'appointment',
-                    'title' => $appointment->title ?? ($appointment->appointmentType?->name ?? 'Appointment'),
-                    'description' => $appointment->resident ? $appointment->resident->first_name . ' ' . $appointment->resident->last_name : 'No resident',
-                    'date' => $appointment->appointment_date->toDateString(),
-                    'time' => $appointment->appointment_time,
-                    'datetime' => $dateTime->toIso8601String(),
-                    'location' => $appointment->location,
-                    'branch' => $appointment->branch?->name,
-                    'link' => '/appointments',
-                    'icon' => 'calendar',
-                    'color' => 'blue',
-                ];
-            });
+            $appointmentsQuery->orderBy('appointment_date', 'asc')
+                ->orderBy('appointment_time', 'asc')
+                ->limit($limit)
+                ->get()
+                ->each(function ($appointment) use (&$events) {
+                    $dateTime = \Carbon\Carbon::parse($appointment->appointment_date->format('Y-m-d') . ' ' . ($appointment->appointment_time ?? '00:00:00'));
+                    $events[] = [
+                        'id' => 'appointment_' . $appointment->id,
+                        'type' => 'appointment',
+                        'title' => $appointment->title ?? ($appointment->appointmentType?->name ?? 'Appointment'),
+                        'description' => $appointment->resident ? $appointment->resident->first_name . ' ' . $appointment->resident->last_name : 'No resident',
+                        'date' => $appointment->appointment_date->toDateString(),
+                        'time' => $appointment->appointment_time,
+                        'datetime' => $dateTime->toIso8601String(),
+                        'location' => $appointment->location,
+                        'branch' => $appointment->branch?->name,
+                        'link' => '/appointments',
+                        'icon' => 'calendar',
+                        'color' => 'blue',
+                    ];
+                });
+        }
 
         // 2. Upcoming Fire Drills
-        if (!$isCaregiver || $facilityId) {
+        if ((!$isCaregiver || $facilityId) && Schema::hasTable('fire_drills')) {
             $fireDrillsQuery = FireDrill::withoutGlobalScopes()
                 ->with(['branch'])
                 ->where('status', 'scheduled')
@@ -924,88 +939,92 @@ class DashboardService
         }
 
         // 3. Pending Assessments (due soon or overdue)
-        $assessmentsQuery = Assessment::withoutGlobalScopes()
-            ->with(['resident', 'resident.branch'])
-            ->whereNotIn('status', ['approved', 'archived', 'completed']);
-        
-        if ($facilityId) {
-            $assessmentsQuery->whereHas('resident', function ($q) use ($facilityId) {
-                $q->where(function ($r) use ($facilityId) {
-                    $r->where('facility_id', $facilityId)
-                        ->orWhereHas('branch', function ($b) use ($facilityId) {
-                            $b->where('facility_id', $facilityId);
-                        });
-                })->where('is_active', true);
-            });
-        }
-        if ($branchId) {
-            $assessmentsQuery->whereHas('resident', function ($q) use ($branchId) {
-                $q->where('branch_id', $branchId)->where('is_active', true);
-            });
-        }
-
-        $assessmentsQuery->orderBy('created_at', 'desc')
-            ->limit($limit)
-            ->get()
-            ->each(function ($assessment) use (&$events) {
-                $events[] = [
-                    'id' => 'assessment_' . $assessment->id,
-                    'type' => 'assessment',
-                    'title' => 'Assessment: ' . ($assessment->resident ? $assessment->resident->first_name . ' ' . $assessment->resident->last_name : 'Unknown'),
-                    'description' => 'Status: ' . ucfirst($assessment->status),
-                    'date' => $assessment->assessment_date?->toDateString() ?? $assessment->created_at->toDateString(),
-                    'time' => null,
-                    'datetime' => ($assessment->assessment_date ?? $assessment->created_at)->toIso8601String(),
-                    'branch' => $assessment->resident?->branch?->name,
-                    'link' => '/assessments/' . $assessment->id,
-                    'icon' => 'clipboard',
-                    'color' => 'purple',
-                ];
-            });
-
-        // 4. Due Medication Administrations (next 7 days)
-        $medicationsQuery = Medication::withoutGlobalScopes()
-            ->with(['resident', 'resident.branch', 'drug'])
-            ->where('is_active', true)
-            ->whereHas('resident', function ($q) use ($facilityId, $branchId) {
-                $q->where('is_active', true);
-                if ($facilityId) {
+        if (Schema::hasTable('assessments')) {
+            $assessmentsQuery = Assessment::withoutGlobalScopes()
+                ->with(['resident', 'resident.branch'])
+                ->whereNotIn('status', ['approved', 'archived', 'completed']);
+            
+            if ($facilityId) {
+                $assessmentsQuery->whereHas('resident', function ($q) use ($facilityId) {
                     $q->where(function ($r) use ($facilityId) {
                         $r->where('facility_id', $facilityId)
                             ->orWhereHas('branch', function ($b) use ($facilityId) {
                                 $b->where('facility_id', $facilityId);
                             });
-                    });
-                }
-                if ($branchId) {
-                    $q->where('branch_id', $branchId);
-                }
-            });
+                    })->where('is_active', true);
+                });
+            }
+            if ($branchId) {
+                $assessmentsQuery->whereHas('resident', function ($q) use ($branchId) {
+                    $q->where('branch_id', $branchId)->where('is_active', true);
+                });
+            }
 
-        $medicationsQuery->limit($limit)
-            ->get()
-            ->each(function ($medication) use (&$events) {
-                // Estimate next due date (simplified - assumes daily)
-                $nextDue = now()->addDay();
-                $medicationName = $medication->drug?->name ?? $medication->name ?? 'Unknown Medication';
-                $timeStr = $medication->time_1 ?? '09:00:00';
-                $events[] = [
-                    'id' => 'medication_' . $medication->id,
-                    'type' => 'medication',
-                    'title' => 'Medication: ' . $medicationName,
-                    'description' => $medication->resident ? $medication->resident->first_name . ' ' . $medication->resident->last_name : 'No resident',
-                    'date' => $nextDue->toDateString(),
-                    'time' => $timeStr,
-                    'datetime' => $nextDue->setTimeFromTimeString($timeStr)->toIso8601String(),
-                    'branch' => $medication->resident?->branch?->name,
-                    'link' => '/medications',
-                    'icon' => 'pill',
-                    'color' => 'green',
-                ];
-            });
+            $assessmentsQuery->orderBy('created_at', 'desc')
+                ->limit($limit)
+                ->get()
+                ->each(function ($assessment) use (&$events) {
+                    $events[] = [
+                        'id' => 'assessment_' . $assessment->id,
+                        'type' => 'assessment',
+                        'title' => 'Assessment: ' . ($assessment->resident ? $assessment->resident->first_name . ' ' . $assessment->resident->last_name : 'Unknown'),
+                        'description' => 'Status: ' . ucfirst($assessment->status),
+                        'date' => $assessment->assessment_date?->toDateString() ?? $assessment->created_at->toDateString(),
+                        'time' => null,
+                        'datetime' => ($assessment->assessment_date ?? $assessment->created_at)->toIso8601String(),
+                        'branch' => $assessment->resident?->branch?->name,
+                        'link' => '/assessments/' . $assessment->id,
+                        'icon' => 'clipboard',
+                        'color' => 'purple',
+                    ];
+                });
+        }
+
+        // 4. Due Medication Administrations (next 7 days)
+        if (Schema::hasTable('medications')) {
+            $medicationsQuery = Medication::withoutGlobalScopes()
+                ->with(['resident', 'resident.branch', 'drug'])
+                ->where('is_active', true)
+                ->whereHas('resident', function ($q) use ($facilityId, $branchId) {
+                    $q->where('is_active', true);
+                    if ($facilityId) {
+                        $q->where(function ($r) use ($facilityId) {
+                            $r->where('facility_id', $facilityId)
+                                ->orWhereHas('branch', function ($b) use ($facilityId) {
+                                    $b->where('facility_id', $facilityId);
+                                });
+                        });
+                    }
+                    if ($branchId) {
+                        $q->where('branch_id', $branchId);
+                    }
+                });
+
+            $medicationsQuery->limit($limit)
+                ->get()
+                ->each(function ($medication) use (&$events) {
+                    // Estimate next due date (simplified - assumes daily)
+                    $nextDue = now()->addDay();
+                    $medicationName = $medication->drug?->name ?? $medication->name ?? 'Unknown Medication';
+                    $timeStr = $medication->time_1 ?? '09:00:00';
+                    $events[] = [
+                        'id' => 'medication_' . $medication->id,
+                        'type' => 'medication',
+                        'title' => 'Medication: ' . $medicationName,
+                        'description' => $medication->resident ? $medication->resident->first_name . ' ' . $medication->resident->last_name : 'No resident',
+                        'date' => $nextDue->toDateString(),
+                        'time' => $timeStr,
+                        'datetime' => $nextDue->setTimeFromTimeString($timeStr)->toIso8601String(),
+                        'branch' => $medication->resident?->branch?->name,
+                        'link' => '/medications',
+                        'icon' => 'pill',
+                        'color' => 'green',
+                    ];
+                });
+        }
 
         // 5. Pending Grocery Status Updates (current and next week)
-        if (!$isCaregiver || $facilityId) {
+        if ((!$isCaregiver || $facilityId) && Schema::hasTable('grocery_status_updates')) {
             $currentWeekStart = now()->startOfWeek();
             $nextWeekStart = $currentWeekStart->copy()->addWeek();
             
@@ -1044,7 +1063,7 @@ class DashboardService
         }
 
         // 6. Scheduled Cleaning Task Assignments
-        if (!$isCaregiver || $facilityId) {
+        if ((!$isCaregiver || $facilityId) && Schema::hasTable('cleaning_task_assignments')) {
             $cleaningQuery = CleaningTaskAssignment::withoutGlobalScopes()
                 ->with(['task.area.branch', 'user'])
                 ->where('status', 'assigned')
