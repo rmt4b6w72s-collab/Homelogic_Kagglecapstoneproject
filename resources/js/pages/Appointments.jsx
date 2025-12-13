@@ -10,21 +10,20 @@ import CalendarView from '../components/CalendarView';
 // Profile Image Component with fallback
 function ProfileImage({ resident }) {
     const [imageError, setImageError] = useState(false);
-    
+
     if (!resident.profile_image_url && !resident.profile_image || imageError) {
         return (
-            <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold ${
-                resident.gender?.toLowerCase() === 'male' ? 'bg-blue-500' : 'bg-pink-500'
-            }`}>
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold ${resident.gender?.toLowerCase() === 'male' ? 'bg-blue-500' : 'bg-pink-500'
+                }`}>
                 {resident.first_name?.[0]?.toUpperCase() || ''}{resident.last_name?.[0]?.toUpperCase() || ''}
             </div>
         );
     }
-    
+
     return (
         <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-gray-200 flex-shrink-0">
-            <img 
-                src={resident.profile_image_url || `/storage/${resident.profile_image}`} 
+            <img
+                src={resident.profile_image_url || `/storage/${resident.profile_image}`}
                 alt={`${resident.first_name} ${resident.last_name}`}
                 className="w-full h-full object-cover"
                 onError={() => setImageError(true)}
@@ -241,15 +240,15 @@ export default function Appointments() {
     // Read URL parameters on mount and set filters
     useEffect(() => {
         if (urlParamsProcessed.current) return;
-        
+
         try {
             const residentId = searchParams.get('resident_id');
             const appointmentId = searchParams.get('appointment_id');
-            
+
             if (residentId) {
                 setResidentFilter(residentId);
                 highlightedAppointmentId.current = appointmentId;
-                
+
                 // Clear URL parameters after reading them
                 const newSearchParams = new URLSearchParams(searchParams);
                 if (appointmentId) {
@@ -261,7 +260,7 @@ export default function Appointments() {
                 }
                 setSearchParams(newSearchParams, { replace: true });
             }
-            
+
             urlParamsProcessed.current = true;
         } catch (error) {
             console.error('Error processing URL parameters:', error);
@@ -280,16 +279,16 @@ export default function Appointments() {
             const timeoutId = setTimeout(() => {
                 const appointmentId = highlightedAppointmentId.current;
                 if (!appointmentId) return;
-                
+
                 // Try both string and number keys
-                const rowRef = appointmentRowRefs.current[appointmentId] || 
-                              appointmentRowRefs.current[String(appointmentId)] ||
-                              appointmentRowRefs.current[parseInt(appointmentId)];
-                
+                const rowRef = appointmentRowRefs.current[appointmentId] ||
+                    appointmentRowRefs.current[String(appointmentId)] ||
+                    appointmentRowRefs.current[parseInt(appointmentId)];
+
                 if (rowRef) {
                     // Scroll to the appointment row
                     rowRef.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    
+
                     // Remove highlight after 3 seconds
                     setTimeout(() => {
                         highlightedAppointmentId.current = null;
@@ -299,7 +298,7 @@ export default function Appointments() {
                     }, 3000);
                 }
             }, 200); // Slightly longer delay to ensure DOM is ready
-            
+
             // Cleanup function to clear timeout if component unmounts or dependencies change
             return () => clearTimeout(timeoutId);
         } catch (error) {
@@ -319,7 +318,7 @@ export default function Appointments() {
                 description: formData.description || null,
                 status: formData.status || 'scheduled',
             };
-            
+
             return await api.post('/appointments', payload);
         },
         onSuccess: () => {
@@ -343,7 +342,7 @@ export default function Appointments() {
             if (notes !== null) {
                 formData.append('notes', notes);
             }
-            
+
             // Add documents if any
             if (documents && documents.length > 0) {
                 documents.forEach((doc, index) => {
@@ -357,7 +356,7 @@ export default function Appointments() {
                     }
                 });
             }
-            
+
             await api.patch(`/appointments/${id}/status`, formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
@@ -420,14 +419,14 @@ export default function Appointments() {
         if (!data?.data) return null;
         const residentAppointments = data.data.filter(apt => apt.resident_id === residentId && apt.status !== 'cancelled' && apt.status !== 'completed');
         if (residentAppointments.length === 0) return null;
-        
+
         // Sort by date and return the next one
         const sorted = residentAppointments.sort((a, b) => {
             const dateA = new Date(a.appointment_date);
             const dateB = new Date(b.appointment_date);
             return dateA - dateB;
         });
-        
+
         return sorted[0];
     };
 
@@ -495,7 +494,7 @@ export default function Appointments() {
                                 {(allResidentsData.data || []).map((resident) => {
                                     const nextAppt = getNextAppointment(resident.id);
                                     const age = calculateAge(resident.date_of_birth);
-                                    
+
                                     return (
                                         <div key={resident.id} className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow border border-gray-200 overflow-hidden">
                                             <div className="p-5">
@@ -544,8 +543,8 @@ export default function Appointments() {
                                                             <div>
                                                                 <p className="text-xs text-blue-600 font-medium mb-1">Next Appointment</p>
                                                                 <p className="text-sm font-semibold text-blue-900">
-                                                                    {new Date(nextAppt.appointment_date).toLocaleDateString('en-US', { 
-                                                                        month: 'short', 
+                                                                    {new Date(nextAppt.appointment_date).toLocaleDateString('en-US', {
+                                                                        month: 'short',
                                                                         day: 'numeric',
                                                                         year: 'numeric'
                                                                     })}
@@ -566,11 +565,10 @@ export default function Appointments() {
                                                                     </p>
                                                                 )}
                                                             </div>
-                                                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                                                nextAppt.status === 'scheduled' ? 'bg-amber-100 text-amber-800' :
-                                                                nextAppt.status === 'confirmed' ? 'bg-[var(--theme-primary-bg)] text-[var(--theme-primary)]' :
-                                                                'bg-gray-100 text-gray-800'
-                                                            }`}>
+                                                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${nextAppt.status === 'scheduled' ? 'bg-amber-100 text-amber-800' :
+                                                                    nextAppt.status === 'confirmed' ? 'bg-[var(--theme-primary-bg)] text-[var(--theme-primary)]' :
+                                                                        'bg-gray-100 text-gray-800'
+                                                                }`}>
                                                                 {nextAppt.status?.charAt(0).toUpperCase() + nextAppt.status?.slice(1)}
                                                             </span>
                                                         </div>
@@ -616,7 +614,7 @@ export default function Appointments() {
                             <div className="flex items-center space-x-3">
                                 <div className="w-10 h-10 bg-gradient-to-br from-[var(--theme-primary)] to-[var(--theme-primary-dark)] rounded-lg flex items-center justify-center">
                                     <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
                                     </svg>
                                 </div>
                                 <div>
@@ -634,7 +632,7 @@ export default function Appointments() {
                                 </button>
                             )}
                         </div>
-                        
+
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                             {/* Branch Filter */}
                             <div>
@@ -710,7 +708,7 @@ export default function Appointments() {
                         </p>
                         <div className="inline-flex items-center space-x-2 text-sm text-[var(--theme-primary)] bg-[var(--theme-primary-bg)] px-4 py-2 rounded-lg">
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                             <span>You can filter by branch first to narrow down resident options</span>
                         </div>
@@ -728,22 +726,20 @@ export default function Appointments() {
                                 <div className="inline-flex rounded-lg border border-gray-200 bg-white p-1 shadow-sm">
                                     <button
                                         onClick={() => setViewMode('list')}
-                                        className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
-                                            viewMode === 'list'
+                                        className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors ${viewMode === 'list'
                                                 ? 'bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)]'
                                                 : 'text-gray-700 hover:bg-gray-50'
-                                        }`}
+                                            }`}
                                     >
                                         <List className="w-4 h-4" />
                                         List View
                                     </button>
                                     <button
                                         onClick={() => setViewMode('calendar')}
-                                        className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
-                                            viewMode === 'calendar'
+                                        className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors ${viewMode === 'calendar'
                                                 ? 'bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)]'
                                                 : 'text-gray-700 hover:bg-gray-50'
-                                        }`}
+                                            }`}
                                     >
                                         <Grid className="w-4 h-4" />
                                         Calendar View
@@ -758,7 +754,7 @@ export default function Appointments() {
                                     const date = apt.appointment_date ? new Date(apt.appointment_date) : new Date();
                                     let start = new Date(date);
                                     let end = new Date(date);
-                                    
+
                                     if (apt.appointment_time) {
                                         const timeParts = apt.appointment_time.split(':');
                                         if (timeParts.length >= 2) {
@@ -820,132 +816,130 @@ export default function Appointments() {
                             <div className="bg-white rounded-lg shadow overflow-hidden">
                                 <div className="overflow-x-auto">
                                     <table className="min-w-full divide-y divide-gray-200">
-                                    <thead className="bg-gray-50">
-                                        <tr>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                Resident Name
-                                            </th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                Date Taken
-                                            </th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                Type
-                                            </th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                Other Details
-                                            </th>
-                                            {isCaregiver && (
+                                        <thead className="bg-gray-50">
+                                            <tr>
                                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                    Status
+                                                    Resident Name
                                                 </th>
-                                            )}
-                                        </tr>
-                                    </thead>
-                                    <tbody className="bg-white divide-y divide-gray-200">
-                                        {data.data.map((appointment) => {
-                                            if (!appointment) return null;
-                                            
-                                            const date = appointment.appointment_date ? new Date(appointment.appointment_date) : null;
-                                            const dateStr = date && !isNaN(date.getTime()) ? date.toLocaleDateString('en-US', { 
-                                                month: 'short', 
-                                                day: 'numeric', 
-                                                year: 'numeric' 
-                                            }) : 'N/A';
-                                            
-                                            let timeStr = '';
-                                            if (appointment.appointment_time) {
-                                                try {
-                                                    const timeParts = appointment.appointment_time.split(':');
-                                                    if (timeParts.length >= 2) {
-                                                        const hours = parseInt(timeParts[0]) || 0;
-                                                        const minutes = timeParts[1] || '00';
-                                                        const hour12 = hours % 12 || 12;
-                                                        const ampm = hours >= 12 ? 'PM' : 'AM';
-                                                        timeStr = `${hour12}:${minutes} ${ampm}`;
-                                                    }
-                                                } catch (err) {
-                                                    console.error('Error parsing appointment time:', err);
-                                                }
-                                            }
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    Date Taken
+                                                </th>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    Type
+                                                </th>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    Other Details
+                                                </th>
+                                                {isCaregiver && (
+                                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                        Status
+                                                    </th>
+                                                )}
+                                            </tr>
+                                        </thead>
+                                        <tbody className="bg-white divide-y divide-gray-200">
+                                            {data.data.map((appointment) => {
+                                                if (!appointment) return null;
 
-                                            const isHighlighted = highlightedAppointmentId.current && appointment.id && (
-                                                String(highlightedAppointmentId.current) === String(appointment.id) || 
-                                                highlightedAppointmentId.current === appointment.id
-                                            );
-                                            
-                                            return (
-                                                <tr 
-                                                    key={appointment.id || Math.random()} 
-                                                    ref={(el) => {
-                                                        try {
-                                                            if (el && appointment?.id) {
-                                                                appointmentRowRefs.current[appointment.id] = el;
-                                                                appointmentRowRefs.current[String(appointment.id)] = el;
-                                                            }
-                                                        } catch (err) {
-                                                            console.error('Error setting ref:', err);
+                                                const date = appointment.appointment_date ? new Date(appointment.appointment_date) : null;
+                                                const dateStr = date && !isNaN(date.getTime()) ? date.toLocaleDateString('en-US', {
+                                                    month: 'short',
+                                                    day: 'numeric',
+                                                    year: 'numeric'
+                                                }) : 'N/A';
+
+                                                let timeStr = '';
+                                                if (appointment.appointment_time) {
+                                                    try {
+                                                        const timeParts = appointment.appointment_time.split(':');
+                                                        if (timeParts.length >= 2) {
+                                                            const hours = parseInt(timeParts[0]) || 0;
+                                                            const minutes = timeParts[1] || '00';
+                                                            const hour12 = hours % 12 || 12;
+                                                            const ampm = hours >= 12 ? 'PM' : 'AM';
+                                                            timeStr = `${hour12}:${minutes} ${ampm}`;
                                                         }
-                                                    }}
-                                                    className={`hover:bg-gray-50 transition-all duration-500 ${
-                                                        isHighlighted 
-                                                            ? 'bg-[var(--theme-primary-bg)] border-l-4 border-[var(--theme-primary)] shadow-md' 
-                                                            : ''
-                                                    }`}
-                                                >
-                                                    <td className="px-6 py-4 whitespace-nowrap">
-                                                        <div className="text-sm font-medium text-gray-900">
-                                                            {appointment?.resident?.first_name || ''} {appointment?.resident?.last_name || ''}
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap">
-                                                        <div className="text-sm text-gray-900">
-                                                            {dateStr}
-                                                            {timeStr && <div className="text-xs text-gray-500">{timeStr}</div>}
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap">
-                                                        <div className="text-sm text-gray-900">
-                                                            {appointment?.appointment_type?.name || appointment?.appointmentType?.name || 'Other'}
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-6 py-4">
-                                                        <div className="text-sm text-gray-900">
-                                                            {appointment?.description || appointment?.provider_name || '-'}
-                                                        </div>
-                                                    </td>
-                                                    {isCaregiver && (
+                                                    } catch (err) {
+                                                        console.error('Error parsing appointment time:', err);
+                                                    }
+                                                }
+
+                                                const isHighlighted = highlightedAppointmentId.current && appointment.id && (
+                                                    String(highlightedAppointmentId.current) === String(appointment.id) ||
+                                                    highlightedAppointmentId.current === appointment.id
+                                                );
+
+                                                return (
+                                                    <tr
+                                                        key={appointment.id || Math.random()}
+                                                        ref={(el) => {
+                                                            try {
+                                                                if (el && appointment?.id) {
+                                                                    appointmentRowRefs.current[appointment.id] = el;
+                                                                    appointmentRowRefs.current[String(appointment.id)] = el;
+                                                                }
+                                                            } catch (err) {
+                                                                console.error('Error setting ref:', err);
+                                                            }
+                                                        }}
+                                                        className={`hover:bg-gray-50 transition-all duration-500 ${isHighlighted
+                                                                ? 'bg-[var(--theme-primary-bg)] border-l-4 border-[var(--theme-primary)] shadow-md'
+                                                                : ''
+                                                            }`}
+                                                    >
                                                         <td className="px-6 py-4 whitespace-nowrap">
-                                                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                                                                appointment.status === 'scheduled' ? 'bg-amber-100 text-amber-800' :
-                                                                appointment.status === 'confirmed' ? 'bg-[var(--theme-primary-bg)] text-[var(--theme-primary)]' :
-                                                                appointment.status === 'completed' ? 'bg-[var(--theme-primary-bg)] text-[var(--theme-primary)]' :
-                                                                appointment.status === 'cancelled' ? 'bg-red-100 text-red-800' :
-                                                                'bg-gray-100 text-gray-800'
-                                                            }`}>
-                                                                {appointment.status?.charAt(0).toUpperCase() + appointment.status?.slice(1)}
-                                                            </span>
+                                                            <div className="text-sm font-medium text-gray-900">
+                                                                {appointment?.resident?.first_name || ''} {appointment?.resident?.last_name || ''}
+                                                            </div>
                                                         </td>
-                                                    )}
-                                                </tr>
-                                            );
-                                        })}
-                                    </tbody>
-                                </table>
+                                                        <td className="px-6 py-4 whitespace-nowrap">
+                                                            <div className="text-sm text-gray-900">
+                                                                {dateStr}
+                                                                {timeStr && <div className="text-xs text-gray-500">{timeStr}</div>}
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-6 py-4 whitespace-nowrap">
+                                                            <div className="text-sm text-gray-900">
+                                                                {appointment?.appointment_type?.name || appointment?.appointmentType?.name || 'Other'}
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-6 py-4">
+                                                            <div className="text-sm text-gray-900">
+                                                                {appointment?.description || appointment?.provider_name || '-'}
+                                                            </div>
+                                                        </td>
+                                                        {isCaregiver && (
+                                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                                <span className={`px-3 py-1 rounded-full text-xs font-medium ${appointment.status === 'scheduled' ? 'bg-amber-100 text-amber-800' :
+                                                                        appointment.status === 'confirmed' ? 'bg-[var(--theme-primary-bg)] text-[var(--theme-primary)]' :
+                                                                            appointment.status === 'completed' ? 'bg-[var(--theme-primary-bg)] text-[var(--theme-primary)]' :
+                                                                                appointment.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                                                                                    'bg-gray-100 text-gray-800'
+                                                                    }`}>
+                                                                    {appointment.status?.charAt(0).toUpperCase() + appointment.status?.slice(1)}
+                                                                </span>
+                                                            </td>
+                                                        )}
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
-                        </div>
-                    ) : (
-                        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
-                            <Calendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                            <p className="text-gray-900 text-lg font-semibold mb-2">No Appointments Found</p>
-                            <p className="text-gray-500 text-sm">
-                                No appointments match your current filters.
-                            </p>
-                            <p className="text-gray-400 text-xs mt-2">
-                                Try adjusting your filters or add a new appointment.
-                            </p>
-                        </div>
-                    )}
-                </div>
+                        ) : (
+                            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
+                                <Calendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                                <p className="text-gray-900 text-lg font-semibold mb-2">No Appointments Found</p>
+                                <p className="text-gray-500 text-sm">
+                                    No appointments match your current filters.
+                                </p>
+                                <p className="text-gray-400 text-xs mt-2">
+                                    Try adjusting your filters or add a new appointment.
+                                </p>
+                            </div>
+                        )}
+                    </div>
                 )
             )}
 
@@ -965,14 +959,14 @@ export default function Appointments() {
 
             {/* Completion Notes Modal */}
             {completingAppointment && (
-                <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto" style={{ backgroundColor: 'rgba(0, 0, 0, 0.1)' }}>
+                <div className="fixed inset-0 backdrop-blur-md bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
                     <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
                         <div className="p-6 border-b">
                             <h3 className="text-xl font-semibold text-gray-900">Complete Appointment</h3>
                         </div>
                         <div className="p-6 space-y-6">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                <label className="block text-sm font-bold text-gray-900 mb-1">
                                     Appointment Outcome / Notes (Optional)
                                 </label>
                                 <textarea
@@ -987,7 +981,7 @@ export default function Appointments() {
                             {/* Documents Section */}
                             <div>
                                 <div className="flex items-center justify-between mb-3">
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    <label className="block text-sm font-bold text-gray-900 mb-1">
                                         Upload Documents (Optional)
                                     </label>
                                     <button
@@ -1025,7 +1019,7 @@ export default function Appointments() {
                                                 </div>
                                                 <div className="grid grid-cols-2 gap-3">
                                                     <div>
-                                                        <label className="block text-xs font-medium text-gray-700 mb-1">
+                                                        <label className="block text-xs font-bold text-gray-900 mb-1">
                                                             Document Name *
                                                         </label>
                                                         <input
@@ -1042,7 +1036,7 @@ export default function Appointments() {
                                                         />
                                                     </div>
                                                     <div>
-                                                        <label className="block text-xs font-medium text-gray-700 mb-1">
+                                                        <label className="block text-xs font-bold text-gray-900 mb-1">
                                                             Type *
                                                         </label>
                                                         <select
@@ -1062,7 +1056,7 @@ export default function Appointments() {
                                                         </select>
                                                     </div>
                                                     <div className="col-span-2">
-                                                        <label className="block text-xs font-medium text-gray-700 mb-1">
+                                                        <label className="block text-xs font-bold text-gray-900 mb-1">
                                                             File *
                                                         </label>
                                                         <input
@@ -1079,7 +1073,7 @@ export default function Appointments() {
                                                         <p className="text-xs text-gray-500 mt-1">Max size: 10MB</p>
                                                     </div>
                                                     <div className="col-span-2">
-                                                        <label className="block text-xs font-medium text-gray-700 mb-1">
+                                                        <label className="block text-xs font-bold text-gray-900 mb-1">
                                                             Notes
                                                         </label>
                                                         <textarea
@@ -1115,7 +1109,7 @@ export default function Appointments() {
                             <button
                                 onClick={() => {
                                     // Validate documents
-                                    const validDocuments = completionDocuments.filter(doc => 
+                                    const validDocuments = completionDocuments.filter(doc =>
                                         doc.document_name && doc.document_type && doc.file
                                     );
                                     if (completionDocuments.length > 0 && validDocuments.length !== completionDocuments.length) {
@@ -1142,7 +1136,7 @@ function AddAppointmentModal({ branches, residents, formData, setFormData, onClo
     const handleSubmit = async (e) => {
         e.preventDefault();
         setErrors({});
-        
+
         // Validate required fields
         if (!formData.resident_id) {
             setErrors({ resident_id: 'Resident is required' });
@@ -1152,7 +1146,7 @@ function AddAppointmentModal({ branches, residents, formData, setFormData, onClo
             setErrors({ appointment_date: 'Date is required' });
             return;
         }
-        
+
         onSubmit();
     };
 
@@ -1165,145 +1159,142 @@ function AddAppointmentModal({ branches, residents, formData, setFormData, onClo
                 </div>
                 <form onSubmit={handleSubmit}>
                     <div className="p-6 space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Branch
-                            </label>
-                            <div className="relative">
-                                <select
-                                    value={formData.branch_id}
-                                    onChange={(e) => {
-                                        setFormData({ 
-                                            ...formData, 
-                                            branch_id: e.target.value,
-                                            resident_id: '' // Reset resident when branch changes
-                                        });
-                                        setErrors({ ...errors, branch_id: null, resident_id: null });
-                                    }}
-                                    disabled={isPreFilled}
-                                    className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent ${
-                                        isPreFilled ? 'bg-gray-100 cursor-not-allowed opacity-75' : ''
-                                    }`}
-                                >
-                                    <option value="">All Branches</option>
-                                    {(branches || []).map(branch => (
-                                        <option key={branch.id} value={branch.id}>{branch.name}</option>
-                                    ))}
-                                </select>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Branch
+                                </label>
+                                <div className="relative">
+                                    <select
+                                        value={formData.branch_id}
+                                        onChange={(e) => {
+                                            setFormData({
+                                                ...formData,
+                                                branch_id: e.target.value,
+                                                resident_id: '' // Reset resident when branch changes
+                                            });
+                                            setErrors({ ...errors, branch_id: null, resident_id: null });
+                                        }}
+                                        disabled={isPreFilled}
+                                        className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent ${isPreFilled ? 'bg-gray-100 cursor-not-allowed opacity-75' : ''
+                                            }`}
+                                    >
+                                        <option value="">All Branches</option>
+                                        {(branches || []).map(branch => (
+                                            <option key={branch.id} value={branch.id}>{branch.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                {errors.branch_id && <p className="text-xs text-red-600 mt-1">{errors.branch_id}</p>}
                             </div>
-                            {errors.branch_id && <p className="text-xs text-red-600 mt-1">{errors.branch_id}</p>}
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Resident *
-                            </label>
-                            <div className="relative">
-                                <User className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                                <select
-                                    value={formData.resident_id}
-                                    onChange={(e) => {
-                                        setFormData({ ...formData, resident_id: e.target.value });
-                                        setErrors({ ...errors, resident_id: null });
-                                    }}
-                                    disabled={isPreFilled}
-                                    className={`w-full pl-9 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent ${
-                                        errors.resident_id ? 'border-red-300' : 'border-gray-300'
-                                    } ${isPreFilled ? 'bg-gray-100 cursor-not-allowed opacity-75' : ''}`}
-                                >
-                                    <option value="">Select resident</option>
-                                    {(residents || []).map(r => (
-                                        <option key={r.id} value={r.id}>{r.first_name} {r.last_name}</option>
-                                    ))}
-                                </select>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Resident *
+                                </label>
+                                <div className="relative">
+                                    <User className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                                    <select
+                                        value={formData.resident_id}
+                                        onChange={(e) => {
+                                            setFormData({ ...formData, resident_id: e.target.value });
+                                            setErrors({ ...errors, resident_id: null });
+                                        }}
+                                        disabled={isPreFilled}
+                                        className={`w-full pl-9 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent ${errors.resident_id ? 'border-red-300' : 'border-gray-300'
+                                            } ${isPreFilled ? 'bg-gray-100 cursor-not-allowed opacity-75' : ''}`}
+                                    >
+                                        <option value="">Select resident</option>
+                                        {(residents || []).map(r => (
+                                            <option key={r.id} value={r.id}>{r.first_name} {r.last_name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                {errors.resident_id && <p className="text-xs text-red-600 mt-1">{errors.resident_id}</p>}
                             </div>
-                            {errors.resident_id && <p className="text-xs text-red-600 mt-1">{errors.resident_id}</p>}
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Date *
-                            </label>
-                            <input
-                                type="date"
-                                value={formData.appointment_date}
-                                onChange={(e) => {
-                                    setFormData({ ...formData, appointment_date: e.target.value });
-                                    setErrors({ ...errors, appointment_date: null });
-                                }}
-                                required
-                                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent ${
-                                    errors.appointment_date ? 'border-red-300' : 'border-gray-300'
-                                }`}
-                            />
-                            {errors.appointment_date && <p className="text-xs text-red-600 mt-1">{errors.appointment_date}</p>}
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Time
-                            </label>
-                            <TimePicker
-                                value={formData.appointment_time}
-                                onChange={(value) => setFormData({ ...formData, appointment_time: value })}
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Provider Name
-                            </label>
-                            <div className="relative">
-                                <Stethoscope className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Date *
+                                </label>
                                 <input
-                                    type="text"
-                                    value={formData.provider_name}
-                                    onChange={(e) => setFormData({ ...formData, provider_name: e.target.value })}
-                                    className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
-                                    placeholder="Dr. Smith"
+                                    type="date"
+                                    value={formData.appointment_date}
+                                    onChange={(e) => {
+                                        setFormData({ ...formData, appointment_date: e.target.value });
+                                        setErrors({ ...errors, appointment_date: null });
+                                    }}
+                                    required
+                                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent ${errors.appointment_date ? 'border-red-300' : 'border-gray-300'
+                                        }`}
+                                />
+                                {errors.appointment_date && <p className="text-xs text-red-600 mt-1">{errors.appointment_date}</p>}
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Time
+                                </label>
+                                <TimePicker
+                                    value={formData.appointment_time}
+                                    onChange={(value) => setFormData({ ...formData, appointment_time: value })}
                                 />
                             </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Provider Name
+                                </label>
+                                <div className="relative">
+                                    <Stethoscope className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                                    <input
+                                        type="text"
+                                        value={formData.provider_name}
+                                        onChange={(e) => setFormData({ ...formData, provider_name: e.target.value })}
+                                        className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                        placeholder="Dr. Smith"
+                                    />
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Location
+                                </label>
+                                <div className="relative">
+                                    <MapPin className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                                    <input
+                                        type="text"
+                                        value={formData.location}
+                                        onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                                        className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                        placeholder="Clinic / Room"
+                                    />
+                                </div>
+                            </div>
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Location
+                                Notes / Description
                             </label>
-                            <div className="relative">
-                                <MapPin className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                                <input
-                                    type="text"
-                                    value={formData.location}
-                                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                                    className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
-                                    placeholder="Clinic / Room"
-                                />
+                            <textarea
+                                rows={3}
+                                value={formData.description}
+                                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                placeholder="Additional details..."
+                            />
+                        </div>
+                        {mutation?.isError && (
+                            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                                <p className="text-sm text-red-800">
+                                    {mutation.error?.response?.data?.message || 'Failed to create appointment. Please try again.'}
+                                </p>
+                                {mutation.error?.response?.data?.errors && (
+                                    <ul className="mt-2 list-disc list-inside text-xs text-red-700">
+                                        {Object.entries(mutation.error.response.data.errors).map(([key, messages]) => (
+                                            <li key={key}>{key}: {Array.isArray(messages) ? messages.join(', ') : messages}</li>
+                                        ))}
+                                    </ul>
+                                )}
                             </div>
-                        </div>
+                        )}
                     </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Notes / Description
-                        </label>
-                        <textarea
-                            rows={3}
-                            value={formData.description}
-                            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
-                            placeholder="Additional details..."
-                        />
-                    </div>
-                    {mutation?.isError && (
-                        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                            <p className="text-sm text-red-800">
-                                {mutation.error?.response?.data?.message || 'Failed to create appointment. Please try again.'}
-                            </p>
-                            {mutation.error?.response?.data?.errors && (
-                                <ul className="mt-2 list-disc list-inside text-xs text-red-700">
-                                    {Object.entries(mutation.error.response.data.errors).map(([key, messages]) => (
-                                        <li key={key}>{key}: {Array.isArray(messages) ? messages.join(', ') : messages}</li>
-                                    ))}
-                                </ul>
-                            )}
-                        </div>
-                    )}
-                </div>
                     <div className="p-6 border-t flex items-center justify-end space-x-3">
                         <button
                             type="button"
@@ -1380,7 +1371,7 @@ function TimePicker({ value, onChange, className = '' }) {
     const hourOptions = Array.from({ length: 12 }, (_, i) => i + 1);
     const minuteOptions = Array.from({ length: 60 }, (_, i) => i);
 
-    const displayValue = value 
+    const displayValue = value
         ? `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')} ${period}`
         : '--:-- --';
 
@@ -1396,11 +1387,11 @@ function TimePicker({ value, onChange, className = '' }) {
                 </span>
                 <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isOpen ? 'transform rotate-180' : ''}`} />
             </button>
-            
+
             {isOpen && (
                 <>
-                    <div 
-                        className="fixed inset-0 z-10" 
+                    <div
+                        className="fixed inset-0 z-10"
                         onClick={() => setIsOpen(false)}
                     ></div>
                     <div className="absolute z-20 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg p-4 w-full">
@@ -1419,9 +1410,9 @@ function TimePicker({ value, onChange, className = '' }) {
                                     <option key={h} value={h}>{h.toString().padStart(2, '0')}</option>
                                 ))}
                             </select>
-                            
+
                             <span className="text-2xl font-bold text-gray-700">:</span>
-                            
+
                             {/* Minutes */}
                             <select
                                 value={minutes}
@@ -1436,7 +1427,7 @@ function TimePicker({ value, onChange, className = '' }) {
                                     <option key={m} value={m}>{m.toString().padStart(2, '0')}</option>
                                 ))}
                             </select>
-                            
+
                             {/* AM/PM */}
                             <select
                                 value={period}

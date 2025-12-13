@@ -246,25 +246,25 @@ export default function CaregiverDashboard({
                                 label="Record Vitals"
                                 icon={Activity}
                                 onClick={() => navigate('/vitals')}
-                                color="bg-red-50 text-red-600 hover:bg-red-100"
+                                color="bg-rose-600 text-white hover:bg-rose-700 shadow-md shadow-rose-100"
                             />
                             <QuickAction
                                 label="New Incident"
                                 icon={AlertCircle}
                                 onClick={() => navigate('/incidents')}
-                                color="bg-orange-50 text-orange-600 hover:bg-orange-100"
+                                color="bg-orange-500 text-white hover:bg-orange-600 shadow-md shadow-orange-100"
                             />
                             <QuickAction
                                 label="Administer Meds"
                                 icon={Pill}
                                 onClick={() => navigate('/medications')}
-                                color="bg-green-50 text-green-600 hover:bg-green-100"
+                                color="bg-emerald-600 text-white hover:bg-emerald-700 shadow-md shadow-emerald-100"
                             />
                             <QuickAction
                                 label="Daily Notes"
                                 icon={FileText}
                                 onClick={() => navigate('/t-logs')}
-                                color="bg-blue-50 text-blue-600 hover:bg-blue-100"
+                                color="bg-blue-600 text-white hover:bg-blue-700 shadow-md shadow-blue-100"
                             />
                         </div>
                     </div>

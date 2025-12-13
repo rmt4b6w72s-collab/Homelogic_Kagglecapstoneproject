@@ -35,11 +35,11 @@ export default function CreateAppointment() {
     const { data: appointmentsData, isLoading: appointmentsLoading, refetch } = useQuery({
         queryKey: ['appointments', residentId],
         queryFn: async () => {
-            const response = await api.get('/appointments', { 
-                params: { 
+            const response = await api.get('/appointments', {
+                params: {
                     resident_id: residentId,
-                    per_page: 100 
-                } 
+                    per_page: 100
+                }
             });
             return response.data;
         },
@@ -60,7 +60,7 @@ export default function CreateAppointment() {
                 notes: formData.description || null,
                 status: 'scheduled',
             };
-            
+
             return await api.post('/appointments', payload);
         },
         onSuccess: () => {
@@ -191,15 +191,14 @@ export default function CreateAppointment() {
                                         setErrors({ ...errors, appointment_date: null });
                                     }}
                                     required
-                                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent ${
-                                        errors.appointment_date ? 'border-red-300' : 'border-gray-300'
-                                    }`}
+                                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent ${errors.appointment_date ? 'border-red-300' : 'border-gray-300'
+                                        }`}
                                 />
                                 {errors.appointment_date && (
                                     <p className="text-xs text-red-600 mt-1">{errors.appointment_date}</p>
                                 )}
                             </div>
-                            
+
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
                                     Time *
@@ -212,15 +211,14 @@ export default function CreateAppointment() {
                                         setErrors({ ...errors, appointment_time: null });
                                     }}
                                     required
-                                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent ${
-                                        errors.appointment_time ? 'border-red-300' : 'border-gray-300'
-                                    }`}
+                                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent ${errors.appointment_time ? 'border-red-300' : 'border-gray-300'
+                                        }`}
                                 />
                                 {errors.appointment_time && (
                                     <p className="text-xs text-red-600 mt-1">{errors.appointment_time}</p>
                                 )}
                             </div>
-                            
+
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
                                     Provider Name
@@ -236,7 +234,7 @@ export default function CreateAppointment() {
                                     />
                                 </div>
                             </div>
-                            
+
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
                                     Location
@@ -253,7 +251,7 @@ export default function CreateAppointment() {
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
                                 Notes / Description
@@ -266,7 +264,7 @@ export default function CreateAppointment() {
                                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent resize-none"
                             />
                         </div>
-                        
+
                         {submitMutation.isError && (
                             <div className="bg-red-50 border border-red-200 rounded-lg p-4">
                                 <p className="text-sm text-red-800">
@@ -282,7 +280,7 @@ export default function CreateAppointment() {
                             </div>
                         )}
                     </div>
-                    
+
                     <div className="flex justify-center mt-6">
                         <button
                             type="submit"
@@ -303,22 +301,20 @@ export default function CreateAppointment() {
                         <div className="inline-flex rounded-lg border border-gray-200 bg-white p-1 shadow-sm">
                             <button
                                 onClick={() => setViewMode('list')}
-                                className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
-                                    viewMode === 'list'
+                                className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors ${viewMode === 'list'
                                         ? 'bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)]'
                                         : 'text-gray-700 hover:bg-gray-50'
-                                }`}
+                                    }`}
                             >
                                 <List className="w-4 h-4" />
                                 List View
                             </button>
                             <button
                                 onClick={() => setViewMode('calendar')}
-                                className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
-                                    viewMode === 'calendar'
+                                className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors ${viewMode === 'calendar'
                                         ? 'bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)]'
                                         : 'text-gray-700 hover:bg-gray-50'
-                                }`}
+                                    }`}
                             >
                                 <Grid className="w-4 h-4" />
                                 Calendar View
@@ -341,7 +337,7 @@ export default function CreateAppointment() {
                                         const date = apt.appointment_date ? new Date(apt.appointment_date) : new Date();
                                         let start = new Date(date);
                                         let end = new Date(date);
-                                        
+
                                         if (apt.appointment_time) {
                                             const timeParts = apt.appointment_time.split(':');
                                             if (timeParts.length >= 2) {
@@ -385,110 +381,109 @@ export default function CreateAppointment() {
                             />
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {appointmentsData.data.map((appointment) => {
-                                if (!appointment) return null;
-                                
-                                const date = appointment.appointment_date ? new Date(appointment.appointment_date) : null;
-                                const dateStr = date && !isNaN(date.getTime()) ? date.toLocaleDateString('en-US', { 
-                                    month: 'long', 
-                                    day: 'numeric',
-                                    year: 'numeric' 
-                                }) : 'N/A';
-                                
-                                let timeStr = '';
-                                if (appointment.appointment_time) {
-                                    try {
-                                        const timeParts = appointment.appointment_time.split(':');
-                                        if (timeParts.length >= 2) {
-                                            const hours = parseInt(timeParts[0]) || 0;
-                                            const minutes = timeParts[1] || '00';
-                                            const hour12 = hours % 12 || 12;
-                                            const ampm = hours >= 12 ? 'PM' : 'AM';
-                                            timeStr = `${hour12}:${minutes} ${ampm}`;
+                                {appointmentsData.data.map((appointment) => {
+                                    if (!appointment) return null;
+
+                                    const date = appointment.appointment_date ? new Date(appointment.appointment_date) : null;
+                                    const dateStr = date && !isNaN(date.getTime()) ? date.toLocaleDateString('en-US', {
+                                        month: 'long',
+                                        day: 'numeric',
+                                        year: 'numeric'
+                                    }) : 'N/A';
+
+                                    let timeStr = '';
+                                    if (appointment.appointment_time) {
+                                        try {
+                                            const timeParts = appointment.appointment_time.split(':');
+                                            if (timeParts.length >= 2) {
+                                                const hours = parseInt(timeParts[0]) || 0;
+                                                const minutes = timeParts[1] || '00';
+                                                const hour12 = hours % 12 || 12;
+                                                const ampm = hours >= 12 ? 'PM' : 'AM';
+                                                timeStr = `${hour12}:${minutes} ${ampm}`;
+                                            }
+                                        } catch (err) {
+                                            console.error('Error parsing appointment time:', err);
                                         }
-                                    } catch (err) {
-                                        console.error('Error parsing appointment time:', err);
                                     }
-                                }
-                                
-                                const nextApptDate = appointment.next_appointment_date ? new Date(appointment.next_appointment_date) : null;
-                                const nextApptDateStr = nextApptDate && !isNaN(nextApptDate.getTime()) ? nextApptDate.toLocaleDateString('en-US', { 
-                                    month: 'long', 
-                                    day: 'numeric',
-                                    year: 'numeric' 
-                                }) : 'N/A';
-                                
-                                return (
-                                    <div key={appointment.id} className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow border border-gray-200 p-5">
-                                        <div className="flex items-start justify-between mb-3">
-                                            <div className="flex-1">
-                                                <h4 className="text-lg font-semibold text-gray-900 mb-1">
-                                                    {appointment.resident?.first_name} {appointment.resident?.last_name}
-                                                </h4>
-                                                <div className="flex items-center space-x-2 text-sm text-gray-600">
-                                                    <Calendar className="w-4 h-4" />
-                                                    <span>{dateStr}</span>
-                                                    {timeStr && <span className="text-gray-500">• {timeStr}</span>}
+
+                                    const nextApptDate = appointment.next_appointment_date ? new Date(appointment.next_appointment_date) : null;
+                                    const nextApptDateStr = nextApptDate && !isNaN(nextApptDate.getTime()) ? nextApptDate.toLocaleDateString('en-US', {
+                                        month: 'long',
+                                        day: 'numeric',
+                                        year: 'numeric'
+                                    }) : 'N/A';
+
+                                    return (
+                                        <div key={appointment.id} className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow border border-gray-200 p-5">
+                                            <div className="flex items-start justify-between mb-3">
+                                                <div className="flex-1">
+                                                    <h4 className="text-lg font-semibold text-gray-900 mb-1">
+                                                        {appointment.resident?.first_name} {appointment.resident?.last_name}
+                                                    </h4>
+                                                    <div className="flex items-center space-x-2 text-sm text-gray-600">
+                                                        <Calendar className="w-4 h-4" />
+                                                        <span>{dateStr}</span>
+                                                        {timeStr && <span className="text-gray-500">• {timeStr}</span>}
+                                                    </div>
                                                 </div>
+                                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${appointment.status === 'scheduled' ? 'bg-amber-100 text-amber-800' :
+                                                        appointment.status === 'confirmed' ? 'bg-green-100 text-green-800' :
+                                                            appointment.status === 'completed' ? 'bg-emerald-100 text-emerald-800' :
+                                                                appointment.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                                                                    'bg-gray-100 text-gray-800'
+                                                    }`}>
+                                                    {appointment.status?.charAt(0).toUpperCase() + appointment.status?.slice(1)}
+                                                </span>
                                             </div>
-                                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                                appointment.status === 'scheduled' ? 'bg-amber-100 text-amber-800' :
-                                                appointment.status === 'confirmed' ? 'bg-green-100 text-green-800' :
-                                                appointment.status === 'completed' ? 'bg-emerald-100 text-emerald-800' :
-                                                appointment.status === 'cancelled' ? 'bg-red-100 text-red-800' :
-                                                'bg-gray-100 text-gray-800'
-                                            }`}>
-                                                {appointment.status?.charAt(0).toUpperCase() + appointment.status?.slice(1)}
-                                            </span>
-                                        </div>
-                                        
-                                        <div className="space-y-2 mb-4">
-                                            <div className="text-sm text-gray-600">
-                                                <span className="font-medium">Type:</span> {appointment.appointment_type?.name || appointment.appointmentType?.name || 'Other'}
+
+                                            <div className="space-y-2 mb-4">
+                                                <div className="text-sm text-gray-600">
+                                                    <span className="font-medium">Type:</span> {appointment.appointment_type?.name || appointment.appointmentType?.name || 'Other'}
+                                                </div>
+                                                {(appointment.description || appointment.provider_name) && (
+                                                    <div className="text-sm text-gray-600">
+                                                        <span className="font-medium">Details:</span> {appointment.description || appointment.provider_name || '-'}
+                                                    </div>
+                                                )}
+                                                {nextApptDateStr !== 'N/A' && (
+                                                    <div className="text-sm text-gray-600">
+                                                        <span className="font-medium">Next Appointment:</span> {nextApptDateStr}
+                                                    </div>
+                                                )}
+                                                {appointment.notes && (
+                                                    <div className="text-sm text-gray-600 mt-2 pt-2 border-t border-gray-200">
+                                                        <span className="font-medium">Notes:</span>
+                                                        <p className="text-gray-700 mt-1 whitespace-pre-wrap">{appointment.notes}</p>
+                                                    </div>
+                                                )}
                                             </div>
-                                            {(appointment.description || appointment.provider_name) && (
-                                                <div className="text-sm text-gray-600">
-                                                    <span className="font-medium">Details:</span> {appointment.description || appointment.provider_name || '-'}
-                                                </div>
-                                            )}
-                                            {nextApptDateStr !== 'N/A' && (
-                                                <div className="text-sm text-gray-600">
-                                                    <span className="font-medium">Next Appointment:</span> {nextApptDateStr}
-                                                </div>
-                                            )}
-                                            {appointment.notes && (
-                                                <div className="text-sm text-gray-600 mt-2 pt-2 border-t border-gray-200">
-                                                    <span className="font-medium">Notes:</span>
-                                                    <p className="text-gray-700 mt-1 whitespace-pre-wrap">{appointment.notes}</p>
-                                                </div>
-                                            )}
-                                        </div>
-                                        
-                                        <div className="flex items-center justify-end space-x-2">
-                                            {appointment.status !== 'completed' && appointment.status !== 'cancelled' && (
+
+                                            <div className="flex items-center justify-end space-x-2">
+                                                {appointment.status !== 'completed' && appointment.status !== 'cancelled' && (
+                                                    <button
+                                                        onClick={() => handleMarkComplete(appointment)}
+                                                        className="flex items-center space-x-1 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors"
+                                                        title="Mark as Complete"
+                                                    >
+                                                        <CheckCircle className="w-4 h-4" />
+                                                        <span>Mark Complete</span>
+                                                    </button>
+                                                )}
                                                 <button
-                                                    onClick={() => handleMarkComplete(appointment)}
-                                                    className="flex items-center space-x-1 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors"
-                                                    title="Mark as Complete"
+                                                    onClick={() => {
+                                                        // Navigate to edit appointment or open modal
+                                                        navigate(`/appointments?edit=${appointment.id}`);
+                                                    }}
+                                                    className="text-[var(--theme-primary)] hover:text-[var(--theme-primary-hover)] p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                                                    title="Edit"
                                                 >
-                                                    <CheckCircle className="w-4 h-4" />
-                                                    <span>Mark Complete</span>
+                                                    <Edit className="w-5 h-5" />
                                                 </button>
-                                            )}
-                                            <button
-                                                onClick={() => {
-                                                    // Navigate to edit appointment or open modal
-                                                    navigate(`/appointments?edit=${appointment.id}`);
-                                                }}
-                                                className="text-[var(--theme-primary)] hover:text-[var(--theme-primary-hover)] p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                                                title="Edit"
-                                            >
-                                                <Edit className="w-5 h-5" />
-                                            </button>
+                                            </div>
                                         </div>
-                                    </div>
-                                );
-                            })}
+                                    );
+                                })}
                             </div>
                         )
                     ) : (
@@ -503,7 +498,7 @@ export default function CreateAppointment() {
 
             {/* Mark Complete Modal */}
             {completingAppointment && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                <div className="fixed inset-0 backdrop-blur-md bg-black/50 flex items-center justify-center z-50">
                     <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
                         <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
                             <h3 className="text-xl font-semibold text-gray-900">Mark Appointment as Complete</h3>
@@ -530,8 +525,8 @@ export default function CreateAppointment() {
                                 </p>
                             </div>
                             <div className="mb-4">
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Completion Notes <span className="text-gray-500">(Optional)</span>
+                                <label className="block text-sm font-bold text-gray-900 mb-2">
+                                    Completion Notes <span className="text-gray-500 font-normal">(Optional)</span>
                                 </label>
                                 <textarea
                                     value={completionNotes}
