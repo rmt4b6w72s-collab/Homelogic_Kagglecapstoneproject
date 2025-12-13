@@ -112,6 +112,7 @@ Route::prefix('v1')->middleware([\App\Http\Middleware\SetFacilityContext::class]
     Route::apiResource('drugs', DrugController::class)->middleware('auth:sanctum');
 
     // Medication Administrations
+    Route::get('/medication-administrations/stats', [MedicationAdministrationController::class, 'stats'])->middleware('auth:sanctum');
     Route::apiResource('medication-administrations', MedicationAdministrationController::class)->middleware('auth:sanctum');
 
     // Medication Deliveries

@@ -13,8 +13,85 @@ class MedicationAdministrationController extends BaseApiController
 {
     public function index(Request $request): JsonResponse
     {
-        $query = MedicationAdministration::with(['medication', 'resident', 'branch', 'administeredBy']);
+        $query = $this->buildQuery($request);
+        
+        $perPage = (int) $request->get('per_page', 25);
+        $perPage = max(1, min(100, $perPage));
+
+        $administrations = $query->with(['medication', 'resident', 'branch', 'administeredBy'])
+            ->orderBy('administered_at', 'desc')
+            ->paginate($perPage);
+
+        return response()->json($administrations);
+    }
+
+    public function stats(Request $request): JsonResponse
+    {
+        $query = $this->buildQuery($request);
+        
+        // Clone query for different aggregations to avoid modifying the base query
+        $total = (clone $query)->count();
+        $administered = (clone $query)->where('status', 'administered')->count();
+        $missed = (clone $query)->where('status', 'missed')->count();
+        $refused = (clone $query)->where('status', 'refused')->count();
+        
+        // Calculate adherence
+        $adherence = ($total > 0) ? round(($administered / $total) * 100) : 0;
+        
+        // Daily breakdown for charts (last 7 days or selected range)
+        $dateFrom = $request->get('date_from') 
+            ? Carbon::createFromFormat('Y-m-d', $request->get('date_from'), config('app.timezone'))->startOfDay()
+            : Carbon::now(config('app.timezone'))->subDays(6)->startOfDay();
+            
+        $dateTo = $request->get('date_to')
+            ? Carbon::createFromFormat('Y-m-d', $request->get('date_to'), config('app.timezone'))->endOfDay()
+            : Carbon::now(config('app.timezone'))->endOfDay();
+
+        // Group by date
+        $dailyData = (clone $query)
+            ->selectRaw('DATE(administered_at) as date, status, count(*) as count')
+            ->groupBy('date', 'status')
+            ->orderBy('date')
+            ->get();
+            
+        // Process daily data into chart format
+        $chartData = [];
+        $current = $dateFrom->copy();
+        while ($current <= $dateTo) {
+            $dateStr = $current->toDateString();
+            $dayData = $dailyData->where('date', $dateStr);
+            
+            $chartData[] = [
+                'date' => $dateStr,
+                'day' => $current->format('D'), // Mon, Tue, etc.
+                'administered' => $dayData->where('status', 'administered')->sum('count'),
+                'missed' => $dayData->where('status', 'missed')->sum('count'),
+                'refused' => $dayData->where('status', 'refused')->sum('count'),
+            ];
+            $current->addDay();
+        }
+
+        return response()->json([
+            'total' => $total,
+            'administered' => $administered,
+            'missed' => $missed,
+            'refused' => $refused,
+            'adherence' => $adherence,
+            'chart_data' => $chartData,
+        ]);
+    }
+
+    private function buildQuery(Request $request)
+    {
+        $query = MedicationAdministration::query();
         $user = $request->user();
+
+        // Scope to user's facility
+        if ($user->facility_id) {
+            $query->whereHas('branch', function ($q) use ($user) {
+                $q->where('facility_id', $user->facility_id);
+            });
+        }
 
         // Check if user is a caregiver (including all caregiver-related roles)
         $isCaregiver = $user && in_array($user->role, ['caregiver', 'care_giver', 'nurse', 'registered_nurse', 'licensed_nurse']);
@@ -40,9 +117,10 @@ class MedicationAdministrationController extends BaseApiController
                 $residentBranch = \App\Models\Resident::where('id', $residentId)->value('branch_id');
 
                 if ($user->assigned_branch_id && (int) $residentBranch !== (int) $user->assigned_branch_id) {
-                    return response()->json([
-                        'message' => 'You do not have permission to view medication history for this resident.',
-                    ], 403);
+                    // This permission check is tricky in a builder helper. 
+                    // Ideally, we should throw an exception or handle it upstream.
+                    // For now, we'll force an empty result if permission denied.
+                    $query->whereRaw('1 = 0');
                 }
             }
 
@@ -78,14 +156,8 @@ class MedicationAdministrationController extends BaseApiController
         if ($request->has('today') && $request->get('today') === 'true') {
             $query->whereDate('administered_at', today());
         }
-
-        $perPage = (int) $request->get('per_page', 25);
-        $perPage = max(1, min(100, $perPage));
-
-        $administrations = $query->orderBy('administered_at', 'desc')
-            ->paginate($perPage);
-
-        return response()->json($administrations);
+        
+        return $query;
     }
 
     public function show($id): JsonResponse

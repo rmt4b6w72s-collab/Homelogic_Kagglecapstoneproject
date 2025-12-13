@@ -1,8 +1,27 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { FileText, Pill, ClipboardList, User as UserIcon, Building2, Calendar, Download } from 'lucide-react';
+import { FileText, Pill, ClipboardList, User as UserIcon, Building2, Calendar, Download, AlertCircle } from 'lucide-react';
 import api from '../services/api';
 import SectionCard from '../components/SectionCard';
+import {
+    Chart as ChartJS,
+    CategoryScale,
+    LinearScale,
+    BarElement,
+    Title,
+    Tooltip,
+    Legend,
+} from 'chart.js';
+import { Bar } from 'react-chartjs-2';
+
+ChartJS.register(
+    CategoryScale,
+    LinearScale,
+    BarElement,
+    Title,
+    Tooltip,
+    Legend
+);
 
 const perPage = 25;
 
@@ -10,9 +29,17 @@ export default function MedicationsReport() {
     const [dateFrom, setDateFrom] = React.useState(() => {
         const d = new Date();
         d.setDate(d.getDate() - 7);
-        return d.toISOString().split('T')[0];
+        // Use local date string in YYYY-MM-DD format
+        const offset = d.getTimezoneOffset();
+        const localDate = new Date(d.getTime() - (offset * 60 * 1000));
+        return localDate.toISOString().split('T')[0];
     });
-    const [dateTo, setDateTo] = React.useState(() => new Date().toISOString().split('T')[0]);
+    const [dateTo, setDateTo] = React.useState(() => {
+        const d = new Date();
+        const offset = d.getTimezoneOffset();
+        const localDate = new Date(d.getTime() - (offset * 60 * 1000));
+        return localDate.toISOString().split('T')[0];
+    });
     const [branchId, setBranchId] = React.useState('');
     const [residentId, setResidentId] = React.useState('');
     const [page, setPage] = React.useState(1);
@@ -27,9 +54,24 @@ export default function MedicationsReport() {
         queryFn: async () => (await api.get('/residents', { params: { per_page: 200 } })).data,
     });
 
+    // Fetch aggregate stats
+    const { data: statsData, isLoading: statsLoading } = useQuery({
+        queryKey: ['medications-stats', dateFrom, dateTo, branchId, residentId],
+        queryFn: async () => {
+            const params = {
+                date_from: dateFrom || undefined,
+                date_to: dateTo || undefined,
+                branch_id: branchId || undefined,
+                resident_id: residentId || undefined,
+            };
+            return (await api.get('/medication-administrations/stats', { params })).data;
+        }
+    });
+
+    // Fetch paginated records
     const {
         data: administrationsData,
-        isLoading,
+        isLoading: recordsLoading,
         isFetching,
         error,
     } = useQuery({
@@ -52,10 +94,6 @@ export default function MedicationsReport() {
     const administrations = administrationsData?.data || [];
     const totalPages = administrationsData?.last_page || 1;
     const total = administrationsData?.total || 0;
-
-    const administeredCount = administrations.filter(a => a.status === 'administered').length;
-    const missedCount = administrations.filter(a => a.status === 'missed').length;
-    const adherence = (administeredCount + missedCount) > 0 ? Math.round((administeredCount / (administeredCount + missedCount)) * 100) : 0;
 
     const handleExport = () => {
         const rows = administrations.map(a => ({
@@ -81,16 +119,72 @@ export default function MedicationsReport() {
         URL.revokeObjectURL(url);
     };
 
+    const chartOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'top',
+            },
+            title: {
+                display: false,
+            },
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                grid: {
+                    color: '#f3f4f6',
+                }
+            },
+            x: {
+                grid: {
+                    display: false,
+                }
+            }
+        }
+    };
+
+    const chartData = {
+        labels: statsData?.chart_data?.map(d => d.day) || [],
+        datasets: [
+            {
+                label: 'Administered',
+                data: statsData?.chart_data?.map(d => d.administered) || [],
+                backgroundColor: 'rgba(34, 197, 94, 0.6)',
+                borderColor: 'rgb(34, 197, 94)',
+                borderWidth: 1,
+                borderRadius: 4,
+            },
+            {
+                label: 'Missed',
+                data: statsData?.chart_data?.map(d => d.missed) || [],
+                backgroundColor: 'rgba(239, 68, 68, 0.6)',
+                borderColor: 'rgb(239, 68, 68)',
+                borderWidth: 1,
+                borderRadius: 4,
+            },
+            {
+                label: 'Refused',
+                data: statsData?.chart_data?.map(d => d.refused) || [],
+                backgroundColor: 'rgba(234, 179, 8, 0.6)',
+                borderColor: 'rgb(234, 179, 8)',
+                borderWidth: 1,
+                borderRadius: 4,
+            },
+        ],
+    };
+
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900">Medication Report</h1>
                     <p className="text-gray-600">View administered and missed medications with filters and KPIs.</p>
                 </div>
                 <button
                     onClick={handleExport}
-                    className="inline-flex items-center gap-2 px-3 py-2 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 text-sm font-semibold"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 text-sm font-semibold transition-colors"
                     disabled={!administrations.length}
                 >
                     <Download className="w-4 h-4" />
@@ -159,62 +253,87 @@ export default function MedicationsReport() {
                 </div>
             </SectionCard>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <SectionCard>
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-lg bg-green-50">
-                            <Pill className="w-5 h-5 text-green-600" />
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Stats Cards */}
+                <div className="lg:col-span-1 space-y-4">
+                    <SectionCard className="h-full">
+                        <div className="flex flex-col h-full justify-between gap-6">
+                            <div className="flex items-center gap-4 p-4 rounded-xl bg-green-50 border border-green-100">
+                                <div className="p-3 rounded-full bg-green-100">
+                                    <Pill className="w-6 h-6 text-green-600" />
+                                </div>
+                                <div>
+                                    <p className="text-sm font-medium text-gray-600">Administered</p>
+                                    <p className="text-3xl font-bold text-gray-900">
+                                        {statsLoading ? '...' : statsData?.administered || 0}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center gap-4 p-4 rounded-xl bg-red-50 border border-red-100">
+                                <div className="p-3 rounded-full bg-red-100">
+                                    <AlertCircle className="w-6 h-6 text-red-600" />
+                                </div>
+                                <div>
+                                    <p className="text-sm font-medium text-gray-600">Missed</p>
+                                    <p className="text-3xl font-bold text-gray-900">
+                                        {statsLoading ? '...' : statsData?.missed || 0}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center gap-4 p-4 rounded-xl bg-blue-50 border border-blue-100">
+                                <div className="p-3 rounded-full bg-blue-100">
+                                    <ClipboardList className="w-6 h-6 text-blue-600" />
+                                </div>
+                                <div>
+                                    <p className="text-sm font-medium text-gray-600">Adherence Rate</p>
+                                    <p className="text-3xl font-bold text-gray-900">
+                                        {statsLoading ? '...' : `${statsData?.adherence || 0}%`}
+                                    </p>
+                                </div>
+                            </div>
                         </div>
-                        <div>
-                            <p className="text-sm text-gray-500">Administered</p>
-                            <p className="text-2xl font-bold text-gray-900">{administeredCount}</p>
+                    </SectionCard>
+                </div>
+
+                {/* Chart */}
+                <div className="lg:col-span-2">
+                    <SectionCard className="h-full min-h-[300px]">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4">Administration Trends</h3>
+                        <div className="h-[250px] w-full">
+                            {statsLoading ? (
+                                <div className="h-full flex items-center justify-center text-gray-400">Loading chart...</div>
+                            ) : (
+                                <Bar options={chartOptions} data={chartData} />
+                            )}
                         </div>
-                    </div>
-                </SectionCard>
-                <SectionCard>
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-lg bg-red-50">
-                            <ClipboardList className="w-5 h-5 text-red-600" />
-                        </div>
-                        <div>
-                            <p className="text-sm text-gray-500">Missed</p>
-                            <p className="text-2xl font-bold text-gray-900">{missedCount}</p>
-                        </div>
-                    </div>
-                </SectionCard>
-                <SectionCard>
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-lg bg-blue-50">
-                            <FileText className="w-5 h-5 text-blue-600" />
-                        </div>
-                        <div>
-                            <p className="text-sm text-gray-500">Adherence</p>
-                            <p className="text-2xl font-bold text-gray-900">{adherence}%</p>
-                        </div>
-                    </div>
-                </SectionCard>
+                    </SectionCard>
+                </div>
             </div>
 
             <SectionCard>
                 <div className="flex items-center justify-between mb-4">
                     <h3 className="text-lg font-semibold text-gray-900">Administration Records</h3>
-                    {isFetching && <span className="text-xs text-gray-500">Refreshing...</span>}
+                    {isFetching && <span className="text-xs text-gray-500 animate-pulse">Refreshing...</span>}
                 </div>
 
                 {error && (
-                    <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 mb-4">
+                    <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 mb-4 flex items-center gap-2">
+                        <AlertCircle className="w-5 h-5" />
                         Failed to load data: {error.message}
                     </div>
                 )}
 
-                {isLoading ? (
+                {recordsLoading ? (
                     <div className="text-center py-12">
                         <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--theme-primary)]"></div>
-                        <p className="mt-4 text-gray-600">Loading...</p>
+                        <p className="mt-4 text-gray-600">Loading records...</p>
                     </div>
                 ) : administrations.length === 0 ? (
-                    <div className="text-center py-12 text-gray-500">
-                        No records found for the selected filters.
+                    <div className="text-center py-12 text-gray-500 bg-gray-50 rounded-lg border border-dashed border-gray-300">
+                        <FileText className="w-12 h-12 mx-auto text-gray-300 mb-3" />
+                        <p>No records found for the selected filters.</p>
                     </div>
                 ) : (
                     <div className="overflow-x-auto">
@@ -232,7 +351,7 @@ export default function MedicationsReport() {
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
                                 {administrations.map((item) => (
-                                    <tr key={item.id} className="hover:bg-gray-50">
+                                    <tr key={item.id} className="hover:bg-gray-50 transition-colors">
                                         <td className="px-4 py-3 text-sm">
                                             {(() => {
                                                 const r = item.resident || {};
@@ -245,7 +364,7 @@ export default function MedicationsReport() {
                                                     <img
                                                         src={avatarSrc}
                                                         alt={name}
-                                                        className="w-10 h-10 rounded-full object-cover border border-gray-200"
+                                                        className="w-8 h-8 rounded-full object-cover border border-gray-200"
                                                         onError={(e) => {
                                                             e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=25603E&color=fff&size=128`;
                                                         }}
@@ -255,66 +374,82 @@ export default function MedicationsReport() {
 
                                                 if (r.id) {
                                                     return (
-                                                        <a href={`/medications/residents/${r.id}`} className="inline-flex items-center" title={name} aria-label={name}>
+                                                        <a href={`/medications/residents/${r.id}`} className="inline-flex items-center gap-2 group" title={name} aria-label={name}>
                                                             {avatar}
+                                                            <span className="font-medium text-gray-900 group-hover:text-[var(--theme-primary)]">{name}</span>
                                                         </a>
                                                     );
                                                 }
                                                 return (
-                                                    <div className="w-10 h-10 rounded-full bg-[var(--theme-primary)] text-white flex items-center justify-center font-semibold" title={name} aria-label={name}>
-                                                        {initials.toUpperCase() || 'R'}
+                                                    <div className="inline-flex items-center gap-2">
+                                                        <div className="w-8 h-8 rounded-full bg-[var(--theme-primary)] text-white flex items-center justify-center font-semibold text-xs" title={name} aria-label={name}>
+                                                            {initials.toUpperCase() || 'R'}
+                                                        </div>
+                                                        <span className="font-medium text-gray-900">{name}</span>
                                                     </div>
                                                 );
                                             })()}
                                         </td>
                                         <td className="px-4 py-3 text-sm text-gray-900">
-                                            {item.medication?.name || item.name || 'N/A'}
+                                            <div className="font-medium">{item.medication?.name || item.name || 'N/A'}</div>
+                                            {item.dosage_given && <div className="text-xs text-gray-500">{item.dosage_given}</div>}
                                         </td>
                                         <td className="px-4 py-3">
-                                            <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                                                item.status === 'administered'
-                                                    ? 'bg-green-100 text-green-800'
-                                                    : 'bg-red-100 text-red-700'
-                                            }`}>
+                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${item.status === 'administered'
+                                                ? 'bg-green-100 text-green-800'
+                                                : item.status === 'missed'
+                                                    ? 'bg-red-100 text-red-800'
+                                                    : item.status === 'refused'
+                                                        ? 'bg-yellow-100 text-yellow-800'
+                                                        : 'bg-gray-100 text-gray-800'
+                                                }`}>
                                                 {item.status || 'N/A'}
                                             </span>
                                         </td>
-                                        <td className="px-4 py-3 text-sm text-gray-900">
+                                        <td className="px-4 py-3 text-sm text-gray-600">
                                             {item.administered_by?.name || 'N/A'}
                                         </td>
-                                        <td className="px-4 py-3 text-sm text-gray-900">
-                                            {item.administered_at || item.scheduled_at || 'N/A'}
+                                        <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">
+                                            {item.administered_at ? new Date(item.administered_at).toLocaleString() : (item.scheduled_at || 'N/A')}
                                         </td>
-                                        <td className="px-4 py-3 text-sm text-gray-900">
+                                        <td className="px-4 py-3 text-sm text-gray-600">
                                             {item.branch?.name || 'N/A'}
                                         </td>
-                                        <td className="px-4 py-3 text-sm text-gray-700 max-w-xs truncate" title={item.notes || ''}>
+                                        <td className="px-4 py-3 text-sm text-gray-500 max-w-xs truncate" title={item.notes || ''}>
                                             {item.notes || '—'}
                                         </td>
                                     </tr>
                                 ))}
                             </tbody>
                         </table>
-                        <div className="mt-4 flex items-center justify-between text-sm text-gray-700">
-                            <div>
-                                Showing {(perPage * (page - 1)) + 1} - {Math.min(perPage * page, total)} of {total}
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <button
-                                    onClick={() => setPage((p) => Math.max(1, p - 1))}
-                                    disabled={page === 1}
-                                    className="px-3 py-1 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
-                                >
-                                    Previous
-                                </button>
-                                <span>Page {page} of {totalPages}</span>
-                                <button
-                                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                                    disabled={page === totalPages}
-                                    className="px-3 py-1 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
-                                >
-                                    Next
-                                </button>
+                        <div className="px-4 py-3 border-t border-gray-200 flex items-center justify-between sm:px-6">
+                            <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                                <div>
+                                    <p className="text-sm text-gray-700">
+                                        Showing <span className="font-medium">{(perPage * (page - 1)) + 1}</span> to <span className="font-medium">{Math.min(perPage * page, total)}</span> of <span className="font-medium">{total}</span> results
+                                    </p>
+                                </div>
+                                <div>
+                                    <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                                        <button
+                                            onClick={() => setPage((p) => Math.max(1, p - 1))}
+                                            disabled={page === 1}
+                                            className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            Previous
+                                        </button>
+                                        <span className="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">
+                                            Page {page} of {totalPages}
+                                        </span>
+                                        <button
+                                            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                                            disabled={page === totalPages}
+                                            className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            Next
+                                        </button>
+                                    </nav>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -323,4 +458,3 @@ export default function MedicationsReport() {
         </div>
     );
 }
-
