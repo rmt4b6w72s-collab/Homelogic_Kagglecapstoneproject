@@ -592,6 +592,42 @@ class DashboardService
                 ->whereBetween('created_at', [$rangeStart, now()])
                 ->count();
 
+            // Low inventory count (pharmacy inventory)
+            $lowInventoryCount = 0;
+            if (Schema::hasTable('pharmacy_inventory')) {
+                $lowInventoryQuery = \App\Models\PharmacyInventory::withoutGlobalScopes();
+                
+                if ($facilityId && $facilityBranchIds && !empty($facilityBranchIds)) {
+                    $lowInventoryQuery->whereIn('branch_id', $facilityBranchIds);
+                } elseif ($facilityId) {
+                    $lowInventoryQuery->whereHas('branch', function ($q) use ($facilityId) {
+                        $q->where('facility_id', $facilityId);
+                    });
+                }
+                
+                $lowInventoryCount = $lowInventoryQuery->lowStock()->count();
+            }
+
+            // Pending leave requests for admins
+            $pendingLeaveRequests = 0;
+            if (Schema::hasTable('leave_requests')) {
+                $leaveRequestQuery = LeaveRequest::withoutGlobalScopes()->where('status', 'pending');
+                
+                if ($facilityId && $facilityBranchIds && !empty($facilityBranchIds)) {
+                    $leaveRequestQuery->whereHas('staff', function ($q) use ($facilityBranchIds) {
+                        $q->whereIn('assigned_branch_id', $facilityBranchIds);
+                    });
+                } elseif ($facilityId) {
+                    $leaveRequestQuery->whereHas('staff', function ($q) use ($facilityId) {
+                        if (Schema::hasColumn('users', 'facility_id')) {
+                            $q->where('facility_id', $facilityId);
+                        }
+                    });
+                }
+                
+                $pendingLeaveRequests = $leaveRequestQuery->count();
+            }
+
             // Log all results for debugging
             Log::info('DashboardService: Query results', [
                 'facility_id' => $facilityId,
@@ -605,6 +641,8 @@ class DashboardService
                 'total_staff' => $totalStaff,
                 'pending_assessments' => $pendingAssessments,
                 'active_medications' => $activeMedications,
+                'low_inventory_count' => $lowInventoryCount,
+                'pending_leave_requests' => $pendingLeaveRequests,
             ]);
 
             // Log warning if zero results with facility context
@@ -712,6 +750,8 @@ class DashboardService
             'total_staff' => $totalStaff,
             'pending_assessments' => $pendingAssessments,
             'active_medications' => $activeMedications,
+            'low_inventory_count' => $lowInventoryCount ?? 0,
+            'pending_leave_requests' => $pendingLeaveRequests ?? 0,
             'user_type' => 'admin',
             'upcoming_appointments_list' => $this->getAdminUpcomingAppointments(),
             'resident_list' => $this->getAdminResidentList(),

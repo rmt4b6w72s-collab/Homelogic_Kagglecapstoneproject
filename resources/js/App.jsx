@@ -4,6 +4,8 @@ import { toast } from 'sonner';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
 import ModuleProtectedRoute from './components/ModuleProtectedRoute';
+import ModuleRouter from './components/modules/ModuleRouter';
+const ModuleAnalytics = lazyWithRetry(() => import('./pages/modules/ModuleAnalytics'));
 
 // Loading component for Suspense
 const PageLoader = () => (
@@ -151,7 +153,8 @@ const CheckInDashboard = lazyWithRetry(() => import('./pages/CheckInDashboard'))
 const Welcome = lazyWithRetry(() => import('./pages/Welcome'));
 const Features = lazyWithRetry(() => import('./pages/public/Features'));
 const Pricing = lazyWithRetry(() => import('./pages/public/Pricing'));
-const Modules = lazyWithRetry(() => import('./pages/public/Modules'));
+const PublicModules = lazyWithRetry(() => import('./pages/public/Modules'));
+const Modules = lazyWithRetry(() => import('./pages/Modules'));
 const Security = lazyWithRetry(() => import('./pages/public/Security'));
 const About = lazyWithRetry(() => import('./pages/public/About'));
 const Contact = lazyWithRetry(() => import('./pages/public/Contact'));
@@ -179,7 +182,7 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/features" element={<Suspense fallback={<PageLoader />}><Features /></Suspense>} />
             <Route path="/pricing" element={<Suspense fallback={<PageLoader />}><Pricing /></Suspense>} />
-            <Route path="/modules" element={<Suspense fallback={<PageLoader />}><Modules /></Suspense>} />
+            <Route path="/public/modules" element={<Suspense fallback={<PageLoader />}><PublicModules /></Suspense>} />
             <Route path="/security" element={<Suspense fallback={<PageLoader />}><Security /></Suspense>} />
             <Route path="/about" element={<Suspense fallback={<PageLoader />}><About /></Suspense>} />
             <Route path="/contact" element={<Suspense fallback={<PageLoader />}><Contact /></Suspense>} />
@@ -191,6 +194,17 @@ function App() {
             <Route path="/staff/clock-in" element={<Suspense fallback={<PageLoader />}><PublicStaffClockIn /></Suspense>} />
             <Route path="/register-facility" element={<Suspense fallback={<PageLoader />}><RegisterFacility /></Suspense>} />
             <Route path="/register-facility/success" element={<Suspense fallback={<PageLoader />}><RegisterFacilitySuccess /></Suspense>} />
+            
+            {/* Module routes - bypass main Layout, use ModuleLayout */}
+            <Route
+                path="/modules/:module/*"
+                element={
+                    <ProtectedRoute>
+                        <ModuleRouter type="dashboard" />
+                    </ProtectedRoute>
+                }
+            />
+            
             {/* Protected routes - dashboard and app pages */}
             {/* Match all paths that aren't public routes (defined above) */}
             {/* React Router matches in order, so / won't match here since it's defined above */}
@@ -205,6 +219,7 @@ function App() {
                 {/* Main Pages */}
                 <Route path="profile" element={<Suspense fallback={<PageLoader />}><Profile /></Suspense>} />
                 <Route path="dashboard" element={<Suspense fallback={<PageLoader />}><Dashboard /></Suspense>} />
+                <Route path="modules" element={<Suspense fallback={<PageLoader />}><Modules /></Suspense>} />
                 <Route path="assessments" element={<Suspense fallback={<PageLoader />}><ModuleProtectedRoute module="assessments"><Assessments /></ModuleProtectedRoute></Suspense>} />
                 <Route path="assessments/:id" element={<Suspense fallback={<PageLoader />}><ModuleProtectedRoute module="assessments"><AssessmentDetail /></ModuleProtectedRoute></Suspense>} />
                 <Route path="assessments/:id/review" element={<Suspense fallback={<PageLoader />}><ModuleProtectedRoute module="assessments"><AssessmentReview /></ModuleProtectedRoute></Suspense>} />

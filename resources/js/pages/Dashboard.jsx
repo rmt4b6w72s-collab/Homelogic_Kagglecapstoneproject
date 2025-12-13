@@ -606,38 +606,67 @@ export default function Dashboard() {
             }
         }
 
-        // Medication reminders
+        // Medication Due (next 30 minutes) - Priority alert
         if (stats?.medication_reminders && stats.medication_reminders.length > 0) {
-            const dueToday = stats.medication_reminders.filter(m => {
-                if (!m.due_at && !m.scheduled_for) return false;
+            const now = new Date();
+            const next30Minutes = new Date(now.getTime() + 30 * 60 * 1000);
+            
+            const dueSoon = stats.medication_reminders.filter(m => {
+                if (!m.due_at && !m.due_time) return false;
                 try {
-                    const dueDate = new Date(m.due_at || m.scheduled_for);
-                    if (isNaN(dueDate.getTime())) return false;
-                    return dueDate.toDateString() === new Date().toDateString();
+                    // Try to parse the due time
+                    let dueDate;
+                    if (m.due_at) {
+                        dueDate = new Date(m.due_at);
+                    } else if (m.due_time) {
+                        // Combine today's date with the time
+                        const today = new Date().toISOString().split('T')[0];
+                        dueDate = new Date(`${today}T${m.due_time}`);
+                    }
+                    
+                    if (!dueDate || isNaN(dueDate.getTime())) return false;
+                    
+                    // Check if due within next 30 minutes
+                    return dueDate >= now && dueDate <= next30Minutes;
                 } catch (error) {
                     return false;
                 }
             });
-            if (dueToday.length > 0) {
+            
+            if (dueSoon.length > 0) {
+                const residentCount = new Set(dueSoon.map(m => m.resident_name || m.resident_id)).size;
                 items.push({
-                    id: 'medication-reminders',
+                    id: 'medication-due',
                     type: 'medication',
-                    title: `${dueToday.length} Medication${dueToday.length > 1 ? 's' : ''} Due Today`,
-                    description: 'Requires administration',
+                    title: 'Medication Due',
+                    description: `${residentCount} resident${residentCount > 1 ? 's' : ''} need medication in the next 30 minutes`,
                     priority: 'urgent',
                     link: '/medications',
-                    metadata: { count: dueToday.length },
+                    metadata: { count: dueSoon.length, residentCount },
                 });
             }
         }
 
-        // Pending leave requests (for admins)
+        // Low Inventory Alert (if pharmacy module available)
+        if (stats?.low_inventory_count && stats.low_inventory_count > 0) {
+            items.push({
+                id: 'low-inventory',
+                type: 'inventory',
+                title: 'Low Inventory',
+                description: 'Medical supplies running low - order needed',
+                priority: 'soon',
+                link: '/pharmacy/inventory?stock_status=low_stock',
+                metadata: { count: stats.low_inventory_count },
+            });
+        }
+
+        // Pending Leave Requests (for admins) - Updated design
         if (!isCaregiver && stats?.pending_leave_requests > 0) {
             items.push({
                 id: 'pending-leave-requests',
                 type: 'leave_request',
-                title: `${stats.pending_leave_requests} Leave Request${stats.pending_leave_requests > 1 ? 's' : ''} Pending`,
-                description: 'Awaiting approval',
+                title: 'Pending Approvals',
+                description: `${stats.pending_leave_requests} leave request${stats.pending_leave_requests > 1 ? 's' : ''} awaiting your approval`,
                 priority: 'info',
                 link: '/administration/leave-requests',
                 metadata: { count: stats.pending_leave_requests },

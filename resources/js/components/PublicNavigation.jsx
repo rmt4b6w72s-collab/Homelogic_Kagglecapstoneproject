@@ -10,7 +10,7 @@ export default function PublicNavigation() {
         { path: '/', label: 'Home', icon: Home },
         { path: '/about', label: 'About', icon: Info },
         { path: '/features', label: 'Features', icon: Sparkles },
-        { path: '/modules', label: 'Modules', icon: Grid3x3 },
+        { path: '/public/modules', label: 'Modules', icon: Grid3x3 },
         { path: '/pricing', label: 'Pricing', icon: DollarSign },
         { path: '/contact', label: 'Contact', icon: Mail },
     ];

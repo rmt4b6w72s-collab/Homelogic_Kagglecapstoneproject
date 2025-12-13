@@ -43,6 +43,7 @@ use App\Http\Controllers\Api\DatabaseManagementController;
 use App\Http\Controllers\Api\TLogController;
 use App\Http\Controllers\Api\ReminderController;
 use App\Http\Controllers\Api\ReminderEventController;
+use App\Http\Controllers\Api\ModuleDashboardController;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Session\Middleware\StartSession;
@@ -74,6 +75,11 @@ Route::prefix('v1')->middleware([\App\Http\Middleware\SetFacilityContext::class]
     Route::get('/dashboard/resident-vitals/{residentId}', [DashboardController::class, 'residentVitalsTrend'])->middleware('auth:sanctum');
     Route::get('/dashboard/daily-activities', [DashboardController::class, 'dailyActivities'])->middleware('auth:sanctum');
     Route::get('/dashboard/upcoming-events', [DashboardController::class, 'upcomingEvents'])->middleware('auth:sanctum');
+
+    // Module Dashboards
+    Route::get('/modules/stats', [ModuleDashboardController::class, 'getAllStats'])->middleware('auth:sanctum');
+    Route::get('/modules/{module}/stats', [ModuleDashboardController::class, 'getModuleStats'])->middleware('auth:sanctum');
+    Route::get('/modules/{module}/recent-activity', [ModuleDashboardController::class, 'getRecentActivity'])->middleware('auth:sanctum');
 
     // Residents
     Route::apiResource('residents', ResidentController::class)->middleware('auth:sanctum');
