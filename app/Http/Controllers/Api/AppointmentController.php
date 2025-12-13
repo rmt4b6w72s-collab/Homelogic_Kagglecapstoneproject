@@ -216,5 +216,11 @@ class AppointmentController extends BaseApiController
 
         return response()->json($appointment->load(['resident', 'healthcareProvider']));
     }
+
+    public function types(): JsonResponse
+    {
+        $types = \App\Models\AppointmentType::all();
+        return response()->json($types);
+    }
 }
 

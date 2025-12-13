@@ -82,6 +82,8 @@ Route::prefix('v1')->middleware([\App\Http\Middleware\SetFacilityContext::class]
     Route::get('/residents/{id}/vitals', [ResidentController::class, 'vitals'])->middleware('auth:sanctum');
 
     // Appointments
+    // Appointments
+    Route::get('/appointment-types', [AppointmentController::class, 'types'])->middleware('auth:sanctum');
     Route::apiResource('appointments', AppointmentController::class)->middleware('auth:sanctum');
     Route::patch('/appointments/{id}/status', [AppointmentController::class, 'updateStatus'])->middleware('auth:sanctum');
 

@@ -51,6 +51,7 @@ export default function Appointments() {
         resident_id: '',
         appointment_date: new Date().toISOString().split('T')[0],
         appointment_time: '',
+        appointment_type_id: '',
         provider_name: '',
         location: '',
         description: '',
@@ -69,6 +70,15 @@ export default function Appointments() {
         };
         fetchUser();
     }, []);
+
+    // Fetch appointment types
+    const { data: appointmentTypes } = useQuery({
+        queryKey: ['appointment-types'],
+        queryFn: async () => {
+            const response = await api.get('/appointment-types');
+            return response.data;
+        },
+    });
 
     // Check if user is a caregiver (comprehensive detection)
     const isCaregiver = React.useMemo(() => {
@@ -566,8 +576,8 @@ export default function Appointments() {
                                                                 )}
                                                             </div>
                                                             <span className={`px-2 py-1 rounded-full text-xs font-medium ${nextAppt.status === 'scheduled' ? 'bg-amber-100 text-amber-800' :
-                                                                    nextAppt.status === 'confirmed' ? 'bg-[var(--theme-primary-bg)] text-[var(--theme-primary)]' :
-                                                                        'bg-gray-100 text-gray-800'
+                                                                nextAppt.status === 'confirmed' ? 'bg-[var(--theme-primary-bg)] text-[var(--theme-primary)]' :
+                                                                    'bg-gray-100 text-gray-800'
                                                                 }`}>
                                                                 {nextAppt.status?.charAt(0).toUpperCase() + nextAppt.status?.slice(1)}
                                                             </span>
@@ -727,8 +737,8 @@ export default function Appointments() {
                                     <button
                                         onClick={() => setViewMode('list')}
                                         className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors ${viewMode === 'list'
-                                                ? 'bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)]'
-                                                : 'text-gray-700 hover:bg-gray-50'
+                                            ? 'bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)]'
+                                            : 'text-gray-700 hover:bg-gray-50'
                                             }`}
                                     >
                                         <List className="w-4 h-4" />
@@ -737,8 +747,8 @@ export default function Appointments() {
                                     <button
                                         onClick={() => setViewMode('calendar')}
                                         className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors ${viewMode === 'calendar'
-                                                ? 'bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)]'
-                                                : 'text-gray-700 hover:bg-gray-50'
+                                            ? 'bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)]'
+                                            : 'text-gray-700 hover:bg-gray-50'
                                             }`}
                                     >
                                         <Grid className="w-4 h-4" />
@@ -883,8 +893,8 @@ export default function Appointments() {
                                                             }
                                                         }}
                                                         className={`hover:bg-gray-50 transition-all duration-500 ${isHighlighted
-                                                                ? 'bg-[var(--theme-primary-bg)] border-l-4 border-[var(--theme-primary)] shadow-md'
-                                                                : ''
+                                                            ? 'bg-[var(--theme-primary-bg)] border-l-4 border-[var(--theme-primary)] shadow-md'
+                                                            : ''
                                                             }`}
                                                     >
                                                         <td className="px-6 py-4 whitespace-nowrap">
@@ -911,10 +921,10 @@ export default function Appointments() {
                                                         {isCaregiver && (
                                                             <td className="px-6 py-4 whitespace-nowrap">
                                                                 <span className={`px-3 py-1 rounded-full text-xs font-medium ${appointment.status === 'scheduled' ? 'bg-amber-100 text-amber-800' :
-                                                                        appointment.status === 'confirmed' ? 'bg-[var(--theme-primary-bg)] text-[var(--theme-primary)]' :
-                                                                            appointment.status === 'completed' ? 'bg-[var(--theme-primary-bg)] text-[var(--theme-primary)]' :
-                                                                                appointment.status === 'cancelled' ? 'bg-red-100 text-red-800' :
-                                                                                    'bg-gray-100 text-gray-800'
+                                                                    appointment.status === 'confirmed' ? 'bg-[var(--theme-primary-bg)] text-[var(--theme-primary)]' :
+                                                                        appointment.status === 'completed' ? 'bg-[var(--theme-primary-bg)] text-[var(--theme-primary)]' :
+                                                                            appointment.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                                                                                'bg-gray-100 text-gray-800'
                                                                     }`}>
                                                                     {appointment.status?.charAt(0).toUpperCase() + appointment.status?.slice(1)}
                                                                 </span>
@@ -954,6 +964,7 @@ export default function Appointments() {
                     isSubmitting={createMutation.isPending}
                     mutation={createMutation}
                     isPreFilled={isPreFilled}
+                    appointmentTypes={appointmentTypes}
                 />
             )}
 
@@ -1130,7 +1141,7 @@ export default function Appointments() {
     );
 }
 
-function AddAppointmentModal({ branches, residents, formData, setFormData, onClose, onSubmit, isSubmitting, mutation, isPreFilled = false }) {
+function AddAppointmentModal({ branches, residents, formData, setFormData, onClose, onSubmit, isSubmitting, mutation, isPreFilled = false, appointmentTypes = [] }) {
     const [errors, setErrors] = React.useState({});
 
     const handleSubmit = async (e) => {
@@ -1161,7 +1172,7 @@ function AddAppointmentModal({ branches, residents, formData, setFormData, onClo
                     <div className="p-6 space-y-6">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                <label className="block text-sm font-bold text-gray-900 mb-1">
                                     Branch
                                 </label>
                                 <div className="relative">
@@ -1188,7 +1199,7 @@ function AddAppointmentModal({ branches, residents, formData, setFormData, onClo
                                 {errors.branch_id && <p className="text-xs text-red-600 mt-1">{errors.branch_id}</p>}
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                <label className="block text-sm font-bold text-gray-900 mb-1">
                                     Resident *
                                 </label>
                                 <div className="relative">
@@ -1212,7 +1223,7 @@ function AddAppointmentModal({ branches, residents, formData, setFormData, onClo
                                 {errors.resident_id && <p className="text-xs text-red-600 mt-1">{errors.resident_id}</p>}
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                <label className="block text-sm font-bold text-gray-900 mb-1">
                                     Date *
                                 </label>
                                 <input
@@ -1229,7 +1240,7 @@ function AddAppointmentModal({ branches, residents, formData, setFormData, onClo
                                 {errors.appointment_date && <p className="text-xs text-red-600 mt-1">{errors.appointment_date}</p>}
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                <label className="block text-sm font-bold text-gray-900 mb-1">
                                     Time
                                 </label>
                                 <TimePicker
@@ -1238,7 +1249,7 @@ function AddAppointmentModal({ branches, residents, formData, setFormData, onClo
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                <label className="block text-sm font-bold text-gray-900 mb-1">
                                     Provider Name
                                 </label>
                                 <div className="relative">
@@ -1253,7 +1264,7 @@ function AddAppointmentModal({ branches, residents, formData, setFormData, onClo
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                <label className="block text-sm font-bold text-gray-900 mb-1">
                                     Location
                                 </label>
                                 <div className="relative">
@@ -1267,9 +1278,24 @@ function AddAppointmentModal({ branches, residents, formData, setFormData, onClo
                                     />
                                 </div>
                             </div>
+                            <div>
+                                <label className="block text-sm font-bold text-gray-900 mb-1">
+                                    Appointment Type
+                                </label>
+                                <select
+                                    value={formData.appointment_type_id}
+                                    onChange={(e) => setFormData({ ...formData, appointment_type_id: e.target.value })}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                >
+                                    <option value="">Select Type</option>
+                                    {(appointmentTypes || []).map(type => (
+                                        <option key={type.id} value={type.id}>{type.name}</option>
+                                    ))}
+                                </select>
+                            </div>
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label className="block text-sm font-bold text-gray-900 mb-1">
                                 Notes / Description
                             </label>
                             <textarea

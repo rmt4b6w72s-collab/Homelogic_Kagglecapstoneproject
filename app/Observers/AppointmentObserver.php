@@ -42,6 +42,9 @@ class AppointmentObserver
             ? Carbon::parse($appointment->appointment_date)->format('M d, Y')
             : 'Date TBD';
 
+        // Get facility_id from resident's branch
+        $facilityId = $appointment->resident?->branch?->facility_id;
+
         foreach ($recipients as $user) {
             Notification::create([
                 'user_id' => $user->id,
@@ -55,6 +58,7 @@ class AppointmentObserver
                     'appointment_id' => $appointment->id,
                     'resident_id' => $appointment->resident_id,
                     'status' => $appointment->status,
+                    'facility_id' => $facilityId,
                 ],
             ]);
         }
@@ -121,6 +125,9 @@ class AppointmentObserver
             
             $residentName = trim(($appointment->resident->first_name ?? '') . ' ' . ($appointment->resident->last_name ?? ''));
             
+            // Get facility_id from resident's branch
+            $facilityId = $appointment->resident?->branch?->facility_id;
+            
             Notification::create([
                 'user_id' => $caregiver->id,
                 'type' => 'appointment_upcoming',
@@ -135,6 +142,7 @@ class AppointmentObserver
                     'appointment_id' => $appointment->id,
                     'resident_id' => $appointment->resident_id,
                     'days_until' => $daysUntil,
+                    'facility_id' => $facilityId,
                 ],
             ]);
         }

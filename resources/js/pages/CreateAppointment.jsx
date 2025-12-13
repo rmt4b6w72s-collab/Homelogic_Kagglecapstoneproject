@@ -12,6 +12,7 @@ export default function CreateAppointment() {
     const [formData, setFormData] = useState({
         appointment_date: new Date().toISOString().split('T')[0],
         appointment_time: '',
+        appointment_type_id: '',
         provider_name: '',
         location: '',
         description: '',
@@ -46,6 +47,15 @@ export default function CreateAppointment() {
         enabled: !!residentId,
     });
 
+    // Fetch appointment types
+    const { data: appointmentTypes } = useQuery({
+        queryKey: ['appointment-types'],
+        queryFn: async () => {
+            const response = await api.get('/appointment-types');
+            return response.data;
+        },
+    });
+
     // Submit appointment mutation
     const submitMutation = useMutation({
         mutationFn: async () => {
@@ -54,6 +64,7 @@ export default function CreateAppointment() {
                 branch_id: residentData?.branch_id || '',
                 appointment_date: formData.appointment_date,
                 appointment_time: formData.appointment_time,
+                appointment_type_id: formData.appointment_type_id || null,
                 provider_name: formData.provider_name || null,
                 location: formData.location || null,
                 description: formData.description || null,
@@ -68,6 +79,7 @@ export default function CreateAppointment() {
             setFormData({
                 appointment_date: new Date().toISOString().split('T')[0],
                 appointment_time: '',
+                appointment_type_id: '',
                 provider_name: '',
                 location: '',
                 description: '',
@@ -180,7 +192,7 @@ export default function CreateAppointment() {
                     <div className="space-y-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                <label className="block text-sm font-bold text-gray-900 mb-2">
                                     Date *
                                 </label>
                                 <input
@@ -200,7 +212,7 @@ export default function CreateAppointment() {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                <label className="block text-sm font-bold text-gray-900 mb-2">
                                     Time *
                                 </label>
                                 <input
@@ -220,7 +232,7 @@ export default function CreateAppointment() {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                <label className="block text-sm font-bold text-gray-900 mb-2">
                                     Provider Name
                                 </label>
                                 <div className="relative">
@@ -236,7 +248,7 @@ export default function CreateAppointment() {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                <label className="block text-sm font-bold text-gray-900 mb-2">
                                     Location
                                 </label>
                                 <div className="relative">
@@ -250,10 +262,26 @@ export default function CreateAppointment() {
                                     />
                                 </div>
                             </div>
+
+                            <div>
+                                <label className="block text-sm font-bold text-gray-900 mb-2">
+                                    Appointment Type
+                                </label>
+                                <select
+                                    value={formData.appointment_type_id}
+                                    onChange={(e) => setFormData({ ...formData, appointment_type_id: e.target.value })}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                >
+                                    <option value="">Select Type</option>
+                                    {(appointmentTypes || []).map(type => (
+                                        <option key={type.id} value={type.id}>{type.name}</option>
+                                    ))}
+                                </select>
+                            </div>
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                            <label className="block text-sm font-bold text-gray-900 mb-2">
                                 Notes / Description
                             </label>
                             <textarea
@@ -302,8 +330,8 @@ export default function CreateAppointment() {
                             <button
                                 onClick={() => setViewMode('list')}
                                 className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors ${viewMode === 'list'
-                                        ? 'bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)]'
-                                        : 'text-gray-700 hover:bg-gray-50'
+                                    ? 'bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)]'
+                                    : 'text-gray-700 hover:bg-gray-50'
                                     }`}
                             >
                                 <List className="w-4 h-4" />
@@ -312,8 +340,8 @@ export default function CreateAppointment() {
                             <button
                                 onClick={() => setViewMode('calendar')}
                                 className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors ${viewMode === 'calendar'
-                                        ? 'bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)]'
-                                        : 'text-gray-700 hover:bg-gray-50'
+                                    ? 'bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)]'
+                                    : 'text-gray-700 hover:bg-gray-50'
                                     }`}
                             >
                                 <Grid className="w-4 h-4" />
@@ -428,10 +456,10 @@ export default function CreateAppointment() {
                                                     </div>
                                                 </div>
                                                 <span className={`px-2 py-1 rounded-full text-xs font-medium ${appointment.status === 'scheduled' ? 'bg-amber-100 text-amber-800' :
-                                                        appointment.status === 'confirmed' ? 'bg-green-100 text-green-800' :
-                                                            appointment.status === 'completed' ? 'bg-emerald-100 text-emerald-800' :
-                                                                appointment.status === 'cancelled' ? 'bg-red-100 text-red-800' :
-                                                                    'bg-gray-100 text-gray-800'
+                                                    appointment.status === 'confirmed' ? 'bg-green-100 text-green-800' :
+                                                        appointment.status === 'completed' ? 'bg-emerald-100 text-emerald-800' :
+                                                            appointment.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                                                                'bg-gray-100 text-gray-800'
                                                     }`}>
                                                     {appointment.status?.charAt(0).toUpperCase() + appointment.status?.slice(1)}
                                                 </span>
