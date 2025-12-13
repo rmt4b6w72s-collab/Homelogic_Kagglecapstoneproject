@@ -63,12 +63,25 @@ class DashboardController extends BaseApiController
 
     public function upcomingEvents(\Illuminate\Http\Request $request): JsonResponse
     {
-        $user = auth()->user();
-        $limit = (int) $request->get('limit', 20);
-        
-        $events = $this->dashboardService->getUpcomingEvents($user, $limit);
-        
-        return $this->success($events);
+        try {
+            $user = auth()->user();
+            $user->refresh(); // Ensure latest facility_id and assigned_branch_id
+            
+            $limit = (int) $request->get('limit', 20);
+            
+            $events = $this->dashboardService->getUpcomingEvents($user, $limit);
+            
+            return $this->success($events);
+        } catch (\Exception $e) {
+            \Log::error('DashboardController: Error fetching upcoming events', [
+                'user_id' => auth()->id(),
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            
+            // Return empty array instead of crashing
+            return $this->success([]);
+        }
     }
 }
 

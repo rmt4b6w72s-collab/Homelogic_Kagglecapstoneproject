@@ -636,8 +636,33 @@ class DashboardService
             $assessmentsLast30 = 0;
         }
 
+        // Final check: Ensure facilityBranchIds is set if we have facilityId but it wasn't set earlier
+        if ($facilityId && (!$facilityBranchIds || empty($facilityBranchIds))) {
+            $facilityBranchIds = \App\Models\Branch::where('facility_id', $facilityId)->pluck('id')->toArray();
+        }
+        
+        // Also check if we have branch with facility but facilityId wasn't resolved
+        if (!$facilityId && $branchId) {
+            $assignedBranch = \App\Models\Branch::find($branchId);
+            if ($assignedBranch && $assignedBranch->facility_id) {
+                $facilityId = $assignedBranch->facility_id;
+                $facilityBranchIds = \App\Models\Branch::where('facility_id', $facilityId)->pluck('id')->toArray();
+            }
+        }
+
         // Calculate new metrics
         $newMetrics = $this->calculateNewMetrics($facilityId);
+
+        // Determine if facility context is truly missing
+        // Only show warning if:
+        // 1. User is an administrator (not super_admin)
+        // 2. No facilityId was resolved
+        // 3. No branch-based filtering is available (no branchId or no facilityBranchIds)
+        $hasValidContext = $facilityId || ($branchId && $facilityBranchIds && !empty($facilityBranchIds));
+        $shouldShowWarning = !$hasValidContext && 
+                             $user && 
+                             $user->role !== 'super_admin' && 
+                             $isAdministrator;
 
         return [
             'total_residents' => $totalResidents,
@@ -663,19 +688,13 @@ class DashboardService
             'staff_utilization' => $newMetrics['staff_utilization'],
             // Debug info
             'facility_id' => $facilityId,
-            // Only mark as missing if we're an administrator who should have facility access
-            // but don't have it set after all resolution attempts
-            // Also check if we have branch-based filtering as an alternative valid context
-            'facility_context_missing' => !$facilityId && 
-                                          !($branchId && $facilityBranchIds && !empty($facilityBranchIds)) && 
-                                          $user && 
-                                          $user->role !== 'super_admin' && 
-                                          $isAdministrator,
+            'facility_context_missing' => $shouldShowWarning,
             // Add debug info about what was tried
             'facility_resolution_attempted' => $isAdministrator,
             'user_has_facility_id' => (bool)($user->facility_id ?? false),
             'user_has_branch_id' => (bool)($user->assigned_branch_id ?? false),
             'has_branch_based_filtering' => (bool)($branchId && $facilityBranchIds && !empty($facilityBranchIds)),
+            'has_valid_context' => $hasValidContext,
         ];
     }
 
