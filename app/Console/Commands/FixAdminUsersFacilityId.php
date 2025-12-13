@@ -50,9 +50,6 @@ class FixAdminUsersFacilityId extends Command
         $this->info("📋 Found {$adminUsers->count()} admin user(s) without facility_id:");
         $this->line('');
 
-        $this->info("📋 Found {$adminUsers->count()} admin user(s) that need fixing:");
-        $this->line('');
-
         $fixed = 0;
         $failed = 0;
 
