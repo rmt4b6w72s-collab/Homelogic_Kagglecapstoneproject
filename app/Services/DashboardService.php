@@ -1132,11 +1132,8 @@ class DashboardService
         
         $totalResidents = Resident::withoutGlobalScopes()
             ->where('is_active', true)
-            ->where(function ($q) use ($facilityId) {
-                $q->where('facility_id', $facilityId)
-                    ->orWhereHas('branch', function ($b) use ($facilityId) {
-                        $b->where('facility_id', $facilityId);
-                    });
+            ->whereHas('branch', function ($q) use ($facilityId) {
+                $q->where('facility_id', $facilityId);
             })
             ->count();
         
@@ -1152,11 +1149,8 @@ class DashboardService
         $rangeStart = now()->subDays(30)->startOfDay();
         $totalAssessments = Assessment::withoutGlobalScopes()
             ->whereHas('resident', function ($q) use ($facilityId) {
-                $q->where(function ($r) use ($facilityId) {
-                    $r->where('facility_id', $facilityId)
-                        ->orWhereHas('branch', function ($b) use ($facilityId) {
-                            $b->where('facility_id', $facilityId);
-                        });
+                $q->whereHas('branch', function ($b) use ($facilityId) {
+                    $b->where('facility_id', $facilityId);
                 })->where('is_active', true);
             })
             ->whereBetween('created_at', [$rangeStart, now()])
@@ -1164,11 +1158,8 @@ class DashboardService
         
         $completedAssessments = Assessment::withoutGlobalScopes()
             ->whereHas('resident', function ($q) use ($facilityId) {
-                $q->where(function ($r) use ($facilityId) {
-                    $r->where('facility_id', $facilityId)
-                        ->orWhereHas('branch', function ($b) use ($facilityId) {
-                            $b->where('facility_id', $facilityId);
-                        });
+                $q->whereHas('branch', function ($b) use ($facilityId) {
+                    $b->where('facility_id', $facilityId);
                 })->where('is_active', true);
             })
             ->whereBetween('created_at', [$rangeStart, now()])
@@ -1184,11 +1175,8 @@ class DashboardService
         $totalMedicationsDue = Medication::withoutGlobalScopes()
             ->where('is_active', true)
             ->whereHas('resident', function ($q) use ($facilityId) {
-                $q->where(function ($r) use ($facilityId) {
-                    $r->where('facility_id', $facilityId)
-                        ->orWhereHas('branch', function ($b) use ($facilityId) {
-                            $b->where('facility_id', $facilityId);
-                        });
+                $q->whereHas('branch', function ($b) use ($facilityId) {
+                    $b->where('facility_id', $facilityId);
                 })->where('is_active', true);
             })
             ->count();
@@ -1197,11 +1185,8 @@ class DashboardService
             ->whereBetween('administered_at', [$weekStart, now()])
             ->where('status', 'completed')
             ->whereHas('resident', function ($q) use ($facilityId) {
-                $q->where(function ($r) use ($facilityId) {
-                    $r->where('facility_id', $facilityId)
-                        ->orWhereHas('branch', function ($b) use ($facilityId) {
-                            $b->where('facility_id', $facilityId);
-                        });
+                $q->whereHas('branch', function ($b) use ($facilityId) {
+                    $b->where('facility_id', $facilityId);
                 })->where('is_active', true);
             })
             ->count();
@@ -1338,11 +1323,8 @@ class DashboardService
             
             if ($facilityId) {
                 $assessmentsQuery->whereHas('resident', function ($q) use ($facilityId) {
-                    $q->where(function ($r) use ($facilityId) {
-                        $r->where('facility_id', $facilityId)
-                            ->orWhereHas('branch', function ($b) use ($facilityId) {
-                                $b->where('facility_id', $facilityId);
-                            });
+                    $q->whereHas('branch', function ($b) use ($facilityId) {
+                        $b->where('facility_id', $facilityId);
                     })->where('is_active', true);
                 });
             }
@@ -1380,11 +1362,8 @@ class DashboardService
                 ->whereHas('resident', function ($q) use ($facilityId, $branchId) {
                     $q->where('is_active', true);
                     if ($facilityId) {
-                        $q->where(function ($r) use ($facilityId) {
-                            $r->where('facility_id', $facilityId)
-                                ->orWhereHas('branch', function ($b) use ($facilityId) {
-                                    $b->where('facility_id', $facilityId);
-                                });
+                        $q->whereHas('branch', function ($b) use ($facilityId) {
+                            $b->where('facility_id', $facilityId);
                         });
                     }
                     if ($branchId) {
