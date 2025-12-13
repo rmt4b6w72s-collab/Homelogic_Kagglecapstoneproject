@@ -83,6 +83,26 @@ class DashboardController extends BaseApiController
             return $this->success([]);
         }
     }
+
+    public function todaysSchedule(): JsonResponse
+    {
+        try {
+            $user = auth()->user();
+            $user->refresh();
+            
+            $schedule = $this->dashboardService->getTodaysSchedule($user);
+            
+            return $this->success($schedule);
+        } catch (\Exception $e) {
+            \Log::error('DashboardController: Error fetching today\'s schedule', [
+                'user_id' => auth()->id(),
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            
+            return $this->success([]);
+        }
+    }
 }
 
 

@@ -75,6 +75,7 @@ Route::prefix('v1')->middleware([\App\Http\Middleware\SetFacilityContext::class]
     Route::get('/dashboard/resident-vitals/{residentId}', [DashboardController::class, 'residentVitalsTrend'])->middleware('auth:sanctum');
     Route::get('/dashboard/daily-activities', [DashboardController::class, 'dailyActivities'])->middleware('auth:sanctum');
     Route::get('/dashboard/upcoming-events', [DashboardController::class, 'upcomingEvents'])->middleware('auth:sanctum');
+    Route::get('/dashboard/todays-schedule', [DashboardController::class, 'todaysSchedule'])->middleware('auth:sanctum');
 
     // Module Dashboards
     Route::get('/modules/stats', [ModuleDashboardController::class, 'getAllStats'])->middleware('auth:sanctum');
