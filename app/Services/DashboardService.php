@@ -452,20 +452,74 @@ class DashboardService
             $staffQuery->where('facility_id', $facilityId);
         }
 
-        // If no facility found, log warning and try to get data without facility filter
-        // Only show warning for administrators who should have facility access
+        // If no facility found, try additional fallback methods for administrators
         if (!$facilityId && $user && $user->role !== 'super_admin' && $isAdministrator) {
-            Log::warning('DashboardService: No facility context found for administrator - querying all data', [
-                'user_id' => $user->id,
-                'user_role' => $user->role,
-                'user_facility_id' => $user->facility_id,
-                'user_assigned_branch_id' => $user->assigned_branch_id,
-                'app_facility_bound' => app()->bound('facility'),
-                'host' => request()->getHost(),
-                'path' => request()->path(),
-            ]);
-            // For administrators without facility context, query all data (no filters)
-            // This allows them to see data even if facility context isn't set
+            // Try to find facility from any residents created by this user
+            $residentWithFacility = Resident::withoutGlobalScopes()
+                ->where('created_by', $user->id)
+                ->whereNotNull('facility_id')
+                ->first();
+            
+            if ($residentWithFacility && $residentWithFacility->facility_id) {
+                $facilityId = $residentWithFacility->facility_id;
+                $facility = \App\Models\Facility::find($facilityId);
+                Log::info('DashboardService: Derived facility from created residents', [
+                    'user_id' => $user->id,
+                    'derived_facility_id' => $facilityId,
+                ]);
+            }
+            
+            // If still not found, try to find from branch where user created residents
+            if (!$facilityId) {
+                $residentWithBranch = Resident::withoutGlobalScopes()
+                    ->where('created_by', $user->id)
+                    ->whereNotNull('branch_id')
+                    ->with('branch')
+                    ->first();
+                
+                if ($residentWithBranch && $residentWithBranch->branch && $residentWithBranch->branch->facility_id) {
+                    $facilityId = $residentWithBranch->branch->facility_id;
+                    $facility = \App\Models\Facility::find($facilityId);
+                    Log::info('DashboardService: Derived facility from resident branch', [
+                        'user_id' => $user->id,
+                        'derived_facility_id' => $facilityId,
+                    ]);
+                }
+            }
+            
+            // If still no facility, log warning and query all data (no filters)
+            if (!$facilityId) {
+                Log::warning('DashboardService: No facility context found for administrator - querying all data', [
+                    'user_id' => $user->id,
+                    'user_role' => $user->role,
+                    'user_facility_id' => $user->facility_id,
+                    'user_assigned_branch_id' => $user->assigned_branch_id,
+                    'app_facility_bound' => app()->bound('facility'),
+                    'host' => request()->getHost(),
+                    'path' => request()->path(),
+                ]);
+                // For administrators without facility context, query all data (no filters)
+                // This allows them to see data even if facility context isn't set
+                // Queries are already built without filters when $facilityId is null
+            } else {
+                // Re-apply facility filters since we just found the facility
+                $facilityBranchIds = \App\Models\Branch::where('facility_id', $facilityId)->pluck('id')->toArray();
+                
+                if ($facilityBranchIds && !empty($facilityBranchIds)) {
+                    $residentsQuery->whereIn('branch_id', $facilityBranchIds);
+                    $appointmentsQuery->whereIn('branch_id', $facilityBranchIds);
+                    $vitalsQuery->whereHas('resident', function ($q) use ($facilityBranchIds) {
+                        $q->whereIn('branch_id', $facilityBranchIds)->where('is_active', true);
+                    });
+                    $assessmentsQuery->whereHas('resident', function ($q) use ($facilityBranchIds) {
+                        $q->whereIn('branch_id', $facilityBranchIds)->where('is_active', true);
+                    });
+                    $activeMedicationsQuery->whereHas('resident', function ($q) use ($facilityBranchIds) {
+                        $q->whereIn('branch_id', $facilityBranchIds)->where('is_active', true);
+                    });
+                }
+                $staffQuery->where('facility_id', $facilityId);
+            }
         }
 
         // Execute queries and log results for debugging
@@ -566,8 +620,12 @@ class DashboardService
             // Debug info
             'facility_id' => $facilityId,
             // Only mark as missing if we're an administrator who should have facility access
-            // but don't have it set, OR if we resolved it from user's direct assignment (not middleware)
+            // but don't have it set after all resolution attempts
             'facility_context_missing' => !$facilityId && $user && $user->role !== 'super_admin' && $isAdministrator,
+            // Add debug info about what was tried
+            'facility_resolution_attempted' => $isAdministrator,
+            'user_has_facility_id' => (bool)($user->facility_id ?? false),
+            'user_has_branch_id' => (bool)($user->assigned_branch_id ?? false),
         ];
     }
 
