@@ -246,6 +246,19 @@ class DashboardService
     }
 
     /**
+     * Check if user is an administrator/admin role
+     */
+    private function isAdministratorRole(?string $role): bool
+    {
+        if (!$role) {
+            return false;
+        }
+        
+        $roleLower = strtolower(trim($role));
+        return in_array($roleLower, ['administrator', 'admin', 'super_admin']);
+    }
+    
+    /**
      * Get admin dashboard stats
      */
     public function getAdminStats(?User $user = null): array
@@ -254,6 +267,7 @@ class DashboardService
         
         // Use the same facility resolution logic as BaseApiController
         $facility = null;
+        $isAdministrator = $this->isAdministratorRole($user->role ?? null);
         
         // Super admins can float between facilities; prefer explicit context
         if ($user && $user->role === 'super_admin') {
@@ -263,23 +277,49 @@ class DashboardService
                 $facility = null;
             }
         } else {
-            // Try facility from current request context (set by middleware)
-            try {
-                $facility = app()->bound('facility') ? app('facility') : null;
-            } catch (\Exception $e) {
-                $facility = null;
-            }
+            // For administrators, aggressively resolve facility from user's direct assignments
+            // This ensures they always see their facility's data
+            if ($isAdministrator) {
+                // First try user's facility_id (most direct)
+                if ($user && $user->facility_id) {
+                    $facility = \App\Models\Facility::find($user->facility_id);
+                }
+                
+                // If still not found, try deriving from assigned branch
+                if (!$facility && $user && $user->assigned_branch_id) {
+                    $branch = \App\Models\Branch::find($user->assigned_branch_id);
+                    if ($branch && $branch->facility_id) {
+                        $facility = \App\Models\Facility::find($branch->facility_id);
+                    }
+                }
+                
+                // Also try middleware context (may have been set)
+                if (!$facility) {
+                    try {
+                        $facility = app()->bound('facility') ? app('facility') : null;
+                    } catch (\Exception $e) {
+                        $facility = null;
+                    }
+                }
+            } else {
+                // For non-administrators, try middleware context first
+                try {
+                    $facility = app()->bound('facility') ? app('facility') : null;
+                } catch (\Exception $e) {
+                    $facility = null;
+                }
 
-            // Fallback to user's facility_id
-            if (!$facility && $user && $user->facility_id) {
-                $facility = \App\Models\Facility::find($user->facility_id);
-            }
+                // Fallback to user's facility_id
+                if (!$facility && $user && $user->facility_id) {
+                    $facility = \App\Models\Facility::find($user->facility_id);
+                }
 
-            // Derive facility from assigned branch if still unknown
-            if (!$facility && $user && $user->assigned_branch_id) {
-                $branch = \App\Models\Branch::find($user->assigned_branch_id);
-                if ($branch && $branch->facility_id) {
-                    $facility = \App\Models\Facility::find($branch->facility_id);
+                // Derive facility from assigned branch if still unknown
+                if (!$facility && $user && $user->assigned_branch_id) {
+                    $branch = \App\Models\Branch::find($user->assigned_branch_id);
+                    if ($branch && $branch->facility_id) {
+                        $facility = \App\Models\Facility::find($branch->facility_id);
+                    }
                 }
             }
         }
@@ -361,7 +401,8 @@ class DashboardService
         }
 
         // If no facility found, log warning and try to get data without facility filter
-        if (!$facilityId && $user && $user->role !== 'super_admin') {
+        // Only show warning for administrators who should have facility access
+        if (!$facilityId && $user && $user->role !== 'super_admin' && $isAdministrator) {
             Log::warning('DashboardService: No facility context found for administrator - querying all data', [
                 'user_id' => $user->id,
                 'user_role' => $user->role,
@@ -472,7 +513,9 @@ class DashboardService
             'staff_utilization' => $newMetrics['staff_utilization'],
             // Debug info
             'facility_id' => $facilityId,
-            'facility_context_missing' => !$facilityId && $user && $user->role !== 'super_admin',
+            // Only mark as missing if we're an administrator who should have facility access
+            // but don't have it set, OR if we resolved it from user's direct assignment (not middleware)
+            'facility_context_missing' => !$facilityId && $user && $user->role !== 'super_admin' && $isAdministrator,
         ];
     }
 
