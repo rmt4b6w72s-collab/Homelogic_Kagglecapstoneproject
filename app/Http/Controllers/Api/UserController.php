@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\Branch;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -105,13 +106,27 @@ class UserController extends BaseApiController
             }
         }
 
-        // Determine facility_id for email uniqueness validation
+        // Determine facility_id for email uniqueness validation and user creation
         $currentUser = Auth::user();
         $facilityId = $request->input('facility_id');
         
-        // For non-super admins, use their facility_id if not provided
-        if ($currentUser && $currentUser->role !== 'super_admin' && !$facilityId) {
-            $facilityId = $currentUser->facility_id;
+        // For non-super admins, automatically set facility_id from creator's facility
+        if ($currentUser && $currentUser->role !== 'super_admin') {
+            // First try creator's facility_id
+            if (!$facilityId && $currentUser->facility_id) {
+                $facilityId = $currentUser->facility_id;
+            }
+            // If still not set, try to derive from creator's assigned_branch_id
+            if (!$facilityId && $currentUser->assigned_branch_id) {
+                $branch = Branch::find($currentUser->assigned_branch_id);
+                if ($branch && $branch->facility_id) {
+                    $facilityId = $branch->facility_id;
+                }
+            }
+            // Set the facility_id in the request so it's included in validation and creation
+            if ($facilityId) {
+                $request->merge(['facility_id' => $facilityId]);
+            }
         }
         
         // Build email validation rule scoped by facility_id
@@ -174,12 +189,11 @@ class UserController extends BaseApiController
         // Hash password
         $validated['password'] = Hash::make($validated['password']);
 
-        // For non-super admins, ensure facility_id is set to their facility
-        if ($currentUser && $currentUser->role !== 'super_admin') {
-            // Facility admins can only create users for their own facility
-            if (!isset($validated['facility_id']) || $validated['facility_id'] != $currentUser->facility_id) {
-                $validated['facility_id'] = $currentUser->facility_id;
-            }
+        // For non-super admins, ensure facility_id is set to creator's facility
+        // (This is a safety check in case validation didn't include it)
+        if ($currentUser && $currentUser->role !== 'super_admin' && $facilityId) {
+            // Always set to creator's facility_id - they can only create users for their facility
+            $validated['facility_id'] = $facilityId;
         }
 
         // Extract role_ids if provided
