@@ -17,6 +17,12 @@ class DashboardController extends BaseApiController
     public function stats(): JsonResponse
     {
         $user = auth()->user();
+        
+        // Check if cache should be cleared (for debugging/admin use)
+        if (request()->has('clear_cache') && ($user->role === 'super_admin' || $user->role === 'administrator')) {
+            $this->dashboardService->clearCacheForUser($user);
+        }
+        
         $stats = $this->dashboardService->getStatsForUser($user);
 
         return $this->success($stats);

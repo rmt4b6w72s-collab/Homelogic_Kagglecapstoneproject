@@ -26,17 +26,103 @@ class DashboardService
      */
     public function getStatsForUser(User $user): array
     {
-        // Cache stats for 2 minutes to reduce database load
-        $cacheKey = "dashboard.stats.{$user->id}.{$user->role}";
+        // Include facility_id in cache key for better cache invalidation
+        $facilityId = $user->facility_id ?? ($user->assigned_branch_id ? 
+            (\App\Models\Branch::find($user->assigned_branch_id)?->facility_id ?? 'none') : 'none');
         
-        return Cache::remember($cacheKey, 120, function () use ($user) {
-        if (UserRoles::isCaregiverRole($user->role)) {
-            return $this->getCaregiverStats($user);
-        }
+        // Cache stats for 1 minute to reduce database load (reduced from 2 minutes for faster updates)
+        $cacheKey = "dashboard.stats.{$user->id}.{$user->role}.{$facilityId}";
+        
+        try {
+            return Cache::remember($cacheKey, 60, function () use ($user) {
+                if (UserRoles::isCaregiverRole($user->role)) {
+                    return $this->getCaregiverStats($user);
+                }
 
-        // Pass user to admin stats for potential facility filtering
-        return $this->getAdminStats($user);
-        });
+                // Pass user to admin stats for potential facility filtering
+                return $this->getAdminStats($user);
+            });
+        } catch (\Exception $e) {
+            Log::error('DashboardService: Error fetching stats', [
+                'user_id' => $user->id,
+                'user_role' => $user->role,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            
+            // Return empty stats on error rather than failing
+            return $this->getEmptyStats($user);
+        }
+    }
+    
+    /**
+     * Clear dashboard cache for a user
+     */
+    public function clearCacheForUser(User $user): void
+    {
+        $facilityId = $user->facility_id ?? ($user->assigned_branch_id ? 
+            (\App\Models\Branch::find($user->assigned_branch_id)?->facility_id ?? 'none') : 'none');
+        
+        $cacheKey = "dashboard.stats.{$user->id}.{$user->role}.{$facilityId}";
+        Cache::forget($cacheKey);
+        
+        // Also clear with old cache key format for backward compatibility
+        $oldCacheKey = "dashboard.stats.{$user->id}.{$user->role}";
+        Cache::forget($oldCacheKey);
+        
+        Log::info('DashboardService: Cleared cache for user', [
+            'user_id' => $user->id,
+            'user_role' => $user->role,
+            'facility_id' => $facilityId,
+        ]);
+    }
+    
+    /**
+     * Get empty stats structure for error cases
+     */
+    private function getEmptyStats(User $user): array
+    {
+        if (UserRoles::isCaregiverRole($user->role)) {
+            return [
+                'assigned_residents' => 0,
+                'todays_appointments' => 0,
+                'pending_assessments' => 0,
+                'today_vitals' => 0,
+                'pending_leave_requests' => 0,
+                'week_appointments' => 0,
+                'user_type' => 'caregiver',
+                'weekly_activity' => [],
+                'medication_reminders' => [],
+                'upcoming_appointments_list' => [],
+                'resident_list' => [],
+                'resident_vitals_trend' => null,
+            ];
+        }
+        
+        return [
+            'total_residents' => 0,
+            'active_residents' => 0,
+            'today_appointments' => 0,
+            'upcoming_appointments' => 0,
+            'today_vitals' => 0,
+            'last_30_appointments' => 0,
+            'last_30_vitals' => 0,
+            'last_30_assessments' => 0,
+            'total_staff' => 0,
+            'pending_assessments' => 0,
+            'active_medications' => 0,
+            'user_type' => 'admin',
+            'upcoming_appointments_list' => [],
+            'resident_list' => [],
+            'medication_reminders' => [],
+            'occupancy_rate' => 0,
+            'compliance_score' => 0,
+            'medication_adherence_rate' => 0,
+            'average_incident_response_time' => 0,
+            'staff_utilization' => 0,
+            'facility_id' => null,
+            'facility_context_missing' => true,
+        ];
     }
 
     /**
@@ -200,6 +286,17 @@ class DashboardService
         
         $facilityId = $facility ? $facility->id : null;
 
+        // Log facility resolution for debugging
+        Log::info('DashboardService: Facility context resolution', [
+            'user_id' => $user->id,
+            'user_role' => $user->role,
+            'user_facility_id' => $user->facility_id,
+            'user_assigned_branch_id' => $user->assigned_branch_id,
+            'resolved_facility_id' => $facilityId,
+            'app_facility_bound' => app()->bound('facility'),
+            'facility_name' => $facility ? $facility->name : null,
+        ]);
+
         // Bind facility into container so downstream code can use app('facility')
         if ($facility) {
             try {
@@ -271,43 +368,81 @@ class DashboardService
                 'user_facility_id' => $user->facility_id,
                 'user_assigned_branch_id' => $user->assigned_branch_id,
                 'app_facility_bound' => app()->bound('facility'),
+                'host' => request()->getHost(),
+                'path' => request()->path(),
             ]);
             // For administrators without facility context, query all data (no filters)
             // This allows them to see data even if facility context isn't set
         }
 
         // Execute queries and log results for debugging
-        $totalResidents = $residentsQuery->count();
-        $todayAppointments = $appointmentsQuery->whereDate('appointment_date', today())->count();
-        $upcomingAppointments = $appointmentsQuery->whereDate('appointment_date', '>=', today())
-            ->whereNotIn('status', ['cancelled', 'completed'])
-            ->count();
-        $todayVitals = $vitalsQuery->whereDate('measurement_date', today())->count();
-        $totalStaff = $staffQuery->count();
-        $pendingAssessments = $assessmentsQuery->count();
-        $activeMedications = $activeMedicationsQuery->count();
+        try {
+            $totalResidents = $residentsQuery->count();
+            $todayAppointments = $appointmentsQuery->whereDate('appointment_date', today())->count();
+            $upcomingAppointments = $appointmentsQuery->whereDate('appointment_date', '>=', today())
+                ->whereNotIn('status', ['cancelled', 'completed'])
+                ->count();
+            $todayVitals = $vitalsQuery->whereDate('measurement_date', today())->count();
+            $totalStaff = $staffQuery->count();
+            $pendingAssessments = $assessmentsQuery->count();
+            $activeMedications = $activeMedicationsQuery->count();
 
-        // Last 30 days filters
-        $appointmentsLast30 = (clone $appointmentsQuery)
-            ->whereBetween('appointment_date', [$rangeStart, now()])
-            ->where('status', '!=', 'cancelled')
-            ->count();
+            // Last 30 days filters
+            $appointmentsLast30 = (clone $appointmentsQuery)
+                ->whereBetween('appointment_date', [$rangeStart, now()])
+                ->where('status', '!=', 'cancelled')
+                ->count();
 
-        $vitalsLast30 = (clone $vitalsQuery)
-            ->whereBetween('measurement_date', [$rangeStart->toDateString(), now()->toDateString()])
-            ->count();
+            $vitalsLast30 = (clone $vitalsQuery)
+                ->whereBetween('measurement_date', [$rangeStart->toDateString(), now()->toDateString()])
+                ->count();
 
-        $assessmentsLast30 = (clone $assessmentsQuery)
-            ->whereBetween('created_at', [$rangeStart, now()])
-            ->count();
+            $assessmentsLast30 = (clone $assessmentsQuery)
+                ->whereBetween('created_at', [$rangeStart, now()])
+                ->count();
 
-        // Log results for debugging
-        if ($totalResidents === 0 && $facilityId) {
-            Log::info('DashboardService: Zero residents found', [
+            // Log all results for debugging
+            Log::info('DashboardService: Query results', [
                 'facility_id' => $facilityId,
                 'user_id' => $user->id,
                 'user_role' => $user->role,
+                'total_residents' => $totalResidents,
+                'today_appointments' => $todayAppointments,
+                'appointments_last_30' => $appointmentsLast30,
+                'today_vitals' => $todayVitals,
+                'vitals_last_30' => $vitalsLast30,
+                'total_staff' => $totalStaff,
+                'pending_assessments' => $pendingAssessments,
+                'active_medications' => $activeMedications,
             ]);
+
+            // Log warning if zero results with facility context
+            if ($totalResidents === 0 && $facilityId) {
+                Log::warning('DashboardService: Zero residents found for facility', [
+                    'facility_id' => $facilityId,
+                    'user_id' => $user->id,
+                    'user_role' => $user->role,
+                ]);
+            }
+        } catch (\Exception $e) {
+            Log::error('DashboardService: Error executing queries', [
+                'facility_id' => $facilityId,
+                'user_id' => $user->id,
+                'user_role' => $user->role,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            // Set defaults on error
+            $totalResidents = 0;
+            $todayAppointments = 0;
+            $upcomingAppointments = 0;
+            $todayVitals = 0;
+            $totalStaff = 0;
+            $pendingAssessments = 0;
+            $activeMedications = 0;
+            $appointmentsLast30 = 0;
+            $vitalsLast30 = 0;
+            $assessmentsLast30 = 0;
         }
 
         // Calculate new metrics
