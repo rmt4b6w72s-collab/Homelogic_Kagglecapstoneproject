@@ -22,6 +22,22 @@ class CreateUser extends CreateRecord
             $data['name'] = trim(implode(' ', array_filter([$firstName, $middleNames, $lastName]))) ?: $data['email'];
         }
 
+        // Auto-set facility_id from creator (for non-super admins)
+        $currentUser = auth()->user();
+        if ($currentUser && $currentUser->role !== 'super_admin') {
+            // First try creator's facility_id
+            if (empty($data['facility_id']) && $currentUser->facility_id) {
+                $data['facility_id'] = $currentUser->facility_id;
+            }
+            // If still not set, try to derive from creator's assigned_branch_id
+            if (empty($data['facility_id']) && $currentUser->assigned_branch_id) {
+                $branch = \App\Models\Branch::find($currentUser->assigned_branch_id);
+                if ($branch && $branch->facility_id) {
+                    $data['facility_id'] = $branch->facility_id;
+                }
+            }
+        }
+
         return $data;
     }
 
