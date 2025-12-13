@@ -69,8 +69,8 @@ class FixAdminUsersFacilityId extends Command
                 }
             }
             
-            // Method 2: Try to find from residents created by this user
-            if (!$facilityId) {
+            // Method 2: Try to find from residents (only if created_by column exists)
+            if (!$facilityId && Schema::hasColumn('residents', 'created_by')) {
                 $resident = \App\Models\Resident::where('created_by', $user->id)
                     ->whereNotNull('facility_id')
                     ->first();
@@ -81,8 +81,8 @@ class FixAdminUsersFacilityId extends Command
                 }
             }
             
-            // Method 3: Try to find from residents' branches created by this user
-            if (!$facilityId) {
+            // Method 3: Try to find from residents' branches (only if created_by column exists)
+            if (!$facilityId && Schema::hasColumn('residents', 'created_by')) {
                 $resident = \App\Models\Resident::where('created_by', $user->id)
                     ->whereNotNull('branch_id')
                     ->with('branch')
