@@ -197,7 +197,7 @@ function PharmacyDashboard() {
                         </div>
                         <div className="flex gap-3">
                             <button
-                                onClick={() => navigate('/pharmacy/orders/create')}
+                                onClick={() => navigate('/pharmacy/orders')}
                                 className="px-4 py-2 bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] rounded-lg hover:bg-[var(--theme-primary-hover)] transition-colors flex items-center gap-2"
                             >
                                 <Plus className="w-4 h-4" />

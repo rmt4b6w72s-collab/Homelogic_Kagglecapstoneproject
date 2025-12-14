@@ -72,9 +72,22 @@ class PharmacyDashboardService
             $totalOrderValue = $orders->sum('total');
             $pendingOrderValue = $orders->where('status', 'pending')->sum('total');
             
-            // Supplier Stats
-            $supplierQuery = PharmacySupplier::query();
-            $totalSuppliers = $supplierQuery->where('is_active', true)->count();
+            // Supplier Stats - Filter by facility
+            $supplierQuery = PharmacySupplier::query()->where('is_active', true);
+            
+            if ($facilityId) {
+                // Filter suppliers by those created by users in the facility OR
+                // suppliers that have orders for branches in the facility
+                $supplierQuery->where(function ($q) use ($facilityId) {
+                    $q->whereHas('createdBy', function ($q) use ($facilityId) {
+                        $q->where('facility_id', $facilityId);
+                    })->orWhereHas('orders.branch', function ($q) use ($facilityId) {
+                        $q->where('facility_id', $facilityId);
+                    });
+                });
+            }
+            
+            $totalSuppliers = $supplierQuery->count();
             
             // Recent Orders (last 10)
             $recentOrders = $orderQuery->orderBy('order_date', 'desc')
