@@ -20,7 +20,7 @@ return new class extends Migration
                 $table->boolean('is_allowed')->default(true);
                 $table->timestamps();
                 
-                $table->unique(['facility_id', 'role_id', 'permission_id']);
+                $table->unique(['facility_id', 'role_id', 'permission_id'], 'frp_facility_role_permission_unique');
                 $table->index('facility_id');
                 $table->index('role_id');
                 $table->index(['facility_id', 'role_id']);
