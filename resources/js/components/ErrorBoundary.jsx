@@ -4,16 +4,38 @@ import { AlertTriangle, RefreshCw, Home, ArrowLeft } from 'lucide-react';
 class ErrorBoundary extends React.Component {
     constructor(props) {
         super(props);
-        this.state = { hasError: false, error: null, errorInfo: null };
+        this.state = { hasError: false, error: null, errorInfo: null, showError: false };
+        this.errorTimeout = null;
     }
 
     static getDerivedStateFromError(error) {
-        return { hasError: true, error };
+        // For module loading errors, delay showing the error to allow retries to succeed
+        const isModuleLoadError = error?.message?.includes('Failed to fetch dynamically imported module');
+        return { 
+            hasError: true, 
+            error,
+            showError: !isModuleLoadError // Show immediately if not a module load error
+        };
     }
 
     componentDidCatch(error, errorInfo) {
         console.error('React Error:', error, errorInfo);
         this.setState({ errorInfo });
+        
+        // If it's a module loading error, wait 2 seconds before showing error
+        // This gives the retry logic time to succeed
+        const isModuleLoadError = error?.message?.includes('Failed to fetch dynamically imported module');
+        if (isModuleLoadError) {
+            this.errorTimeout = setTimeout(() => {
+                this.setState({ showError: true });
+            }, 2000);
+        }
+    }
+
+    componentWillUnmount() {
+        if (this.errorTimeout) {
+            clearTimeout(this.errorTimeout);
+        }
     }
 
     handleReset = () => {
@@ -25,7 +47,8 @@ class ErrorBoundary extends React.Component {
     };
 
     render() {
-        if (this.state.hasError) {
+        // Only show error if showError is true (after delay for module load errors)
+        if (this.state.hasError && this.state.showError) {
             return (
                 <ErrorFallback
                     error={this.state.error}
@@ -34,6 +57,18 @@ class ErrorBoundary extends React.Component {
                     onReload={() => window.location.reload()}
                     onGoToDashboard={this.handleGoToDashboard}
                 />
+            );
+        }
+
+        // While waiting for retry or if error shouldn't be shown yet, show loading state
+        if (this.state.hasError && !this.state.showError) {
+            return (
+                <div className="flex items-center justify-center min-h-screen">
+                    <div className="text-center">
+                        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                        <p className="mt-4 text-gray-600">Loading module...</p>
+                    </div>
+                </div>
             );
         }
 

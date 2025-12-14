@@ -17,7 +17,7 @@ const PageLoader = () => (
 
 // Utility function to retry failed dynamic imports
 // This fixes the "Failed to fetch dynamically imported module" error in production
-function retryLazyImport(importFn, retries = 3, delay = 1000) {
+function retryLazyImport(importFn, retries = 5, delay = 200) {
     return new Promise((resolve, reject) => {
         // Check if we've already tried reloading (prevent infinite loops)
         const reloadKey = 'module_reload_attempted';
@@ -34,9 +34,10 @@ function retryLazyImport(importFn, retries = 3, delay = 1000) {
                 })
                 .catch((error) => {
                     if (remainingRetries > 0) {
+                        // Faster retries with shorter delays
                         console.warn(`Failed to load module, retrying... (${retries - remainingRetries + 1}/${retries})`, error);
-                        // Exponential backoff
-                        const backoffDelay = delay * (retries - remainingRetries + 1);
+                        // Linear backoff instead of exponential for faster recovery
+                        const backoffDelay = delay * (retries - remainingRetries);
                         setTimeout(() => attempt(remainingRetries - 1), backoffDelay);
                     } else {
                         console.error('Failed to load module after all retries:', error);
@@ -47,7 +48,7 @@ function retryLazyImport(importFn, retries = 3, delay = 1000) {
                             // Small delay before reload to avoid infinite loop
                             setTimeout(() => {
                                 window.location.reload();
-                            }, 2000);
+                            }, 1000);
                         } else if (hasReloaded) {
                             console.error('Module load failed even after reload. This may indicate a build or deployment issue.');
                         }
@@ -68,7 +69,7 @@ function lazyWithRetry(importFn, retries = 3) {
 import Login from './pages/Login';
 
 // Lazy load all page components for code splitting with retry logic
-const Dashboard = lazyWithRetry(() => import('./pages/Dashboard'), 3);
+const Dashboard = lazyWithRetry(() => import('./pages/Dashboard'), 5);
 const Residents = lazyWithRetry(() => import('./pages/Residents'));
 const MyResidentsPage = lazyWithRetry(() => import('./pages/caregiver/MyResidentsPage'));
 const ResidentDetailPage = lazyWithRetry(() => import('./pages/caregiver/ResidentDetailPage'));
