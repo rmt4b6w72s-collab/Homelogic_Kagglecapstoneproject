@@ -34,6 +34,16 @@ class CleaningTaskAssignmentController extends BaseApiController
     public function store(Request $request, CleaningTask $cleaningTask)
     {
         try {
+            // Ensure task has an area before proceeding
+            if (!$cleaningTask->cleaning_area_id) {
+                \Log::error('Cleaning task missing area_id', [
+                    'task_id' => $cleaningTask->id,
+                ]);
+                return response()->json([
+                    'message' => 'This task is not associated with a cleaning area. Please contact support.',
+                ], 422);
+            }
+
             $this->authorizeAssignments($request->user(), $cleaningTask);
 
             $data = $request->validate([
@@ -41,7 +51,18 @@ class CleaningTaskAssignmentController extends BaseApiController
                 'scheduled_date' => 'required|date',
             ]);
 
-            $scheduledDate = Carbon::parse($data['scheduled_date'])->toDateString();
+            // Parse and validate the scheduled date
+            try {
+                $scheduledDate = Carbon::parse($data['scheduled_date'])->toDateString();
+            } catch (\Exception $e) {
+                \Log::error('Invalid scheduled_date format', [
+                    'scheduled_date' => $data['scheduled_date'],
+                    'error' => $e->getMessage(),
+                ]);
+                return response()->json([
+                    'message' => 'Invalid date format. Please use YYYY-MM-DD format.',
+                ], 422);
+            }
 
             $keys = [
                 'cleaning_task_id' => $cleaningTask->id,
@@ -50,19 +71,28 @@ class CleaningTaskAssignmentController extends BaseApiController
             ];
 
             // Use database-level upsert to avoid race-condition duplicate key errors
-            CleaningTaskAssignment::upsert(
-                [[
-                    'cleaning_task_id' => $keys['cleaning_task_id'],
-                    'user_id' => $keys['user_id'],
-                    'scheduled_date' => $keys['scheduled_date'],
-                    'status' => 'assigned',
-                    'notified_at' => now(),
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]],
-                ['cleaning_task_id', 'user_id', 'scheduled_date'],
-                ['status', 'notified_at', 'updated_at']
-            );
+            try {
+                CleaningTaskAssignment::upsert(
+                    [[
+                        'cleaning_task_id' => $keys['cleaning_task_id'],
+                        'user_id' => $keys['user_id'],
+                        'scheduled_date' => $keys['scheduled_date'],
+                        'status' => 'assigned',
+                        'notified_at' => now(),
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]],
+                    ['cleaning_task_id', 'user_id', 'scheduled_date'],
+                    ['status', 'notified_at', 'updated_at']
+                );
+            } catch (\Exception $e) {
+                \Log::error('Failed to upsert cleaning task assignment', [
+                    'keys' => $keys,
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
+                ]);
+                throw new \Exception('Failed to create assignment. Please try again.');
+            }
 
             // Retrieve the upserted record - use whereDate for scheduled_date to handle date comparison properly
             $assignment = CleaningTaskAssignment::where('cleaning_task_id', $keys['cleaning_task_id'])
@@ -71,6 +101,9 @@ class CleaningTaskAssignmentController extends BaseApiController
                 ->first();
 
             if (!$assignment) {
+                \Log::error('Assignment not found after upsert', [
+                    'keys' => $keys,
+                ]);
                 throw new \Exception('Failed to create or retrieve assignment after upsert.');
             }
 
@@ -106,6 +139,7 @@ class CleaningTaskAssignmentController extends BaseApiController
             \Log::error('Error assigning caregiver to task', [
                 'task_id' => $cleaningTask->id,
                 'user_id' => $request->input('user_id'),
+                'scheduled_date' => $request->input('scheduled_date'),
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
@@ -144,6 +178,7 @@ class CleaningTaskAssignmentController extends BaseApiController
             \Log::error('Error checking permission for caregiver assignment', [
                 'user_id' => $user->id,
                 'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
             ]);
             abort(403, 'You do not have permission to assign housekeeping tasks.');
         }
@@ -162,8 +197,25 @@ class CleaningTaskAssignmentController extends BaseApiController
 
         // Check branch access if user has an assigned branch
         if ($user->assigned_branch_id) {
+            // Check if task has an area
             if (!$task->area) {
+                \Log::warning('Task missing area for branch access check', [
+                    'task_id' => $task->id,
+                    'user_id' => $user->id,
+                    'user_branch_id' => $user->assigned_branch_id,
+                ]);
                 abort(422, 'This task is not associated with a cleaning area. Please contact support.');
+            }
+
+            // Check if area has a branch_id
+            if (!$task->area->branch_id) {
+                \Log::warning('Task area missing branch_id', [
+                    'task_id' => $task->id,
+                    'area_id' => $task->area->id,
+                    'user_id' => $user->id,
+                    'user_branch_id' => $user->assigned_branch_id,
+                ]);
+                abort(422, 'This task\'s cleaning area is not associated with a branch. Please contact support.');
             }
 
             if ($user->assigned_branch_id !== $task->area->branch_id) {
