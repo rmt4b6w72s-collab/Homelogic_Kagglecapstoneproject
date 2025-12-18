@@ -5,10 +5,14 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Branch;
+use App\Mail\WelcomeToFacilityNotification;
+use App\Services\MailConfigurationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Schema;
 
@@ -239,6 +243,40 @@ class UserController extends BaseApiController
 
         // Refresh the model to get accessors (like profile_image_url)
         $user->refresh();
+
+        // Send welcome email if user has email and facility
+        if ($user->email && $user->facility_id) {
+            try {
+                $mailConfigService = app(MailConfigurationService::class);
+                $facility = $user->facility;
+                
+                // Configure mail for facility
+                if ($facility) {
+                    $mailConfigService->configureForFacility($facility);
+                }
+                
+                // Get temporary password if it was just created (we have it in validated before hashing)
+                $temporaryPassword = $request->input('password'); // This is the plain password before hashing
+                
+                // Send welcome email
+                Mail::to($user->email)->send(
+                    new WelcomeToFacilityNotification($user, $facility, $user->assignedBranch, $temporaryPassword)
+                );
+                
+                Log::info('Welcome email sent to new user', [
+                    'user_id' => $user->id,
+                    'email' => $user->email,
+                    'facility_id' => $user->facility_id,
+                ]);
+            } catch (\Exception $e) {
+                // Log error but don't fail user creation
+                Log::error('Failed to send welcome email to new user', [
+                    'user_id' => $user->id,
+                    'email' => $user->email,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
 
         return response()->json($user->load(['assignedBranch', 'roles', 'facility']), 201);
     }

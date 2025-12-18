@@ -3,9 +3,13 @@
 namespace App\Filament\Resources\FacilityResource\Pages;
 
 use App\Filament\Resources\FacilityResource;
+use App\Mail\WelcomeToFacilityNotification;
+use App\Services\MailConfigurationService;
 use Filament\Actions;
 use Filament\Resources\Pages\CreateRecord;
 use Filament\Notifications\Notification;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class CreateFacility extends CreateRecord
 {
@@ -91,6 +95,35 @@ class CreateFacility extends CreateRecord
             $this->record->update([
                 'registered_by_user_id' => $owner->id,
             ]);
+
+            // Send welcome email to facility owner
+            if ($owner->email) {
+                try {
+                    $mailConfigService = app(MailConfigurationService::class);
+                    
+                    // Configure mail for facility
+                    $mailConfigService->configureForFacility($this->record);
+                    
+                    // Send welcome email with temporary password
+                    Mail::to($owner->email)->send(
+                        new WelcomeToFacilityNotification($owner, $this->record, $branch, $formData['owner_password'])
+                    );
+                    
+                    Log::info('Welcome email sent to facility owner', [
+                        'user_id' => $owner->id,
+                        'email' => $owner->email,
+                        'facility_id' => $this->record->id,
+                    ]);
+                } catch (\Exception $e) {
+                    // Log error but don't fail facility creation
+                    Log::error('Failed to send welcome email to facility owner', [
+                        'user_id' => $owner->id,
+                        'email' => $owner->email,
+                        'facility_id' => $this->record->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
         }
 
         // Send success notification with details

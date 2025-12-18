@@ -7,8 +7,13 @@ use App\Models\CleaningTask;
 use App\Models\CleaningTaskAssignment;
 use App\Models\Notification;
 use App\Models\User;
+use App\Mail\TaskAssignmentNotification;
+use App\Services\EmailPreferenceService;
+use App\Services\MailConfigurationService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 class CleaningTaskAssignmentController extends BaseApiController
@@ -186,6 +191,7 @@ class CleaningTaskAssignmentController extends BaseApiController
 
         $areaName = $task->area?->name ?? 'Housekeeping';
 
+        // Create in-app notification
         Notification::create([
             'user_id' => $user->id,
             'type' => 'housekeeping_assignment',
@@ -204,5 +210,52 @@ class CleaningTaskAssignmentController extends BaseApiController
                 'scheduled_date' => $assignment->scheduled_date,
             ],
         ]);
+
+        // Send email notification if user has email and preferences allow it
+        if ($user->email) {
+            try {
+                $emailPreferenceService = app(EmailPreferenceService::class);
+                $mailConfigService = app(MailConfigurationService::class);
+                
+                // Get facility from task area's branch
+                $facility = $task->area?->branch?->facility;
+                
+                // Check if user should receive task assignment emails
+                if ($emailPreferenceService->shouldSendEmail($user, 'task_assignment', $facility)) {
+                    // Configure mail for facility if available
+                    if ($facility) {
+                        $mailConfigService->configureForFacility($facility);
+                    }
+                    
+                    // Get the user who assigned the task (if available from request)
+                    $assignedBy = request()->user();
+                    
+                    // Send email
+                    Mail::to($user->email)->send(
+                        new TaskAssignmentNotification($assignment, $assignedBy)
+                    );
+                    
+                    Log::info('Task assignment email sent', [
+                        'to' => $user->email,
+                        'task_id' => $task->id,
+                        'task_title' => $task->title,
+                        'scheduled_date' => $assignment->scheduled_date,
+                        'facility_id' => $facility?->id,
+                    ]);
+                } else {
+                    Log::info('Task assignment email skipped - user preferences disabled', [
+                        'user_id' => $user->id,
+                        'task_id' => $task->id,
+                    ]);
+                }
+            } catch (\Exception $e) {
+                // Log error but don't fail the assignment
+                Log::error('Failed to send task assignment email', [
+                    'to' => $user->email,
+                    'task_id' => $task->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
     }
 }

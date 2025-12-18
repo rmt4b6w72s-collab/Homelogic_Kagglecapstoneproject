@@ -4,8 +4,12 @@ namespace App\Filament\Resources\UserResource\Pages;
 
 use App\Filament\Resources\UserResource;
 use App\Models\Role;
+use App\Mail\WelcomeToFacilityNotification;
+use App\Services\MailConfigurationService;
 use Filament\Actions;
 use Filament\Resources\Pages\CreateRecord;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class CreateUser extends CreateRecord
 {
@@ -51,6 +55,41 @@ class CreateUser extends CreateRecord
             $adminRole = Role::where('name', 'administrator')->first();
             if ($adminRole && !$user->hasRole('administrator')) {
                 $user->assignRole('administrator');
+            }
+        }
+
+        // Send welcome email if user has email and facility
+        if ($user->email && $user->facility_id) {
+            try {
+                $mailConfigService = app(MailConfigurationService::class);
+                $facility = $user->facility;
+                
+                // Configure mail for facility
+                if ($facility) {
+                    $mailConfigService->configureForFacility($facility);
+                }
+                
+                // Get temporary password from form data if available
+                $formData = $this->form->getState();
+                $temporaryPassword = $formData['password'] ?? null;
+                
+                // Send welcome email
+                Mail::to($user->email)->send(
+                    new WelcomeToFacilityNotification($user, $facility, $user->assignedBranch, $temporaryPassword)
+                );
+                
+                Log::info('Welcome email sent to new user (Filament)', [
+                    'user_id' => $user->id,
+                    'email' => $user->email,
+                    'facility_id' => $user->facility_id,
+                ]);
+            } catch (\Exception $e) {
+                // Log error but don't fail user creation
+                Log::error('Failed to send welcome email to new user (Filament)', [
+                    'user_id' => $user->id,
+                    'email' => $user->email,
+                    'error' => $e->getMessage(),
+                ]);
             }
         }
     }

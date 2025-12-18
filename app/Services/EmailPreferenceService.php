@@ -63,6 +63,7 @@ class EmailPreferenceService
             'medication_administration' => 'medication_administration_enabled',
             'critical_vital_sign' => 'critical_vital_sign_enabled',
             'daily_summary' => 'daily_summary_enabled',
+            'task_assignment' => 'task_assignment_enabled',
         ];
 
         $field = $typeMap[$notificationType] ?? null;

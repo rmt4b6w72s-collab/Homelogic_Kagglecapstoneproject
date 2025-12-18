@@ -21,6 +21,7 @@ class StaffEmailPreference extends Model
         'medication_administration_enabled',
         'critical_vital_sign_enabled',
         'daily_summary_enabled',
+        'task_assignment_enabled',
         'email_enabled',
         'frequency',
         'digest_time',
@@ -35,6 +36,7 @@ class StaffEmailPreference extends Model
         'medication_administration_enabled' => 'boolean',
         'critical_vital_sign_enabled' => 'boolean',
         'daily_summary_enabled' => 'boolean',
+        'task_assignment_enabled' => 'boolean',
         'email_enabled' => 'boolean',
         'digest_time' => 'datetime',
     ];
@@ -87,6 +89,7 @@ class StaffEmailPreference extends Model
             'medication_administration' => 'medication_administration_enabled',
             'critical_vital_sign' => 'critical_vital_sign_enabled',
             'daily_summary' => 'daily_summary_enabled',
+            'task_assignment' => 'task_assignment_enabled',
         ];
 
         $field = $typeMap[$notificationType] ?? null;
@@ -113,6 +116,7 @@ class StaffEmailPreference extends Model
             'medication_administration_enabled' => true,
             'critical_vital_sign_enabled' => true,
             'daily_summary_enabled' => false,
+            'task_assignment_enabled' => true,
             'email_enabled' => true,
             'frequency' => 'immediate',
             'digest_time' => null,
