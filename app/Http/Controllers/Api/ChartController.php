@@ -684,12 +684,93 @@ class ChartController extends BaseApiController
         $pendingLeave = $leaveQuery->count();
         $leaveByStatus = $leaveByStatusQuery->groupBy('status')->get();
         
+        // Get detailed assignment breakdown
+        $assignmentsByBranch = \App\Models\Assignment::where('is_active', true);
+        if ($user && $user->role !== 'super_admin' && $user->facility_id) {
+            $facilityBranchIds = \App\Models\Branch::where('facility_id', $user->facility_id)->pluck('id')->toArray();
+            if (!empty($facilityBranchIds)) {
+                $assignmentsByBranch->whereIn('branch_id', $facilityBranchIds);
+            } else {
+                $assignmentsByBranch->whereRaw('1 = 0');
+            }
+        }
+        $assignmentsByBranch = $assignmentsByBranch->selectRaw('branch_id, COUNT(*) as count')
+            ->with('branch:id,name')
+            ->groupBy('branch_id')
+            ->get();
+        
+        // Get assignments by caregiver
+        $assignmentsByCaregiver = \App\Models\Assignment::where('is_active', true);
+        if ($user && $user->role !== 'super_admin' && $user->facility_id) {
+            $facilityBranchIds = \App\Models\Branch::where('facility_id', $user->facility_id)->pluck('id')->toArray();
+            if (!empty($facilityBranchIds)) {
+                $assignmentsByCaregiver->whereIn('branch_id', $facilityBranchIds);
+            } else {
+                $assignmentsByCaregiver->whereRaw('1 = 0');
+            }
+        }
+        $assignmentsByCaregiver = $assignmentsByCaregiver->selectRaw('caregiver_id, COUNT(*) as count')
+            ->with('caregiver:id,name')
+            ->groupBy('caregiver_id')
+            ->orderByDesc('count')
+            ->limit(5)
+            ->get();
+        
+        // Get recent pending leave requests with details
+        $recentPendingLeave = $leaveQuery->with(['staff:id,name,email', 'branch:id,name'])
+            ->orderBy('start_date', 'asc')
+            ->limit(5)
+            ->get();
+        
+        // Get staff by role breakdown
+        $staffByRole = $staffQuery->selectRaw('COUNT(*) as count')
+            ->join('model_has_roles', 'users.id', '=', 'model_has_roles.model_id')
+            ->join('roles', 'model_has_roles.role_id', '=', 'roles.id')
+            ->where('model_has_roles.model_type', 'App\\Models\\User')
+            ->groupBy('roles.name')
+            ->get(['roles.name as role', 'count']);
+        
+        // Get clock-in stats for today
+        $todayClockIns = \App\Models\StaffClockIn::whereDate('clock_in_at', today())
+            ->where('is_active', true);
+        if ($user && $user->role !== 'super_admin' && $user->facility_id) {
+            $todayClockIns->where('facility_id', $user->facility_id);
+        }
+        $todayClockInsCount = $todayClockIns->count();
+        
+        // Get active clock-ins (currently clocked in)
+        $activeClockIns = \App\Models\StaffClockIn::whereNull('clock_out_at')
+            ->where('is_active', true);
+        if ($user && $user->role !== 'super_admin' && $user->facility_id) {
+            $activeClockIns->where('facility_id', $user->facility_id);
+        }
+        $activeClockInsCount = $activeClockIns->count();
+        
+        // Get approved leave count
+        $approvedLeave = LeaveRequest::where('status', 'approved');
+        if ($user && $user->role !== 'super_admin' && $user->facility_id) {
+            $facilityBranchIds = \App\Models\Branch::where('facility_id', $user->facility_id)->pluck('id')->toArray();
+            if (!empty($facilityBranchIds)) {
+                $approvedLeave->whereHas('staff', function($q) use ($user, $facilityBranchIds) {
+                    if (Schema::hasColumn('users', 'facility_id')) {
+                        $q->where(function($subQ) use ($user, $facilityBranchIds) {
+                            $subQ->where('facility_id', $user->facility_id);
+                            $subQ->orWhereIn('assigned_branch_id', $facilityBranchIds);
+                        });
+                    } else {
+                        $q->whereIn('assigned_branch_id', $facilityBranchIds);
+                    }
+                });
+            }
+        }
+        $approvedLeaveCount = $approvedLeave->count();
+        
         // Debug logging
         \Illuminate\Support\Facades\Log::info('Staff Stats Query', [
             'user_id' => $user?->id,
             'user_facility_id' => $user?->facility_id,
             'user_role' => $user?->role,
-            'facility_branch_ids' => $facilityBranchIds,
+            'facility_branch_ids' => $facilityBranchIds ?? [],
             'total_staff' => $totalStaff,
             'total_caregivers' => $totalCaregivers,
             'active_assignments' => $activeAssignments,
@@ -701,7 +782,14 @@ class ChartController extends BaseApiController
             'total_caregivers' => $totalCaregivers,
             'active_assignments' => $activeAssignments,
             'pending_leave' => $pendingLeave,
+            'approved_leave' => $approvedLeaveCount,
             'leave_by_status' => $leaveByStatus,
+            'assignments_by_branch' => $assignmentsByBranch,
+            'assignments_by_caregiver' => $assignmentsByCaregiver,
+            'recent_pending_leave' => $recentPendingLeave,
+            'staff_by_role' => $staffByRole,
+            'today_clock_ins' => $todayClockInsCount,
+            'active_clock_ins' => $activeClockInsCount,
         ];
 
         return response()->json($stats);
