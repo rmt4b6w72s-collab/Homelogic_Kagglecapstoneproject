@@ -8,6 +8,7 @@ use App\Models\Branch;
 use App\Constants\Modules;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
 
 class MedicationDeliveryController extends BaseApiController
 {
@@ -67,47 +68,96 @@ class MedicationDeliveryController extends BaseApiController
      */
     public function store(Request $request): JsonResponse
     {
-        if ($error = $this->requireModuleAccess(Modules::PHARMACY)) {
-            return $error;
-        }
+        try {
+            if ($error = $this->requireModuleAccess(Modules::PHARMACY)) {
+                return $error;
+            }
 
-        $validated = $request->validate([
-            'branch_id' => 'required|exists:branches,id',
-            'delivery_type' => 'required|in:individual,batch',
-            'resident_id' => 'nullable|exists:residents,id',
-            'medication_id' => 'nullable|exists:medications,id',
-            'pharmacy_name' => 'required|string|max:255',
-            'quantity_received' => 'required|string|max:255',
-            'received_date' => 'required|date',
-            'received_time' => 'required|string',
-            'status' => 'nullable|in:received,verified,stored',
-            'notes' => 'nullable|string',
-        ]);
+            $validated = $request->validate([
+                'branch_id' => 'required|exists:branches,id',
+                'delivery_type' => 'required|in:individual,batch',
+                'resident_id' => 'nullable|exists:residents,id',
+                'medication_id' => 'nullable|exists:medications,id',
+                'pharmacy_name' => 'required|string|max:255',
+                'quantity_received' => 'required|string|max:255',
+                'received_date' => 'required|date',
+                'received_time' => 'required|string',
+                'status' => 'nullable|in:received,verified,stored',
+                'notes' => 'nullable|string',
+            ]);
 
-        // Facility enforcement for non-super admins
-        $facility = $this->getCurrentFacility($request->user());
+            // Facility enforcement for non-super admins
+            $facility = $this->getCurrentFacility($request->user());
             if ($facility) {
-            $branch = Branch::find($validated['branch_id']);
+                $branch = Branch::find($validated['branch_id']);
                 if (!$branch || $branch->facility_id !== $facility->id) {
                     return response()->json([
                         'message' => 'The selected branch does not belong to your facility.',
                     ], 403);
+                }
             }
-        }
 
-        // Validate medication_id is required for individual deliveries
-        if ($validated['delivery_type'] === 'individual' && empty($validated['medication_id'])) {
+            // Validate medication_id is required for individual deliveries
+            if ($validated['delivery_type'] === 'individual' && empty($validated['medication_id'])) {
+                return response()->json([
+                    'message' => 'Medication is required for individual deliveries.',
+                ], 422);
+            }
+
+            $validated['received_by'] = auth()->id();
+            $validated['status'] = $validated['status'] ?? 'received';
+
+            // Clean up null values for optional fields
+            if (empty($validated['resident_id'])) {
+                $validated['resident_id'] = null;
+            }
+            if (empty($validated['medication_id'])) {
+                $validated['medication_id'] = null;
+            }
+
+            // Convert received_time to proper format (HH:MM:SS)
+            if (isset($validated['received_time'])) {
+                $time = $validated['received_time'];
+                // If time is in HH:MM format, add :00 for seconds
+                if (preg_match('/^\d{2}:\d{2}$/', $time)) {
+                    $validated['received_time'] = $time . ':00';
+                }
+                // If time is in HH:MM:SS format, keep it as is
+                // If time is in other formats, try to parse it
+                elseif (!preg_match('/^\d{2}:\d{2}:\d{2}$/', $time)) {
+                    try {
+                        $parsedTime = \Carbon\Carbon::parse($time)->format('H:i:s');
+                        $validated['received_time'] = $parsedTime;
+                    } catch (\Exception $e) {
+                        // If parsing fails, use the original value
+                        Log::warning('Could not parse received_time', ['time' => $time]);
+                    }
+                }
+            }
+
+            $delivery = MedicationDelivery::create($validated);
+
+            // Load relationships safely
+            $delivery->load(['branch', 'resident', 'medication', 'receivedBy']);
+
+            return response()->json($delivery, 201);
+        } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
-                'message' => 'Medication is required for individual deliveries.',
+                'message' => 'Validation failed',
+                'errors' => $e->errors(),
             ], 422);
+        } catch (\Exception $e) {
+            Log::error('Error creating medication delivery', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'request' => $request->all(),
+            ]);
+
+            return response()->json([
+                'message' => 'Failed to create medication delivery',
+                'error' => config('app.debug') ? $e->getMessage() : 'An error occurred while creating the medication delivery.',
+            ], 500);
         }
-
-        $validated['received_by'] = auth()->id();
-        $validated['status'] = $validated['status'] ?? 'received';
-
-        $delivery = MedicationDelivery::create($validated);
-
-        return response()->json($delivery->load(['branch', 'resident', 'medication', 'receivedBy']), 201);
     }
 
     /**
