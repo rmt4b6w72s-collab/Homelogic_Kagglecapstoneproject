@@ -567,6 +567,7 @@ class ChartController extends BaseApiController
     public function staffStats(Request $request): JsonResponse
     {
         $user = $request->user();
+        $facilityBranchIds = [];
         
         // Build staff queries with facility filtering
         $staffQuery = User::where('is_active', true);
@@ -582,6 +583,7 @@ class ChartController extends BaseApiController
                 // Check if facility_id column exists
                 if (Schema::hasColumn('users', 'facility_id')) {
                     // Include users with direct facility_id match OR users with assigned_branch_id in facility branches
+                    // Also include users with NULL facility_id but assigned_branch_id in facility branches
                     $staffQuery->where(function($q) use ($user, $facilityBranchIds) {
                         $q->where('facility_id', $user->facility_id);
                         if (!empty($facilityBranchIds)) {
@@ -640,7 +642,7 @@ class ChartController extends BaseApiController
         if ($user && $user->role !== 'super_admin' && $user->facility_id) {
             $facilityBranchIds = \App\Models\Branch::where('facility_id', $user->facility_id)->pluck('id')->toArray();
             if (!empty($facilityBranchIds)) {
-                $leaveQuery->whereHas('user', function($q) use ($user, $facilityBranchIds) {
+                $leaveQuery->whereHas('staff', function($q) use ($user, $facilityBranchIds) {
                     if (Schema::hasColumn('users', 'facility_id')) {
                         $q->where(function($subQ) use ($user, $facilityBranchIds) {
                             $subQ->where('facility_id', $user->facility_id);
@@ -659,7 +661,7 @@ class ChartController extends BaseApiController
         if ($user && $user->role !== 'super_admin' && $user->facility_id) {
             $facilityBranchIds = \App\Models\Branch::where('facility_id', $user->facility_id)->pluck('id')->toArray();
             if (!empty($facilityBranchIds)) {
-                $leaveByStatusQuery->whereHas('user', function($q) use ($user, $facilityBranchIds) {
+                $leaveByStatusQuery->whereHas('staff', function($q) use ($user, $facilityBranchIds) {
                     if (Schema::hasColumn('users', 'facility_id')) {
                         $q->where(function($subQ) use ($user, $facilityBranchIds) {
                             $subQ->where('facility_id', $user->facility_id);
@@ -674,12 +676,31 @@ class ChartController extends BaseApiController
             }
         }
         
+        // Get counts
+        $totalStaff = $staffQuery->count();
+        $totalCaregivers = $caregiverQuery->count();
+        $activeAssignments = $assignmentQuery->count();
+        $pendingLeave = $leaveQuery->count();
+        $leaveByStatus = $leaveByStatusQuery->groupBy('status')->get();
+        
+        // Debug logging
+        \Illuminate\Support\Facades\Log::info('Staff Stats Query', [
+            'user_id' => $user?->id,
+            'user_facility_id' => $user?->facility_id,
+            'user_role' => $user?->role,
+            'facility_branch_ids' => $facilityBranchIds,
+            'total_staff' => $totalStaff,
+            'total_caregivers' => $totalCaregivers,
+            'active_assignments' => $activeAssignments,
+            'pending_leave' => $pendingLeave,
+        ]);
+        
         $stats = [
-            'total_staff' => $staffQuery->count(),
-            'total_caregivers' => $caregiverQuery->count(),
-            'active_assignments' => $assignmentQuery->count(),
-            'pending_leave' => $leaveQuery->count(),
-            'leave_by_status' => $leaveByStatusQuery->groupBy('status')->get(),
+            'total_staff' => $totalStaff,
+            'total_caregivers' => $totalCaregivers,
+            'active_assignments' => $activeAssignments,
+            'pending_leave' => $pendingLeave,
+            'leave_by_status' => $leaveByStatus,
         ];
 
         return response()->json($stats);
