@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../services/api';
-import { Calendar, Plus, Edit, Trash2 } from 'lucide-react';
+import { Calendar, Plus, Edit, Trash2, CheckCircle, XCircle } from 'lucide-react';
 import SectionCard from '../components/SectionCard';
 
 export default function LeaveRequests() {
@@ -32,6 +32,14 @@ export default function LeaveRequests() {
     return roleNormalized === 'caregiver' || (role.includes('care') && role.includes('giver'));
   }, [currentUser]);
 
+  // Check if user is an admin (can approve/reject)
+  const isAdmin = React.useMemo(() => {
+    if (!currentUser) return false;
+    const role = currentUser.role?.toLowerCase().trim() || '';
+    return role === 'administrator' || role === 'admin' || role === 'super_admin' || 
+           currentUser.isFacilityAdministrator?.() || currentUser.isBranchAdmin?.();
+  }, [currentUser]);
+
   const { data: users } = useQuery({
     queryKey: ['users-options'],
     queryFn: async () => (await api.get('/residents', { params: { per_page: 1 } })).data && (await api.get('/roles')) && (await api.get('/v1/user')) && [],
@@ -53,6 +61,44 @@ export default function LeaveRequests() {
       queryClient.invalidateQueries(['leave-requests']);
     },
   });
+
+  const approveMutation = useMutation({
+    mutationFn: async (id) => {
+      return api.put(`/leave-requests/${id}`, {
+        status: 'approved',
+        approved_by: currentUser?.id,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['leave-requests']);
+    },
+  });
+
+  const rejectMutation = useMutation({
+    mutationFn: async ({ id, declineReason }) => {
+      return api.put(`/leave-requests/${id}`, {
+        status: 'declined',
+        decline_reason: declineReason || 'Request declined by administrator',
+        approved_by: currentUser?.id,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['leave-requests']);
+    },
+  });
+
+  const handleApprove = (id) => {
+    if (window.confirm('Approve this leave request?')) {
+      approveMutation.mutate(id);
+    }
+  };
+
+  const handleReject = (id) => {
+    const declineReason = window.prompt('Please provide a reason for declining this request (optional):');
+    if (declineReason !== null) { // User didn't cancel
+      rejectMutation.mutate({ id, declineReason });
+    }
+  };
 
   const handleCloseForm = () => {
     setShowForm(false);
@@ -132,24 +178,48 @@ export default function LeaveRequests() {
                       </span>
                     </div>
                     {/* Actions */}
-                    {(!isCaregiver || lr.staff_id === currentUser?.id) && (
-                      <div className="flex space-x-2">
-                        <button 
-                          onClick={() => { setEditing(lr); setShowForm(true); }} 
-                          className="p-2 bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] hover:bg-[var(--theme-primary-hover)] rounded-lg transition-colors shadow-md hover:shadow-lg" 
-                          title="Edit"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </button>
-                        <button 
-                          onClick={() => window.confirm('Delete leave request?') && deleteMutation.mutate(lr.id)} 
-                          className="p-2 bg-red-600 text-white hover:bg-red-700 rounded-lg transition-colors shadow-md hover:shadow-lg" 
-                          title="Delete"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    )}
+                    <div className="flex space-x-2">
+                      {/* Approve/Reject buttons for admins on pending requests */}
+                      {isAdmin && lr.status === 'pending' && (
+                        <>
+                          <button 
+                            onClick={() => handleApprove(lr.id)} 
+                            disabled={approveMutation.isLoading}
+                            className="p-2 bg-green-600 text-white hover:bg-green-700 rounded-lg transition-colors shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed" 
+                            title="Approve"
+                          >
+                            <CheckCircle className="w-4 h-4" />
+                          </button>
+                          <button 
+                            onClick={() => handleReject(lr.id)} 
+                            disabled={rejectMutation.isLoading}
+                            className="p-2 bg-red-600 text-white hover:bg-red-700 rounded-lg transition-colors shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed" 
+                            title="Reject"
+                          >
+                            <XCircle className="w-4 h-4" />
+                          </button>
+                        </>
+                      )}
+                      {/* Edit/Delete buttons */}
+                      {(!isCaregiver || lr.staff_id === currentUser?.id) && (
+                        <>
+                          <button 
+                            onClick={() => { setEditing(lr); setShowForm(true); }} 
+                            className="p-2 bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] hover:bg-[var(--theme-primary-hover)] rounded-lg transition-colors shadow-md hover:shadow-lg" 
+                            title="Edit"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+                          <button 
+                            onClick={() => window.confirm('Delete leave request?') && deleteMutation.mutate(lr.id)} 
+                            className="p-2 bg-red-600 text-white hover:bg-red-700 rounded-lg transition-colors shadow-md hover:shadow-lg" 
+                            title="Delete"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </>
+                      )}
+                    </div>
                   </div>
 
                   {/* Reason */}
