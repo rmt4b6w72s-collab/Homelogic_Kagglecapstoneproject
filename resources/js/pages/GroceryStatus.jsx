@@ -870,29 +870,6 @@ function GroceryStatusForm({ record, branches, templates = [], isCaregiver, care
                             {errors.notes && <p className="text-xs text-red-600 mt-1">{errors.notes[0]}</p>}
                         </div>
 
-                        {!isCaregiver && onSaveTemplate && (
-                            <div className="flex items-center justify-end gap-3">
-                                <button
-                                    type="button"
-                                    onClick={async () => {
-                                        if (!formData.branch_id || !formData.items_needed) {
-                                            toast.error('Branch and items needed are required to save a template.');
-                                            return;
-                                        }
-                                        await onSaveTemplate({
-                                            branch_id: Number(formData.branch_id),
-                                            name: 'Grocery Template',
-                                            items_list: formData.items_needed,
-                                            category: 'general',
-                                        });
-                                    }}
-                                    className="px-4 py-2 border border-[var(--theme-primary)] text-[var(--theme-primary)] rounded-lg hover:bg-[var(--theme-primary-bg-light)]"
-                                >
-                                    Save as Template
-                                </button>
-                            </div>
-                        )}
-
                         <div className="flex items-center justify-end space-x-3 pt-4 border-t">
                             <button
                                 type="button"
