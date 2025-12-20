@@ -247,7 +247,8 @@ class User extends Authenticatable implements FilamentUser
 
     public function hasPermission(string $permission): bool
     {
-        // Admins bypass all restrictions
+        // Both administrator and admin bypass permission checks
+        // But they have different data access scopes (handled elsewhere)
         $adminRoles = ['super_admin', 'administrator', 'admin'];
         if (in_array($this->role, $adminRoles) || $this->roles()->whereIn('name', $adminRoles)->exists()) {
             return true;
@@ -323,14 +324,18 @@ class User extends Authenticatable implements FilamentUser
             return true;
         }
 
-        // Facility admins (admin/administrator) should have full module access within their facility
-        $isFacilityAdmin = $this->role === 'administrator'
-            || $this->role === 'admin'
-            || $this->hasRole('administrator')
-            || $this->hasRole('admin');
-
-        if ($isFacilityAdmin) {
+        // Facility administrators have full module access within their facility
+        if ($this->isFacilityAdministrator()) {
             return true;
+        }
+
+        // Branch admins have module access within their facility (but data scoped to branch)
+        if ($this->isBranchAdmin()) {
+            // Check if user's facility has access to this module
+            if (!$this->facility_id || !$this->facility) {
+                return false;
+            }
+            return $this->facility->hasModuleAccess($module);
         }
 
         // If user doesn't have a facility, deny access
@@ -344,6 +349,32 @@ class User extends Authenticatable implements FilamentUser
     public function hasAnyRole(array $roles): bool
     {
         return $this->roles()->whereIn('name', $roles)->exists();
+    }
+
+    /**
+     * Check if user is a facility administrator (sees all branches in facility)
+     */
+    public function isFacilityAdministrator(): bool
+    {
+        return $this->role === 'administrator' 
+            || $this->hasRole('administrator');
+    }
+
+    /**
+     * Check if user is a branch admin (sees only their assigned branch)
+     */
+    public function isBranchAdmin(): bool
+    {
+        return $this->role === 'admin' 
+            || $this->hasRole('admin');
+    }
+
+    /**
+     * Check if user is any type of admin (facility or branch)
+     */
+    public function isAnyAdmin(): bool
+    {
+        return $this->isFacilityAdministrator() || $this->isBranchAdmin();
     }
 
     // Scopes
@@ -471,10 +502,11 @@ class User extends Authenticatable implements FilamentUser
     public static function getRoleOptions()
     {
         return [
+            'administrator' => 'Administrator (Facility-wide)',
+            'admin' => 'Admin (Branch-level)',
             'care_giver' => 'Care Giver',
             'registered_nurse' => 'Registered Nurse',
             'licensed_nurse' => 'Licensed Nurse',
-            'administrator' => 'Administrator',
             'manager' => 'Manager',
             'support_staff' => 'Support Staff',
         ];

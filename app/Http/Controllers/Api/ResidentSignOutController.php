@@ -327,7 +327,7 @@ class ResidentSignOutController extends Controller
         $query = ResidentSignOut::with(['resident', 'branch', 'createdBy', 'signedInBy']);
 
         // Apply access level filtering
-        $isAdmin = $user->role === 'super_admin' || $user->role === 'administrator' || $user->hasRole('administrator');
+        $isAdmin = $user->role === 'super_admin' || $user->isAnyAdmin();
         
         if ($user->isCaregiver() && $user->assigned_branch_id) {
             // Caregivers can only see sign-outs from their assigned branch

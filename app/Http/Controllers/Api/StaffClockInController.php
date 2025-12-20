@@ -140,7 +140,7 @@ class StaffClockInController extends Controller
         }
 
         // Check if user is admin
-        $isAdmin = $user->role === 'super_admin' || $user->role === 'administrator' || $user->hasRole('administrator');
+        $isAdmin = $user->role === 'super_admin' || $user->isAnyAdmin();
         
         if (!$isAdmin) {
             return response()->json(['message' => 'Unauthorized. Admin access required.'], 403);
@@ -325,7 +325,7 @@ class StaffClockInController extends Controller
 
         $query = StaffClockIn::with(['staff', 'branch', 'facility']);
 
-        $isAdmin = $user->role === 'super_admin' || $user->role === 'administrator' || $user->hasRole('administrator');
+        $isAdmin = $user->role === 'super_admin' || $user->isAnyAdmin();
 
         // Apply facility filtering for non-super admins
         if ($user->role !== 'super_admin' && $user->facility_id) {
@@ -388,7 +388,7 @@ class StaffClockInController extends Controller
             return response()->json(['message' => 'Unauthorized'], 401);
         }
 
-        $staffId = $request->filled('staff_id') && ($user->role === 'super_admin' || $user->role === 'administrator')
+        $staffId = $request->filled('staff_id') && ($user->role === 'super_admin' || $user->isFacilityAdministrator())
             ? $request->get('staff_id')
             : $user->id;
 

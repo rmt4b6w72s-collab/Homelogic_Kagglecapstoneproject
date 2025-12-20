@@ -25,6 +25,11 @@ class RoleSeeder extends Seeder
             'guard_name' => 'web',
         ]);
 
+        $admin = Role::create([
+            'name' => 'admin',
+            'guard_name' => 'web',
+        ]);
+
         $manager = Role::create([
             'name' => 'manager',
             'guard_name' => 'web',
@@ -56,9 +61,12 @@ class RoleSeeder extends Seeder
         // Super Admin - All permissions
         $superAdmin->syncPermissions($allPermissions);
 
-        // Administrator - Most permissions except system admin
+        // Administrator - Full facility access (all permissions except system admin)
         $adminPermissions = Permission::whereNotIn('group', ['System Administration'])->pluck('id')->toArray();
         $administrator->syncPermissions($adminPermissions);
+
+        // Admin - Branch-level admin (same permissions but data scoped to branch)
+        $admin->syncPermissions($adminPermissions);
 
         // Manager - Management and operational permissions
         $managerPermissions = Permission::whereIn('group', [

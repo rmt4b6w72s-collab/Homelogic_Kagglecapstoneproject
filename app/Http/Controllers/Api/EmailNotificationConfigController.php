@@ -32,7 +32,7 @@ class EmailNotificationConfigController extends Controller
         }
 
         // Only super_admin or facility admin/manager can access
-        $isAdmin = in_array($user->role, ['super_admin', 'administrator', 'admin', 'manager'], true);
+        $isAdmin = $user->role === 'super_admin' || $user->isFacilityAdministrator() || $user->isBranchAdmin() || $user->role === 'manager';
 
         if (!$isAdmin || ($user->role !== 'super_admin' && $user->facility_id !== $facility->id)) {
             return response()->json(['message' => 'Unauthorized. Admin access required for this facility.'], 403);
@@ -59,7 +59,7 @@ class EmailNotificationConfigController extends Controller
             return response()->json(['message' => 'Unauthorized'], 401);
         }
 
-        $isAdmin = in_array($user->role, ['super_admin', 'administrator', 'admin', 'manager'], true);
+        $isAdmin = $user->role === 'super_admin' || $user->isFacilityAdministrator() || $user->isBranchAdmin() || $user->role === 'manager';
 
         if (!$isAdmin || ($user->role !== 'super_admin' && $user->facility_id !== $facility->id)) {
             return response()->json(['message' => 'Unauthorized. Admin access required for this facility.'], 403);
@@ -89,7 +89,7 @@ class EmailNotificationConfigController extends Controller
             return response()->json(['message' => 'Unauthorized'], 401);
         }
 
-        $isAdmin = in_array($user->role, ['super_admin', 'administrator', 'admin', 'manager'], true);
+        $isAdmin = $user->role === 'super_admin' || $user->isFacilityAdministrator() || $user->isBranchAdmin() || $user->role === 'manager';
 
         if (!$isAdmin || ($user->role !== 'super_admin' && $user->facility_id !== $facility->id)) {
             return response()->json(['message' => 'Unauthorized. Admin access required for this facility.'], 403);
@@ -142,7 +142,7 @@ class EmailNotificationConfigController extends Controller
             return response()->json(['message' => 'Unauthorized'], 401);
         }
 
-        $isAdmin = in_array($user->role, ['super_admin', 'administrator', 'admin', 'manager'], true);
+        $isAdmin = $user->role === 'super_admin' || $user->isFacilityAdministrator() || $user->isBranchAdmin() || $user->role === 'manager';
 
         if (!$isAdmin || ($user->role !== 'super_admin' && $user->facility_id !== $facility->id)) {
             return response()->json(['message' => 'Unauthorized. Admin access required for this facility.'], 403);

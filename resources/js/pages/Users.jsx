@@ -1101,7 +1101,8 @@ function UserForm({ record, branches, roles, facilities, isSuperAdmin, onClose, 
                                         className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                                     >
                                         <option value="">Choose role</option>
-                                        <option value="administrator">Administrator</option>
+                                        <option value="administrator">Administrator (Facility-wide)</option>
+                                        <option value="admin">Admin (Branch-level)</option>
                                         <option value="caregiver">Caregiver</option>
                                         <option value="care_giver">Care Giver</option>
                                         <option value="nurse">Nurse</option>

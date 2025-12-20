@@ -24,7 +24,7 @@ class VitalRangeController extends BaseApiController
             
             // Allow administrators and super admins to create vital ranges even without specific permission
             $isSuperAdmin = $user && ($user->role === 'super_admin' || $user->hasRole('super_admin'));
-            $isAdmin = $user && ($user->role === 'administrator' || $user->role === 'admin');
+            $isAdmin = $user && $user->isAnyAdmin();
             
             // Check permission only if user is not an admin or super admin
             if (!$isSuperAdmin && !$isAdmin) {
@@ -74,7 +74,7 @@ class VitalRangeController extends BaseApiController
             
             // Allow administrators and super admins to edit vital ranges even without specific permission
             $isSuperAdmin = $user && ($user->role === 'super_admin' || $user->hasRole('super_admin'));
-            $isAdmin = $user && ($user->role === 'administrator' || $user->role === 'admin');
+            $isAdmin = $user && $user->isAnyAdmin();
             
             // Check permission only if user is not an admin or super admin
             if (!$isSuperAdmin && !$isAdmin) {
@@ -125,7 +125,7 @@ class VitalRangeController extends BaseApiController
             
             // Allow administrators and super admins to delete vital ranges even without specific permission
             $isSuperAdmin = $user && ($user->role === 'super_admin' || $user->hasRole('super_admin'));
-            $isAdmin = $user && ($user->role === 'administrator' || $user->role === 'admin');
+            $isAdmin = $user && $user->isAnyAdmin();
             
             // Check permission only if user is not an admin or super admin
             if (!$isSuperAdmin && !$isAdmin) {

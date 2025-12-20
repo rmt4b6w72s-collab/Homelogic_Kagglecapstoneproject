@@ -75,7 +75,7 @@ class AppointmentController extends BaseApiController
         
         // Allow administrators and super admins to create appointments even without specific permission
         $isSuperAdmin = $user && ($user->role === 'super_admin' || $user->hasRole('super_admin'));
-        $isAdmin = $user && ($user->role === 'administrator' || $user->role === 'admin');
+        $isAdmin = $user && $user->isAnyAdmin();
         
         // Check if user is a caregiver
         $isCaregiver = $this->isCaregiver($user);

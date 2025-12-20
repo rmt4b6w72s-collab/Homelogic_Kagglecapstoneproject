@@ -125,7 +125,7 @@ class IncidentController extends BaseApiController
             
             // Allow administrators and super admins to create incidents even without specific permission
             $isSuperAdmin = $user && ($user->role === 'super_admin' || $user->hasRole('super_admin'));
-            $isAdmin = $user && ($user->role === 'administrator' || $user->role === 'admin');
+            $isAdmin = $user && $user->isAnyAdmin();
             
             // Check if user is a caregiver
             $isCaregiver = $this->isCaregiver($user);
@@ -279,7 +279,7 @@ class IncidentController extends BaseApiController
         
         // Allow administrators and super admins to edit incidents even without specific permission
         $isSuperAdmin = $user && ($user->role === 'super_admin' || $user->hasRole('super_admin'));
-        $isAdmin = $user && ($user->role === 'administrator' || $user->role === 'admin');
+        $isAdmin = $user && $user->isAnyAdmin();
         
         // Check permission only if user is not an admin or super admin
         if (!$isSuperAdmin && !$isAdmin) {
@@ -345,7 +345,7 @@ class IncidentController extends BaseApiController
         
         // Allow administrators and super admins to delete incidents even without specific permission
         $isSuperAdmin = $user && ($user->role === 'super_admin' || $user->hasRole('super_admin'));
-        $isAdmin = $user && ($user->role === 'administrator' || $user->role === 'admin');
+        $isAdmin = $user && $user->isAnyAdmin();
         
         // Check permission only if user is not an admin or super admin
         if (!$isSuperAdmin && !$isAdmin) {

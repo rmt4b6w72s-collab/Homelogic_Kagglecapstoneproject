@@ -53,6 +53,11 @@ class UserController extends BaseApiController
                     $query->where('assigned_branch_id', $currentUser->assigned_branch_id);
                 }
             }
+            
+            // Branch admins can only see users from their assigned branch
+            if ($currentUser->isBranchAdmin() && $currentUser->assigned_branch_id) {
+                $query->where('assigned_branch_id', $currentUser->assigned_branch_id);
+            }
         } else {
             // For super admins, filter by facility_id if provided
             if ($hasFacilityIdColumn && $requestedFacilityId) {
@@ -113,7 +118,7 @@ class UserController extends BaseApiController
         $user = User::findOrFail($id);
 
         // Check if current user has permission to view stats
-        if ($currentUser->role !== 'super_admin' && $currentUser->role !== 'administrator') {
+        if ($currentUser->role !== 'super_admin' && !$currentUser->isFacilityAdministrator() && !$currentUser->isBranchAdmin()) {
             // Only allow users to view their own stats
             if ($currentUser->id != $id) {
                 return response()->json(['message' => 'Unauthorized'], 403);
@@ -144,10 +149,10 @@ class UserController extends BaseApiController
         
         // Allow administrators and super admins to create users even without specific permission
         $isSuperAdmin = $user && ($user->role === 'super_admin' || $user->hasRole('super_admin'));
-        $isAdmin = $user && ($user->role === 'administrator' || $user->role === 'admin');
+        $isAnyAdmin = $user && $user->isAnyAdmin();
         
         // Check permission only if user is not an admin or super admin
-        if (!$isSuperAdmin && !$isAdmin) {
+        if (!$isSuperAdmin && !$isAnyAdmin) {
             if ($error = $this->requirePermission('create_users')) {
                 return $error;
             }
@@ -260,6 +265,13 @@ class UserController extends BaseApiController
                 ]);
             }
         }
+        
+        // Branch admins must have an assigned_branch_id
+        if (($validated['role'] ?? '') === 'admin') {
+            if (empty($validated['assigned_branch_id'])) {
+                return $this->error('Branch admins must have an assigned branch.', 422);
+            }
+        }
 
         // Extract role_ids if provided
         $roleIds = $validated['role_ids'] ?? null;
@@ -318,10 +330,10 @@ class UserController extends BaseApiController
         
         // Allow administrators and super admins to edit users even without specific permission
         $isSuperAdmin = $user && ($user->role === 'super_admin' || $user->hasRole('super_admin'));
-        $isAdmin = $user && ($user->role === 'administrator' || $user->role === 'admin');
+        $isAnyAdmin = $user && $user->isAnyAdmin();
         
         // Check permission only if user is not an admin or super admin
-        if (!$isSuperAdmin && !$isAdmin) {
+        if (!$isSuperAdmin && !$isAnyAdmin) {
             if ($error = $this->requirePermission('edit_users')) {
                 return $error;
             }
@@ -487,6 +499,14 @@ class UserController extends BaseApiController
         if (isset($validated['role_ids'])) {
             unset($validated['role_ids']);
         }
+        
+        // Branch admins must have an assigned_branch_id
+        if (($validated['role'] ?? $user->role) === 'admin') {
+            $assignedBranchId = $validated['assigned_branch_id'] ?? $user->assigned_branch_id;
+            if (empty($assignedBranchId)) {
+                return $this->error('Branch admins must have an assigned branch.', 422);
+            }
+        }
 
         $wasActive = (bool) $user->is_active;
 
@@ -518,10 +538,10 @@ class UserController extends BaseApiController
         
         // Allow administrators and super admins to delete users even without specific permission
         $isSuperAdmin = $user && ($user->role === 'super_admin' || $user->hasRole('super_admin'));
-        $isAdmin = $user && ($user->role === 'administrator' || $user->role === 'admin');
+        $isAnyAdmin = $user && $user->isAnyAdmin();
         
         // Check permission only if user is not an admin or super admin
-        if (!$isSuperAdmin && !$isAdmin) {
+        if (!$isSuperAdmin && !$isAnyAdmin) {
             if ($error = $this->requirePermission('delete_users')) {
                 return $error;
             }

@@ -430,6 +430,7 @@ function EmploymentTab({ roles, branches, facilities, isSuperAdmin }) {
                             .filter(r => {
                                 const roleName = r.name?.toLowerCase();
                                 return roleName === 'administrator' || 
+                                       roleName === 'admin' ||
                                        roleName === 'caregiver' || 
                                        roleName === 'care_giver' ||
                                        roleName === 'nurse' ||
@@ -438,13 +439,19 @@ function EmploymentTab({ roles, branches, facilities, isSuperAdmin }) {
                             })
                             .filter(r => {
                                 const roleName = r.name?.toLowerCase();
-                                return roleName !== 'admin' && 
-                                       roleName !== 'duty_roster' && 
+                                return roleName !== 'duty_roster' && 
                                        roleName !== 'duty roster';
                             })
-                            .map(r => (
-                                <option key={r.id} value={r.name}>{r.name}</option>
-                            ))}
+                            .map(r => {
+                                const displayName = r.name === 'administrator' 
+                                    ? 'Administrator (Facility-wide)'
+                                    : r.name === 'admin'
+                                    ? 'Admin (Branch-level)'
+                                    : r.name;
+                                return (
+                                    <option key={r.id} value={r.name}>{displayName}</option>
+                                );
+                            })}
                     </select>
                 </div>
 
