@@ -312,37 +312,48 @@ function EmploymentTab({ roles, branches, facilities, isSuperAdmin }) {
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-[var(--theme-primary)]"
                     >
                         <option value="">Select Role</option>
-                        {roles && roles.length > 0 ? (
-                            roles
-                                .filter(r => {
-                                    const roleName = r.name?.toLowerCase();
-                                    return roleName === 'administrator' || 
-                                           roleName === 'admin' ||
-                                           roleName === 'caregiver' || 
-                                           roleName === 'care_giver' ||
-                                           roleName === 'nurse' ||
-                                           roleName === 'registered_nurse' ||
-                                           roleName === 'licensed_nurse';
-                                })
-                                .filter(r => {
-                                    const roleName = r.name?.toLowerCase();
-                                    return roleName !== 'duty_roster' && 
-                                           roleName !== 'duty roster';
-                                })
-                                .map(r => {
-                                    const roleName = r.name?.toLowerCase();
-                                    const displayName = roleName === 'administrator' 
-                                        ? 'Administrator (Facility-wide)'
-                                        : roleName === 'admin'
-                                        ? 'Admin (Branch-level)'
-                                        : r.name;
-                                    return (
-                                        <option key={r.id} value={r.name}>{displayName}</option>
-                                    );
-                                })
-                        ) : (
-                            <option value="">Loading roles...</option>
-                        )}
+                        {(() => {
+                            // Debug: log roles to console
+                            if (roles && roles.length > 0) {
+                                console.log('Available roles:', roles.map(r => r.name));
+                            }
+                            
+                            return roles && roles.length > 0 ? (
+                                roles
+                                    .filter(r => {
+                                        const roleName = r.name?.toLowerCase();
+                                        const isAllowed = roleName === 'administrator' || 
+                                               roleName === 'admin' ||
+                                               roleName === 'caregiver' || 
+                                               roleName === 'care_giver' ||
+                                               roleName === 'nurse' ||
+                                               roleName === 'registered_nurse' ||
+                                               roleName === 'licensed_nurse';
+                                        if (!isAllowed && r.name) {
+                                            console.log('Filtered out role:', r.name);
+                                        }
+                                        return isAllowed;
+                                    })
+                                    .filter(r => {
+                                        const roleName = r.name?.toLowerCase();
+                                        return roleName !== 'duty_roster' && 
+                                               roleName !== 'duty roster';
+                                    })
+                                    .map(r => {
+                                        const roleName = r.name?.toLowerCase();
+                                        const displayName = roleName === 'administrator' 
+                                            ? 'Administrator (Facility-wide)'
+                                            : roleName === 'admin'
+                                            ? 'Admin (Branch-level)'
+                                            : r.name;
+                                        return (
+                                            <option key={r.id} value={r.name}>{displayName}</option>
+                                        );
+                                    })
+                            ) : (
+                                <option value="">Loading roles...</option>
+                            );
+                        })()}
                     </select>
                 </div>
 
@@ -555,7 +566,14 @@ export default function UserCreateWrapper() {
 
     const { data: rolesData } = useQuery({
         queryKey: ['roles-options'],
-        queryFn: async () => (await api.get('/roles', { params: { per_page: 100 } })).data
+        queryFn: async () => {
+            const response = await api.get('/roles', { params: { per_page: 100 } });
+            console.log('Roles API Response:', response.data);
+            console.log('Roles data array:', response.data?.data);
+            return response.data;
+        },
+        staleTime: 0, // Always fetch fresh data
+        cacheTime: 0, // Don't cache
     });
 
     const { data: branchesData } = useQuery({
