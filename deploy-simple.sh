@@ -22,6 +22,10 @@ echo "🎨 Building frontend assets..."
 npm ci
 npm run build
 
+# Clear view cache BEFORE caching to ensure new asset hashes are used
+echo "🧹 Clearing view cache..."
+php artisan view:clear
+
 # Run database migrations
 echo "🗄️ Running database migrations..."
 php artisan migrate --force
@@ -37,7 +41,7 @@ fi
 echo "⚡ Optimizing application..."
 php artisan config:cache
 php artisan route:cache
-php artisan view:cache
+php artisan view:cache  # Cache views AFTER clearing to pick up new asset hashes
 php artisan event:cache
 
 # Clear application cache

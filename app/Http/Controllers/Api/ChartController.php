@@ -723,12 +723,31 @@ class ChartController extends BaseApiController
             ->get();
         
         // Get staff by role breakdown
-        $staffByRole = $staffQuery->selectRaw('COUNT(*) as count')
+        $staffByRoleQuery = User::where('is_active', true)
             ->join('model_has_roles', 'users.id', '=', 'model_has_roles.model_id')
             ->join('roles', 'model_has_roles.role_id', '=', 'roles.id')
-            ->where('model_has_roles.model_type', 'App\\Models\\User')
+            ->where('model_has_roles.model_type', 'App\\Models\\User');
+        
+        // Apply same facility filtering
+        if ($user && $user->role !== 'super_admin' && $user->facility_id) {
+            $facilityBranchIds = \App\Models\Branch::where('facility_id', $user->facility_id)->pluck('id')->toArray();
+            if (Schema::hasColumn('users', 'facility_id')) {
+                $staffByRoleQuery->where(function($q) use ($user, $facilityBranchIds) {
+                    $q->where('users.facility_id', $user->facility_id);
+                    if (!empty($facilityBranchIds)) {
+                        $q->orWhereIn('users.assigned_branch_id', $facilityBranchIds);
+                    }
+                });
+            } else {
+                if (!empty($facilityBranchIds)) {
+                    $staffByRoleQuery->whereIn('users.assigned_branch_id', $facilityBranchIds);
+                }
+            }
+        }
+        
+        $staffByRole = $staffByRoleQuery->selectRaw('roles.name as role, COUNT(*) as count')
             ->groupBy('roles.name')
-            ->get(['roles.name as role', 'count']);
+            ->get();
         
         // Get clock-in stats for today
         $todayClockIns = \App\Models\StaffClockIn::whereDate('clock_in_at', today())
