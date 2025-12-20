@@ -321,7 +321,7 @@ function EmploymentTab({ roles, branches, facilities, isSuperAdmin }) {
                             return roles && roles.length > 0 ? (
                                 roles
                                     .filter(r => {
-                                        const roleName = r.name?.toLowerCase();
+                                        const roleName = r.name?.toLowerCase().trim();
                                         const isAllowed = roleName === 'administrator' ||
                                             roleName === 'admin' ||
                                             roleName === 'caregiver' ||
@@ -335,16 +335,16 @@ function EmploymentTab({ roles, branches, facilities, isSuperAdmin }) {
                                         return isAllowed;
                                     })
                                     .filter(r => {
-                                        const roleName = r.name?.toLowerCase();
+                                        const roleName = r.name?.toLowerCase().trim();
                                         return roleName !== 'duty_roster' &&
                                             roleName !== 'duty roster';
                                     })
                                     .map(r => {
-                                        const roleName = r.name?.toLowerCase();
+                                        const roleName = r.name?.toLowerCase().trim();
                                         const displayName = roleName === 'administrator'
                                             ? 'Administrator (Facility-wide)'
                                             : roleName === 'admin'
-                                                ? 'Admin'
+                                                ? 'Admin (Branch-level)'
                                                 : r.name;
                                         return (
                                             <option key={r.id} value={r.name}>{displayName}</option>
@@ -765,8 +765,8 @@ function UserCreateContent({
                                     key={tab.id}
                                     onClick={() => setActiveTab(tab.id)}
                                     className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition whitespace-nowrap ${activeTab === tab.id
-                                            ? 'bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] shadow-sm'
-                                            : 'text-gray-600 hover:bg-gray-50'
+                                        ? 'bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] shadow-sm'
+                                        : 'text-gray-600 hover:bg-gray-50'
                                         }`}
                                 >
                                     <Icon className="w-4 h-4" />

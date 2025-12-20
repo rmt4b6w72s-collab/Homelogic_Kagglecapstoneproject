@@ -391,7 +391,7 @@ function PersonalInfoTab() {
 }
 
 // Employment Tab
-function EmploymentTab({ roles, branches, facilities, isSuperAdmin }) {
+function EmploymentTab({ roles, branches, facilities, isSuperAdmin, isFacilityAdmin, isBranchAdmin }) {
     const { formData, updateForm } = React.useContext(FormContext);
 
     return (
@@ -428,7 +428,7 @@ function EmploymentTab({ roles, branches, facilities, isSuperAdmin }) {
                         <option value="">Select Role</option>
                         {roles
                             .filter(r => {
-                                const roleName = r.name?.toLowerCase();
+                                const roleName = r.name?.toLowerCase().trim();
                                 return roleName === 'administrator' ||
                                     roleName === 'admin' ||
                                     roleName === 'caregiver' ||
@@ -438,12 +438,12 @@ function EmploymentTab({ roles, branches, facilities, isSuperAdmin }) {
                                     roleName === 'licensed_nurse';
                             })
                             .filter(r => {
-                                const roleName = r.name?.toLowerCase();
+                                const roleName = r.name?.toLowerCase().trim();
                                 return roleName !== 'duty_roster' &&
                                     roleName !== 'duty roster';
                             })
                             .map(r => {
-                                const roleName = r.name?.toLowerCase();
+                                const roleName = r.name?.toLowerCase().trim();
                                 const displayName = roleName === 'administrator'
                                     ? 'Administrator (Facility-wide)'
                                     : roleName === 'admin'
@@ -454,6 +454,30 @@ function EmploymentTab({ roles, branches, facilities, isSuperAdmin }) {
                                 );
                             })}
                     </select>
+                    {(isSuperAdmin || isFacilityAdmin || isBranchAdmin) && (
+                        <div className="mt-2 flex items-center justify-between">
+                            <div className="text-[10px] text-gray-500">
+                                Debug: {roles.length} roles found.
+                                "admin" role: {roles.some(r => r.name?.toLowerCase().trim() === 'admin') ? '✅' : '❌'}
+                            </div>
+                            {!roles.some(r => r.name?.toLowerCase().trim() === 'admin') && (
+                                <button
+                                    type="button"
+                                    onClick={async () => {
+                                        try {
+                                            await api.post('/roles/ensure-exist');
+                                            window.location.reload();
+                                        } catch (e) {
+                                            alert('Failed to repair roles: ' + e.message);
+                                        }
+                                    }}
+                                    className="text-[10px] text-[var(--theme-primary)] hover:underline"
+                                >
+                                    Repair Missing Roles
+                                </button>
+                            )}
+                        </div>
+                    )}
                 </div>
 
                 <div>
@@ -657,6 +681,8 @@ export default function UserEditWrapper() {
     });
 
     const isSuperAdmin = currentUser?.role === 'super_admin';
+    const isFacilityAdmin = currentUser?.role === 'administrator';
+    const isBranchAdmin = currentUser?.role === 'admin';
 
     const { data: user, isLoading: isLoadingUser } = useQuery({
         queryKey: ['user', id],
@@ -704,6 +730,8 @@ export default function UserEditWrapper() {
                 branches={branchesData?.data || []}
                 facilities={facilitiesData?.data || []}
                 isSuperAdmin={isSuperAdmin}
+                isFacilityAdmin={isFacilityAdmin}
+                isBranchAdmin={isBranchAdmin}
                 userId={id}
             />
         </FormProvider>
@@ -712,10 +740,16 @@ export default function UserEditWrapper() {
 
 function UserEditContent({
     navigate, showToast, queryClient, isSubmitting, setIsSubmitting, errors, setErrors,
-    roles, branches, facilities, isSuperAdmin, userId
+    roles, branches, facilities, isSuperAdmin, isFacilityAdmin, isBranchAdmin, userId
 }) {
     const { formData, profileImage, imageRemoved } = React.useContext(FormContext);
     const [activeTab, setActiveTab] = useState('personal');
+
+    React.useEffect(() => {
+        if (roles && roles.length > 0) {
+            console.log('UserEdit: Available roles from API:', roles.map(r => `"${r.name}"`));
+        }
+    }, [roles]);
 
     const handleSubmit = async () => {
         setErrors({});
@@ -902,6 +936,8 @@ function UserEditContent({
                             branches={branches}
                             facilities={facilities}
                             isSuperAdmin={isSuperAdmin}
+                            isFacilityAdmin={isFacilityAdmin}
+                            isBranchAdmin={isBranchAdmin}
                         />
                     )}
                     {activeTab === 'security' && <SecurityTab isEditing={true} />}
