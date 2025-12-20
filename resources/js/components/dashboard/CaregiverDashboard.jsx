@@ -2,9 +2,10 @@ import React from 'react';
 import {
     Calendar, Clock, CheckCircle, AlertCircle,
     ChevronRight, Activity, Pill, User,
-    MapPin, Phone, FileText, Sparkles
+    MapPin, Phone, FileText, Sparkles, Heart, ClipboardList
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import SectionCard from '../SectionCard';
 
 export default function CaregiverDashboard({
     user,
@@ -32,26 +33,30 @@ export default function CaregiverDashboard({
     };
 
     return (
-        <div className="space-y-8 animate-in fade-in duration-500">
+        <div className="space-y-6">
             {/* Header Section */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
-                        {greeting}, <span className="text-[var(--theme-primary)]">{user?.first_name || 'Caregiver'}</span>
-                    </h1>
-                    <p className="text-gray-500 mt-1">Here's what's happening today at {user?.branch?.name || 'your facility'}.</p>
-                </div>
-                <div className="flex items-center gap-3">
-                    <div className="bg-white px-4 py-2 rounded-xl shadow-sm border border-gray-100 flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                        <span className="text-sm font-medium text-gray-600">On Shift</span>
+            <div className="bg-gradient-to-br from-[var(--theme-primary)] to-[var(--theme-primary-dark)] rounded-xl shadow-sm p-6 text-white">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h1 className="text-2xl font-bold mb-1">
+                            {greeting}, {user?.first_name || 'Caregiver'} 👋
+                        </h1>
+                        <p className="text-white/90 text-sm">
+                            Welcome to your Care Dashboard • {user?.branch?.name || 'Your Facility'}
+                        </p>
                     </div>
-                    <button
-                        onClick={() => navigate('/appointments')}
-                        className="bg-[var(--theme-primary)] hover:bg-[var(--theme-primary-dark)] text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors shadow-lg shadow-[var(--theme-primary)]/20"
-                    >
-                        View Calendar
-                    </button>
+                    <div className="flex items-center gap-3">
+                        <div className="bg-white/20 backdrop-blur-sm px-4 py-2 rounded-lg flex items-center gap-2 border border-white/30">
+                            <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></div>
+                            <span className="text-sm font-medium">On Shift</span>
+                        </div>
+                        <button
+                            onClick={() => navigate('/appointments')}
+                            className="bg-white text-[var(--theme-primary)] px-4 py-2 rounded-lg text-sm font-semibold transition-colors hover:bg-white/90 shadow-md"
+                        >
+                            View Calendar
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -61,46 +66,39 @@ export default function CaregiverDashboard({
                     title="My Residents"
                     value={stats?.assigned_residents || 0}
                     icon={User}
-                    color="blue"
                     onClick={() => navigate('/administration/residents')}
                 />
                 <StatCard
                     title="Appointments"
                     value={stats?.todays_appointments || 0}
                     icon={Calendar}
-                    color="purple"
                     onClick={() => navigate('/appointments')}
                 />
                 <StatCard
                     title="Medications Due"
                     value={stats?.medication_reminders?.length || 0}
                     icon={Pill}
-                    color="green"
                     onClick={() => navigate('/medications')}
                 />
                 <StatCard
                     title="Pending Tasks"
                     value={stats?.pending_assessments || 0}
-                    icon={FileText}
-                    color="orange"
+                    icon={ClipboardList}
                     onClick={() => navigate('/assessments')}
                 />
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Left Column: Today's Timeline */}
-                <div className="lg:col-span-2 space-y-6">
-                    <div className="flex items-center justify-between">
-                        <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                            <Clock className="w-5 h-5 text-[var(--theme-primary)]" />
-                            Today's Schedule
-                        </h2>
-                        <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
-                            {new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
-                        </span>
-                    </div>
-
-                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 min-h-[400px]">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Left Column: Today's Schedule */}
+                <div className="lg:col-span-2">
+                    <SectionCard
+                        title="Today's Schedule"
+                        headerRight={
+                            <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+                                {new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
+                            </span>
+                        }
+                    >
                         {todaysSchedule.length > 0 ? (
                             <div className="space-y-0">
                                 {todaysSchedule.map((item, index) => {
@@ -108,10 +106,10 @@ export default function CaregiverDashboard({
                                     const isLast = index === todaysSchedule.length - 1;
 
                                     return (
-                                        <div key={item.id} className="relative pl-8 pb-8 group">
+                                        <div key={item.id} className="relative pl-8 pb-6 group">
                                             {/* Timeline Line */}
                                             {!isLast && (
-                                                <div className="absolute left-[11px] top-8 bottom-0 w-0.5 bg-gray-100 group-hover:bg-gray-200 transition-colors"></div>
+                                                <div className="absolute left-[11px] top-8 bottom-0 w-0.5 bg-gray-200 group-hover:bg-gray-300 transition-colors"></div>
                                             )}
 
                                             {/* Timeline Dot */}
@@ -127,14 +125,15 @@ export default function CaregiverDashboard({
                                             </div>
 
                                             {/* Content Card */}
-                                            <div className={`relative p-4 rounded-xl border transition-all duration-200 hover:shadow-md
+                                            <div className={`relative p-4 rounded-lg border transition-all duration-200 hover:shadow-md cursor-pointer
                                                 ${status === 'current' ? 'bg-[var(--theme-primary-bg-light)] border-[var(--theme-primary)]/20' :
-                                                    status === 'past' ? 'bg-gray-50 border-gray-100 opacity-75' : 'bg-white border-gray-100'}`}
+                                                    status === 'past' ? 'bg-gray-50 border-gray-200 opacity-75' : 'bg-white border-gray-200 hover:border-[var(--theme-primary)]/30'}`}
+                                                onClick={() => item.link && navigate(item.link)}
                                             >
                                                 <div className="flex items-start justify-between gap-4">
-                                                    <div>
+                                                    <div className="flex-1">
                                                         <div className="flex items-center gap-2 mb-1">
-                                                            <span className={`text-sm font-bold ${status === 'current' ? 'text-[var(--theme-primary)]' : 'text-gray-900'}`}>
+                                                            <span className={`text-sm font-semibold ${status === 'current' ? 'text-[var(--theme-primary)]' : 'text-gray-900'}`}>
                                                                 {item.time}
                                                             </span>
                                                             <span className={`px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider
@@ -159,12 +158,7 @@ export default function CaregiverDashboard({
                                                     </div>
 
                                                     {item.link && (
-                                                        <button
-                                                            onClick={() => navigate(item.link)}
-                                                            className="p-2 hover:bg-white rounded-lg text-gray-400 hover:text-[var(--theme-primary)] transition-colors"
-                                                        >
-                                                            <ChevronRight className="w-5 h-5" />
-                                                        </button>
+                                                        <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-[var(--theme-primary)] transition-colors flex-shrink-0" />
                                                     )}
                                                 </div>
                                             </div>
@@ -173,7 +167,7 @@ export default function CaregiverDashboard({
                                 })}
                             </div>
                         ) : (
-                            <div className="flex flex-col items-center justify-center h-full py-12 text-center text-gray-500">
+                            <div className="flex flex-col items-center justify-center py-12 text-center text-gray-500">
                                 <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
                                     <Sparkles className="w-8 h-8 text-gray-300" />
                                 </div>
@@ -181,117 +175,95 @@ export default function CaregiverDashboard({
                                 <p className="text-sm max-w-xs mx-auto mt-1">No scheduled tasks or appointments remaining for today.</p>
                             </div>
                         )}
-                    </div>
+                    </SectionCard>
                 </div>
 
                 {/* Right Column: Upcoming & Quick Actions */}
-                <div className="space-y-8">
+                <div className="space-y-6">
                     {/* Upcoming Events */}
-                    <div>
-                        <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2 mb-6">
-                            <Calendar className="w-5 h-5 text-[var(--theme-primary)]" />
-                            Upcoming Events
-                        </h2>
-                        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                            {upcomingEvents.length > 0 ? (
-                                <div className="divide-y divide-gray-100">
-                                    {upcomingEvents.map((event) => (
-                                        <div key={event.id} className="p-4 hover:bg-gray-50 transition-colors">
-                                            <div className="flex gap-3">
-                                                <div className={`flex-shrink-0 w-12 h-12 rounded-xl flex flex-col items-center justify-center
-                                                    ${event.color === 'orange' ? 'bg-orange-50 text-orange-600' :
-                                                        event.color === 'blue' ? 'bg-blue-50 text-blue-600' : 'bg-gray-50 text-gray-600'}`}
-                                                >
-                                                    <span className="text-xs font-bold uppercase">{new Date(event.date).toLocaleDateString(undefined, { month: 'short' })}</span>
-                                                    <span className="text-lg font-bold leading-none">{new Date(event.date).getDate()}</span>
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <h4 className="text-sm font-semibold text-gray-900 truncate">{event.title}</h4>
-                                                    <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">{event.description}</p>
-                                                    <div className="flex items-center gap-2 mt-1.5">
-                                                        {event.time && (
-                                                            <span className="text-[10px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded font-medium">
-                                                                {event.time}
-                                                            </span>
-                                                        )}
-                                                        <span className="text-[10px] text-gray-400">{event.branch}</span>
-                                                    </div>
+                    <SectionCard
+                        title="Upcoming Events"
+                        actionLabel="View All"
+                        onAction={() => navigate('/events')}
+                    >
+                        {upcomingEvents.length > 0 ? (
+                            <div className="divide-y divide-gray-200">
+                                {upcomingEvents.slice(0, 5).map((event) => (
+                                    <div key={event.id} className="p-3 hover:bg-gray-50 transition-colors rounded-lg cursor-pointer" onClick={() => event.link && navigate(event.link)}>
+                                        <div className="flex gap-3">
+                                            <div className={`flex-shrink-0 w-12 h-12 rounded-lg flex flex-col items-center justify-center
+                                                ${event.color === 'orange' ? 'bg-orange-50 text-orange-600' :
+                                                    event.color === 'blue' ? 'bg-blue-50 text-blue-600' : 'bg-gray-50 text-gray-600'}`}
+                                            >
+                                                <span className="text-xs font-bold uppercase">{new Date(event.date).toLocaleDateString(undefined, { month: 'short' })}</span>
+                                                <span className="text-lg font-bold leading-none">{new Date(event.date).getDate()}</span>
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <h4 className="text-sm font-semibold text-gray-900 truncate">{event.title}</h4>
+                                                <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">{event.description}</p>
+                                                <div className="flex items-center gap-2 mt-1.5">
+                                                    {event.time && (
+                                                        <span className="text-[10px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded font-medium">
+                                                            {event.time}
+                                                        </span>
+                                                    )}
+                                                    <span className="text-[10px] text-gray-400">{event.branch}</span>
                                                 </div>
                                             </div>
                                         </div>
-                                    ))}
-                                    <button
-                                        onClick={() => navigate('/events')}
-                                        className="w-full py-3 text-sm text-center text-gray-500 hover:text-[var(--theme-primary)] font-medium transition-colors"
-                                    >
-                                        View All Events
-                                    </button>
-                                </div>
-                            ) : (
-                                <div className="p-8 text-center text-gray-500">
-                                    <p className="text-sm">No upcoming events scheduled.</p>
-                                </div>
-                            )}
-                        </div>
-                    </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="py-8 text-center text-gray-500">
+                                <Calendar className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                                <p className="text-sm">No upcoming events scheduled.</p>
+                            </div>
+                        )}
+                    </SectionCard>
 
                     {/* Quick Actions */}
-                    <div>
-                        <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2 mb-6">
-                            <Activity className="w-5 h-5 text-[var(--theme-primary)]" />
-                            Quick Actions
-                        </h2>
+                    <SectionCard title="Quick Actions">
                         <div className="grid grid-cols-2 gap-3">
                             <QuickAction
                                 label="Record Vitals"
-                                icon={Activity}
+                                icon={Heart}
                                 onClick={() => navigate('/vitals')}
-                                color="bg-rose-600 text-white hover:bg-rose-700 shadow-md shadow-rose-100"
                             />
                             <QuickAction
                                 label="New Incident"
                                 icon={AlertCircle}
                                 onClick={() => navigate('/incidents')}
-                                color="bg-orange-500 text-white hover:bg-orange-600 shadow-md shadow-orange-100"
                             />
                             <QuickAction
                                 label="Administer Meds"
                                 icon={Pill}
                                 onClick={() => navigate('/medications')}
-                                color="bg-emerald-600 text-white hover:bg-emerald-700 shadow-md shadow-emerald-100"
                             />
                             <QuickAction
                                 label="Daily Notes"
                                 icon={FileText}
                                 onClick={() => navigate('/t-logs')}
-                                color="bg-blue-600 text-white hover:bg-blue-700 shadow-md shadow-blue-100"
                             />
                         </div>
-                    </div>
+                    </SectionCard>
                 </div>
             </div>
         </div>
     );
 }
 
-function StatCard({ title, value, icon: Icon, color, onClick }) {
-    const colors = {
-        blue: 'bg-blue-50 text-blue-600',
-        purple: 'bg-purple-50 text-purple-600',
-        green: 'bg-green-50 text-green-600',
-        orange: 'bg-orange-50 text-orange-600',
-    };
-
+function StatCard({ title, value, icon: Icon, onClick }) {
     return (
         <div
             onClick={onClick}
-            className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 cursor-pointer hover:shadow-md transition-all duration-200 group"
+            className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 cursor-pointer hover:shadow-md hover:border-[var(--theme-primary)]/30 transition-all duration-200 group"
         >
             <div className="flex items-center justify-between mb-3">
-                <div className={`p-2.5 rounded-xl ${colors[color]} group-hover:scale-110 transition-transform duration-200`}>
+                <div className="p-2.5 rounded-lg bg-[var(--theme-primary-bg)] text-[var(--theme-primary)] group-hover:scale-110 transition-transform duration-200">
                     <Icon className="w-5 h-5" />
                 </div>
-                <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-gray-500 transition-colors" />
+                <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-[var(--theme-primary)] transition-colors" />
             </div>
             <div>
                 <p className="text-sm font-medium text-gray-500">{title}</p>
@@ -301,14 +273,14 @@ function StatCard({ title, value, icon: Icon, color, onClick }) {
     );
 }
 
-function QuickAction({ label, icon: Icon, onClick, color }) {
+function QuickAction({ label, icon: Icon, onClick }) {
     return (
         <button
             onClick={onClick}
-            className={`${color} p-4 rounded-xl flex flex-col items-center justify-center gap-2 transition-all duration-200 hover:shadow-sm`}
+            className="bg-[var(--theme-primary)] hover:bg-[var(--theme-primary-hover)] text-[var(--theme-text-on-primary)] p-4 rounded-lg flex flex-col items-center justify-center gap-2 transition-all duration-200 hover:shadow-md shadow-sm"
         >
-            <Icon className="w-6 h-6" />
-            <span className="text-xs font-bold">{label}</span>
+            <Icon className="w-5 h-5" />
+            <span className="text-xs font-semibold">{label}</span>
         </button>
     );
 }
