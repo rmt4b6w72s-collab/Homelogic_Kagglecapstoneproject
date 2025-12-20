@@ -190,7 +190,9 @@ class IncidentController extends BaseApiController
         $validated['reported_by'] = auth()->id();
 
         // Create incident
+        \Log::info("Attempting to create incident", ['data' => array_diff_key($validated, ['description' => ''])]);
         $incident = Incident::create($validated);
+        \Log::info("Incident created successfully", ['id' => $incident->id, 'number' => $incident->incident_number]);
 
         // Handle file uploads
         // The frontend sends attachments as attachments[0][file], attachments[1][file], etc.
@@ -198,6 +200,7 @@ class IncidentController extends BaseApiController
         $allFiles = $request->allFiles();
         
         if (isset($allFiles['attachments']) && is_array($allFiles['attachments'])) {
+            \Log::info("Processing " . count($allFiles['attachments']) . " attachments for incident {$incident->id}");
             foreach ($allFiles['attachments'] as $index => $attachmentItem) {
                 // attachmentItem could be either:
                 // 1. An UploadedFile directly (if sent as attachments[0])
@@ -217,15 +220,18 @@ class IncidentController extends BaseApiController
                         $fileType = $attachmentItem['file_type'] ?? $request->input("attachments.{$index}.file_type", 'photo');
                     } else {
                         // Skip if file is not a valid UploadedFile
+                        \Log::warning("Skipping attachment {$index} for incident {$incident->id}: Not a valid UploadedFile in array");
                         continue;
                     }
                 } else {
                     // Skip if attachmentItem is neither UploadedFile nor array
+                    \Log::warning("Skipping attachment {$index} for incident {$incident->id}: Not a valid attachment structure");
                     continue;
                 }
                 
                 // Process the file if we have a valid UploadedFile
                 if ($file instanceof \Illuminate\Http\UploadedFile && $file->isValid()) {
+                    \Log::debug("Processing file: " . $file->getClientOriginalName());
                     // Validate file size (2MB = 2048 KB)
                     $maxSize = 2 * 1024 * 1024; // 2MB in bytes
                     if ($file->getSize() > $maxSize) {
@@ -239,6 +245,7 @@ class IncidentController extends BaseApiController
                     }
                     
                     $storedPath = $file->store('incident-attachments', 'public');
+                    \Log::debug("File stored at: $storedPath");
                     
                     IncidentAttachment::create([
                         'incident_id' => $incident->id,
@@ -252,10 +259,15 @@ class IncidentController extends BaseApiController
                             ? $attachmentItem['description'] 
                             : $request->input("attachments.{$index}.description"),
                     ]);
+                    \Log::debug("Incident attachment record created");
+                } else {
+                    $error = $file ? $file->getErrorMessage() : 'File is not instance of UploadedFile';
+                    \Log::error("File upload invalid for index {$index}: $error");
                 }
             }
         }
 
+            \Log::info("Incident creation complete for ID {$incident->id}");
             return response()->json($incident->load(['resident', 'branch', 'reportedBy', 'assignedTo', 'attachments']), 201);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([

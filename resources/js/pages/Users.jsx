@@ -1102,7 +1102,7 @@ function UserForm({ record, branches, roles, facilities, isSuperAdmin, onClose, 
                             >
                                 <option value="">Choose role</option>
                                 <option value="administrator">Administrator (Facility-wide)</option>
-                                <option value="admin">Admin</option>
+                                <option value="admin">Admin (Branch-level)</option>
                                 <option value="caregiver">Caregiver</option>
                                 <option value="care_giver">Care Giver</option>
                                 <option value="nurse">Nurse</option>

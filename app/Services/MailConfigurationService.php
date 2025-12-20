@@ -104,6 +104,9 @@ class MailConfigurationService
      */
     public function getFacilityFromResident($resident): ?Facility
     {
+        if (!$resident) {
+            return null;
+        }
         return $resident->branch?->facility;
     }
 
