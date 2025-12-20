@@ -575,15 +575,16 @@ class ChartController extends BaseApiController
             $q->where('name', 'caregiver');
         })->where('is_active', true);
         
-        // Apply facility filtering for non-super admins
+        // Apply facility filtering for non-super admins (matching UserController logic)
         if ($user && $user->role !== 'super_admin') {
+            $hasFacilityIdColumn = Schema::hasColumn('users', 'facility_id');
+            
             if ($user->facility_id) {
                 $facilityBranchIds = \App\Models\Branch::where('facility_id', $user->facility_id)->pluck('id')->toArray();
                 
-                // Check if facility_id column exists
-                if (Schema::hasColumn('users', 'facility_id')) {
-                    // Include users with direct facility_id match OR users with assigned_branch_id in facility branches
-                    // Also include users with NULL facility_id but assigned_branch_id in facility branches
+                if ($hasFacilityIdColumn) {
+                    // Match UserController: filter by facility_id directly
+                    // But also include users with assigned_branch_id in facility branches (for users without facility_id set)
                     $staffQuery->where(function($q) use ($user, $facilityBranchIds) {
                         $q->where('facility_id', $user->facility_id);
                         if (!empty($facilityBranchIds)) {
