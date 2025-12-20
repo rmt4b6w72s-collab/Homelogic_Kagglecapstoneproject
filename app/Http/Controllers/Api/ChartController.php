@@ -364,6 +364,7 @@ class ChartController extends BaseApiController
     // Sleep Charts
     public function sleepStats(Request $request): JsonResponse
     {
+        $user = $request->user();
         $dateFrom = $request->input('date_from') 
             ? Carbon::parse($request->input('date_from'))->startOfDay()
             : Carbon::now()->subDays(30)->startOfDay();
@@ -374,8 +375,22 @@ class ChartController extends BaseApiController
 
         $query = SleepRecord::whereBetween('sleep_date', [$dateFrom, $dateTo]);
         
+        // Apply facility filtering for non-super admins
+        $this->applyFacilityFilter($query, $user);
+        
+        // Apply branch filtering
+        $this->applyBranchFilter($query, $request, $user);
+        
         if ($request->has('resident_id')) {
             $query->where('resident_id', $request->input('resident_id'));
+        }
+
+        // Get branch_id for helper methods
+        $branchId = null;
+        if ($this->isCaregiver($user) && $user->assigned_branch_id) {
+            $branchId = $user->assigned_branch_id;
+        } elseif ($request->has('branch_id')) {
+            $branchId = $request->input('branch_id');
         }
 
         $stats = [
@@ -385,18 +400,27 @@ class ChartController extends BaseApiController
             'min_sleep_hours' => round($query->min('total_sleep_hours') ?? 0, 1),
             'max_sleep_hours' => round($query->max('total_sleep_hours') ?? 0, 1),
             'total_sleep_hours' => round($query->sum('total_sleep_hours') ?? 0, 1),
-            'sleep_duration_trends' => $this->getSleepDurationTrends($dateFrom, $dateTo, $request->input('resident_id')),
-            'quality_distribution' => $this->getSleepQualityDistribution($dateFrom, $dateTo, $request->input('resident_id')),
-            'quality_over_time' => $this->getQualityOverTime($dateFrom, $dateTo, $request->input('resident_id')),
-            'weekly_average' => $this->getWeeklyAverage($dateFrom, $dateTo, $request->input('resident_id')),
+            'sleep_duration_trends' => $this->getSleepDurationTrends($dateFrom, $dateTo, $request->input('resident_id'), $user, $branchId),
+            'quality_distribution' => $this->getSleepQualityDistribution($dateFrom, $dateTo, $request->input('resident_id'), $user, $branchId),
+            'quality_over_time' => $this->getQualityOverTime($dateFrom, $dateTo, $request->input('resident_id'), $user, $branchId),
+            'weekly_average' => $this->getWeeklyAverage($dateFrom, $dateTo, $request->input('resident_id'), $user, $branchId),
         ];
 
         return response()->json($stats);
     }
 
-    private function getSleepDurationTrends($dateFrom, $dateTo, $residentId = null): array
+    private function getSleepDurationTrends($dateFrom, $dateTo, $residentId = null, $user = null, $branchId = null): array
     {
         $query = SleepRecord::whereBetween('sleep_date', [$dateFrom, $dateTo]);
+        
+        // Apply facility filtering
+        $this->applyFacilityFilter($query, $user);
+        
+        // Apply branch filtering
+        if ($branchId) {
+            $query->where('branch_id', $branchId);
+        }
+        
         if ($residentId) {
             $query->where('resident_id', $residentId);
         }
@@ -429,10 +453,18 @@ class ChartController extends BaseApiController
         }
     }
 
-    private function getSleepQualityDistribution($dateFrom, $dateTo, $residentId = null): array
+    private function getSleepQualityDistribution($dateFrom, $dateTo, $residentId = null, $user = null, $branchId = null): array
     {
         $query = SleepRecord::whereBetween('sleep_date', [$dateFrom, $dateTo])
             ->whereNotNull('sleep_quality');
+        
+        // Apply facility filtering
+        $this->applyFacilityFilter($query, $user);
+        
+        // Apply branch filtering
+        if ($branchId) {
+            $query->where('branch_id', $branchId);
+        }
         
         if ($residentId) {
             $query->where('resident_id', $residentId);
@@ -446,10 +478,18 @@ class ChartController extends BaseApiController
             ->toArray();
     }
 
-    private function getQualityOverTime($dateFrom, $dateTo, $residentId = null): array
+    private function getQualityOverTime($dateFrom, $dateTo, $residentId = null, $user = null, $branchId = null): array
     {
         $query = SleepRecord::whereBetween('sleep_date', [$dateFrom, $dateTo])
             ->whereNotNull('sleep_quality');
+        
+        // Apply facility filtering
+        $this->applyFacilityFilter($query, $user);
+        
+        // Apply branch filtering
+        if ($branchId) {
+            $query->where('branch_id', $branchId);
+        }
         
         if ($residentId) {
             $query->where('resident_id', $residentId);
@@ -483,9 +523,17 @@ class ChartController extends BaseApiController
         }
     }
 
-    private function getWeeklyAverage($dateFrom, $dateTo, $residentId = null): array
+    private function getWeeklyAverage($dateFrom, $dateTo, $residentId = null, $user = null, $branchId = null): array
     {
         $query = SleepRecord::whereBetween('sleep_date', [$dateFrom, $dateTo]);
+        
+        // Apply facility filtering
+        $this->applyFacilityFilter($query, $user);
+        
+        // Apply branch filtering
+        if ($branchId) {
+            $query->where('branch_id', $branchId);
+        }
         
         if ($residentId) {
             $query->where('resident_id', $residentId);
