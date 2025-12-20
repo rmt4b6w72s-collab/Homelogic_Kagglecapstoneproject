@@ -50,13 +50,16 @@ class NotificationService
 {
     protected MailConfigurationService $mailConfigService;
     protected EmailPreferenceService $emailPreferenceService;
+    protected EmailRecipientService $recipientService;
 
     public function __construct(
         MailConfigurationService $mailConfigService,
-        EmailPreferenceService $emailPreferenceService
+        EmailPreferenceService $emailPreferenceService,
+        EmailRecipientService $recipientService
     ) {
         $this->mailConfigService = $mailConfigService;
         $this->emailPreferenceService = $emailPreferenceService;
+        $this->recipientService = $recipientService;
     }
 
     /**
@@ -73,20 +76,43 @@ class NotificationService
         // Configure mail for facility if available
         if ($facility) {
             $this->mailConfigService->configureForFacility($facility);
+            
+            // Check if notification is enabled via config
+            if (!$this->recipientService->isNotificationEnabled($facility, 'late_medication')) {
+                Log::info('Late medication email skipped - notification disabled in config', [
+                    'facility_id' => $facility->id,
+                ]);
+                return;
+            }
+            
+            // Get recipients from config
+            $configRecipients = $this->recipientService->getRecipients($facility, 'late_medication');
+            
+            // If config has recipients, use them; otherwise fall back to existing logic
+            if ($configRecipients->isNotEmpty()) {
+                $caregiversToNotify = $configRecipients;
+            } else {
+                // Fallback to existing email preference logic
+                $caregiversToNotify = $this->emailPreferenceService->filterUsersForEmail(
+                    $caregivers,
+                    'late_medication',
+                    $facility
+                );
+            }
+        } else {
+            // No facility, use existing logic
+            $caregiversToNotify = $this->emailPreferenceService->filterUsersForEmail(
+                $caregivers,
+                'late_medication',
+                null
+            );
         }
-        
-        // Filter caregivers based on email preferences
-        $caregiversToNotify = $this->emailPreferenceService->filterUsersForEmail(
-            $caregivers,
-            'late_medication',
-            $facility
-        );
         
         foreach ($caregiversToNotify as $caregiver) {
             if ($caregiver->email) {
                 try {
                     Mail::to($caregiver->email)->send(
-                        new LateMedicationNotification($medication, $resident, 'Scheduled Time')
+                        new LateMedicationNotification($medication, $resident, 'Scheduled Time', $facility)
                     );
                     
                     // Log email sent
@@ -171,19 +197,38 @@ class NotificationService
         
         if ($facility) {
             $this->mailConfigService->configureForFacility($facility);
+            
+            // Check if notification is enabled via config
+            if (!$this->recipientService->isNotificationEnabled($facility, 'appointment_reminder')) {
+                return;
+            }
+            
+            // Get recipients from config
+            $configRecipients = $this->recipientService->getRecipients($facility, 'appointment_reminder');
+            
+            // If config has recipients, use them; otherwise fall back to existing logic
+            if ($configRecipients->isNotEmpty()) {
+                $recipientsToNotify = $configRecipients;
+            } else {
+                $recipientsToNotify = $this->emailPreferenceService->filterUsersForEmail(
+                    $recipients,
+                    'appointment_reminder',
+                    $facility
+                );
+            }
+        } else {
+            $recipientsToNotify = $this->emailPreferenceService->filterUsersForEmail(
+                $recipients,
+                'appointment_reminder',
+                null
+            );
         }
-        
-        $recipientsToNotify = $this->emailPreferenceService->filterUsersForEmail(
-            $recipients,
-            'appointment_reminder',
-            $facility
-        );
         
         foreach ($recipientsToNotify as $recipient) {
             if ($recipient->email) {
                 try {
                     Mail::to($recipient->email)->send(
-                        new AppointmentNotification($appointment, $eventType)
+                        new AppointmentNotification($appointment, $eventType, $facility)
                     );
                     
                     Log::info('Appointment email sent', [

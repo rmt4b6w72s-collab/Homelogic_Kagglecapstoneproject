@@ -1,12 +1,18 @@
 import React, { useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Mail, Send, Info } from 'lucide-react';
+import { Mail, Send, Info, Users, FileText } from 'lucide-react';
 import api from '../../services/api';
 import { useToastContext } from '../../contexts/ToastContext';
+import Tabs, { TabsList, TabsTrigger, TabsContent } from '../../components/ui/radix/Tabs';
+import EmailRecipientConfig from '../../components/EmailRecipientConfig';
+import EmailTemplateEditor from '../../components/EmailTemplateEditor';
+import NotificationTypeSelector from '../../components/NotificationTypeSelector';
 
 export default function EmailSettings() {
   const toast = useToastContext();
   const queryClient = useQueryClient();
+  const [activeTab, setActiveTab] = useState('smtp');
+  const [selectedNotificationType, setSelectedNotificationType] = useState('');
 
   // TODO: Replace with selected facility selector for super admins
   const { data: currentUser } = useQuery({
@@ -139,6 +145,120 @@ export default function EmailSettings() {
     testEmailMutation.mutate(recipient);
   };
 
+  // Fetch notification configs
+  const { data: notificationConfigs } = useQuery({
+    enabled: !!facilityId && activeTab === 'recipients',
+    queryKey: ['email-notification-configs', facilityId],
+    queryFn: async () => {
+      const response = await api.get(`/facilities/${facilityId}/email-notification-configs`);
+      return response.data?.data || [];
+    },
+  });
+
+  // Fetch templates
+  const { data: templates } = useQuery({
+    enabled: !!facilityId && activeTab === 'templates',
+    queryKey: ['email-templates', facilityId],
+    queryFn: async () => {
+      const response = await api.get(`/facilities/${facilityId}/email-templates`);
+      return response.data?.data || [];
+    },
+  });
+
+  // Fetch specific template
+  const { data: currentTemplate } = useQuery({
+    enabled: !!facilityId && !!selectedNotificationType && activeTab === 'templates',
+    queryKey: ['email-template', facilityId, selectedNotificationType],
+    queryFn: async () => {
+      try {
+        const response = await api.get(
+          `/facilities/${facilityId}/email-templates/${selectedNotificationType}`
+        );
+        return response.data?.data;
+      } catch (error) {
+        if (error.response?.status === 404) {
+          return null;
+        }
+        throw error;
+      }
+    },
+  });
+
+  // Fetch specific config
+  const { data: currentConfig } = useQuery({
+    enabled: !!facilityId && !!selectedNotificationType && activeTab === 'recipients',
+    queryKey: ['email-notification-config', facilityId, selectedNotificationType],
+    queryFn: async () => {
+      try {
+        const response = await api.get(
+          `/facilities/${facilityId}/email-notification-configs/${selectedNotificationType}`
+        );
+        return response.data?.data;
+      } catch (error) {
+        if (error.response?.status === 404) {
+          return null;
+        }
+        throw error;
+      }
+    },
+  });
+
+  // Save notification config
+  const saveConfigMutation = useMutation({
+    mutationFn: async (data) => {
+      const response = await api.put(
+        `/facilities/${facilityId}/email-notification-configs/${selectedNotificationType}`,
+        data
+      );
+      return response.data;
+    },
+    onSuccess: () => {
+      toast.showToast('Recipient configuration saved successfully', 'success');
+      queryClient.invalidateQueries(['email-notification-configs', facilityId]);
+      queryClient.invalidateQueries(['email-notification-config', facilityId, selectedNotificationType]);
+    },
+    onError: (error) => {
+      toast.showToast(
+        error.response?.data?.message || 'Failed to save recipient configuration',
+        'error'
+      );
+    },
+  });
+
+  // Save template
+  const saveTemplateMutation = useMutation({
+    mutationFn: async (data) => {
+      const response = await api.put(
+        `/facilities/${facilityId}/email-templates/${selectedNotificationType}`,
+        data
+      );
+      return response.data;
+    },
+    onSuccess: () => {
+      toast.showToast('Email template saved successfully', 'success');
+      queryClient.invalidateQueries(['email-templates', facilityId]);
+      queryClient.invalidateQueries(['email-template', facilityId, selectedNotificationType]);
+    },
+    onError: (error) => {
+      toast.showToast(
+        error.response?.data?.message || 'Failed to save email template',
+        'error'
+      );
+    },
+  });
+
+  const handleConfigChange = (configData) => {
+    if (selectedNotificationType) {
+      saveConfigMutation.mutate(configData);
+    }
+  };
+
+  const handleTemplateSave = (templateData) => {
+    if (selectedNotificationType) {
+      saveTemplateMutation.mutate(templateData);
+    }
+  };
+
   if (!facilityId) {
     return (
       <div className="p-6 bg-white rounded-xl shadow-sm">
@@ -166,12 +286,29 @@ export default function EmailSettings() {
         <div>
           <h1 className="text-xl font-semibold text-gray-900">Email Settings</h1>
           <p className="text-sm text-gray-500">
-            Configure SMTP details used for notifications and alerts for this facility.
+            Configure email delivery, recipients, and templates for this facility.
           </p>
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm p-6 space-y-6">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="w-full justify-start">
+          <TabsTrigger value="smtp">
+            <Mail className="w-4 h-4 mr-2" />
+            SMTP/SES Configuration
+          </TabsTrigger>
+          <TabsTrigger value="recipients">
+            <Users className="w-4 h-4 mr-2" />
+            Notification Recipients
+          </TabsTrigger>
+          <TabsTrigger value="templates">
+            <FileText className="w-4 h-4 mr-2" />
+            Email Templates
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="smtp">
+          <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm p-6 space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Driver</label>
@@ -367,6 +504,95 @@ export default function EmailSettings() {
           </div>
         </div>
       </form>
+        </TabsContent>
+
+        <TabsContent value="recipients">
+          <div className="bg-white rounded-xl shadow-sm p-6 space-y-6">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900 mb-2">
+                Configure Email Recipients
+              </h2>
+              <p className="text-sm text-gray-500 mb-4">
+                Select who should receive emails for each notification type. You can configure by role and/or specific users.
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Notification Type
+              </label>
+              <NotificationTypeSelector
+                value={selectedNotificationType}
+                onChange={setSelectedNotificationType}
+              />
+            </div>
+
+            {selectedNotificationType && (
+              <div className="border-t border-gray-200 pt-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-md font-medium text-gray-900">
+                    Recipient Configuration for {selectedNotificationType.replace(/_/g, ' ')}
+                  </h3>
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={currentConfig?.enabled ?? true}
+                      onChange={(e) => {
+                        handleConfigChange({
+                          enabled: e.target.checked,
+                          recipient_roles: currentConfig?.recipient_roles || [],
+                          recipient_user_ids: currentConfig?.recipient_user_ids || [],
+                        });
+                      }}
+                      className="w-4 h-4 text-[var(--theme-primary)] border-gray-300 rounded focus:ring-[var(--theme-primary)]"
+                    />
+                    <span className="text-sm text-gray-700">Enable this notification</span>
+                  </label>
+                </div>
+                <EmailRecipientConfig
+                  facilityId={facilityId}
+                  config={currentConfig}
+                  onChange={handleConfigChange}
+                />
+              </div>
+            )}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="templates">
+          <div className="bg-white rounded-xl shadow-sm p-6 space-y-6">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900 mb-2">
+                Email Template Management
+              </h2>
+              <p className="text-sm text-gray-500 mb-4">
+                Create and customize HTML email templates for each notification type. Use variables like {'{{variableName}}'} to insert dynamic content.
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Notification Type
+              </label>
+              <NotificationTypeSelector
+                value={selectedNotificationType}
+                onChange={setSelectedNotificationType}
+              />
+            </div>
+
+            {selectedNotificationType && (
+              <div className="border-t border-gray-200 pt-6">
+                <EmailTemplateEditor
+                  facilityId={facilityId}
+                  notificationType={selectedNotificationType}
+                  template={currentTemplate}
+                  onSave={handleTemplateSave}
+                />
+              </div>
+            )}
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

@@ -11,18 +11,18 @@ return new class extends Migration
      */
     public function up(): void
     {
-        if (Schema::hasTable('email_notification_configs')) {
+        if (Schema::hasTable('email_templates')) {
             return;
         }
         
-        Schema::create('email_notification_configs', function (Blueprint $table) {
+        Schema::create('email_templates', function (Blueprint $table) {
             $table->id();
             $table->foreignId('facility_id')->constrained()->onDelete('cascade');
             $table->string('notification_type')->comment('e.g., task_assignment, late_medication, etc.');
             $table->string('module')->nullable()->comment('Optional grouping like medications, tasks, appointments');
-            $table->boolean('enabled')->default(true)->comment('Whether this notification type is enabled');
-            $table->json('recipient_roles')->nullable()->comment('Array of role names that should receive emails');
-            $table->json('recipient_user_ids')->nullable()->comment('Array of specific user IDs that should receive emails');
+            $table->text('subject_template')->comment('Email subject with variables like {{taskTitle}}');
+            $table->text('html_template')->comment('HTML email content with variables');
+            $table->boolean('is_active')->default(true)->comment('Whether this template is active');
             
             $table->timestamps();
             
@@ -38,7 +38,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('email_notification_configs');
+        Schema::dropIfExists('email_templates');
     }
 };
 

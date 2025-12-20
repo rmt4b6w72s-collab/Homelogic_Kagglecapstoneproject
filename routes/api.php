@@ -44,6 +44,8 @@ use App\Http\Controllers\Api\DatabaseManagementController;
 use App\Http\Controllers\Api\TLogController;
 use App\Http\Controllers\Api\ReminderController;
 use App\Http\Controllers\Api\ReminderEventController;
+use App\Http\Controllers\Api\EmailNotificationConfigController;
+use App\Http\Controllers\Api\EmailTemplateController;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Session\Middleware\StartSession;
@@ -342,6 +344,19 @@ Route::prefix('v1')->middleware([\App\Http\Middleware\SetFacilityContext::class]
         Route::get('/{facility}/settings/{category}', [FacilitySettingsController::class, 'show']);
         Route::put('/{facility}/settings/{category}', [FacilitySettingsController::class, 'update']);
         Route::post('/{facility}/settings/email/test', [FacilitySettingsController::class, 'testEmail']);
+        
+        // Email Notification Configs
+        Route::get('/{facility}/email-notification-configs', [EmailNotificationConfigController::class, 'index']);
+        Route::get('/{facility}/email-notification-configs/{notificationType}', [EmailNotificationConfigController::class, 'show']);
+        Route::put('/{facility}/email-notification-configs/{notificationType}', [EmailNotificationConfigController::class, 'update']);
+        Route::put('/{facility}/email-notification-configs', [EmailNotificationConfigController::class, 'bulkUpdate']);
+        
+        // Email Templates
+        Route::get('/{facility}/email-templates', [EmailTemplateController::class, 'index']);
+        Route::get('/{facility}/email-templates/{notificationType}', [EmailTemplateController::class, 'show']);
+        Route::put('/{facility}/email-templates/{notificationType}', [EmailTemplateController::class, 'update']);
+        Route::post('/{facility}/email-templates/{notificationType}/preview', [EmailTemplateController::class, 'preview']);
+        Route::delete('/{facility}/email-templates/{notificationType}', [EmailTemplateController::class, 'destroy']);
     });
 
     // Database Management
