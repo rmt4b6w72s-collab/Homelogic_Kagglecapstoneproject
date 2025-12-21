@@ -33,6 +33,18 @@ export default function AppointmentsDashboard() {
     const [dateFilter, setDateFilter] = useState('upcoming');
     const [activeTab, setActiveTab] = useState('upcoming'); // 'today', 'upcoming', 'completed', 'this_month'
     const [search, setSearch] = useState('');
+    const [showForm, setShowForm] = useState(false);
+    const [formData, setFormData] = useState({
+        branch_id: '',
+        resident_id: '',
+        appointment_date: new Date().toISOString().split('T')[0],
+        appointment_time: '',
+        appointment_type_id: '',
+        provider_name: '',
+        location: '',
+        description: '',
+        status: 'scheduled',
+    });
 
     // Fetch current user
     const { data: currentUser } = useQuery({
@@ -49,6 +61,67 @@ export default function AppointmentsDashboard() {
         const role = currentUser.role?.toLowerCase().trim() || '';
         return role === 'administrator' || role === 'admin' || role === 'super_admin';
     }, [currentUser]);
+
+    const isBranchAdmin = React.useMemo(() => {
+        if (!currentUser) return false;
+        const role = currentUser.role?.toLowerCase().trim() || '';
+        return (role === 'administrator' || role === 'admin') && role !== 'super_admin';
+    }, [currentUser]);
+
+    // Fetch branches
+    const { data: branchesData } = useQuery({
+        queryKey: ['branches-list'],
+        queryFn: async () => {
+            const response = await api.get('/branches', { params: { per_page: 100 } });
+            return response.data;
+        },
+    });
+
+    // Fetch residents
+    const { data: residentsData } = useQuery({
+        queryKey: ['residents-list'],
+        queryFn: async () => {
+            const response = await api.get('/residents', { params: { per_page: 100 } });
+            return response.data;
+        },
+    });
+
+    // Fetch appointment types
+    const { data: appointmentTypes } = useQuery({
+        queryKey: ['appointment-types'],
+        queryFn: async () => {
+            const response = await api.get('/appointment-types');
+            return response.data;
+        },
+    });
+
+    // Create appointment mutation
+    const createMutation = useMutation({
+        mutationFn: async (data) => {
+            const response = await api.post('/appointments', data);
+            return response.data;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries(['appointments-dashboard']);
+            queryClient.invalidateQueries(['appointments-statistics']);
+            setShowForm(false);
+            setFormData({
+                branch_id: '',
+                resident_id: '',
+                appointment_date: new Date().toISOString().split('T')[0],
+                appointment_time: '',
+                appointment_type_id: '',
+                provider_name: '',
+                location: '',
+                description: '',
+                status: 'scheduled',
+            });
+        },
+        onError: (error) => {
+            console.error('Error creating appointment:', error);
+            alert(error.response?.data?.message || 'Failed to create appointment');
+        },
+    });
 
     // Fetch statistics
     const { data: statistics, isLoading: statsLoading, error: statsError } = useQuery({
@@ -222,13 +295,19 @@ export default function AppointmentsDashboard() {
                         <List className="h-4 w-4" />
                         View All
                     </Link>
-                    <Link
-                        to="/appointments"
+                    <button
+                        onClick={() => {
+                            // Auto-fill branch for admin users
+                            if (isBranchAdmin && currentUser?.assigned_branch_id) {
+                                setFormData(prev => ({ ...prev, branch_id: currentUser.assigned_branch_id }));
+                            }
+                            setShowForm(true);
+                        }}
                         className="px-4 py-2 bg-[var(--theme-primary)] text-white rounded-lg hover:bg-[var(--theme-primary-hover)] transition-colors flex items-center gap-2"
                     >
                         <Plus className="w-5 h-5" />
                         Add Appointment
-                    </Link>
+                    </button>
                 </div>
             </div>
 
@@ -466,6 +545,146 @@ export default function AppointmentsDashboard() {
                     </div>
                 )}
             </SectionCard>
+
+            {/* Add Appointment Modal */}
+            {showForm && (
+                <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50 p-4" style={{ backgroundColor: 'rgba(0, 0, 0, 0.1)' }}>
+                    <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+                        <div className="p-6 border-b flex items-center justify-between">
+                            <h3 className="text-xl font-semibold text-gray-900">Add Appointment</h3>
+                            <button onClick={() => setShowForm(false)} className="text-gray-500 hover:text-gray-700 text-2xl">×</button>
+                        </div>
+                        <form onSubmit={async (e) => {
+                            e.preventDefault();
+                            if (!formData.resident_id) {
+                                alert('Please select a resident');
+                                return;
+                            }
+                            if (!formData.appointment_date) {
+                                alert('Please select a date');
+                                return;
+                            }
+                            if (!formData.appointment_time) {
+                                alert('Please select a time');
+                                return;
+                            }
+                            await createMutation.mutateAsync(formData);
+                        }}>
+                            <div className="p-6 space-y-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label className="block text-sm font-bold text-gray-900 mb-1">Branch</label>
+                                        <select
+                                            value={formData.branch_id}
+                                            onChange={(e) => setFormData({ ...formData, branch_id: e.target.value, resident_id: '' })}
+                                            disabled={isBranchAdmin && currentUser?.assigned_branch_id}
+                                            className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent ${isBranchAdmin && currentUser?.assigned_branch_id ? 'bg-gray-100 cursor-not-allowed opacity-75' : ''}`}
+                                        >
+                                            <option value="">All Branches</option>
+                                            {(branchesData?.data || []).map(branch => (
+                                                <option key={branch.id} value={branch.id}>{branch.name}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-bold text-gray-900 mb-1">Resident *</label>
+                                        <div className="relative">
+                                            <User className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                                            <select
+                                                value={formData.resident_id}
+                                                onChange={(e) => setFormData({ ...formData, resident_id: e.target.value })}
+                                                required
+                                                className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                            >
+                                                <option value="">Select resident</option>
+                                                {(residentsData?.data || []).filter(r => !formData.branch_id || r.branch_id == formData.branch_id).map(r => (
+                                                    <option key={r.id} value={r.id}>{r.first_name} {r.last_name}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-bold text-gray-900 mb-1">Date *</label>
+                                        <input
+                                            type="date"
+                                            value={formData.appointment_date}
+                                            onChange={(e) => setFormData({ ...formData, appointment_date: e.target.value })}
+                                            required
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-bold text-gray-900 mb-1">Time *</label>
+                                        <input
+                                            type="time"
+                                            value={formData.appointment_time}
+                                            onChange={(e) => setFormData({ ...formData, appointment_time: e.target.value })}
+                                            required
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-bold text-gray-900 mb-1">Appointment Type</label>
+                                        <select
+                                            value={formData.appointment_type_id}
+                                            onChange={(e) => setFormData({ ...formData, appointment_type_id: e.target.value })}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                        >
+                                            <option value="">Select type</option>
+                                            {(appointmentTypes || []).map(type => (
+                                                <option key={type.id} value={type.id}>{type.name}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-bold text-gray-900 mb-1">Provider Name</label>
+                                        <input
+                                            type="text"
+                                            value={formData.provider_name}
+                                            onChange={(e) => setFormData({ ...formData, provider_name: e.target.value })}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-bold text-gray-900 mb-1">Location</label>
+                                        <input
+                                            type="text"
+                                            value={formData.location}
+                                            onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                        />
+                                    </div>
+                                    <div className="md:col-span-2">
+                                        <label className="block text-sm font-bold text-gray-900 mb-1">Description</label>
+                                        <textarea
+                                            value={formData.description}
+                                            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                            rows={3}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="p-6 border-t flex items-center justify-end space-x-3">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowForm(false)}
+                                    className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-all"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={createMutation.isPending}
+                                    className="px-4 py-2 bg-[var(--theme-primary)] text-white rounded-lg hover:bg-[var(--theme-primary-hover)] transition-all disabled:opacity-50"
+                                >
+                                    {createMutation.isPending ? 'Creating...' : 'Create Appointment'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
