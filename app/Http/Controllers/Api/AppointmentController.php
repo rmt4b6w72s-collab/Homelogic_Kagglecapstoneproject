@@ -274,55 +274,61 @@ class AppointmentController extends BaseApiController
     {
         $user = $request->user();
         
-        // Get branch IDs for facility filtering
-        $branchIds = [];
-        if ($user && $user->role !== 'super_admin' && $user->facility_id) {
-            $branchIds = $this->getFacilityBranchIds($user->facility_id);
-            if (empty($branchIds)) {
-                return response()->json([
-                    'today' => 0,
-                    'upcoming' => 0,
-                    'completed' => 0,
-                    'cancelled' => 0,
-                    'total' => 0,
-                    'this_week' => 0,
-                    'this_month' => 0,
-                ]);
-            }
-        }
-
-        $today = now()->toDateString();
-        $startOfWeek = now()->startOfWeek()->toDateString();
-        $endOfWeek = now()->endOfWeek()->toDateString();
-        $startOfMonth = now()->startOfMonth()->toDateString();
-        $endOfMonth = now()->endOfMonth()->toDateString();
-
-        // Build base query with facility filtering
-        $buildQuery = function() use ($branchIds) {
-            $query = Appointment::query();
-            
-            if (!empty($branchIds)) {
-                // Apply facility filtering using whereIn and whereHas
-                $query->where(function($q) use ($branchIds) {
-                    $q->whereIn('branch_id', $branchIds)
-                      ->orWhereHas('resident', function($residentQuery) use ($branchIds) {
-                          $residentQuery->whereIn('branch_id', $branchIds);
-                      });
-                });
-            }
-            
-            return $query;
-        };
-
         try {
+            // Get branch IDs for facility filtering
+            $branchIds = [];
+            if ($user && $user->role !== 'super_admin' && $user->facility_id) {
+                $branchIds = $this->getFacilityBranchIds($user->facility_id);
+                if (empty($branchIds)) {
+                    return response()->json([
+                        'today' => 0,
+                        'upcoming' => 0,
+                        'completed' => 0,
+                        'cancelled' => 0,
+                        'total' => 0,
+                        'this_week' => 0,
+                        'this_month' => 0,
+                    ]);
+                }
+            }
+
+            $today = now()->toDateString();
+            $startOfWeek = now()->startOfWeek()->toDateString();
+            $endOfWeek = now()->endOfWeek()->toDateString();
+            $startOfMonth = now()->startOfMonth()->toDateString();
+            $endOfMonth = now()->endOfMonth()->toDateString();
+
+            // Get resident IDs for this facility to avoid complex whereHas queries
+            $residentIds = [];
+            if (!empty($branchIds)) {
+                $residentIds = \DB::table('residents')
+                    ->whereIn('branch_id', $branchIds)
+                    ->pluck('id')
+                    ->toArray();
+            }
+
+            // Build base query with facility filtering - simpler approach
+            $buildQuery = function() use ($branchIds, $residentIds) {
+                $query = Appointment::query();
+                
+                if (!empty($branchIds)) {
+                    // Filter by appointments in facility branches OR residents in facility branches
+                    $query->where(function($q) use ($branchIds, $residentIds) {
+                        $q->whereIn('branch_id', $branchIds);
+                        if (!empty($residentIds)) {
+                            $q->orWhereIn('resident_id', $residentIds);
+                        }
+                    });
+                }
+                
+                return $query;
+            };
+
             // Build each statistic query
             $stats = [
                 'today' => $buildQuery()->whereDate('appointment_date', $today)->count(),
-                'upcoming' => $buildQuery()->where(function($q) use ($today) {
-                    $q->where('status', 'scheduled')
-                      ->orWhere('status', 'confirmed')
-                      ->orWhere('status', 'in_progress');
-                })->whereDate('appointment_date', '>=', $today)->count(),
+                'upcoming' => $buildQuery()->whereIn('status', ['scheduled', 'confirmed', 'in_progress'])
+                    ->whereDate('appointment_date', '>=', $today)->count(),
                 'completed' => $buildQuery()->where('status', 'completed')->count(),
                 'cancelled' => $buildQuery()->where('status', 'cancelled')->count(),
                 'total' => $buildQuery()->count(),
@@ -338,9 +344,9 @@ class AppointmentController extends BaseApiController
         } catch (\Exception $e) {
             \Log::error('Error fetching appointment statistics', [
                 'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
                 'user_id' => $user->id ?? null,
                 'facility_id' => $user->facility_id ?? null,
-                'branch_ids' => $branchIds,
             ]);
 
             return response()->json([
