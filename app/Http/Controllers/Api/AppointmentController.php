@@ -6,6 +6,7 @@ use App\Models\Appointment;
 use App\Models\ResidentDocument;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
 
 class AppointmentController extends BaseApiController
 {
@@ -301,7 +302,7 @@ class AppointmentController extends BaseApiController
             // Get resident IDs for this facility to avoid complex whereHas queries
             $residentIds = [];
             if (!empty($branchIds)) {
-                $residentIds = \DB::table('residents')
+                $residentIds = DB::table('residents')
                     ->whereIn('branch_id', $branchIds)
                     ->pluck('id')
                     ->toArray();
