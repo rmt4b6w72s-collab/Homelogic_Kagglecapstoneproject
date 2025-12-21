@@ -2,7 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import App from './App';
+import App from './Root.jsx';
 import ErrorBoundary from './components/ErrorBoundary';
 import { ToastProvider } from './contexts/ToastContext';
 import ThemeWrapper from './components/ThemeWrapper';
@@ -11,47 +11,47 @@ import '../css/app.css';
 
 // Suppress Cloudflare cookie warnings - after imports
 // This prevents these harmless errors from cluttering the console
-(function() {
+(function () {
     const originalWarn = console.warn;
     const originalError = console.error;
     const originalLog = console.log;
-    
+
     // Helper function to check if message should be suppressed
     function shouldSuppress(message) {
         const lowerMessage = message.toString().toLowerCase();
         return (
             lowerMessage.includes('cookie') && (
-                lowerMessage.includes('_cf_bm') || 
-                lowerMessage.includes('__cf_bm') || 
+                lowerMessage.includes('_cf_bm') ||
+                lowerMessage.includes('__cf_bm') ||
                 lowerMessage.includes('cf_clearance') ||
                 lowerMessage.includes('cf_bm') ||
                 lowerMessage.includes('rejected for invalid domain') ||
                 lowerMessage.includes('has been rejected')
             )
         ) || (
-            lowerMessage.includes('__cf_bm') ||
-            lowerMessage.includes('_cf_bm')
-        );
+                lowerMessage.includes('__cf_bm') ||
+                lowerMessage.includes('_cf_bm')
+            );
     }
-    
-    console.warn = function(...args) {
+
+    console.warn = function (...args) {
         const message = args.join(' ');
         if (shouldSuppress(message)) {
             return; // Suppress Cloudflare cookie warnings
         }
         originalWarn.apply(console, args);
     };
-    
-    console.error = function(...args) {
+
+    console.error = function (...args) {
         const message = args.join(' ');
         if (shouldSuppress(message)) {
             return; // Suppress Cloudflare cookie errors
         }
         originalError.apply(console, args);
     };
-    
+
     // Also override console.log in case errors are logged there
-    console.log = function(...args) {
+    console.log = function (...args) {
         const message = args.join(' ');
         if (shouldSuppress(message)) {
             return; // Suppress Cloudflare cookie logs
@@ -90,14 +90,14 @@ function initApp() {
     }
 
     console.log('React app root element found, initializing...');
-    
+
     // First, render a simple test to verify React is working
     try {
         const root = ReactDOM.createRoot(rootElement);
-        
+
         // Clear any existing content
         rootElement.innerHTML = '';
-        
+
         // Render the full app directly
         try {
             root.render(
@@ -119,12 +119,12 @@ function initApp() {
         } catch (renderError) {
             console.error('Error rendering full app:', renderError);
             root.render(
-                React.createElement('div', { 
-                    style: { padding: '40px', textAlign: 'center', background: 'white', minHeight: '100vh' } 
+                React.createElement('div', {
+                    style: { padding: '40px', textAlign: 'center', background: 'white', minHeight: '100vh' }
                 },
                     React.createElement('h1', { style: { color: 'red' } }, 'Error Loading Full App'),
                     React.createElement('p', { style: { color: '#666' } }, renderError.message),
-                    React.createElement('button', { 
+                    React.createElement('button', {
                         onClick: () => window.location.reload(),
                         style: { padding: '10px 20px', marginTop: '20px', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' }
                     }, 'Reload Page')

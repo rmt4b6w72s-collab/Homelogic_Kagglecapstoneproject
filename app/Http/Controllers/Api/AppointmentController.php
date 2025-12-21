@@ -274,6 +274,7 @@ class AppointmentController extends BaseApiController
     public function statistics(Request $request): JsonResponse
     {
         try {
+            \Log::info('Fetching appointment statistics for user: ' . ($request->user()->id ?? 'none'));
             $user = $request->user();
             
             // Initialize with zeros
@@ -292,12 +293,14 @@ class AppointmentController extends BaseApiController
             if ($user && $user->role !== 'super_admin' && $user->facility_id) {
                 try {
                     $branchIds = $this->getFacilityBranchIds($user->facility_id);
-                } catch (\Exception $e) {
-                    \Log::error('Error getting facility branch IDs', ['error' => $e->getMessage()]);
+                    \Log::debug('Facility branch IDs for statistics:', $branchIds);
+                } catch (\Throwable $e) {
+                    \Log::error('Error getting facility branch IDs for stats', ['error' => $e->getMessage()]);
                     return response()->json($stats);
                 }
                 
                 if (empty($branchIds)) {
+                    \Log::warning('No branches found for facility: ' . $user->facility_id);
                     return response()->json($stats);
                 }
             }
@@ -316,14 +319,15 @@ class AppointmentController extends BaseApiController
                         ->whereIn('branch_id', $branchIds)
                         ->pluck('id')
                         ->toArray();
-                } catch (\Exception $e) {
-                    \Log::error('Error fetching resident IDs', ['error' => $e->getMessage()]);
-                    // Continue without resident IDs
+                    \Log::debug('Found ' . count($residentIds) . ' residents for stats filtering');
+                } catch (\Throwable $e) {
+                    \Log::error('Error fetching resident IDs for stats', ['error' => $e->getMessage()]);
                 }
             }
 
             // Build base query - use raw query builder for maximum reliability
             if (!empty($branchIds)) {
+                \Log::debug('Applying branch/resident filtering to statistics query');
                 // Today
                 $stats['today'] = DB::table('appointments')
                     ->where(function($q) use ($branchIds, $residentIds) {
@@ -408,6 +412,7 @@ class AppointmentController extends BaseApiController
                     ->whereNull('deleted_at')
                     ->count();
             } else {
+                \Log::debug('Super admin: Fetching global statistics');
                 // Super admin - no filtering
                 $stats['today'] = DB::table('appointments')->whereDate('appointment_date', $today)->whereNull('deleted_at')->count();
                 $stats['upcoming'] = DB::table('appointments')->whereIn('status', ['scheduled', 'confirmed', 'in_progress'])->whereDate('appointment_date', '>=', $today)->whereNull('deleted_at')->count();
@@ -418,13 +423,15 @@ class AppointmentController extends BaseApiController
                 $stats['this_month'] = DB::table('appointments')->whereBetween('appointment_date', [$startOfMonth, $endOfMonth])->whereNull('deleted_at')->count();
             }
 
+            \Log::info('Appointment statistics fetched successfully', ['stats' => $stats]);
             return response()->json($stats);
             
-        } catch (\Exception $e) {
-            \Log::error('Error fetching appointment statistics', [
+        } catch (\Throwable $e) {
+            \Log::error('CRITICAL ERROR in Appointment statistics', [
                 'error' => $e->getMessage(),
                 'line' => $e->getLine(),
                 'file' => $e->getFile(),
+                'trace' => $e->getTraceAsString()
             ]);
 
             // Always return 200 with zeros to prevent frontend errors
@@ -436,6 +443,7 @@ class AppointmentController extends BaseApiController
                 'total' => 0,
                 'this_week' => 0,
                 'this_month' => 0,
+                'debug_error' => config('app.debug') ? $e->getMessage() : null
             ], 200);
         }
     }
