@@ -298,17 +298,15 @@ class AppointmentController extends BaseApiController
         $endOfMonth = now()->endOfMonth()->toDateString();
 
         // Build base query with facility filtering
-        $buildQuery = function() use ($branchIds, $user) {
+        $buildQuery = function() use ($branchIds) {
             $query = Appointment::query();
             
             if (!empty($branchIds)) {
-                // Use more efficient join-based approach
+                // Apply facility filtering using whereIn and whereHas
                 $query->where(function($q) use ($branchIds) {
-                    $q->whereIn('appointments.branch_id', $branchIds)
-                      ->orWhereIn('appointments.resident_id', function($subQuery) use ($branchIds) {
-                          $subQuery->select('id')
-                                   ->from('residents')
-                                   ->whereIn('branch_id', $branchIds);
+                    $q->whereIn('branch_id', $branchIds)
+                      ->orWhereHas('resident', function($residentQuery) use ($branchIds) {
+                          $residentQuery->whereIn('branch_id', $branchIds);
                       });
                 });
             }
@@ -316,24 +314,45 @@ class AppointmentController extends BaseApiController
             return $query;
         };
 
-        // Build each statistic query
-        return response()->json([
-            'today' => $buildQuery()->whereDate('appointment_date', $today)->count(),
-            'upcoming' => $buildQuery()->where(function($q) use ($today) {
-                $q->where('status', 'scheduled')
-                  ->orWhere('status', 'confirmed')
-                  ->orWhere('status', 'in_progress');
-            })->whereDate('appointment_date', '>=', $today)->count(),
-            'completed' => $buildQuery()->where('status', 'completed')->count(),
-            'cancelled' => $buildQuery()->where('status', 'cancelled')->count(),
-            'total' => $buildQuery()->count(),
-            'this_week' => $buildQuery()
-                ->whereBetween('appointment_date', [$startOfWeek, $endOfWeek])
-                ->count(),
-            'this_month' => $buildQuery()
-                ->whereBetween('appointment_date', [$startOfMonth, $endOfMonth])
-                ->count(),
-        ]);
+        try {
+            // Build each statistic query
+            $stats = [
+                'today' => $buildQuery()->whereDate('appointment_date', $today)->count(),
+                'upcoming' => $buildQuery()->where(function($q) use ($today) {
+                    $q->where('status', 'scheduled')
+                      ->orWhere('status', 'confirmed')
+                      ->orWhere('status', 'in_progress');
+                })->whereDate('appointment_date', '>=', $today)->count(),
+                'completed' => $buildQuery()->where('status', 'completed')->count(),
+                'cancelled' => $buildQuery()->where('status', 'cancelled')->count(),
+                'total' => $buildQuery()->count(),
+                'this_week' => $buildQuery()
+                    ->whereBetween('appointment_date', [$startOfWeek, $endOfWeek])
+                    ->count(),
+                'this_month' => $buildQuery()
+                    ->whereBetween('appointment_date', [$startOfMonth, $endOfMonth])
+                    ->count(),
+            ];
+
+            return response()->json($stats);
+        } catch (\Exception $e) {
+            \Log::error('Error fetching appointment statistics', [
+                'error' => $e->getMessage(),
+                'user_id' => $user->id ?? null,
+                'facility_id' => $user->facility_id ?? null,
+                'branch_ids' => $branchIds,
+            ]);
+
+            return response()->json([
+                'today' => 0,
+                'upcoming' => 0,
+                'completed' => 0,
+                'cancelled' => 0,
+                'total' => 0,
+                'this_week' => 0,
+                'this_month' => 0,
+            ], 200); // Return 200 with zeros instead of 500
+        }
     }
 }
 
