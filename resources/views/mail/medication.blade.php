@@ -17,6 +17,7 @@ Instructions: {{ $instructions }}
 @if($notes)
 Notes: {{ $notes }}
 @endif
+Created By: {{ $createdBy }}
 
 A new medication has been added for this resident. Please review the details and ensure proper administration.
 
