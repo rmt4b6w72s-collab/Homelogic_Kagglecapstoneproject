@@ -41,7 +41,7 @@ class CreateUser extends CreateRecord
                 }
             }
         }
-        
+
         // Branch admins must have an assigned_branch_id
         if (($data['role'] ?? '') === 'admin') {
             if (empty($data['assigned_branch_id'])) {

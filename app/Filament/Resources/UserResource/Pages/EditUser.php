@@ -26,7 +26,7 @@ class EditUser extends EditRecord
                 $data['name'] = $data['email'] ?? $this->record->email ?? '';
             }
         }
-        
+
         // Branch admins must have an assigned_branch_id
         if (($data['role'] ?? $this->record->role) === 'admin') {
             $assignedBranchId = $data['assigned_branch_id'] ?? $this->record->assigned_branch_id;
