@@ -57,6 +57,14 @@ export default function Appointments() {
         description: '',
         status: 'scheduled',
     });
+    
+    // Auto-fill branch for admin users on mount
+    React.useEffect(() => {
+        const isBranchAdmin = (currentUser?.role === 'administrator' || currentUser?.role === 'admin') && currentUser?.role !== 'super_admin';
+        if (isBranchAdmin && currentUser?.assigned_branch_id && !formData.branch_id) {
+            setFormData(prev => ({ ...prev, branch_id: currentUser.assigned_branch_id }));
+        }
+    }, [currentUser]);
 
     // Fetch current user
     React.useEffect(() => {
@@ -159,6 +167,7 @@ export default function Appointments() {
     // Permission checks
     const isSuperAdmin = currentUser?.role === 'super_admin';
     const isAdmin = currentUser?.role === 'administrator' || currentUser?.role === 'admin';
+    const isBranchAdmin = (currentUser?.role === 'administrator' || currentUser?.role === 'admin') && currentUser?.role !== 'super_admin';
     const permissions = Array.isArray(currentUser?.permissions) ? currentUser.permissions : [];
     // Caregivers can create appointments (similar to incidents)
     const canCreate = isSuperAdmin || isAdmin || isCaregiver || permissions.includes('create_appointments');
@@ -965,6 +974,8 @@ export default function Appointments() {
                     mutation={createMutation}
                     isPreFilled={isPreFilled}
                     appointmentTypes={appointmentTypes}
+                    currentUser={currentUser}
+                    isBranchAdmin={isBranchAdmin}
                 />
             )}
 
@@ -1141,7 +1152,7 @@ export default function Appointments() {
     );
 }
 
-function AddAppointmentModal({ branches, residents, formData, setFormData, onClose, onSubmit, isSubmitting, mutation, isPreFilled = false, appointmentTypes = [] }) {
+function AddAppointmentModal({ branches, residents, formData, setFormData, onClose, onSubmit, isSubmitting, mutation, isPreFilled = false, appointmentTypes = [], currentUser, isBranchAdmin }) {
     const [errors, setErrors] = React.useState({});
 
     const handleSubmit = async (e) => {
@@ -1186,8 +1197,8 @@ function AddAppointmentModal({ branches, residents, formData, setFormData, onClo
                                             });
                                             setErrors({ ...errors, branch_id: null, resident_id: null });
                                         }}
-                                        disabled={isPreFilled}
-                                        className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent ${isPreFilled ? 'bg-gray-100 cursor-not-allowed opacity-75' : ''
+                                        disabled={isPreFilled || (isBranchAdmin && currentUser?.assigned_branch_id)}
+                                        className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent ${isPreFilled || (isBranchAdmin && currentUser?.assigned_branch_id) ? 'bg-gray-100 cursor-not-allowed opacity-75' : ''
                                             }`}
                                     >
                                         <option value="">All Branches</option>

@@ -32,6 +32,13 @@ export default function Sleep() {
         staleTime: 5 * 60 * 1000,
     });
 
+    // Check if user is a branch-level admin (not super_admin)
+    const isBranchAdmin = React.useMemo(() => {
+        if (!currentUser) return false;
+        const role = currentUser.role?.toLowerCase().trim() || '';
+        return (role === 'administrator' || role === 'admin') && role !== 'super_admin';
+    }, [currentUser]);
+    
     const isCaregiver = React.useMemo(() => {
         if (!currentUser) {
             return false;
@@ -357,6 +364,8 @@ export default function Sleep() {
                     isCaregiver={isCaregiver}
                     caregiverBranchId={caregiverBranchId}
                     caregiverBranchName={caregiverBranchName}
+                    currentUser={currentUser}
+                    isBranchAdmin={isBranchAdmin}
                     onClose={() => {
                         setShowForm(false);
                         setEditingRecord(null);
@@ -588,10 +597,10 @@ export default function Sleep() {
 }
 
 // Sleep Record Form Component
-function SleepRecordForm({ record, residents, isCaregiver, caregiverBranchId, caregiverBranchName, onClose, onSuccess }) {
+function SleepRecordForm({ record, residents, isCaregiver, caregiverBranchId, caregiverBranchName, onClose, onSuccess, currentUser, isBranchAdmin }) {
     const [formData, setFormData] = useState({
         resident_id: record?.resident_id || '',
-        branch_id: record?.branch_id || caregiverBranchId || '',
+        branch_id: record?.branch_id || caregiverBranchId || (isBranchAdmin && currentUser?.assigned_branch_id ? currentUser.assigned_branch_id : ''),
         sleep_date: record?.sleep_date || getLocalDateString(),
         sleep_time: record?.sleep_time || '',
         wake_time: record?.wake_time || '',
@@ -600,6 +609,13 @@ function SleepRecordForm({ record, residents, isCaregiver, caregiverBranchId, ca
         restlessness_episodes: record?.restlessness_episodes || 0,
         notes: record?.notes || '',
     });
+    
+    // Auto-fill branch for admin users on mount
+    React.useEffect(() => {
+        if (isBranchAdmin && currentUser?.assigned_branch_id && !record && !formData.branch_id) {
+            setFormData(prev => ({ ...prev, branch_id: currentUser.assigned_branch_id }));
+        }
+    }, [isBranchAdmin, currentUser, record]);
 
     const [errors, setErrors] = useState({});
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -720,7 +736,8 @@ function SleepRecordForm({ record, residents, isCaregiver, caregiverBranchId, ca
                                         value={formData.branch_id}
                                         onChange={(e) => setFormData({...formData, branch_id: e.target.value, resident_id: ''})}
                                         required
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                        disabled={isBranchAdmin && currentUser?.assigned_branch_id}
+                                        className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent ${isBranchAdmin && currentUser?.assigned_branch_id ? 'bg-gray-100 cursor-not-allowed opacity-75' : ''}`}
                                     >
                                         <option value="">Select Branch</option>
                                         {branches.map(branch => (

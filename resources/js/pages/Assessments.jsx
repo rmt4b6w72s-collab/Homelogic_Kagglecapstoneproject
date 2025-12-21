@@ -46,6 +46,13 @@ export default function Assessments() {
         return role === 'administrator' || role === 'admin' || role === 'super_admin';
     }, [currentUser]);
     
+    // Check if user is a branch-level admin (not super_admin)
+    const isBranchAdmin = useMemo(() => {
+        if (!currentUser) return false;
+        const role = currentUser.role?.toLowerCase().trim() || '';
+        return (role === 'administrator' || role === 'admin') && role !== 'super_admin';
+    }, [currentUser]);
+    
     // Permission checks
     const permissions = Array.isArray(currentUser?.permissions) ? currentUser.permissions : [];
     const canCreate = isSuperAdmin || isAdmin || permissions.includes('create_assessments');
@@ -277,6 +284,8 @@ export default function Assessments() {
                     record={editing}
                     residents={residentsData?.data || []}
                     branches={branchesData?.data || []}
+                    currentUser={currentUser}
+                    isBranchAdmin={isBranchAdmin}
                     onClose={() => {
                         setShowForm(false);
                         setEditing(null);
@@ -530,15 +539,22 @@ export default function Assessments() {
 }
 
 // Assessment Form Component
-function AssessmentForm({ record, residents, branches, onClose, onSuccess }) {
+function AssessmentForm({ record, residents, branches, onClose, onSuccess, currentUser, isBranchAdmin }) {
     const [formData, setFormData] = useState({
         resident_id: record?.resident_id || '',
-        branch_id: record?.branch_id || '',
+        branch_id: record?.branch_id || (isBranchAdmin && currentUser?.assigned_branch_id ? currentUser.assigned_branch_id : ''),
         assessment_type: record?.assessment_type || '',
         assessment_date: record?.assessment_date || new Date().toISOString().split('T')[0],
         status: record?.status || 'draft',
         notes: record?.notes || '',
     });
+    
+    // Auto-fill branch for admin users on mount
+    React.useEffect(() => {
+        if (isBranchAdmin && currentUser?.assigned_branch_id && !record && !formData.branch_id) {
+            setFormData(prev => ({ ...prev, branch_id: currentUser.assigned_branch_id }));
+        }
+    }, [isBranchAdmin, currentUser, record]);
 
     const [errors, setErrors] = useState({});
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -625,7 +641,8 @@ function AssessmentForm({ record, residents, branches, onClose, onSuccess }) {
                                     value={formData.branch_id}
                                     onChange={(e) => setFormData({...formData, branch_id: e.target.value, resident_id: ''})}
                                     required
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                    disabled={isBranchAdmin && currentUser?.assigned_branch_id}
+                                    className={`w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent ${isBranchAdmin && currentUser?.assigned_branch_id ? 'bg-gray-100 cursor-not-allowed opacity-75' : ''}`}
                                 >
                                     <option value="">Select Branch</option>
                                     {branches.map(branch => (

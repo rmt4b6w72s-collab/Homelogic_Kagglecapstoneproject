@@ -313,11 +313,6 @@ function EmploymentTab({ roles, branches, facilities, isSuperAdmin }) {
                     >
                         <option value="">Select Role</option>
                         {(() => {
-                            // Debug: log roles to console
-                            if (roles && roles.length > 0) {
-                                console.log('Available roles:', roles.map(r => r.name));
-                            }
-
                             return roles && roles.length > 0 ? (
                                 roles
                                     .filter(r => {
@@ -329,9 +324,6 @@ function EmploymentTab({ roles, branches, facilities, isSuperAdmin }) {
                                             roleName === 'nurse' ||
                                             roleName === 'registered_nurse' ||
                                             roleName === 'licensed_nurse';
-                                        if (!isAllowed && r.name) {
-                                            console.log('Filtered out role:', r.name);
-                                        }
                                         return isAllowed;
                                     })
                                     .filter(r => {
@@ -567,8 +559,6 @@ export default function UserCreateWrapper() {
         queryKey: ['roles-options'],
         queryFn: async () => {
             const response = await api.get('/roles', { params: { per_page: 100 } });
-            console.log('Roles API Response:', response.data);
-            console.log('Roles data array:', response.data?.data);
             return response.data;
         },
         staleTime: 0, // Always fetch fresh data

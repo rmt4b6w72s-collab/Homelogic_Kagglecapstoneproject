@@ -12,6 +12,9 @@ class RoleController extends BaseApiController
 {
     public function index(Request $request): JsonResponse
     {
+        // Ensure required roles exist before querying
+        $this->ensureRequiredRolesExist();
+        
         $query = Role::with('permissions');
         
         // Filter to only show allowed roles: administrator, admin, caregiver, and nurse
@@ -27,6 +30,40 @@ class RoleController extends BaseApiController
         }
         $roles = $query->orderBy('name')->paginate($request->get('per_page', 20));
         return response()->json($roles);
+    }
+    
+    /**
+     * Ensure required roles exist in the database
+     */
+    private function ensureRequiredRolesExist(): void
+    {
+        // Check if administrator role exists
+        $administratorRole = Role::where('name', 'administrator')->first();
+        if (!$administratorRole) {
+            // Create administrator role if it doesn't exist
+            $administratorRole = Role::create([
+                'name' => 'administrator',
+                'guard_name' => 'web'
+            ]);
+            
+            // Sync all permissions to administrator role
+            $permissions = Permission::all();
+            if ($permissions->count() > 0) {
+                $administratorRole->permissions()->sync($permissions->pluck('id'));
+            }
+        }
+        
+        // Ensure other required roles exist
+        $requiredRoles = ['admin', 'caregiver', 'nurse'];
+        foreach ($requiredRoles as $roleName) {
+            $role = Role::where('name', $roleName)->first();
+            if (!$role) {
+                Role::create([
+                    'name' => $roleName,
+                    'guard_name' => 'web'
+                ]);
+            }
+        }
     }
 
     public function permissions(): JsonResponse

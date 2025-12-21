@@ -15,6 +15,28 @@ export default function PharmacyOrders() {
     const [editing, setEditing] = useState(null);
     const [selectedOrder, setSelectedOrder] = useState(null);
     const [showItems, setShowItems] = useState(false);
+    const [currentUser, setCurrentUser] = useState(null);
+    
+    // Fetch current user
+    React.useEffect(() => {
+        const fetchUser = async () => {
+            try {
+                const response = await api.get('/user');
+                setCurrentUser(response.data);
+            } catch (err) {
+                console.error('Failed to fetch current user:', err);
+            }
+        };
+        fetchUser();
+    }, []);
+    
+    // Check if user is a branch-level admin (not super_admin)
+    const isBranchAdmin = React.useMemo(() => {
+        if (!currentUser) return false;
+        const role = currentUser.role?.toLowerCase().trim() || '';
+        return (role === 'administrator' || role === 'admin') && role !== 'super_admin';
+    }, [currentUser]);
+    
     const [formData, setFormData] = useState({
         branch_id: '',
         supplier_id: '',
@@ -25,6 +47,13 @@ export default function PharmacyOrders() {
         internal_notes: '',
         items: [],
     });
+    
+    // Auto-fill branch for admin users on mount
+    React.useEffect(() => {
+        if (isBranchAdmin && currentUser?.assigned_branch_id && !formData.branch_id) {
+            setFormData(prev => ({ ...prev, branch_id: currentUser.assigned_branch_id }));
+        }
+    }, [isBranchAdmin, currentUser]);
 
     // Fetch branches
     const { data: branchesData } = useQuery({
@@ -252,7 +281,8 @@ export default function PharmacyOrders() {
                                     required
                                     value={formData.branch_id}
                                     onChange={(e) => setFormData({ ...formData, branch_id: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                    disabled={isBranchAdmin && currentUser?.assigned_branch_id}
+                                    className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent ${isBranchAdmin && currentUser?.assigned_branch_id ? 'bg-gray-100 cursor-not-allowed opacity-75' : ''}`}
                                 >
                                     <option value="">Select Branch</option>
                                     {branches.map(branch => (

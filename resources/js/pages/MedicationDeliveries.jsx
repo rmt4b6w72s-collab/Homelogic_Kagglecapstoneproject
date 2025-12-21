@@ -51,6 +51,13 @@ export default function MedicationDeliveries() {
         const roleNormalized = role.replace(/[\s_]/g, '');
         return roleNormalized === 'caregiver' || (role.includes('care') && role.includes('giver'));
     }, [currentUser]);
+    
+    // Check if user is a branch-level admin (not super_admin)
+    const isBranchAdmin = React.useMemo(() => {
+        if (!currentUser) return false;
+        const role = currentUser.role?.toLowerCase().trim() || '';
+        return (role === 'administrator' || role === 'admin') && role !== 'super_admin';
+    }, [currentUser]);
 
     // Fetch branches
     const { data: branchesData } = useQuery({
@@ -202,6 +209,8 @@ export default function MedicationDeliveries() {
                     onSaveTemplate={(payload) => createPharmacyTemplateMutation.mutateAsync(payload)}
                     isCaregiver={isCaregiver}
                     caregiverBranchId={currentUser?.assigned_branch_id}
+                    currentUser={currentUser}
+                    isBranchAdmin={isBranchAdmin}
                     onClose={handleCloseForm}
                     onSuccess={() => {
                         queryClient.invalidateQueries(['medication-deliveries']);
@@ -225,6 +234,8 @@ export default function MedicationDeliveries() {
                     onSaveTemplate={(payload) => createPharmacyTemplateMutation.mutateAsync(payload)}
                     isCaregiver={isCaregiver}
                     caregiverBranchId={currentUser?.assigned_branch_id}
+                    currentUser={currentUser}
+                    isBranchAdmin={isBranchAdmin}
                     formMode={formMode}
                     onClose={handleCloseForm}
                     onSuccess={() => {
@@ -534,9 +545,9 @@ export default function MedicationDeliveries() {
     );
 }
 
-function MedicationDeliveryForm({ record, branches, residents, medications, pharmacySuppliers = [], pharmacyTemplates: initialPharmacyTemplates = [], onSaveTemplate, isCaregiver, caregiverBranchId, formMode = 'full', onClose, onSuccess }) {
+function MedicationDeliveryForm({ record, branches, residents, medications, pharmacySuppliers = [], pharmacyTemplates: initialPharmacyTemplates = [], onSaveTemplate, isCaregiver, caregiverBranchId, formMode = 'full', onClose, onSuccess, currentUser, isBranchAdmin }) {
     const [formData, setFormData] = useState({
-        branch_id: record?.branch_id || caregiverBranchId || '',
+        branch_id: record?.branch_id || caregiverBranchId || (isBranchAdmin && currentUser?.assigned_branch_id ? currentUser.assigned_branch_id : ''),
         delivery_type: record?.delivery_type || (formMode === 'quick' ? 'batch' : 'individual'),
         resident_id: record?.resident_id || '',
         medication_id: record?.medication_id || '',
@@ -547,6 +558,13 @@ function MedicationDeliveryForm({ record, branches, residents, medications, phar
         status: record?.status || 'received',
         notes: record?.notes || '',
     });
+    
+    // Auto-fill branch for admin users on mount
+    React.useEffect(() => {
+        if (isBranchAdmin && currentUser?.assigned_branch_id && !record && !formData.branch_id) {
+            setFormData(prev => ({ ...prev, branch_id: currentUser.assigned_branch_id }));
+        }
+    }, [isBranchAdmin, currentUser, record]);
 
     const [errors, setErrors] = useState({});
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -715,8 +733,8 @@ function MedicationDeliveryForm({ record, branches, residents, medications, phar
                                     value={formData.branch_id}
                                     onChange={(e) => setFormData({ ...formData, branch_id: e.target.value, resident_id: '', medication_id: '' })}
                                     required
-                                    disabled={isCaregiver}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent text-gray-900 bg-white"
+                                    disabled={isCaregiver || (isBranchAdmin && currentUser?.assigned_branch_id)}
+                                    className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent text-gray-900 bg-white ${isBranchAdmin && currentUser?.assigned_branch_id ? 'bg-gray-100 cursor-not-allowed opacity-75' : ''}`}
                                 >
                                     <option value="">Select Branch</option>
                                     {branches.map(branch => (
@@ -916,14 +934,21 @@ function MedicationDeliveryForm({ record, branches, residents, medications, phar
     );
 }
 
-function BulkMedicationDeliveryForm({ branches, residents, medications, pharmacySuppliers = [], pharmacyTemplates = [], onSaveTemplate, isCaregiver, caregiverBranchId, onClose, onSuccess }) {
+function BulkMedicationDeliveryForm({ branches, residents, medications, pharmacySuppliers = [], pharmacyTemplates = [], onSaveTemplate, isCaregiver, caregiverBranchId, onClose, onSuccess, currentUser, isBranchAdmin }) {
     const [commonFields, setCommonFields] = useState({
-        branch_id: caregiverBranchId || '',
+        branch_id: caregiverBranchId || (isBranchAdmin && currentUser?.assigned_branch_id ? currentUser.assigned_branch_id : ''),
         pharmacy_name: '',
         received_date: new Date().toISOString().split('T')[0],
         received_time: new Date().toTimeString().slice(0, 5),
         status: 'received',
     });
+    
+    // Auto-fill branch for admin users on mount
+    React.useEffect(() => {
+        if (isBranchAdmin && currentUser?.assigned_branch_id && !commonFields.branch_id) {
+            setCommonFields(prev => ({ ...prev, branch_id: currentUser.assigned_branch_id }));
+        }
+    }, [isBranchAdmin, currentUser]);
     const [deliveries, setDeliveries] = useState([
         {
             delivery_type: 'individual',
@@ -1088,7 +1113,7 @@ function BulkMedicationDeliveryForm({ branches, residents, medications, pharmacy
                                             value: branch.id.toString(),
                                             label: branch.name,
                                         })) || []}
-                                        disabled={isCaregiver}
+                                        disabled={isCaregiver || (isBranchAdmin && currentUser?.assigned_branch_id)}
                                         className="w-full"
                                     />
                                 </div>

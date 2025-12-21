@@ -66,6 +66,13 @@ export default function GroceryStatus() {
         const roleNormalized = role.replace(/[\s_]/g, '');
         return roleNormalized === 'caregiver' || (role.includes('care') && role.includes('giver'));
     }, [currentUser]);
+    
+    // Check if user is a branch-level admin (not super_admin)
+    const isBranchAdmin = React.useMemo(() => {
+        if (!currentUser) return false;
+        const role = currentUser.role?.toLowerCase().trim() || '';
+        return (role === 'administrator' || role === 'admin') && role !== 'super_admin';
+    }, [currentUser]);
 
     // Auto-set branch filter for caregivers
     React.useEffect(() => {
@@ -248,6 +255,8 @@ export default function GroceryStatus() {
                     templates={templates}
                     isCaregiver={isCaregiver}
                     caregiverBranchId={currentUser?.assigned_branch_id}
+                    currentUser={currentUser}
+                    isBranchAdmin={isBranchAdmin}
                     onClose={handleCloseForm}
                     onSaveTemplate={(payload) => createTemplateMutation.mutateAsync(payload)}
                     onSuccess={() => {
@@ -750,7 +759,7 @@ export default function GroceryStatus() {
     );
 }
 
-function GroceryStatusForm({ record, branches, templates = [], isCaregiver, caregiverBranchId, onClose, onSuccess, onSaveTemplate }) {
+function GroceryStatusForm({ record, branches, templates = [], isCaregiver, caregiverBranchId, onClose, onSuccess, onSaveTemplate, currentUser, isBranchAdmin }) {
     // Get current Monday
     const getCurrentMonday = () => {
         const today = new Date();
@@ -761,13 +770,20 @@ function GroceryStatusForm({ record, branches, templates = [], isCaregiver, care
     };
 
     const [formData, setFormData] = useState({
-        branch_id: record?.branch_id || caregiverBranchId || null,
+        branch_id: record?.branch_id || caregiverBranchId || (isBranchAdmin && currentUser?.assigned_branch_id ? currentUser.assigned_branch_id : null),
         week_start_date: record?.week_start_date || getCurrentMonday(),
         status: record?.status || 'pending',
         items_needed: record?.items_needed || '',
         items_received: record?.items_received || '',
         notes: record?.notes || '',
     });
+    
+    // Auto-fill branch for admin users on mount
+    React.useEffect(() => {
+        if (isBranchAdmin && currentUser?.assigned_branch_id && !record && !formData.branch_id) {
+            setFormData(prev => ({ ...prev, branch_id: currentUser.assigned_branch_id }));
+        }
+    }, [isBranchAdmin, currentUser, record]);
 
     const [errors, setErrors] = useState({});
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -831,7 +847,7 @@ function GroceryStatusForm({ record, branches, templates = [], isCaregiver, care
                                         value: branch.id.toString(),
                                         label: branch.name,
                                     }))}
-                                    disabled={isCaregiver}
+                                    disabled={isCaregiver || (isBranchAdmin && currentUser?.assigned_branch_id)}
                                     className="w-full"
                                 />
                                 {errors.branch_id && <p className="text-xs text-red-600 mt-1">{errors.branch_id[0]}</p>}
