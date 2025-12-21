@@ -641,15 +641,26 @@ export default function Appointments() {
                                     <p className="text-sm text-gray-500">Select branch and resident to view appointment history</p>
                                 </div>
                             </div>
-                            {canCreate && (
-                                <button
-                                    onClick={handleOpenFormManually}
-                                    className="inline-flex items-center gap-2 rounded-lg border-2 border-[var(--theme-primary)] bg-[var(--theme-primary)] px-4 py-2 text-sm font-semibold text-[var(--theme-text-on-primary)] hover:bg-[var(--theme-primary-hover)] transition-colors shadow-sm"
-                                >
-                                    <Plus className="h-4 w-4" />
-                                    Add Appointment
-                                </button>
-                            )}
+                            <div className="flex items-center gap-3">
+                                {isAdmin && (
+                                    <Link
+                                        to="/appointments/dashboard"
+                                        className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
+                                    >
+                                        <Calendar className="h-4 w-4" />
+                                        Dashboard
+                                    </Link>
+                                )}
+                                {canCreate && (
+                                    <button
+                                        onClick={handleOpenFormManually}
+                                        className="inline-flex items-center gap-2 rounded-lg border-2 border-[var(--theme-primary)] bg-[var(--theme-primary)] px-4 py-2 text-sm font-semibold text-[var(--theme-text-on-primary)] hover:bg-[var(--theme-primary-hover)] transition-colors shadow-sm"
+                                    >
+                                        <Plus className="h-4 w-4" />
+                                        Add Appointment
+                                    </button>
+                                )}
+                            </div>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">

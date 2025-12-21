@@ -42,6 +42,8 @@ class ExpenseNotification extends Mailable
         $categoryName = $this->expense->category?->name ?? 'Unknown Category';
         $branchName = $this->expense->branch?->name ?? '';
         $expenseDate = $this->expense->expense_date ? Carbon::parse($this->expense->expense_date)->format('M d, Y') : 'TBD';
+        $paymentDate = $this->expense->payment_date ? Carbon::parse($this->expense->payment_date)->format('M d, Y') : null;
+        $paymentMethod = $this->expense->payment_method ? ucfirst($this->expense->payment_method) : null;
         $createdByName = $this->expense->createdBy 
             ? trim(($this->expense->createdBy->first_name ?? '') . ' ' . ($this->expense->createdBy->last_name ?? ''))
             : 'Staff';
@@ -54,6 +56,8 @@ class ExpenseNotification extends Mailable
                 'categoryName' => $categoryName,
                 'branchName' => $branchName,
                 'expenseDate' => $expenseDate,
+                'paymentDate' => $paymentDate,
+                'paymentMethod' => $paymentMethod,
                 'paymentStatus' => $this->expense->payment_status,
                 'eventType' => $this->eventType,
                 'createdByName' => $createdByName,

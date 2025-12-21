@@ -51,6 +51,8 @@ class AppointmentController extends BaseApiController
                 $query->whereDate('appointment_date', '>=', today());
             } elseif ($filter === 'past') {
                 $query->whereDate('appointment_date', '<', today());
+            } elseif ($filter === 'today') {
+                $query->whereDate('appointment_date', today());
             }
         }
 
@@ -251,6 +253,66 @@ class AppointmentController extends BaseApiController
     {
         $types = \App\Models\AppointmentType::all();
         return response()->json($types);
+    }
+
+    public function statistics(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $query = Appointment::query();
+
+        // Apply facility filtering for non-super admins
+        if ($user && $user->role !== 'super_admin') {
+            if ($user->facility_id) {
+                $branchIds = $this->getFacilityBranchIds($user->facility_id);
+                if (!empty($branchIds)) {
+                    $query->whereIn('branch_id', $branchIds);
+                } else {
+                    return response()->json([
+                        'today' => 0,
+                        'upcoming' => 0,
+                        'completed' => 0,
+                        'cancelled' => 0,
+                        'total' => 0,
+                        'this_week' => 0,
+                        'this_month' => 0,
+                    ]);
+                }
+            } else {
+                return response()->json([
+                    'today' => 0,
+                    'upcoming' => 0,
+                    'completed' => 0,
+                    'cancelled' => 0,
+                    'total' => 0,
+                    'this_week' => 0,
+                    'this_month' => 0,
+                ]);
+            }
+        }
+
+        $today = now()->toDateString();
+        $startOfWeek = now()->startOfWeek()->toDateString();
+        $endOfWeek = now()->endOfWeek()->toDateString();
+        $startOfMonth = now()->startOfMonth()->toDateString();
+        $endOfMonth = now()->endOfMonth()->toDateString();
+
+        $baseQuery = clone $query;
+
+        return response()->json([
+            'today' => (clone $baseQuery)->whereDate('appointment_date', $today)->count(),
+            'upcoming' => (clone $baseQuery)->where('status', 'scheduled')
+                ->whereDate('appointment_date', '>=', $today)
+                ->count(),
+            'completed' => (clone $baseQuery)->where('status', 'completed')->count(),
+            'cancelled' => (clone $baseQuery)->where('status', 'cancelled')->count(),
+            'total' => (clone $baseQuery)->count(),
+            'this_week' => (clone $baseQuery)
+                ->whereBetween('appointment_date', [$startOfWeek, $endOfWeek])
+                ->count(),
+            'this_month' => (clone $baseQuery)
+                ->whereBetween('appointment_date', [$startOfMonth, $endOfMonth])
+                ->count(),
+        ]);
     }
 }
 

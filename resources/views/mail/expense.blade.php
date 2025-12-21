@@ -26,8 +26,23 @@ Category: {{ $categoryName }}
 @if($branchName)
 Branch: {{ $branchName }}
 @endif
+@if($paymentDate)
+Payment Date: {{ $paymentDate }}
+@endif
+@if($paymentMethod)
+Payment Method: {{ $paymentMethod }}
+@endif
+@if($expenseDate)
+Expense Date: {{ $expenseDate }}
+@endif
+@if($createdByName)
+Created By: {{ $createdByName }}
+@endif
+@if($notes)
+Notes: {{ $notes }}
+@endif
 
-This expense has been marked as paid.
+This expense has been marked as paid and payment has been recorded.
 
 @elseif($eventType === 'deleted')
 Expense Deleted

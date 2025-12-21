@@ -70,9 +70,9 @@ class ExpenseObserver
             // Load relationships
             $expense->load(['category', 'branch', 'facility', 'createdBy']);
 
-            // Get all administrators and managers for the facility
+            // Get all administrators and admins for the facility (only admin and administrator roles)
             $admins = User::where('facility_id', $expense->facility_id)
-                ->whereIn('role', ['administrator', 'admin', 'manager', 'super_admin'])
+                ->whereIn('role', ['administrator', 'admin'])
                 ->where('is_active', true)
                 ->get();
 
