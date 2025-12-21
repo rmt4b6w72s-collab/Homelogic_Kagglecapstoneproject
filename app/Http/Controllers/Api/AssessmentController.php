@@ -26,9 +26,20 @@ class AssessmentController extends BaseApiController
         if ($currentUser && $currentUser->role !== 'super_admin') {
             // Filter assessments by branches that belong to the user's facility
             if ($currentUser->facility_id) {
-                $query->whereHas('branch', function($q) use ($currentUser) {
-                    $q->where('facility_id', $currentUser->facility_id);
-                });
+                // Use optimized whereIn pattern instead of whereHas for better performance
+                $branchIds = $this->getFacilityBranchIds($currentUser->facility_id);
+                if (!empty($branchIds)) {
+                    $query->whereIn('branch_id', $branchIds);
+                } else {
+                    // No branches for facility, return empty results
+                    return response()->json([
+                        'data' => [],
+                        'current_page' => 1,
+                        'last_page' => 1,
+                        'per_page' => $request->get('per_page', 20),
+                        'total' => 0
+                    ]);
+                }
             } else {
                 // User has no facility assigned, return empty results
                 return response()->json([

@@ -80,11 +80,21 @@ class AnalyticsController extends BaseApiController
 
         // Apply facility filtering
         if (!$isSuperAdmin && $facilityId) {
-            $query->whereHas('resident', function($q) use ($facilityId) {
-                $q->whereHas('branch', function($b) use ($facilityId) {
-                    $b->where('facility_id', $facilityId);
-                })->where('is_active', true);
-            });
+            // Use optimized whereIn pattern instead of nested whereHas for better performance
+            $branchIds = $this->getFacilityBranchIds($facilityId);
+            if (!empty($branchIds)) {
+                $query->whereHas('resident', function($q) use ($branchIds) {
+                    $q->whereIn('branch_id', $branchIds)->where('is_active', true);
+                });
+            } else {
+                // No branches for facility, return empty summary
+                return [
+                    'total' => 0,
+                    'today' => 0,
+                    'week' => 0,
+                    'month' => 0,
+                ];
+            }
         }
 
         if ($branchId) {
@@ -117,11 +127,21 @@ class AnalyticsController extends BaseApiController
 
         // Apply facility filtering
         if (!$isSuperAdmin && $facilityId) {
-            $query->whereHas('resident', function($q) use ($facilityId) {
-                $q->whereHas('branch', function($b) use ($facilityId) {
-                    $b->where('facility_id', $facilityId);
-                })->where('is_active', true);
-            });
+            // Use optimized whereIn pattern instead of nested whereHas for better performance
+            $branchIds = $this->getFacilityBranchIds($facilityId);
+            if (!empty($branchIds)) {
+                $query->whereHas('resident', function($q) use ($branchIds) {
+                    $q->whereIn('branch_id', $branchIds)->where('is_active', true);
+                });
+            } else {
+                // No branches for facility, return empty summary
+                return [
+                    'total' => 0,
+                    'today' => 0,
+                    'week' => 0,
+                    'month' => 0,
+                ];
+            }
         }
 
         if ($branchId) {
@@ -149,11 +169,20 @@ class AnalyticsController extends BaseApiController
         // Calculate compliance rate (last 30 days)
         $complianceQuery = MedicationAdministration::query();
         if (!$isSuperAdmin && $facilityId) {
-            $complianceQuery->whereHas('resident', function($q) use ($facilityId) {
-                $q->whereHas('branch', function($b) use ($facilityId) {
-                    $b->where('facility_id', $facilityId);
-                })->where('is_active', true);
-            });
+            // Use optimized whereIn pattern instead of nested whereHas for better performance
+            $branchIds = $this->getFacilityBranchIds($facilityId);
+            if (!empty($branchIds)) {
+                $complianceQuery->whereHas('resident', function($q) use ($branchIds) {
+                    $q->whereIn('branch_id', $branchIds)->where('is_active', true);
+                });
+            } else {
+                // No branches for facility, return zero compliance
+                return [
+                    'active' => $activeCount,
+                    'due_today' => $dueToday,
+                    'compliance_rate' => 0,
+                ];
+            }
         }
         if ($branchId) {
             $complianceQuery->whereHas('resident', function($q) use ($branchId) {
@@ -182,9 +211,18 @@ class AnalyticsController extends BaseApiController
 
         // Apply facility filtering
         if (!$isSuperAdmin && $facilityId) {
-            $query->whereHas('branch', function($q) use ($facilityId) {
-                $q->where('facility_id', $facilityId);
-            });
+            // Use optimized whereIn pattern instead of whereHas for better performance
+            $branchIds = $this->getFacilityBranchIds($facilityId);
+            if (!empty($branchIds)) {
+                $query->whereIn('branch_id', $branchIds);
+            } else {
+                // No branches for facility, return empty summary
+                return [
+                    'total' => 0,
+                    'upcoming' => 0,
+                    'completed_month' => 0,
+                ];
+            }
         }
 
         if ($branchId) {
@@ -212,11 +250,21 @@ class AnalyticsController extends BaseApiController
 
         // Apply facility filtering
         if (!$isSuperAdmin && $facilityId) {
-            $query->whereHas('resident', function($q) use ($facilityId) {
-                $q->whereHas('branch', function($b) use ($facilityId) {
-                    $b->where('facility_id', $facilityId);
-                })->where('is_active', true);
-            });
+            // Use optimized whereIn pattern instead of nested whereHas for better performance
+            $branchIds = $this->getFacilityBranchIds($facilityId);
+            if (!empty($branchIds)) {
+                $query->whereHas('resident', function($q) use ($branchIds) {
+                    $q->whereIn('branch_id', $branchIds)->where('is_active', true);
+                });
+            } else {
+                // No branches for facility, return empty summary
+                return [
+                    'total' => 0,
+                    'today' => 0,
+                    'week' => 0,
+                    'month' => 0,
+                ];
+            }
         }
 
         if ($branchId) {
@@ -245,11 +293,21 @@ class AnalyticsController extends BaseApiController
 
         // Apply facility filtering
         if (!$isSuperAdmin && $facilityId) {
-            $query->whereHas('resident', function($q) use ($facilityId) {
-                $q->whereHas('branch', function($b) use ($facilityId) {
-                    $b->where('facility_id', $facilityId);
-                })->where('is_active', true);
-            });
+            // Use optimized whereIn pattern instead of nested whereHas for better performance
+            $branchIds = $this->getFacilityBranchIds($facilityId);
+            if (!empty($branchIds)) {
+                $query->whereHas('resident', function($q) use ($branchIds) {
+                    $q->whereIn('branch_id', $branchIds)->where('is_active', true);
+                });
+            } else {
+                // No branches for facility, return empty summary
+                return [
+                    'total' => 0,
+                    'today' => 0,
+                    'week' => 0,
+                    'month' => 0,
+                ];
+            }
         }
 
         if ($branchId) {

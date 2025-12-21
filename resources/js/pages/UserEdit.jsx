@@ -460,6 +460,8 @@ function EmploymentTab({ roles, branches, facilities, isSuperAdmin, isFacilityAd
                                 Debug: {roles.length} roles found. Roles: [{roles.map(r => r.name).join(', ')}]
                                 <br />
                                 "admin" role: {roles.some(r => r.name?.toLowerCase().trim() === 'admin') ? '✅' : '❌'}
+                                <br />
+                                Check roles prop directly: {JSON.stringify(roles.map(r => ({id: r.id, name: r.name})))}
                             </div>
                             {!roles.some(r => r.name?.toLowerCase().trim() === 'admin') && (
                                 <button
@@ -694,16 +696,18 @@ export default function UserEditWrapper() {
         queryKey: ['roles-options'],
         queryFn: async () => {
             const response = await api.get('/roles', { params: { per_page: 100 } });
-            console.log('UserEdit: Roles API Response:', response.data);
+            console.log('UserEdit: Full API Response:', JSON.stringify(response.data, null, 2));
             console.log('UserEdit: Roles data array:', response.data?.data);
+            console.log('UserEdit: Total roles in response:', response.data?.data?.length || 0);
             if (response.data?.data) {
                 const adminRole = response.data.data.find(r => r.name?.toLowerCase() === 'admin');
                 console.log('UserEdit: Admin role found:', adminRole ? 'YES' : 'NO', adminRole);
+                console.log('UserEdit: All role names:', response.data.data.map(r => r.name));
             }
             return response.data;
         },
         staleTime: 0, // Always fetch fresh data
-        cacheTime: 0, // Don't cache
+        gcTime: 0, // Don't cache (gcTime replaces cacheTime in newer versions)
     });
 
     const { data: branchesData } = useQuery({

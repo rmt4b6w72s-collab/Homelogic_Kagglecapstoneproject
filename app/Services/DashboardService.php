@@ -401,9 +401,10 @@ class DashboardService
         }
 
         // Get all branch IDs in the facility for more efficient and reliable querying
+        // Always fetch branch IDs early using cached method to optimize queries
         $facilityBranchIds = null;
         if ($facilityId) {
-            $facilityBranchIds = \App\Models\Branch::where('facility_id', $facilityId)->pluck('id')->toArray();
+            $facilityBranchIds = $this->getFacilityBranchIds($facilityId);
             Log::info('DashboardService: Facility branches', [
                 'facility_id' => $facilityId,
                 'branch_ids' => $facilityBranchIds,
@@ -413,8 +414,8 @@ class DashboardService
             // If we have a branch but no facility_id, try to get facility from branch
             $assignedBranch = \App\Models\Branch::find($branchId);
             if ($assignedBranch && $assignedBranch->facility_id) {
-                // Get all branches in the same facility
-                $facilityBranchIds = \App\Models\Branch::where('facility_id', $assignedBranch->facility_id)->pluck('id')->toArray();
+                // Get all branches in the same facility using cached method
+                $facilityBranchIds = $this->getFacilityBranchIds($assignedBranch->facility_id);
                 Log::info('DashboardService: Facility branches from branch context', [
                     'branch_id' => $branchId,
                     'facility_id' => $assignedBranch->facility_id,
@@ -425,14 +426,16 @@ class DashboardService
         }
 
         if ($facilityId) {
-            // Use branch-based filtering if we have branch IDs (more efficient and reliable than whereHas)
+            // Always use branch-based filtering with whereIn (more efficient than whereHas)
+            // This eliminates the need for nested whereHas queries which are slow
             if ($facilityBranchIds && !empty($facilityBranchIds)) {
-                // Filter by branch IDs directly (similar to caregiver approach but for all branches in facility)
+                // Filter by branch IDs directly (optimized path)
                 $residentsQuery->whereIn('branch_id', $facilityBranchIds);
                 
                 $appointmentsQuery->whereIn('branch_id', $facilityBranchIds);
                 
-                // For vitals, assessments, medications - filter by resident's branch
+                // For vitals, assessments, medications - filter by resident's branch using whereIn
+                // This is more efficient than nested whereHas queries
                 $vitalsQuery->whereHas('resident', function ($q) use ($facilityBranchIds) {
                     $q->whereIn('branch_id', $facilityBranchIds)->where('is_active', true);
                 });
@@ -445,7 +448,12 @@ class DashboardService
                     $q->whereIn('branch_id', $facilityBranchIds)->where('is_active', true);
                 });
             } else {
-                // Fallback to facility-based filtering using whereHas
+                // This fallback should rarely be needed, but kept for safety
+                // With proper indexes on branches.facility_id, whereHas will still perform well
+                Log::warning('DashboardService: No branch IDs found for facility, using whereHas fallback', [
+                    'facility_id' => $facilityId,
+                ]);
+                
                 $residentsQuery->whereHas('branch', function ($q) use ($facilityId) {
                     $q->where('facility_id', $facilityId);
                 });
@@ -535,7 +543,8 @@ class DashboardService
                 // Queries are already built without filters when $facilityId is null
             } else {
                 // Re-apply facility filters since we just found the facility
-                $facilityBranchIds = \App\Models\Branch::where('facility_id', $facilityId)->pluck('id')->toArray();
+                // Use cached method to get branch IDs
+                $facilityBranchIds = $this->getFacilityBranchIds($facilityId);
                 
                 if ($facilityBranchIds && !empty($facilityBranchIds)) {
                     $residentsQuery->whereIn('branch_id', $facilityBranchIds);
@@ -1749,6 +1758,23 @@ class DashboardService
 
         // Return limited results
         return array_slice($schedule, 0, $limit);
+    }
+
+    /**
+     * Get facility branch IDs with caching for performance
+     * 
+     * @param int $facilityId
+     * @return array
+     */
+    private function getFacilityBranchIds(int $facilityId): array
+    {
+        $cacheKey = "facility.{$facilityId}.branches";
+        
+        return Cache::remember($cacheKey, 3600, function () use ($facilityId) {
+            return \App\Models\Branch::where('facility_id', $facilityId)
+                ->pluck('id')
+                ->toArray();
+        });
     }
 }
 

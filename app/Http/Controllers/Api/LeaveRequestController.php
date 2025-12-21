@@ -28,12 +28,15 @@ class LeaveRequestController extends BaseApiController
                 // Filter by leave requests where the staff member belongs to the user's facility
                 // OR where the branch belongs to the user's facility
                 $facilityId = $currentUser->facility_id;
-                $query->where(function($q) use ($facilityId) {
+                // Use optimized whereIn pattern for branch filtering
+                $branchIds = $this->getFacilityBranchIds($facilityId);
+                $query->where(function($q) use ($facilityId, $branchIds) {
                     $q->whereHas('staff', function($userQuery) use ($facilityId) {
                         $userQuery->where('facility_id', $facilityId);
-                    })->orWhereHas('branch', function($branchQuery) use ($facilityId) {
-                        $branchQuery->where('facility_id', $facilityId);
                     });
+                    if (!empty($branchIds)) {
+                        $q->orWhereIn('branch_id', $branchIds);
+                    }
                 });
             }
         }

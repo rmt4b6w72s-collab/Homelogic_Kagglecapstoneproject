@@ -8,6 +8,7 @@ use App\Models\Facility;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 abstract class BaseApiController extends Controller
 {
@@ -292,6 +293,24 @@ abstract class BaseApiController extends Controller
         }
 
         return null;
+    }
+
+    /**
+     * Get facility branch IDs with caching for performance.
+     * Use this method instead of whereHas('branch') when filtering by facility.
+     * 
+     * @param int $facilityId
+     * @return array Array of branch IDs for the facility
+     */
+    protected function getFacilityBranchIds(int $facilityId): array
+    {
+        $cacheKey = "facility.{$facilityId}.branches";
+        
+        return Cache::remember($cacheKey, 3600, function () use ($facilityId) {
+            return \App\Models\Branch::where('facility_id', $facilityId)
+                ->pluck('id')
+                ->toArray();
+        });
     }
 }
 

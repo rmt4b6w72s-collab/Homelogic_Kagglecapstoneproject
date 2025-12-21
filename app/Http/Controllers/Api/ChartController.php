@@ -47,11 +47,24 @@ class ChartController extends BaseApiController
         // Apply facility filtering for non-super admins
         if ($user && $user->role !== 'super_admin') {
             if ($user->facility_id) {
-                $query->whereHas('resident', function($q) use ($user) {
-                    $q->whereHas('branch', function($b) use ($user) {
-                        $b->where('facility_id', $user->facility_id);
-                    })->where('is_active', true);
-                });
+                // Use optimized whereIn pattern instead of nested whereHas for better performance
+                $branchIds = $this->getFacilityBranchIds($user->facility_id);
+                if (!empty($branchIds)) {
+                    $query->whereHas('resident', function($q) use ($branchIds) {
+                        $q->whereIn('branch_id', $branchIds)->where('is_active', true);
+                    });
+                } else {
+                    // No branches for facility, return empty results
+                    return response()->json([
+                        'total_vitals' => 0,
+                        'today_vitals' => 0,
+                        'week_vitals' => 0,
+                        'month_vitals' => 0,
+                        'trends' => [],
+                        'blood_pressure' => ['labels' => [], 'systolic' => [], 'diastolic' => []],
+                        'temperature' => ['labels' => [], 'temperature' => []],
+                    ]);
+                }
             } else {
                 // User has no facility assigned, return empty results
                 return response()->json([
@@ -92,17 +105,29 @@ class ChartController extends BaseApiController
     private function getVitalsTrends($branchId = null, $residentId = null, $user = null): array
     {
         $last7Days = [];
+        // Pre-fetch branch IDs if facility filtering is needed
+        $branchIds = null;
+        if ($user && $user->role !== 'super_admin' && $user->facility_id) {
+            $branchIds = $this->getFacilityBranchIds($user->facility_id);
+        }
+        
         for ($i = 6; $i >= 0; $i--) {
             $date = Carbon::now()->subDays($i);
             $query = VitalSign::whereDate('measurement_date', $date);
             
             // Apply facility filtering for non-super admins
-            if ($user && $user->role !== 'super_admin' && $user->facility_id) {
-                $query->whereHas('resident', function($q) use ($user) {
-                    $q->whereHas('branch', function($b) use ($user) {
-                        $b->where('facility_id', $user->facility_id);
-                    })->where('is_active', true);
+            if ($user && $user->role !== 'super_admin' && $user->facility_id && !empty($branchIds)) {
+                // Use optimized whereIn pattern instead of nested whereHas for better performance
+                $query->whereHas('resident', function($q) use ($branchIds) {
+                    $q->whereIn('branch_id', $branchIds)->where('is_active', true);
                 });
+            } elseif ($user && $user->role !== 'super_admin' && $user->facility_id && empty($branchIds)) {
+                // No branches for facility, skip this date
+                $last7Days[] = [
+                    'date' => $date->format('M j'),
+                    'count' => 0
+                ];
+                continue;
             }
             
             if ($branchId) {
@@ -131,11 +156,20 @@ class ChartController extends BaseApiController
         
         // Apply facility filtering for non-super admins
         if ($user && $user->role !== 'super_admin' && $user->facility_id) {
-            $query->whereHas('resident', function($q) use ($user) {
-                $q->whereHas('branch', function($b) use ($user) {
-                    $b->where('facility_id', $user->facility_id);
-                })->where('is_active', true);
-            });
+            // Use optimized whereIn pattern instead of nested whereHas for better performance
+            $branchIds = $this->getFacilityBranchIds($user->facility_id);
+            if (!empty($branchIds)) {
+                $query->whereHas('resident', function($q) use ($branchIds) {
+                    $q->whereIn('branch_id', $branchIds)->where('is_active', true);
+                });
+            } else {
+                // No branches for facility, return empty data
+                return [
+                    'labels' => [],
+                    'systolic' => [],
+                    'diastolic' => [],
+                ];
+            }
         }
         
         if ($branchId) {
@@ -165,11 +199,19 @@ class ChartController extends BaseApiController
         
         // Apply facility filtering for non-super admins
         if ($user && $user->role !== 'super_admin' && $user->facility_id) {
-            $query->whereHas('resident', function($q) use ($user) {
-                $q->whereHas('branch', function($b) use ($user) {
-                    $b->where('facility_id', $user->facility_id);
-                })->where('is_active', true);
-            });
+            // Use optimized whereIn pattern instead of nested whereHas for better performance
+            $branchIds = $this->getFacilityBranchIds($user->facility_id);
+            if (!empty($branchIds)) {
+                $query->whereHas('resident', function($q) use ($branchIds) {
+                    $q->whereIn('branch_id', $branchIds)->where('is_active', true);
+                });
+            } else {
+                // No branches for facility, return empty data
+                return [
+                    'labels' => [],
+                    'temperature' => [],
+                ];
+            }
         }
         
         if ($branchId) {
@@ -204,11 +246,23 @@ class ChartController extends BaseApiController
         // Apply facility filtering for non-super admins
         if ($user && $user->role !== 'super_admin') {
             if ($user->facility_id) {
-                $query->whereHas('resident', function($q) use ($user) {
-                    $q->whereHas('branch', function($b) use ($user) {
-                        $b->where('facility_id', $user->facility_id);
-                    })->where('is_active', true);
-                });
+                // Use optimized whereIn pattern instead of nested whereHas for better performance
+                $branchIds = $this->getFacilityBranchIds($user->facility_id);
+                if (!empty($branchIds)) {
+                    $query->whereHas('resident', function($q) use ($branchIds) {
+                        $q->whereIn('branch_id', $branchIds)->where('is_active', true);
+                    });
+                } else {
+                    // No branches for facility, return empty results
+                    return response()->json([
+                        'total_assessments' => 0,
+                        'completed_assessments' => 0,
+                        'pending_assessments' => 0,
+                        'this_month' => 0,
+                        'by_type' => [],
+                        'completion_trends' => [],
+                    ]);
+                }
             } else {
                 // User has no facility assigned, return empty results
                 return response()->json([
@@ -249,17 +303,29 @@ class ChartController extends BaseApiController
     private function getAssessmentTrends($branchId = null, $residentId = null, $user = null): array
     {
         $last7Days = [];
+        // Pre-fetch branch IDs if facility filtering is needed
+        $branchIds = null;
+        if ($user && $user->role !== 'super_admin' && $user->facility_id) {
+            $branchIds = $this->getFacilityBranchIds($user->facility_id);
+        }
+        
         for ($i = 6; $i >= 0; $i--) {
             $date = Carbon::now()->subDays($i);
             $query = Assessment::whereDate('assessment_date', $date);
             
             // Apply facility filtering for non-super admins
-            if ($user && $user->role !== 'super_admin' && $user->facility_id) {
-                $query->whereHas('resident', function($q) use ($user) {
-                    $q->whereHas('branch', function($b) use ($user) {
-                        $b->where('facility_id', $user->facility_id);
-                    })->where('is_active', true);
+            if ($user && $user->role !== 'super_admin' && $user->facility_id && !empty($branchIds)) {
+                // Use optimized whereIn pattern instead of nested whereHas for better performance
+                $query->whereHas('resident', function($q) use ($branchIds) {
+                    $q->whereIn('branch_id', $branchIds)->where('is_active', true);
                 });
+            } elseif ($user && $user->role !== 'super_admin' && $user->facility_id && empty($branchIds)) {
+                // No branches for facility, skip this date
+                $last7Days[] = [
+                    'date' => $date->format('M j'),
+                    'count' => 0
+                ];
+                continue;
             }
             
             if ($branchId) {
@@ -293,9 +359,21 @@ class ChartController extends BaseApiController
         // Apply facility filtering for non-super admins
         if ($user && $user->role !== 'super_admin') {
             if ($user->facility_id) {
-                $query->whereHas('branch', function($q) use ($user) {
-                    $q->where('facility_id', $user->facility_id);
-                });
+                // Use optimized whereIn pattern instead of whereHas for better performance
+                $branchIds = $this->getFacilityBranchIds($user->facility_id);
+                if (!empty($branchIds)) {
+                    $query->whereIn('branch_id', $branchIds);
+                } else {
+                    // No branches for facility, return empty results
+                    return response()->json([
+                        'total_appointments' => 0,
+                        'upcoming' => 0,
+                        'completed' => 0,
+                        'pending' => 0,
+                        'by_status' => [],
+                        'trends' => [],
+                    ]);
+                }
             } else {
                 // User has no facility assigned, return empty results
                 return response()->json([

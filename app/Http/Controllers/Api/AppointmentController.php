@@ -17,9 +17,20 @@ class AppointmentController extends BaseApiController
         // Apply facility filtering for non-super admins
         if ($user && $user->role !== 'super_admin') {
             if ($user->facility_id) {
-                $query->whereHas('branch', function($q) use ($user) {
-                    $q->where('facility_id', $user->facility_id);
-                });
+                // Use optimized whereIn pattern instead of whereHas for better performance
+                $branchIds = $this->getFacilityBranchIds($user->facility_id);
+                if (!empty($branchIds)) {
+                    $query->whereIn('branch_id', $branchIds);
+                } else {
+                    // No branches for facility, return empty results
+                    return response()->json([
+                        'data' => [],
+                        'current_page' => 1,
+                        'last_page' => 1,
+                        'per_page' => $request->get('per_page', 15),
+                        'total' => 0
+                    ]);
+                }
             } else {
                 // User has no facility assigned, return empty results
                 return response()->json([
