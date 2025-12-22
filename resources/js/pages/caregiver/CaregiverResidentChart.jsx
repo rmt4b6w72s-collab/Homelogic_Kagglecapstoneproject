@@ -35,8 +35,9 @@ export default function CaregiverResidentChart() {
                 api.get('/chart-data-definitions'),
                 api.get(`/resident-charts/${residentId}`)
             ]);
+            const allowedCategories = ['Resistive', 'Behavior', 'Others'];
             return {
-                categories: definitionsRes.data,
+                categories: definitionsRes.data.filter(cat => allowedCategories.includes(cat.name)),
                 chart: chartRes.data.chart
             };
         },
@@ -204,8 +205,8 @@ export default function CaregiverResidentChart() {
                             onClick={() => handleSubmit('submitted')}
                             disabled={saving || !!currentTimeError}
                             className={`px-8 py-2.5 rounded-xl font-bold flex items-center gap-2 transition-all shadow-lg ${currentTimeError
-                                    ? 'bg-gray-200 text-gray-400 cursor-not-allowed border border-gray-300 shadow-none'
-                                    : 'bg-[var(--theme-primary)] text-white hover:bg-[var(--theme-primary-hover)] shadow-[var(--theme-primary-light)]/20 active:scale-95'
+                                ? 'bg-gray-200 text-gray-400 cursor-not-allowed border border-gray-300 shadow-none'
+                                : 'bg-[var(--theme-primary)] text-white hover:bg-[var(--theme-primary-hover)] shadow-[var(--theme-primary-light)]/20 active:scale-95'
                                 } disabled:opacity-50`}
                         >
                             <CheckCircle2 className="w-4 h-4" />
