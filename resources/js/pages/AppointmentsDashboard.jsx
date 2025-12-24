@@ -723,7 +723,7 @@ export default function AppointmentsDashboard() {
                         </div>
                         <div className="p-6 space-y-6">
                             <div>
-                                <label className="block text-sm font-bold text-gray-900 mb-1">
+                                <label className="block text-base font-semibold text-gray-900 mb-2">
                                     Appointment Outcome / Comments (Optional)
                                 </label>
                                 <textarea
@@ -737,12 +737,12 @@ export default function AppointmentsDashboard() {
 
                             {/* Documents Section */}
                             <div>
-                                <div className="flex items-center justify-between mb-3">
+                                <div className="flex items-center justify-between mb-4">
                                     <div>
-                                        <label className="block text-sm font-bold text-gray-900 mb-1">
+                                        <label className="block text-base font-semibold text-gray-900 mb-2">
                                             Upload Documents (Optional)
                                         </label>
-                                        <p className="text-xs text-gray-600">Attach consultation documents, medical reports, or other files related to this appointment</p>
+                                        <p className="text-sm text-gray-600">Attach consultation documents, medical reports, or other files related to this appointment</p>
                                     </div>
                                     <button
                                         type="button"
@@ -777,9 +777,9 @@ export default function AppointmentsDashboard() {
                                                         ×
                                                     </button>
                                                 </div>
-                                                <div className="grid grid-cols-2 gap-3">
+                                                <div className="grid grid-cols-2 gap-4">
                                                     <div>
-                                                        <label className="block text-xs font-bold text-gray-900 mb-1">
+                                                        <label className="block text-sm font-semibold text-gray-900 mb-2">
                                                             Document Name *
                                                         </label>
                                                         <input
@@ -791,12 +791,12 @@ export default function AppointmentsDashboard() {
                                                                 setCompletionDocuments(updated);
                                                             }}
                                                             required
-                                                            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                                            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent text-gray-900"
                                                             placeholder="e.g., Consultation Report, Medical Summary"
                                                         />
                                                     </div>
                                                     <div>
-                                                        <label className="block text-xs font-bold text-gray-900 mb-1">
+                                                        <label className="block text-sm font-semibold text-gray-900 mb-2">
                                                             Type *
                                                         </label>
                                                         <select
@@ -807,7 +807,7 @@ export default function AppointmentsDashboard() {
                                                                 setCompletionDocuments(updated);
                                                             }}
                                                             required
-                                                            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                                            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent text-gray-900 bg-white"
                                                         >
                                                             <option value="appointment">Appointment</option>
                                                             <option value="consultation">Consultation</option>
@@ -818,7 +818,7 @@ export default function AppointmentsDashboard() {
                                                         </select>
                                                     </div>
                                                     <div className="col-span-2">
-                                                        <label className="block text-xs font-bold text-gray-900 mb-1">
+                                                        <label className="block text-sm font-semibold text-gray-900 mb-2">
                                                             File *
                                                         </label>
                                                         <input
@@ -830,12 +830,12 @@ export default function AppointmentsDashboard() {
                                                             }}
                                                             accept=".pdf,.jpg,.jpeg,.png,.gif,.doc,.docx"
                                                             required
-                                                            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                                            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent text-gray-900"
                                                         />
-                                                        <p className="text-xs text-gray-500 mt-1">Max size: 10MB</p>
+                                                        <p className="text-xs text-gray-600 mt-1">Max size: 10MB</p>
                                                     </div>
                                                     <div className="col-span-2">
-                                                        <label className="block text-xs font-bold text-gray-900 mb-1">
+                                                        <label className="block text-sm font-semibold text-gray-900 mb-2">
                                                             Notes
                                                         </label>
                                                         <textarea
@@ -846,7 +846,7 @@ export default function AppointmentsDashboard() {
                                                                 setCompletionDocuments(updated);
                                                             }}
                                                             rows={2}
-                                                            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                                                            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent text-gray-900"
                                                             placeholder="Additional notes..."
                                                         />
                                                     </div>
