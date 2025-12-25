@@ -20,6 +20,8 @@ export default function Housekeeping() {
     const queryClient = useQueryClient();
     const [selectedDate, setSelectedDate] = React.useState(() => getLocalDateString());
     const [skipNotesModal, setSkipNotesModal] = React.useState({ open: false, taskId: null, notes: '' });
+    const [expandedSkipTask, setExpandedSkipTask] = React.useState(null); // Track which task is showing skip input
+    const [skipNotes, setSkipNotes] = React.useState({}); // Store skip notes per task
 
     const { data, isLoading, error, isFetching } = useQuery({
         queryKey: ['cleaning-checklists', selectedDate],
@@ -59,6 +61,8 @@ export default function Housekeeping() {
             await mutation.mutateAsync({ taskId, status, notes });
             if (status === 'skipped') {
                 setSkipNotesModal({ open: false, taskId: null, notes: '' });
+                setExpandedSkipTask(null);
+                setSkipNotes({ ...skipNotes, [taskId]: '' });
             }
         } catch (err) {
             const apiMessage = err?.response?.data?.message ?? err?.message ?? 'Unable to update task.';
@@ -67,13 +71,28 @@ export default function Housekeeping() {
     };
 
     const handleSkipClick = (taskId) => {
-        setSkipNotesModal({ open: true, taskId, notes: '' });
+        // Toggle inline skip input for this task
+        if (expandedSkipTask === taskId) {
+            setExpandedSkipTask(null);
+        } else {
+            setExpandedSkipTask(taskId);
+            // Initialize notes if not already set
+            if (!skipNotes[taskId]) {
+                setSkipNotes({ ...skipNotes, [taskId]: '' });
+            }
+        }
     };
 
-    const handleSkipSubmit = () => {
-        if (skipNotesModal.taskId) {
-            handleStatusUpdate(skipNotesModal.taskId, 'skipped', skipNotesModal.notes);
-        }
+    const handleSkipSubmit = (taskId) => {
+        const notes = skipNotes[taskId] || '';
+        handleStatusUpdate(taskId, 'skipped', notes);
+        setExpandedSkipTask(null);
+        setSkipNotes({ ...skipNotes, [taskId]: '' });
+    };
+
+    const handleSkipCancel = (taskId) => {
+        setExpandedSkipTask(null);
+        setSkipNotes({ ...skipNotes, [taskId]: '' });
     };
 
     const isToday = React.useMemo(() => {
@@ -110,11 +129,12 @@ export default function Housekeeping() {
         const completedOnSelectedDate =
             Boolean(task.completed_at) && String(task.completed_at).slice(0, 10) === selectedDate;
         const disabled = mutation.isLoading || completedOnSelectedDate || !windowOk;
+        const isSkipExpanded = expandedSkipTask === task.id;
 
         return (
             <div key={task.id} className="rounded-2xl border border-gray-100 bg-white/80 p-4 shadow-sm">
                 <div className="flex items-start justify-between gap-4">
-                    <div>
+                    <div className="flex-1">
                         <div className="flex items-center gap-3">
                             <h4 className="text-base font-semibold text-gray-900">{task.title}</h4>
                             <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1" style={badgeStyles}>
@@ -142,6 +162,56 @@ export default function Housekeeping() {
                                 <span>Completed at {new Date(task.completed_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                             ) : null}
                         </div>
+                        
+                        {/* Inline Skip Reason Input */}
+                        {isSkipExpanded && (
+                            <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4">
+                                <label htmlFor={`skip-reason-${task.id}`} className="block text-sm font-semibold text-gray-900 mb-2">
+                                    Reason for skipping <span className="text-gray-500 font-normal text-xs">(optional)</span>
+                                </label>
+                                <textarea
+                                    id={`skip-reason-${task.id}`}
+                                    value={skipNotes[task.id] || ''}
+                                    onChange={(e) => setSkipNotes({ ...skipNotes, [task.id]: e.target.value })}
+                                    placeholder="Enter reason for skipping this task..."
+                                    rows={3}
+                                    maxLength={1000}
+                                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                                />
+                                <div className="mt-2 flex items-center justify-between">
+                                    <p className="text-xs text-gray-500">
+                                        {(skipNotes[task.id] || '').length}/1000 characters
+                                    </p>
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => handleSkipCancel(task.id)}
+                                            className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleSkipSubmit(task.id)}
+                                            disabled={mutation.isLoading}
+                                            className="px-3 py-1.5 text-sm font-semibold text-white bg-amber-500 rounded-lg hover:bg-amber-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-1.5"
+                                        >
+                                            {mutation.isLoading ? (
+                                                <>
+                                                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                                    Skipping...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <XCircle className="h-3.5 w-3.5" />
+                                                    Skip Task
+                                                </>
+                                            )}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                     <div className="flex flex-col gap-2">
                         <button
@@ -156,12 +226,12 @@ export default function Housekeeping() {
                         </button>
                         <button
                             type="button"
-                            disabled={disabled}
+                            disabled={disabled || isSkipExpanded}
                             onClick={() => handleSkipClick(task.id)}
                             className="inline-flex items-center justify-center gap-2 rounded-lg bg-amber-500 px-3 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-amber-600 disabled:cursor-not-allowed disabled:bg-amber-300 disabled:text-amber-100"
                         >
                             <XCircle className="h-4 w-4" />
-                            Skip
+                            {isSkipExpanded ? 'Cancel' : 'Skip'}
                         </button>
                     </div>
                 </div>

@@ -273,17 +273,6 @@ export default function HousekeepingDashboard() {
                             </label>
                         </div>
 
-                        {/* Debug info - remove in production */}
-                        {process.env.NODE_ENV === 'development' && (
-                            <div className="rounded-lg border border-gray-300 bg-gray-50 p-3 text-xs text-gray-600">
-                                <p><strong>Debug:</strong> showCompletionReport={showCompletionReport ? 'true' : 'false'}, 
-                                loading={reportLoading ? 'true' : 'false'}, 
-                                hasError={reportError ? 'true' : 'false'}, 
-                                hasData={completionReport ? 'true' : 'false'}, 
-                                recordCount={completionReport?.records?.length ?? 0}</p>
-                            </div>
-                        )}
-
                         {reportLoading ? (
                             <div className="flex items-center justify-center py-12 text-sm text-gray-500">
                                 <div className="h-6 w-6 animate-spin rounded-full border-2" style={{ borderColor: 'var(--theme-primary-bg)', borderTopColor: 'var(--theme-primary)' }}></div>
