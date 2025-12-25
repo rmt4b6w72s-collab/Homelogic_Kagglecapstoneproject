@@ -45,9 +45,9 @@ export default function AppointmentsDashboard() {
         description: '',
         status: 'scheduled',
     });
-    const [completingAppointment, setCompletingAppointment] = useState(null);
-    const [completionNotes, setCompletionNotes] = useState('');
-    const [completionDocuments, setCompletionDocuments] = useState([]);
+    const [expandedAppointment, setExpandedAppointment] = useState(null);
+    const [appointmentNotes, setAppointmentNotes] = useState({});
+    const [appointmentDocuments, setAppointmentDocuments] = useState({});
 
     // Fetch current user
     const { data: currentUser } = useQuery({
@@ -219,17 +219,55 @@ export default function AppointmentsDashboard() {
                 },
             });
         },
-        onSuccess: () => {
+        onSuccess: (_, variables) => {
             queryClient.invalidateQueries(['appointments-dashboard']);
             queryClient.invalidateQueries(['appointments-statistics']);
-            setCompletingAppointment(null);
-            setCompletionNotes('');
-            setCompletionDocuments([]);
+            setExpandedAppointment(null);
+            setAppointmentNotes(prev => {
+                const updated = { ...prev };
+                delete updated[variables.id];
+                return updated;
+            });
+            setAppointmentDocuments(prev => {
+                const updated = { ...prev };
+                delete updated[variables.id];
+                return updated;
+            });
         },
     });
 
-    const handleQuickComplete = (appointmentId) => {
-        setCompletingAppointment(appointmentId);
+    const handleToggleComplete = (appointmentId) => {
+        if (expandedAppointment === appointmentId) {
+            setExpandedAppointment(null);
+        } else {
+            setExpandedAppointment(appointmentId);
+            if (!appointmentNotes[appointmentId]) {
+                setAppointmentNotes(prev => ({ ...prev, [appointmentId]: '' }));
+            }
+            if (!appointmentDocuments[appointmentId]) {
+                setAppointmentDocuments(prev => ({ ...prev, [appointmentId]: [] }));
+            }
+        }
+    };
+
+    const handleCompleteSubmit = async (appointmentId) => {
+        const notes = appointmentNotes[appointmentId] || null;
+        const documents = appointmentDocuments[appointmentId] || [];
+        
+        const validDocuments = documents.filter(doc =>
+            doc.document_name && doc.document_type && doc.file
+        );
+        
+        if (documents.length > 0 && validDocuments.length !== documents.length) {
+            alert('Please fill in all required fields for documents');
+            return;
+        }
+        
+        await completeMutation.mutateAsync({ 
+            id: appointmentId, 
+            notes, 
+            documents: validDocuments 
+        });
     };
 
     const appointments = appointmentsData?.data || [];
@@ -549,7 +587,7 @@ export default function AppointmentsDashboard() {
                                     <div className="flex items-center gap-2 ml-4">
                                         {isAdmin && appointment.status === 'scheduled' && (
                                             <button
-                                                onClick={() => handleQuickComplete(appointment.id)}
+                                                onClick={() => handleToggleComplete(appointment.id)}
                                                 disabled={completeMutation.isPending}
                                                 className="px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium flex items-center gap-1.5 disabled:opacity-50"
                                                 title="Mark as Complete"
@@ -567,6 +605,195 @@ export default function AppointmentsDashboard() {
                                         </Link>
                                     </div>
                                 </div>
+
+                                {/* Expandable Completion Section */}
+                                {expandedAppointment === appointment.id && isAdmin && appointment.status === 'scheduled' && (
+                                    <div className="mt-4 pt-4 border-t border-gray-200">
+                                        <div className="space-y-4">
+                                            {/* Notes Section */}
+                                            <div>
+                                                <div className="block text-sm font-medium text-gray-900 mb-1">
+                                                    Appointment Outcome / Comments (Optional)
+                                                </div>
+                                                <textarea
+                                                    rows={3}
+                                                    value={appointmentNotes[appointment.id] || ''}
+                                                    onChange={(e) => setAppointmentNotes(prev => ({ ...prev, [appointment.id]: e.target.value }))}
+                                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent text-gray-900 text-sm"
+                                                    placeholder="Enter notes, comments, or details about the appointment outcome..."
+                                                />
+                                            </div>
+
+                                            {/* Documents Section */}
+                                            <div>
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <div className="block text-sm font-medium text-gray-900">
+                                                        Upload Documents (Optional)
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            const currentDocs = appointmentDocuments[appointment.id] || [];
+                                                            setAppointmentDocuments(prev => ({
+                                                                ...prev,
+                                                                [appointment.id]: [...currentDocs, {
+                                                                    document_name: '',
+                                                                    document_type: 'appointment',
+                                                                    file: null,
+                                                                    notes: '',
+                                                                }]
+                                                            }));
+                                                        }}
+                                                        className="text-sm text-[var(--theme-primary)] hover:text-[var(--theme-primary-hover)] font-medium"
+                                                    >
+                                                        + Add Document
+                                                    </button>
+                                                </div>
+                                                
+                                                {appointmentDocuments[appointment.id]?.length > 0 && (
+                                                    <div className="space-y-3">
+                                                        {appointmentDocuments[appointment.id].map((doc, index) => (
+                                                            <div key={index} className="border border-gray-200 rounded-lg p-3 space-y-3 bg-gray-50">
+                                                                <div className="flex items-start justify-between">
+                                                                    <div className="text-sm font-medium text-gray-900">Document {index + 1}</div>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => {
+                                                                            const updated = [...appointmentDocuments[appointment.id]];
+                                                                            updated.splice(index, 1);
+                                                                            setAppointmentDocuments(prev => ({
+                                                                                ...prev,
+                                                                                [appointment.id]: updated
+                                                                            }));
+                                                                        }}
+                                                                        className="text-gray-400 hover:text-red-600"
+                                                                    >
+                                                                        ×
+                                                                    </button>
+                                                                </div>
+                                                                <div className="grid grid-cols-2 gap-3">
+                                                                    <div>
+                                                                        <div className="block text-xs font-medium text-gray-700 mb-1">
+                                                                            Document Name *
+                                                                        </div>
+                                                                        <input
+                                                                            type="text"
+                                                                            value={doc.document_name}
+                                                                            onChange={(e) => {
+                                                                                const updated = [...appointmentDocuments[appointment.id]];
+                                                                                updated[index].document_name = e.target.value;
+                                                                                setAppointmentDocuments(prev => ({
+                                                                                    ...prev,
+                                                                                    [appointment.id]: updated
+                                                                                }));
+                                                                            }}
+                                                                            required
+                                                                            className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent text-gray-900"
+                                                                            placeholder="e.g., Consultation Report"
+                                                                        />
+                                                                    </div>
+                                                                    <div>
+                                                                        <div className="block text-xs font-medium text-gray-700 mb-1">
+                                                                            Type *
+                                                                        </div>
+                                                                        <select
+                                                                            value={doc.document_type}
+                                                                            onChange={(e) => {
+                                                                                const updated = [...appointmentDocuments[appointment.id]];
+                                                                                updated[index].document_type = e.target.value;
+                                                                                setAppointmentDocuments(prev => ({
+                                                                                    ...prev,
+                                                                                    [appointment.id]: updated
+                                                                                }));
+                                                                            }}
+                                                                            required
+                                                                            className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent text-gray-900 bg-white"
+                                                                        >
+                                                                            <option value="appointment">Appointment</option>
+                                                                            <option value="consultation">Consultation</option>
+                                                                            <option value="medical">Medical</option>
+                                                                            <option value="insurance">Insurance</option>
+                                                                            <option value="legal">Legal</option>
+                                                                            <option value="other">Other</option>
+                                                                        </select>
+                                                                    </div>
+                                                                    <div className="col-span-2">
+                                                                        <div className="block text-xs font-medium text-gray-700 mb-1">
+                                                                            File *
+                                                                        </div>
+                                                                        <input
+                                                                            type="file"
+                                                                            onChange={(e) => {
+                                                                                const updated = [...appointmentDocuments[appointment.id]];
+                                                                                updated[index].file = e.target.files[0];
+                                                                                setAppointmentDocuments(prev => ({
+                                                                                    ...prev,
+                                                                                    [appointment.id]: updated
+                                                                                }));
+                                                                            }}
+                                                                            accept=".pdf,.jpg,.jpeg,.png,.gif,.doc,.docx"
+                                                                            required
+                                                                            className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent text-gray-900"
+                                                                        />
+                                                                        <p className="text-xs text-gray-500 mt-1">Max size: 10MB</p>
+                                                                    </div>
+                                                                    <div className="col-span-2">
+                                                                        <div className="block text-xs font-medium text-gray-700 mb-1">
+                                                                            Notes
+                                                                        </div>
+                                                                        <textarea
+                                                                            value={doc.notes || ''}
+                                                                            onChange={(e) => {
+                                                                                const updated = [...appointmentDocuments[appointment.id]];
+                                                                                updated[index].notes = e.target.value;
+                                                                                setAppointmentDocuments(prev => ({
+                                                                                    ...prev,
+                                                                                    [appointment.id]: updated
+                                                                                }));
+                                                                            }}
+                                                                            rows={2}
+                                                                            className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent text-gray-900"
+                                                                            placeholder="Additional notes..."
+                                                                        />
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Action Buttons */}
+                                            <div className="flex items-center justify-end space-x-3 pt-2">
+                                                <button
+                                                    onClick={() => {
+                                                        setExpandedAppointment(null);
+                                                        setAppointmentNotes(prev => {
+                                                            const updated = { ...prev };
+                                                            delete updated[appointment.id];
+                                                            return updated;
+                                                        });
+                                                        setAppointmentDocuments(prev => {
+                                                            const updated = { ...prev };
+                                                            delete updated[appointment.id];
+                                                            return updated;
+                                                        });
+                                                    }}
+                                                    className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-all text-sm"
+                                                >
+                                                    Cancel
+                                                </button>
+                                                <button
+                                                    onClick={() => handleCompleteSubmit(appointment.id)}
+                                                    disabled={completeMutation.isPending}
+                                                    className="px-4 py-2 bg-[var(--theme-primary)] text-white rounded-lg hover:bg-[var(--theme-primary-hover)] transition-all disabled:opacity-50 text-sm"
+                                                >
+                                                    {completeMutation.isPending ? 'Completing...' : 'Mark as Completed'}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         ))}
                     </div>
@@ -713,8 +940,8 @@ export default function AppointmentsDashboard() {
                 </div>
             )}
 
-            {/* Completion Notes Modal */}
-            {completingAppointment && (
+            {/* Old Completion Modal - Removed - Now using inline card expansion */}
+            {false && (
                 <div className="fixed inset-0 backdrop-blur-md bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
                     <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto modal-content">
                         <div className="p-6 border-b">
