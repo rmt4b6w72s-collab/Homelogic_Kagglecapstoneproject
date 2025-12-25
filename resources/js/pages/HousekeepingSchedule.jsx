@@ -362,14 +362,17 @@ const closeAssignmentModal = () => {
                                 return (
                                     <div 
                                         key={area.id} 
-                                        className={`w-full rounded-2xl border px-4 py-3 transition-all cursor-pointer ${isActive ? '' : 'border-gray-100 bg-white text-gray-700 hover:border-[var(--theme-primary-bg)]'}`}
-                                        style={isActive ? { borderColor: 'var(--theme-primary-bg)', backgroundColor: 'var(--theme-primary-bg)' } : {}}
+                                        className={`w-full rounded-2xl border-2 px-4 py-3 transition-all cursor-pointer shadow-sm ${
+                                            isActive 
+                                                ? 'border-[var(--theme-primary)] bg-[var(--theme-primary)] shadow-lg' 
+                                                : 'border-gray-200 bg-white text-gray-700 hover:border-[var(--theme-primary-bg)] hover:shadow-md'
+                                        }`}
                                         onClick={() => setSelectedAreaId(area.id)}
                                     >
                                         <div className="flex items-center justify-between">
                                             <div className="flex-1 min-w-0">
-                                                <div className={`font-semibold ${isActive ? 'text-white' : 'text-gray-900'}`}>{area.name}</div>
-                                                <p className={`text-xs ${isActive ? 'text-white/90' : 'text-gray-500'}`}>
+                                                <div className={`font-bold text-base ${isActive ? 'text-white' : 'text-gray-900'}`}>{area.name}</div>
+                                                <p className={`text-xs mt-1 ${isActive ? 'text-white/95' : 'text-gray-500'}`}>
                                                     {[area.shift_label, area.location].filter(Boolean).join(' • ') || 'On-site'}
                                                 </p>
                                             </div>
@@ -380,10 +383,10 @@ const closeAssignmentModal = () => {
                                                         setEditingArea(area);
                                                         setIsAreaModalOpen(true);
                                                     }}
-                                                    className={`inline-flex items-center rounded-lg border p-2 transition-colors ${
+                                                    className={`inline-flex items-center rounded-lg border-2 p-2 transition-colors ${
                                                         isActive 
-                                                            ? 'border-white/30 bg-white/20 text-white hover:bg-white/30' 
-                                                            : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
+                                                            ? 'border-white/40 bg-white/25 text-white hover:bg-white/40 hover:border-white/60' 
+                                                            : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50 hover:border-gray-300'
                                                     }`}
                                                     aria-label="Edit area"
                                                 >
@@ -405,10 +408,10 @@ const closeAssignmentModal = () => {
                                                             window.alert(err?.response?.data?.message || err.message);
                                                         }
                                                     }}
-                                                    className={`inline-flex items-center rounded-lg border p-2 transition-colors ${
+                                                    className={`inline-flex items-center rounded-lg border-2 p-2 transition-colors ${
                                                         isActive 
-                                                            ? 'border-white/30 bg-white/20 text-white hover:bg-white/30' 
-                                                            : 'border-red-200 bg-white text-red-600 hover:bg-red-50'
+                                                            ? 'border-white/40 bg-white/25 text-white hover:bg-white/40 hover:border-white/60' 
+                                                            : 'border-red-200 bg-white text-red-600 hover:bg-red-50 hover:border-red-300'
                                                     }`}
                                                     aria-label="Delete area"
                                                 >
