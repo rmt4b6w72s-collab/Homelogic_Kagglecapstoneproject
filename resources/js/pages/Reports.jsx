@@ -379,10 +379,16 @@ export default function Reports() {
                                         <p className="text-sm text-gray-500 mt-4">
                                             Get a unified view of all your facility metrics, trends, and analytics in one comprehensive dashboard.
                                         </p>
-                                    </div>
-                                    <div className="flex items-center text-[var(--theme-primary)] text-lg font-semibold opacity-0 group-hover:opacity-100 transition-all duration-300 ml-6">
-                                        <span>View Dashboard</span>
-                                        <ArrowRight className="w-5 h-5 ml-2 transform group-hover:translate-x-2 transition-transform duration-300" />
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                navigate(reportCategories[0].link);
+                                            }}
+                                            className="mt-6 inline-flex items-center gap-2 px-6 py-3 bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] rounded-xl font-semibold hover:bg-[var(--theme-primary-hover)] transition-all duration-300 shadow-md hover:shadow-lg"
+                                        >
+                                            <span>View Dashboard</span>
+                                            <ArrowRight className="w-5 h-5" />
+                                        </button>
                                     </div>
                                 </div>
                             </div>
