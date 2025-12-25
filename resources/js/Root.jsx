@@ -23,6 +23,21 @@ function retryLazyImport(importFn, retries = 5, delay = 300) {
         const reloadKey = 'module_reload_attempted';
         const hasReloaded = sessionStorage.getItem(reloadKey);
 
+        // Clear any cached module if this is a retry after reload
+        if (hasReloaded && 'caches' in window) {
+            caches.keys().then(cacheNames => {
+                cacheNames.forEach(cacheName => {
+                    if (cacheName.includes('workbox') || cacheName.includes('vite')) {
+                        caches.delete(cacheName).then(() => {
+                            console.log('Cleared cache:', cacheName);
+                        });
+                    }
+                });
+            }).catch(err => {
+                console.warn('Could not clear cache:', err);
+            });
+        }
+
         const attempt = (remainingRetries) => {
             importFn()
                 .then((module) => {
@@ -38,39 +53,56 @@ function retryLazyImport(importFn, retries = 5, delay = 300) {
                         error?.message?.includes('Failed to fetch dynamically imported module') ||
                         error?.message?.includes('error loading dynamically imported module') ||
                         error?.message?.includes('Loading chunk') ||
+                        error?.message?.includes('dynamically imported') ||
                         error?.name === 'ChunkLoadError' ||
-                        error?.name === 'TypeError';
+                        (error?.name === 'TypeError' && error?.message?.includes('imported'));
                     
                     if (remainingRetries > 0 && isModuleLoadError) {
                         // Exponential backoff for retries
                         const retryNumber = retries - remainingRetries + 1;
-                        const backoffDelay = delay * Math.pow(2, retryNumber - 1);
+                        const backoffDelay = Math.min(delay * Math.pow(2, retryNumber - 1), 2000);
                         console.warn(`Failed to load module, retrying in ${backoffDelay}ms... (${retryNumber}/${retries})`, error.message);
                         
                         setTimeout(() => attempt(remainingRetries - 1), backoffDelay);
                     } else if (remainingRetries > 0) {
-                        // For non-module errors, retry immediately
+                        // For non-module errors, retry with shorter delay
                         setTimeout(() => attempt(remainingRetries - 1), delay);
                     } else {
                         console.error('Failed to load module after all retries:', error);
                         // On final failure, try to reload the page only once
                         if (isModuleLoadError && !hasReloaded) {
-                            console.warn('Module load failed, attempting page reload...');
+                            console.warn('Module load failed, attempting page reload with cache clear...');
                             sessionStorage.setItem(reloadKey, 'true');
+                            
+                            // Clear service worker cache if available
+                            if ('serviceWorker' in navigator) {
+                                navigator.serviceWorker.getRegistrations().then(registrations => {
+                                    registrations.forEach(registration => {
+                                        registration.unregister().then(() => {
+                                            console.log('Service worker unregistered');
+                                        });
+                                    });
+                                });
+                            }
+                            
                             // Small delay before reload to avoid infinite loop
                             setTimeout(() => {
-                                window.location.reload();
+                                // Force reload without cache
+                                window.location.reload(true);
                             }, 500);
                         } else if (hasReloaded) {
                             console.error('Module load failed even after reload. This may indicate a build or deployment issue.');
-                            // Don't reject, instead try to show a fallback or redirect
-                            // This prevents the error boundary from showing
-                            console.warn('Attempting to redirect to dashboard to avoid error screen...');
+                            // Try to redirect to a working page instead of showing error
+                            console.warn('Attempting to redirect to login page to avoid error screen...');
                             setTimeout(() => {
-                                if (window.location.pathname !== '/dashboard') {
-                                    window.location.href = '/dashboard';
+                                if (window.location.pathname !== '/login') {
+                                    window.location.href = '/login';
+                                } else {
+                                    // If already on login, show error
+                                    reject(error);
                                 }
                             }, 1000);
+                            return; // Don't reject immediately, give redirect time
                         }
                         reject(error);
                     }
