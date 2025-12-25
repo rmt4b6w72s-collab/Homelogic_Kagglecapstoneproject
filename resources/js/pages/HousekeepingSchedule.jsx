@@ -624,15 +624,33 @@ function TaskForm({ onClose, onSubmit, initialValues, isSaving, currentUser, bra
         enabled: Boolean(selectedBranchId),
     });
 
+    // Fetch all areas to find branch_id when editing (if area doesn't have branch_id in relationship)
+    const { data: allAreasData } = useQuery({
+        queryKey: ['cleaning-areas-all'],
+        queryFn: async () => {
+            const response = await api.get('/cleaning/areas');
+            return response.data.data || [];
+        },
+        enabled: Boolean(initialValues?.cleaning_area_id && !selectedBranchId && !initialValues?.area?.branch_id),
+    });
+
     // If editing and we don't have branch_id yet, fetch the area to get it
     React.useEffect(() => {
-        if (initialValues?.cleaning_area_id && !selectedBranchId && areasData) {
-            const area = areasData.find(a => a.id === initialValues.cleaning_area_id);
-            if (area?.branch_id) {
-                setSelectedBranchId(area.branch_id.toString());
+        if (initialValues?.cleaning_area_id && !selectedBranchId) {
+            // Try to get branch_id from area relationship first
+            if (initialValues?.area?.branch_id) {
+                setSelectedBranchId(initialValues.area.branch_id.toString());
+                setValue('branch_id', initialValues.area.branch_id.toString());
+            } else if (allAreasData) {
+                // Fallback: find area in all areas data
+                const area = allAreasData.find(a => a.id === initialValues.cleaning_area_id);
+                if (area?.branch_id) {
+                    setSelectedBranchId(area.branch_id.toString());
+                    setValue('branch_id', area.branch_id.toString());
+                }
             }
         }
-    }, [initialValues, selectedBranchId, areasData]);
+    }, [initialValues, selectedBranchId, allAreasData, setValue]);
 
     const methods = useForm({
         defaultValues: {
@@ -654,6 +672,18 @@ function TaskForm({ onClose, onSubmit, initialValues, isSaving, currentUser, bra
     const { watch, setValue } = methods;
     const daysOfWeek = watch('days_of_week') || [];
     const isRequired = watch('is_required');
+    const formBranchId = watch('branch_id');
+
+    // Update selectedBranchId when form branch_id changes
+    React.useEffect(() => {
+        if (formBranchId !== selectedBranchId) {
+            setSelectedBranchId(formBranchId || '');
+            // Reset area when branch changes (unless editing existing task)
+            if (formBranchId && !initialValues?.cleaning_area_id) {
+                setValue('cleaning_area_id', '');
+            }
+        }
+    }, [formBranchId, selectedBranchId, setValue, initialValues]);
 
     const toggleDay = (day) => {
         const current = Array.isArray(daysOfWeek) ? daysOfWeek : [];
@@ -667,6 +697,7 @@ function TaskForm({ onClose, onSubmit, initialValues, isSaving, currentUser, bra
     const handleSubmit = async (data) => {
         try {
             await onSubmit({
+                cleaning_area_id: parseInt(data.cleaning_area_id),
                 title: data.title.trim(),
                 instructions: data.instructions?.trim() || null,
                 frequency: data.frequency,
