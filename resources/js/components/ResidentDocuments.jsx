@@ -440,10 +440,23 @@ function DocumentFormInline({ residentId, appointments, record, onClose, onSucce
                 return;
             }
 
+            // Validate required fields
+            if (!formData.document_name || !formData.document_name.trim()) {
+                setErrors({ document_name: ['The document name field is required.'] });
+                setIsSubmitting(false);
+                return;
+            }
+
+            if (!formData.document_type || !formData.document_type.trim()) {
+                setErrors({ document_type: ['The document type field is required.'] });
+                setIsSubmitting(false);
+                return;
+            }
+
             const formDataToSend = new FormData();
             formDataToSend.append('resident_id', String(residentId));
-            formDataToSend.append('document_name', formData.document_name);
-            formDataToSend.append('document_type', formData.document_type);
+            formDataToSend.append('document_name', formData.document_name.trim());
+            formDataToSend.append('document_type', formData.document_type.trim());
             if (formData.appointment_id) {
                 formDataToSend.append('appointment_id', String(formData.appointment_id));
             }
@@ -471,7 +484,8 @@ function DocumentFormInline({ residentId, appointments, record, onClose, onSucce
 
             let response;
             if (record) {
-                response = await api.put(`/resident-documents/${record.id}`, formDataToSend);
+                // Use POST for updates with FormData (file uploads)
+                response = await api.post(`/resident-documents/${record.id}/update`, formDataToSend);
                 console.log('Update response:', response);
                 console.log('Update response.data:', response.data);
                 

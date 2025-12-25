@@ -220,6 +220,7 @@ Route::prefix('v1')->middleware([\App\Http\Middleware\SetFacilityContext::class]
 
     // Resident Documents
     Route::apiResource('resident-documents', \App\Http\Controllers\Api\ResidentDocumentController::class)->middleware('auth:sanctum');
+    Route::post('/resident-documents/{id}/update', [\App\Http\Controllers\Api\ResidentDocumentController::class, 'update'])->middleware('auth:sanctum');
     Route::get('/resident-documents/{id}/download', [\App\Http\Controllers\Api\ResidentDocumentController::class, 'download'])->middleware('auth:sanctum');
 
     // Notifications
