@@ -472,18 +472,31 @@ function DocumentFormInline({ residentId, appointments, record, onClose, onSucce
             let response;
             if (record) {
                 response = await api.put(`/resident-documents/${record.id}`, formDataToSend);
-                console.log('Update response:', response.data);
+                console.log('Update response:', response);
+                console.log('Update response.data:', response.data);
+                
+                // The API returns the document directly in response.data
+                const updatedDoc = response.data;
                 
                 // Update the cache optimistically with the response data
                 queryClient.setQueryData(['resident-documents', residentId, search, typeFilter, currentPage], (oldData) => {
-                    if (!oldData || !oldData.data) return oldData;
-                    const updatedDoc = response.data;
-                    return {
+                    if (!oldData || !oldData.data) {
+                        console.log('No oldData or oldData.data, cannot update cache');
+                        return oldData;
+                    }
+                    console.log('Updating cache, oldData:', oldData);
+                    const newData = {
                         ...oldData,
-                        data: oldData.data.map(doc => 
-                            doc.id === record.id ? updatedDoc : doc
-                        )
+                        data: oldData.data.map(doc => {
+                            if (doc.id === record.id) {
+                                console.log('Replacing document:', doc.id, 'with:', updatedDoc);
+                                return updatedDoc;
+                            }
+                            return doc;
+                        })
                     };
+                    console.log('New cache data:', newData);
+                    return newData;
                 });
             } else {
                 response = await api.post('/resident-documents', formDataToSend);
