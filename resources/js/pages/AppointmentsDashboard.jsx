@@ -723,9 +723,9 @@ export default function AppointmentsDashboard() {
                         </div>
                         <div className="p-6 space-y-6">
                             <div>
-                                <label className="block text-sm font-medium text-gray-900 mb-1">
+                                <div className="block text-sm font-medium text-gray-900 mb-1" style={{ color: '#111827', fontWeight: 500 }}>
                                     Appointment Outcome / Comments (Optional)
-                                </label>
+                                </div>
                                 <textarea
                                     rows={4}
                                     value={completionNotes}
@@ -739,9 +739,9 @@ export default function AppointmentsDashboard() {
                             <div>
                                 <div className="flex items-center justify-between mb-4">
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-900 mb-1">
+                                        <div className="block text-sm font-medium text-gray-900 mb-1" style={{ color: '#111827', fontWeight: 500 }}>
                                             Upload Documents (Optional)
-                                        </label>
+                                        </div>
                                         <p className="text-sm text-gray-600">Attach consultation documents, medical reports, or other files related to this appointment</p>
                                     </div>
                                     <button
@@ -779,9 +779,9 @@ export default function AppointmentsDashboard() {
                                                 </div>
                                                 <div className="grid grid-cols-2 gap-4">
                                                     <div>
-                                                        <label className="block text-sm font-medium text-gray-900 mb-1">
+                                                        <div className="block text-sm font-medium text-gray-900 mb-1" style={{ color: '#111827', fontWeight: 500 }}>
                                                             Document Name *
-                                                        </label>
+                                                        </div>
                                                         <input
                                                             type="text"
                                                             value={doc.document_name}
@@ -796,9 +796,9 @@ export default function AppointmentsDashboard() {
                                                         />
                                                     </div>
                                                     <div>
-                                                        <label className="block text-sm font-medium text-gray-900 mb-1">
+                                                        <div className="block text-sm font-medium text-gray-900 mb-1" style={{ color: '#111827', fontWeight: 500 }}>
                                                             Type *
-                                                        </label>
+                                                        </div>
                                                         <select
                                                             value={doc.document_type}
                                                             onChange={(e) => {
@@ -818,9 +818,9 @@ export default function AppointmentsDashboard() {
                                                         </select>
                                                     </div>
                                                     <div className="col-span-2">
-                                                        <label className="block text-sm font-medium text-gray-900 mb-1">
+                                                        <div className="block text-sm font-medium text-gray-900 mb-1" style={{ color: '#111827', fontWeight: 500 }}>
                                                             File *
-                                                        </label>
+                                                        </div>
                                                         <input
                                                             type="file"
                                                             onChange={(e) => {
@@ -835,9 +835,9 @@ export default function AppointmentsDashboard() {
                                                         <p className="text-xs text-gray-600 mt-1">Max size: 10MB</p>
                                                     </div>
                                                     <div className="col-span-2">
-                                                        <label className="block text-sm font-medium text-gray-900 mb-1">
+                                                        <div className="block text-sm font-medium text-gray-900 mb-1" style={{ color: '#111827', fontWeight: 500 }}>
                                                             Notes
-                                                        </label>
+                                                        </div>
                                                         <textarea
                                                             value={doc.notes}
                                                             onChange={(e) => {
