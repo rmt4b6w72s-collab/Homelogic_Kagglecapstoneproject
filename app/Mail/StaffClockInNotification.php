@@ -21,7 +21,17 @@ class StaffClockInNotification extends Mailable
 
     public function envelope(): Envelope
     {
-        $staffName = trim(($this->clockIn->staff->first_name ?? '') . ' ' . ($this->clockIn->staff->last_name ?? ''));
+        // Ensure relationships are loaded
+        $this->clockIn->loadMissing(['staff', 'branch']);
+        
+        // Get staff name - use name attribute or construct from first_name/last_name
+        $staffName = 'Unknown Staff';
+        if ($this->clockIn->staff) {
+            $staffName = $this->clockIn->staff->name 
+                ?? trim(($this->clockIn->staff->first_name ?? '') . ' ' . ($this->clockIn->staff->last_name ?? ''))
+                ?? $this->clockIn->staff->email
+                ?? 'Unknown Staff';
+        }
         
         $subject = match($this->eventType) {
             'clocked_in' => "Staff Clocked In: {$staffName}",
@@ -36,9 +46,27 @@ class StaffClockInNotification extends Mailable
 
     public function content(): Content
     {
-        $staffName = trim(($this->clockIn->staff->first_name ?? '') . ' ' . ($this->clockIn->staff->last_name ?? ''));
-        $clockInTime = $this->clockIn->clock_in_time ? Carbon::parse($this->clockIn->clock_in_time)->format('M d, Y g:i A') : 'TBD';
-        $clockOutTime = $this->clockIn->clock_out_time ? Carbon::parse($this->clockIn->clock_out_time)->format('M d, Y g:i A') : null;
+        // Ensure relationships are loaded
+        $this->clockIn->loadMissing(['staff', 'branch']);
+        
+        // Get staff name - use name attribute or construct from first_name/last_name
+        $staffName = 'Unknown Staff';
+        if ($this->clockIn->staff) {
+            $staffName = $this->clockIn->staff->name 
+                ?? trim(($this->clockIn->staff->first_name ?? '') . ' ' . ($this->clockIn->staff->last_name ?? ''))
+                ?? $this->clockIn->staff->email
+                ?? 'Unknown Staff';
+        }
+        
+        // Use correct column names: clock_in_at and clock_out_at
+        $clockInTime = $this->clockIn->clock_in_at 
+            ? Carbon::parse($this->clockIn->clock_in_at)->format('M d, Y g:i A') 
+            : 'TBD';
+        
+        $clockOutTime = $this->clockIn->clock_out_at 
+            ? Carbon::parse($this->clockIn->clock_out_at)->format('M d, Y g:i A') 
+            : null;
+        
         $branchName = $this->clockIn->branch?->name ?? 'Branch';
         
         return new Content(
