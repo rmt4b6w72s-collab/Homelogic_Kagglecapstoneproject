@@ -214,6 +214,15 @@ const closeAssignmentModal = () => {
     const selectedArea = areasData?.find((area) => area.id === selectedAreaId);
     const branchId = currentUser?.assigned_branch_id ?? currentUser?.assigned_branch?.id ?? null;
 
+    // Fetch branches for task form
+    const { data: branchesData } = useQuery({
+        queryKey: ['branches-list'],
+        queryFn: async () => {
+            const response = await api.get('/branches', { params: { per_page: 100 } });
+            return response.data;
+        },
+    });
+
     // If task form is open, show the form instead of the main content
     if (isModalOpen) {
         return (
@@ -222,6 +231,8 @@ const closeAssignmentModal = () => {
                 onSubmit={handleSubmit}
                 initialValues={editingTask}
                 isSaving={createTask.isLoading || updateTask.isLoading}
+                currentUser={currentUser}
+                branches={branchesData?.data || []}
             />
         );
     }
@@ -568,9 +579,64 @@ const closeAssignmentModal = () => {
     );
 }
 
-function TaskForm({ onClose, onSubmit, initialValues, isSaving }) {
+function TaskForm({ onClose, onSubmit, initialValues, isSaving, currentUser, branches }) {
+    // Determine initial branch_id - use area's branch if editing, or current user's branch
+    const getInitialBranchId = () => {
+        if (initialValues?.area?.branch_id) {
+            return initialValues.area.branch_id.toString();
+        }
+        if (initialValues?.cleaning_area_id) {
+            // We'll fetch the area to get branch_id
+            return null;
+        }
+        if (currentUser?.assigned_branch_id) {
+            return currentUser.assigned_branch_id.toString();
+        }
+        return '';
+    };
+
+    const [selectedBranchId, setSelectedBranchId] = React.useState(getInitialBranchId());
+
+    // Determine if user is facility admin or branch admin
+    const isFacilityAdmin = React.useMemo(() => {
+        if (!currentUser) return false;
+        const role = currentUser.role?.toLowerCase().trim() || '';
+        return role === 'administrator';
+    }, [currentUser]);
+
+    const isBranchAdmin = React.useMemo(() => {
+        if (!currentUser) return false;
+        const role = currentUser.role?.toLowerCase().trim() || '';
+        return role === 'admin';
+    }, [currentUser]);
+
+    // Fetch areas for selected branch
+    const { data: areasForBranch } = useQuery({
+        queryKey: ['cleaning-areas', selectedBranchId],
+        queryFn: async () => {
+            if (!selectedBranchId) return [];
+            const response = await api.get('/cleaning/areas', {
+                params: { branch_id: selectedBranchId }
+            });
+            return response.data.data || [];
+        },
+        enabled: Boolean(selectedBranchId),
+    });
+
+    // If editing and we don't have branch_id yet, fetch the area to get it
+    React.useEffect(() => {
+        if (initialValues?.cleaning_area_id && !selectedBranchId && areasData) {
+            const area = areasData.find(a => a.id === initialValues.cleaning_area_id);
+            if (area?.branch_id) {
+                setSelectedBranchId(area.branch_id.toString());
+            }
+        }
+    }, [initialValues, selectedBranchId, areasData]);
+
     const methods = useForm({
         defaultValues: {
+            branch_id: getInitialBranchId(),
+            cleaning_area_id: initialValues?.cleaning_area_id ? initialValues.cleaning_area_id.toString() : '',
             title: initialValues?.title ?? '',
             instructions: initialValues?.instructions ?? '',
             frequency: initialValues?.frequency ?? 'daily',
@@ -645,6 +711,65 @@ function TaskForm({ onClose, onSubmit, initialValues, isSaving }) {
                 <div className="px-6 py-6 sm:px-8 sm:py-8">
                     <FormProvider {...methods}>
                         <form onSubmit={methods.handleSubmit(handleSubmit)} className="space-y-6">
+                            {/* Branch Selection */}
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-900 mb-2">
+                                    Branch *
+                                </label>
+                                <select
+                                    {...methods.register('branch_id', { required: true })}
+                                    disabled={!isFacilityAdmin && isBranchAdmin && currentUser?.assigned_branch_id}
+                                    className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent ${
+                                        !isFacilityAdmin && isBranchAdmin && currentUser?.assigned_branch_id 
+                                            ? 'bg-gray-100 cursor-not-allowed opacity-75' 
+                                            : ''
+                                    }`}
+                                >
+                                    <option value="">Select Branch</option>
+                                    {(branches || []).map(branch => (
+                                        <option key={branch.id} value={branch.id.toString()}>
+                                            {branch.name}
+                                        </option>
+                                    ))}
+                                </select>
+                                {methods.formState.errors.branch_id && (
+                                    <p className="text-xs text-red-600 mt-1">Branch selection is required</p>
+                                )}
+                            </div>
+
+                            {/* Area Selection */}
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-900 mb-2">
+                                    Cleaning Area *
+                                </label>
+                                <select
+                                    {...methods.register('cleaning_area_id', { required: true })}
+                                    disabled={!selectedBranchId || (areasForBranch?.length === 0)}
+                                    className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent ${
+                                        !selectedBranchId || (areasForBranch?.length === 0)
+                                            ? 'bg-gray-100 cursor-not-allowed opacity-75'
+                                            : ''
+                                    }`}
+                                >
+                                    <option value="">
+                                        {!selectedBranchId 
+                                            ? 'Select a branch first' 
+                                            : areasForBranch?.length === 0 
+                                                ? 'No areas found for this branch'
+                                                : 'Select Area'
+                                        }
+                                    </option>
+                                    {(areasForBranch || []).map(area => (
+                                        <option key={area.id} value={area.id.toString()}>
+                                            {area.name}
+                                        </option>
+                                    ))}
+                                </select>
+                                {methods.formState.errors.cleaning_area_id && (
+                                    <p className="text-xs text-red-600 mt-1">Cleaning area selection is required</p>
+                                )}
+                            </div>
+
                             <FormInput
                                 name="title"
                                 label="Task Title"
