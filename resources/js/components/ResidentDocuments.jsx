@@ -140,6 +140,10 @@ export default function ResidentDocuments({ residentId }) {
                         residentId={residentId}
                         appointments={appointments}
                         record={editing}
+                        queryClient={queryClient}
+                        search={search}
+                        typeFilter={typeFilter}
+                        currentPage={currentPage}
                         onClose={() => {
                             setShowForm(false);
                             setEditing(null);
@@ -376,7 +380,7 @@ export default function ResidentDocuments({ residentId }) {
     );
 }
 
-function DocumentFormInline({ residentId, appointments, record, onClose, onSuccess }) {
+function DocumentFormInline({ residentId, appointments, record, onClose, onSuccess, queryClient, search, typeFilter, currentPage }) {
     // Log and validate residentId
     useEffect(() => {
         console.log('DocumentFormModal received residentId:', residentId, typeof residentId);
