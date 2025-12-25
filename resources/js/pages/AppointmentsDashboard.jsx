@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, Link } from 'react-router-dom';
 import api from '../services/api';
+import { useToastContext } from '../contexts/ToastContext';
 import { 
     Calendar, 
     CheckCircle, 
@@ -135,10 +136,21 @@ export default function AppointmentsDashboard() {
                 description: '',
                 status: 'scheduled',
             });
+            // Show success message
+            if (toast) {
+                toast.success('Appointment created successfully!', '', { isFormSubmission: true });
+            } else {
+                alert('Appointment created successfully!');
+            }
         },
         onError: (error) => {
             console.error('Error creating appointment:', error);
-            alert(error.response?.data?.message || 'Failed to create appointment');
+            const errorMessage = error.response?.data?.message || 'Failed to create appointment';
+            if (toast) {
+                toast.error('Error', errorMessage);
+            } else {
+                alert(errorMessage);
+            }
         },
     });
 
