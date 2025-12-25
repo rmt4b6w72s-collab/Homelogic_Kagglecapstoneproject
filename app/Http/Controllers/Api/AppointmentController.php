@@ -79,13 +79,6 @@ class AppointmentController extends BaseApiController
             $query->where('status', $request->get('status'));
         }
 
-        // Exclude statuses (for upcoming tab to exclude completed/cancelled)
-        if ($request->has('exclude_status')) {
-            $excludeStatuses = explode(',', $request->get('exclude_status'));
-            $excludeStatuses = array_map('trim', $excludeStatuses);
-            $query->whereNotIn('status', $excludeStatuses);
-        }
-
         // Filter by resident
         if ($request->has('resident_id')) {
             $query->where('resident_id', $request->get('resident_id'));
