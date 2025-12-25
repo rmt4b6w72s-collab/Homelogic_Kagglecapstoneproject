@@ -30,7 +30,7 @@ export default function ResidentDocuments({ residentId }) {
     const [currentPage, setCurrentPage] = useState(1);
 
 
-    const { data, isLoading } = useQuery({
+    const { data, isLoading, refetch } = useQuery({
         queryKey: ['resident-documents', residentId, search, typeFilter, currentPage],
         queryFn: async () => {
             const params = {
@@ -144,10 +144,12 @@ export default function ResidentDocuments({ residentId }) {
                             setShowForm(false);
                             setEditing(null);
                         }}
-                        onSuccess={() => {
+                        onSuccess={async () => {
                             setShowForm(false);
                             setEditing(null);
-                            queryClient.invalidateQueries(['resident-documents']);
+                            // Invalidate and refetch to ensure fresh data
+                            await queryClient.invalidateQueries(['resident-documents']);
+                            await refetch();
                         }}
                     />
                 </div>
