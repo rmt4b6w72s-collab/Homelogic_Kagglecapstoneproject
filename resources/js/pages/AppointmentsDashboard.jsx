@@ -305,16 +305,23 @@ export default function AppointmentsDashboard() {
     // Reschedule appointment mutation
     const rescheduleMutation = useMutation({
         mutationFn: async ({ id, appointment_date, appointment_time }) => {
-            return await api.put(`/appointments/${id}`, {
+            console.log('Rescheduling appointment:', { id, appointment_date, appointment_time });
+            const response = await api.put(`/appointments/${id}`, {
                 appointment_date,
                 appointment_time,
             });
+            console.log('Reschedule response:', response);
+            return response;
         },
         onSuccess: () => {
             queryClient.invalidateQueries(['appointments-dashboard']);
             queryClient.invalidateQueries(['appointments-statistics']);
             setReschedulingAppointment(null);
             setRescheduleFormData({ appointment_date: '', appointment_time: '' });
+        },
+        onError: (error) => {
+            console.error('Reschedule error:', error);
+            alert(error.response?.data?.message || 'Failed to reschedule appointment. Please try again.');
         },
     });
 
