@@ -1,15 +1,19 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useSearchParams } from 'react-router-dom';
 import api from '../services/api';
 import { Activity, User, Heart, Plus, Thermometer, Droplet, Edit, Trash2, ChevronDown, X } from 'lucide-react';
 import { getLocalDateString } from '../utils/pacificTime';
 import { TableSkeleton, ListSkeleton } from '../components/ui/SkeletonLoader';
 import EmptyState from '../components/ui/EmptyState';
 import { useToastContext } from '../contexts/ToastContext';
+import BranchSelector from '../components/BranchSelector';
 
 export default function Vitals() {
     const queryClient = useQueryClient();
     const toast = useToastContext();
+    const [searchParams] = useSearchParams();
+    const selectedBranchId = searchParams.get('branch');
     const [dateFilter, setDateFilter] = useState('all');
     const [residentFilter, setResidentFilter] = useState('');
     const [showForm, setShowForm] = useState(false);
@@ -46,7 +50,7 @@ export default function Vitals() {
     const canDelete = isSuperAdmin || isAdmin || permissions.includes('delete_vitals');
 
     const { data, isLoading } = useQuery({
-        queryKey: ['vitals', dateFilter, residentFilter],
+        queryKey: ['vitals', dateFilter, residentFilter, selectedBranchId],
         queryFn: async () => {
             const params = { per_page: 20 };
             
@@ -60,12 +64,17 @@ export default function Vitals() {
                 params.resident_id = residentFilter;
             }
 
+            if (selectedBranchId) {
+                params.branch_id = selectedBranchId;
+            }
+
             const response = await api.get('/vitals', { params });
             return response.data;
         },
+        enabled: !!selectedBranchId, // Only fetch when branch is selected
     });
 
-    // Fetch branches for administrators
+    // Fetch branches for administrators (always fetch for form)
     const { data: branchesData } = useQuery({
         queryKey: ['branches-list'],
         queryFn: async () => {
@@ -74,10 +83,17 @@ export default function Vitals() {
         },
     });
 
-    // Fetch residents for form
+    // Fetch residents for form - filtered by branch
     const { data: residentsData } = useQuery({
-        queryKey: ['residents-list'],
-        queryFn: async () => (await api.get('/residents', { params: { per_page: 100 } })).data,
+        queryKey: ['residents-list', selectedBranchId],
+        queryFn: async () => {
+            const params = { per_page: 100 };
+            if (selectedBranchId) {
+                params.branch_id = selectedBranchId;
+            }
+            return (await api.get('/residents', { params })).data;
+        },
+        enabled: !!selectedBranchId, // Only fetch when branch is selected
     });
 
     const deleteMutation = useMutation({
@@ -101,6 +117,7 @@ export default function Vitals() {
                     isFacilityAdmin={isFacilityAdmin}
                     isBranchAdmin={isBranchAdmin}
                     currentUser={currentUser}
+                    selectedBranchId={selectedBranchId}
                     onClose={() => {
                         setShowForm(false);
                         setEditing(null);
@@ -115,8 +132,23 @@ export default function Vitals() {
         );
     }
 
+    // Show branch selector if no branch is selected
+    if (!selectedBranchId) {
+        return (
+            <div className="space-y-6">
+                <BranchSelector currentUser={currentUser} />
+                <div className="rounded-xl bg-white p-8 text-center shadow-sm ring-1 ring-gray-100">
+                    <Activity className="mx-auto h-12 w-12 text-gray-400" />
+                    <p className="mt-4 text-sm font-semibold text-gray-700">Please select a branch to continue</p>
+                    <p className="mt-2 text-xs text-gray-500">Select a branch from the dropdown above to view and manage vital signs.</p>
+                </div>
+            </div>
+        );
+    }
+
     return (
-        <div>
+        <div className="space-y-6">
+            <BranchSelector currentUser={currentUser} />
             <div className="bg-white rounded-lg shadow p-6 mb-6">
                     <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
                         <div>
@@ -331,22 +363,14 @@ export default function Vitals() {
                 </div>
             )}
         </div>
+        </div>
     );
 }
 
-function VitalSignForm({ record, residents, branches = [], isFacilityAdmin = false, isBranchAdmin = false, currentUser = null, onClose, onSuccess }) {
+function VitalSignForm({ record, residents, branches = [], isFacilityAdmin = false, isBranchAdmin = false, currentUser = null, selectedBranchId: propSelectedBranchId, onClose, onSuccess }) {
     const toast = useToastContext();
-    const [selectedBranchId, setSelectedBranchId] = useState(() => {
-        // Branch admins always use their assigned branch
-        if (isBranchAdmin && currentUser?.assigned_branch_id) {
-            return currentUser.assigned_branch_id;
-        }
-        // For facility admins editing a record, use the resident's branch
-        if (record?.resident?.branch_id) {
-            return record.resident.branch_id;
-        }
-        return '';
-    });
+    // Always use branch from URL/props - no branch selection in form
+    const selectedBranchId = propSelectedBranchId || '';
     const [formData, setFormData] = useState({
         resident_id: record?.resident_id || '',
         measurement_date: record?.measurement_date 
@@ -378,21 +402,11 @@ function VitalSignForm({ record, residents, branches = [], isFacilityAdmin = fal
     const [errors, setErrors] = useState({});
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // Filter residents by selected branch
+    // Filter residents by selected branch (from URL)
     const filteredResidents = React.useMemo(() => {
         if (!selectedBranchId) return residents;
         return residents.filter(r => r.branch_id == selectedBranchId);
     }, [residents, selectedBranchId]);
-
-    // Set branch when resident is selected
-    React.useEffect(() => {
-        if (formData.resident_id && !selectedBranchId) {
-            const selectedResident = residents.find(r => r.id == formData.resident_id);
-            if (selectedResident?.branch_id) {
-                setSelectedBranchId(selectedResident.branch_id);
-            }
-        }
-    }, [formData.resident_id, residents, selectedBranchId]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -457,30 +471,9 @@ function VitalSignForm({ record, residents, branches = [], isFacilityAdmin = fal
             )}
 
             <form onSubmit={handleSubmit} className="space-y-6">
-                <div className={`grid gap-4 ${(isFacilityAdmin || isBranchAdmin) ? 'grid-cols-2' : 'grid-cols-1'}`}>
-                            {(isFacilityAdmin || isBranchAdmin) && (
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Branch {isBranchAdmin && currentUser?.assigned_branch_id ? '' : '*'}
-                                    </label>
-                                    <select
-                                        value={selectedBranchId}
-                                        onChange={(e) => {
-                                            setSelectedBranchId(e.target.value);
-                                            setFormData({...formData, resident_id: ''}); // Reset resident when branch changes
-                                        }}
-                                        disabled={isBranchAdmin && currentUser?.assigned_branch_id}
-                                        required={!isBranchAdmin || !currentUser?.assigned_branch_id}
-                                        className={`w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent ${
-                                            isBranchAdmin && currentUser?.assigned_branch_id ? 'bg-gray-100 cursor-not-allowed opacity-75' : ''
-                                        }`}
-                                    >
-                                        <option value="">All Branches</option>
-                                        {branches.map(branch => (
-                                            <option key={branch.id} value={branch.id}>{branch.name}</option>
-                                        ))}
-                                    </select>
-                                </div>
+                <div className="grid gap-4 grid-cols-1">
+                            {propSelectedBranchId && (
+                                <input type="hidden" value={propSelectedBranchId} />
                             )}
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
