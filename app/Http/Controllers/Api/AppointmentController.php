@@ -79,6 +79,11 @@ class AppointmentController extends BaseApiController
             $query->where('status', $request->get('status'));
         }
 
+        // Filter by branch - apply after facility filtering to narrow down to specific branch
+        if ($request->has('branch_id') && $request->get('branch_id')) {
+            $query->where('branch_id', $request->get('branch_id'));
+        }
+
         // Filter by resident
         if ($request->has('resident_id')) {
             $query->where('resident_id', $request->get('resident_id'));
