@@ -373,5 +373,6 @@ function App() {
     );
 }
 
+// App component export
 export default App;
 
