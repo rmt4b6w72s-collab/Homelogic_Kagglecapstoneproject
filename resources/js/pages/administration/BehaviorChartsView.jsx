@@ -71,7 +71,20 @@ export default function BehaviorChartsView() {
             return response.data;
         },
         enabled: !!(branchId && residentId), // Only fetch when both filters are selected
+        refetchOnWindowFocus: true, // Refetch when window regains focus
+        refetchOnMount: true, // Refetch when component mounts
     });
+
+    // Refetch when returning to the page
+    React.useEffect(() => {
+        const handleFocus = () => {
+            if (branchId && residentId) {
+                refetch();
+            }
+        };
+        window.addEventListener('focus', handleFocus);
+        return () => window.removeEventListener('focus', handleFocus);
+    }, [branchId, residentId, refetch]);
 
     const charts = chartsData?.data || [];
 

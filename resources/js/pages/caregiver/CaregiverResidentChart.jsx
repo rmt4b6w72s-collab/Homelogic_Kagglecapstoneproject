@@ -169,6 +169,8 @@ export default function CaregiverResidentChart() {
 
             toast.success(`Chart ${status === 'submitted' ? 'submitted' : 'saved as draft'} successfully!`, '', { isFormSubmission: true });
             queryClient.invalidateQueries(['resident-chart-init', residentId]);
+            // Invalidate behavior charts list query so it refreshes in admin view
+            queryClient.invalidateQueries(['behavior-charts']);
             if (status === 'submitted') navigate('/charts');
         } catch (error) {
             console.error('Failed to save chart:', error);
