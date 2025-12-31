@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
-import { 
-    ClipboardList, 
+import {
+    ClipboardList,
     Filter,
     Eye,
     Calendar,
@@ -46,14 +46,14 @@ export default function BehaviorChartsView() {
     React.useEffect(() => {
         api.get('/branches', { params: { per_page: 100 } })
             .then(res => setBranches(res.data?.data || []))
-            .catch(() => {});
+            .catch(() => { });
     }, []);
 
     React.useEffect(() => {
         if (branchId) {
             api.get('/residents', { params: { per_page: 100, branch_id: branchId, is_active: 1 } })
                 .then(res => setResidents(res.data?.data || []))
-                .catch(() => {});
+                .catch(() => { });
         } else {
             setResidents([]);
             setResidentId(null);
@@ -94,7 +94,7 @@ export default function BehaviorChartsView() {
     }, [branchId, residentId, refetch]);
 
     const charts = chartsData?.data || [];
-    
+
     // Debug logging
     React.useEffect(() => {
         console.log('Charts data:', chartsData);
@@ -154,11 +154,11 @@ export default function BehaviorChartsView() {
             await api.put(`/resident-charts/${reviewChart.id}/status`, {
                 status: reviewStatus,
             });
-            
+
             // Invalidate and refetch charts
             queryClient.invalidateQueries(['behavior-charts']);
             await refetch();
-            
+
             handleCloseReviewModal();
         } catch (error) {
             console.error('Error updating chart status:', error);
@@ -184,7 +184,7 @@ export default function BehaviorChartsView() {
 
     const handleExport = () => {
         if (!charts.length) return;
-        
+
         let csv = 'Date,Resident,Chart Status,Submitted At,Caregiver,Items Count,Logs Count\n';
         charts.forEach(chart => {
             csv += `${chart.chart_date},`;
@@ -195,7 +195,7 @@ export default function BehaviorChartsView() {
             csv += `${chart.items?.length || 0},`;
             csv += `${chart.logs?.length || 0}\n`;
         });
-        
+
         const blob = new Blob([csv], { type: 'text/csv' });
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -517,7 +517,7 @@ export default function BehaviorChartsView() {
                                     {selectedChart.resident?.first_name} {selectedChart.resident?.last_name} - {formatPacificDate(selectedChart.chart_date)}
                                 </p>
                             </div>
-                            <button 
+                            <button
                                 onClick={handleCloseModal}
                                 className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
                             >
@@ -531,26 +531,26 @@ export default function BehaviorChartsView() {
                             <div className="bg-gray-50 rounded-xl p-4">
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                     <div>
-                                        <label className="block text-sm font-semibold text-gray-900 mb-2" style={{ color: '#111827' }}>Status</label>
+                                        <label className="block text-sm font-semibold !text-black mb-2">Status</label>
                                         <div>{getStatusBadge(selectedChart.status)}</div>
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-semibold text-gray-900 mb-2" style={{ color: '#111827' }}>Submitted By</label>
-                                        <p className="text-sm font-medium text-gray-900">
+                                        <label className="block text-sm font-semibold !text-black mb-2">Submitted By</label>
+                                        <p className="text-sm font-medium !text-gray-900">
                                             {selectedChart.caregiver?.name || 'N/A'}
                                         </p>
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-semibold text-gray-900 mb-2" style={{ color: '#111827' }}>Submitted On</label>
-                                        <p className="text-sm font-medium text-gray-900">
-                                            {selectedChart.submitted_at 
+                                        <label className="block text-sm font-semibold !text-black mb-2">Submitted On</label>
+                                        <p className="text-sm font-medium !text-gray-900">
+                                            {selectedChart.submitted_at
                                                 ? new Date(selectedChart.submitted_at).toLocaleString()
                                                 : 'N/A'}
                                         </p>
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-semibold text-gray-900 mb-2" style={{ color: '#111827' }}>Total Items</label>
-                                        <p className="text-sm font-medium text-gray-900">
+                                        <label className="block text-sm font-semibold !text-black mb-2">Total Items</label>
+                                        <p className="text-sm font-medium !text-gray-900">
                                             {selectedChart.items?.length || 0}
                                         </p>
                                     </div>
@@ -567,9 +567,9 @@ export default function BehaviorChartsView() {
                                     <table className="w-full text-left border-collapse">
                                         <thead className="bg-gray-50 text-xs uppercase tracking-wider">
                                             <tr>
-                                                <th className="px-4 py-3 font-bold border-b border-gray-200 border-r border-gray-200" style={{ color: '#111827' }}>Category</th>
-                                                <th className="px-4 py-3 font-bold border-b border-gray-200 border-r border-gray-200" style={{ color: '#111827' }}>Behavior</th>
-                                                <th className="px-4 py-3 font-bold border-b border-gray-200" style={{ color: '#111827' }}>Status</th>
+                                                <th className="px-4 py-3 font-bold border-b border-gray-200 border-r border-gray-200 !text-black">Category</th>
+                                                <th className="px-4 py-3 font-bold border-b border-gray-200 border-r border-gray-200 !text-black">Behavior</th>
+                                                <th className="px-4 py-3 font-bold border-b border-gray-200 !text-black">Status</th>
                                             </tr>
                                         </thead>
                                         <tbody className="text-gray-700">
@@ -579,10 +579,10 @@ export default function BehaviorChartsView() {
                                                     const grouped = {};
                                                     selectedChart.items.forEach(item => {
                                                         // Try multiple possible paths for category name
-                                                        const categoryName = item.definition?.category?.name || 
-                                                                             item.definition?.behavior_category?.name ||
-                                                                             item.category_name ||
-                                                                             'Other';
+                                                        const categoryName = item.definition?.category?.name ||
+                                                            item.definition?.behavior_category?.name ||
+                                                            item.category_name ||
+                                                            'Other';
                                                         if (!grouped[categoryName]) {
                                                             grouped[categoryName] = [];
                                                         }
@@ -593,8 +593,8 @@ export default function BehaviorChartsView() {
                                                         items.map((item, idx) => (
                                                             <tr key={item.id || idx} className="border-b border-gray-100 hover:bg-gray-50/50">
                                                                 {idx === 0 && (
-                                                                    <td 
-                                                                        className="px-4 py-3 border-r border-gray-200 align-middle font-bold text-gray-900 bg-gray-50/30 whitespace-nowrap" 
+                                                                    <td
+                                                                        className="px-4 py-3 border-r border-gray-200 align-middle font-bold text-gray-900 bg-gray-50/30 whitespace-nowrap"
                                                                         rowSpan={items.length}
                                                                     >
                                                                         {catName}
@@ -604,11 +604,10 @@ export default function BehaviorChartsView() {
                                                                     {item.definition?.name || item.name || 'Unknown'}
                                                                 </td>
                                                                 <td className="px-4 py-3">
-                                                                    <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
-                                                                        item.value 
-                                                                            ? 'bg-green-100 text-green-800' 
-                                                                            : 'bg-red-100 text-red-800'
-                                                                    }`}>
+                                                                    <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${item.value
+                                                                        ? 'bg-green-100 text-green-800'
+                                                                        : 'bg-red-100 text-red-800'
+                                                                        }`}>
                                                                         {item.value ? 'Yes' : 'No'}
                                                                     </span>
                                                                 </td>
@@ -639,12 +638,12 @@ export default function BehaviorChartsView() {
                                         <table className="w-full text-left border-collapse min-w-[1000px]">
                                             <thead className="bg-gray-50 text-xs uppercase tracking-wider">
                                                 <tr>
-                                                    <th className="px-4 py-3 font-bold border-b border-gray-200 border-r border-gray-200" style={{ color: '#111827' }}>Time Occurred</th>
-                                                    <th className="px-4 py-3 font-bold border-b border-gray-200 border-r border-gray-200" style={{ color: '#111827' }}>Behavior Description</th>
-                                                    <th className="px-4 py-3 font-bold border-b border-gray-200 border-r border-gray-200" style={{ color: '#111827' }}>Triggers</th>
-                                                    <th className="px-4 py-3 font-bold border-b border-gray-200 border-r border-gray-200" style={{ color: '#111827' }}>Intervention</th>
-                                                    <th className="px-4 py-3 font-bold border-b border-gray-200 border-r border-gray-200" style={{ color: '#111827' }}>Reported to Provider</th>
-                                                    <th className="px-4 py-3 font-bold border-b border-gray-200" style={{ color: '#111827' }}>Outcome</th>
+                                                    <th className="px-4 py-3 font-bold border-b border-gray-200 border-r border-gray-200 !text-black">Time Occurred</th>
+                                                    <th className="px-4 py-3 font-bold border-b border-gray-200 border-r border-gray-200 !text-black">Behavior Description</th>
+                                                    <th className="px-4 py-3 font-bold border-b border-gray-200 border-r border-gray-200 !text-black">Triggers</th>
+                                                    <th className="px-4 py-3 font-bold border-b border-gray-200 border-r border-gray-200 !text-black">Intervention</th>
+                                                    <th className="px-4 py-3 font-bold border-b border-gray-200 border-r border-gray-200 !text-black">Reported to Provider</th>
+                                                    <th className="px-4 py-3 font-bold border-b border-gray-200 !text-black">Outcome</th>
                                                 </tr>
                                             </thead>
                                             <tbody className="text-gray-700">
@@ -663,11 +662,10 @@ export default function BehaviorChartsView() {
                                                             <p className="text-sm whitespace-pre-wrap">{log.caregiver_intervention || '-'}</p>
                                                         </td>
                                                         <td className="p-3 border-r border-gray-200">
-                                                            <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
-                                                                log.reported_to_provider 
-                                                                    ? 'bg-green-100 text-green-800' 
-                                                                    : 'bg-gray-100 text-gray-800'
-                                                            }`}>
+                                                            <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${log.reported_to_provider
+                                                                ? 'bg-green-100 text-green-800'
+                                                                : 'bg-gray-100 text-gray-800'
+                                                                }`}>
                                                                 {log.reported_to_provider ? 'Yes' : 'No'}
                                                             </span>
                                                         </td>
@@ -706,7 +704,7 @@ export default function BehaviorChartsView() {
                                 <CheckCircle className="w-6 h-6 text-[var(--theme-primary)]" />
                                 Review Chart
                             </h2>
-                            <button 
+                            <button
                                 onClick={handleCloseReviewModal}
                                 className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
                             >
@@ -719,32 +717,32 @@ export default function BehaviorChartsView() {
                             {/* Chart Info */}
                             <div className="space-y-3">
                                 <div>
-                                    <label className="block text-sm font-semibold text-gray-900 mb-1" style={{ color: '#111827' }}>Resident</label>
-                                    <p className="text-sm font-medium text-gray-900">
+                                    <label className="block text-sm font-semibold !text-black mb-1">Resident</label>
+                                    <p className="text-sm font-medium !text-gray-900">
                                         {reviewChart.resident?.first_name} {reviewChart.resident?.last_name}
                                     </p>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-semibold text-gray-900 mb-1" style={{ color: '#111827' }}>Caregiver</label>
-                                    <p className="text-sm font-medium text-gray-900">
+                                    <label className="block text-sm font-semibold !text-black mb-1">Caregiver</label>
+                                    <p className="text-sm font-medium !text-gray-900">
                                         {reviewChart.caregiver?.name || 'N/A'}
                                     </p>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-semibold text-gray-900 mb-1" style={{ color: '#111827' }}>Branch</label>
-                                    <p className="text-sm font-medium text-gray-900">
+                                    <label className="block text-sm font-semibold !text-black mb-1">Branch</label>
+                                    <p className="text-sm font-medium !text-gray-900">
                                         {reviewChart.resident?.branch?.name || 'N/A'}
                                     </p>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-semibold text-gray-900 mb-1" style={{ color: '#111827' }}>Status</label>
+                                    <label className="block text-sm font-semibold !text-black mb-1">Status</label>
                                     <div>{getStatusBadge(reviewChart.status)}</div>
                                 </div>
                             </div>
 
                             {/* Status Selection */}
                             <div>
-                                <label className="block text-sm font-semibold text-gray-900 mb-2" style={{ color: '#111827' }}>Select Status:</label>
+                                <label className="block text-sm font-semibold !text-black mb-2">Select Status:</label>
                                 <select
                                     value={reviewStatus}
                                     onChange={(e) => setReviewStatus(e.target.value)}
