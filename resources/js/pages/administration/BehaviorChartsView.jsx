@@ -13,7 +13,10 @@ import {
     Download,
     RefreshCw,
     X,
-    AlertCircle
+    AlertCircle,
+    Edit,
+    CheckCircle,
+    MoreVertical
 } from 'lucide-react';
 import { formatPacificDate } from '../../utils/pacificTime';
 
@@ -30,6 +33,8 @@ export default function BehaviorChartsView() {
     const [branches, setBranches] = useState([]);
     const [residents, setResidents] = useState([]);
     const [selectedChart, setSelectedChart] = useState(null);
+    const [openMenuId, setOpenMenuId] = useState(null);
+    const menuRefs = React.useRef({});
 
     // Fetch branches and residents
     React.useEffect(() => {
@@ -84,6 +89,34 @@ export default function BehaviorChartsView() {
     const handleCloseModal = () => {
         setSelectedChart(null);
     };
+
+    const handleEditChart = (chart) => {
+        setOpenMenuId(null);
+        // TODO: Implement edit functionality
+        console.log('Edit chart:', chart);
+        // You can navigate to an edit page or open an edit modal here
+    };
+
+    const handleReviewChart = (chart) => {
+        setOpenMenuId(null);
+        // TODO: Implement review functionality
+        console.log('Review chart:', chart);
+        // You can navigate to a review page or open a review modal here
+    };
+
+    // Close menu when clicking outside
+    React.useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (openMenuId && menuRefs.current[openMenuId] && !menuRefs.current[openMenuId].contains(event.target)) {
+                setOpenMenuId(null);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [openMenuId]);
 
     const handleExport = () => {
         if (!charts.length) return;
@@ -320,16 +353,42 @@ export default function BehaviorChartsView() {
                                         </td>
                                         <td className="px-6 py-4 text-center">
                                             {chart.status === 'submitted' ? (
-                                                <div className="flex items-center justify-center gap-2">
+                                                <div className="relative flex items-center justify-center" ref={(el) => (menuRefs.current[chart.id] = el)}>
                                                     <button
-                                                        onClick={() => handleViewChart(chart)}
-                                                        className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setOpenMenuId(openMenuId === chart.id ? null : chart.id);
+                                                        }}
+                                                        className="p-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 border border-gray-300 rounded-lg transition-colors bg-white"
                                                         title="More options"
+                                                        style={{ color: '#374151' }}
                                                     >
-                                                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                                            <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
-                                                        </svg>
+                                                        <MoreVertical className="w-5 h-5" style={{ color: '#374151' }} />
                                                     </button>
+                                                    {openMenuId === chart.id && (
+                                                        <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50 py-1">
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    handleEditChart(chart);
+                                                                }}
+                                                                className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors"
+                                                            >
+                                                                <Edit className="w-4 h-4" />
+                                                                Edit Chart
+                                                            </button>
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    handleReviewChart(chart);
+                                                                }}
+                                                                className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors"
+                                                            >
+                                                                <CheckCircle className="w-4 h-4" />
+                                                                Review Chart
+                                                            </button>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             ) : (
                                                 <button
