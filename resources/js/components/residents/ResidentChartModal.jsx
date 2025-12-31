@@ -307,8 +307,8 @@ export default function ResidentChartModal({ isOpen, onClose, resident }) {
                         </div>
                     </div>
 
-                    {/* Time Error Alert */}
-                    {currentTimeError && (
+                    {/* Time Error Alert - DISABLED FOR TESTING */}
+                    {/* {currentTimeError && (
                         <div className="bg-amber-50 border-2 border-amber-200 rounded-2xl p-6 flex items-center justify-center text-center">
                             <div className="flex flex-col items-center gap-2">
                                 <AlertCircle className="w-8 h-8 text-amber-500" />
@@ -318,7 +318,7 @@ export default function ResidentChartModal({ isOpen, onClose, resident }) {
                                 <p className="text-sm text-amber-600 mt-1">You can still save your progress as a draft.</p>
                             </div>
                         </div>
-                    )}
+                    )} */}
                 </div>
 
                 {/* Footer Buttons */}

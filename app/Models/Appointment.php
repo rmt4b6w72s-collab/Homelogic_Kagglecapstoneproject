@@ -20,6 +20,9 @@ class Appointment extends Model
         'healthcare_provider_id',
         'appointment_date',
         'appointment_time',
+        'original_appointment_date',
+        'original_appointment_time',
+        'reschedule_reason',
         'provider_name',
         'location',
         'description',
@@ -33,6 +36,8 @@ class Appointment extends Model
     protected $casts = [
         'appointment_date' => 'date',
         'appointment_time' => 'string', // Time column returns as string "HH:mm:ss"
+        'original_appointment_date' => 'date',
+        'original_appointment_time' => 'string',
         'next_appointment_date' => 'date',
     ];
 
