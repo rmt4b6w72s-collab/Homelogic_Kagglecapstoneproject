@@ -123,12 +123,13 @@ class MarkMissedMedications extends Command
                     $windowStart = $scheduledTime->copy()->subMinutes($windowMinutes);
                     $windowEnd = $scheduledTime->copy()->addMinutes($windowMinutes);
 
-                    // In real-time mode, only check windows that have already closed
+                    // In real-time mode, check windows that have closed (window end has passed)
                     // In end-of-day mode, check all windows for the day
                     // For yesterday (when checking in real-time mode), always check all windows
                     $isYesterday = $checkDate->format('Y-m-d') === $now->copy()->subDay()->format('Y-m-d');
                     if (!$this->option('end-of-day') && !$this->option('date') && !$isYesterday) {
-                        // Real-time mode for today: only mark if window has passed
+                        // Real-time mode for today: only mark if window has closed (60 minutes after scheduled time)
+                        // This ensures we give the full window for administration before marking as missed
                         if ($windowEnd->isFuture()) {
                             continue; // Window hasn't closed yet, skip
                         }
