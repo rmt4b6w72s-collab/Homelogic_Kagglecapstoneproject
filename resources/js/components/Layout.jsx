@@ -139,6 +139,7 @@ const navigation = [
         ]
     },
     { name: 'Reports', icon: FileText, path: '/reports', children: null },
+    { name: 'Charts', icon: ClipboardList, path: '/administration/behavior-charts', children: null },
     { 
         name: 'Administration', 
         icon: Settings, 
@@ -153,7 +154,6 @@ const navigation = [
             { name: 'Users', path: '/administration/users' },
             { name: 'Drugs', path: '/administration/drugs' },
             { name: 'Behavior Category Charts', path: '/administration/chart-data' },
-            { name: 'Behavior Charts View', path: '/administration/behavior-charts' },
             { name: 'Inactive Records', path: '/administration/deactivated' },
             { name: 'Employee Documents', path: '/administration/employee-documents' },
             { name: 'Activity Logs', path: '/administration/activity-logs' },
