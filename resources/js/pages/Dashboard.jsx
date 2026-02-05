@@ -36,7 +36,6 @@ import StatCard from '../components/dashboard/StatCard';
 import ActionableItemsSection from '../components/dashboard/ActionableItemsSection';
 import MobileDashboard from '../components/dashboard/MobileDashboard';
 import UpcomingEventsWidget from '../components/dashboard/UpcomingEventsWidget';
-import TodaysSchedule from '../components/dashboard/TodaysSchedule';
 import CaregiverDashboard from '../components/dashboard/CaregiverDashboard';
 
 // Register Chart.js components
@@ -913,11 +912,8 @@ export default function Dashboard() {
                                 ))}
                             </div>
 
-                            {/* Today's Schedule - Timeline View */}
-                            <TodaysSchedule />
-
                             {/* Upcoming Events from All Modules */}
-                            <UpcomingEventsWidget limit={15} />
+                            <UpcomingEventsWidget limit={3} />
 
                             {/* Upcoming Fire Drills Widget - Important Safety Item */}
                             {upcomingFireDrills?.data && upcomingFireDrills.data.length > 0 && (

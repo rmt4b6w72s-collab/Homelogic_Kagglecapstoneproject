@@ -142,7 +142,7 @@ export default function UpcomingEventsWidget({ limit = 10 }) {
             </div>
             <div className="p-4">
                 <div className="space-y-3">
-                    {events.map((event) => {
+                    {events.slice(0, 3).map((event) => {
                         const Icon = getIcon(event.icon);
                         const colorClasses = getColorClasses(event.color);
                         
