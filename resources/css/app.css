@@ -1,6 +1,5 @@
 @import 'tailwindcss';
 @import './logo-theme.css';
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 /* ALTERNATIVE ACTIVE NAVIGATION DESIGN - Uses border and shadow instead of white background */
 /* Uncomment this section if you want to use a different active state design */
@@ -877,8 +876,6 @@ label[htmlFor],
 [role="dialog"] label,
 .fixed label,
 .z-50 label,
-.z-[50] label,
-.z-[9999] label,
 .fixed div.bg-white label,
 .fixed .bg-white label,
 .backdrop-blur label,

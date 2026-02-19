@@ -3,7 +3,7 @@
  * Manages offline data storage and sync queue
  */
 
-import { openDB } from 'idb';
+import { openDB as idbOpenDB } from 'idb';
 
 const DB_NAME = 'HomeLogic360DB';
 const DB_VERSION = 1;
@@ -28,7 +28,7 @@ export async function openDB() {
   }
 
   try {
-    dbInstance = await openDB(DB_NAME, DB_VERSION, {
+    dbInstance = await idbOpenDB(DB_NAME, DB_VERSION, {
       upgrade(db) {
         // Medication administrations store
         if (!db.objectStoreNames.contains(STORES.MEDICATION_ADMINISTRATIONS)) {
