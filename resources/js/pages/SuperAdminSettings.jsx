@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Settings,
   Mail,
+  KeyRound,
   ShieldCheck,
   SlidersHorizontal,
   Bell,
@@ -19,6 +20,14 @@ const cards = [
     icon: Mail,
     to: '/super-admin/settings/email',
     accent: 'from-sky-500/10 to-sky-500/0',
+  },
+  {
+    key: 'credentials',
+    title: 'Credential Settings',
+    description: 'Update Super Admin login email and password',
+    icon: KeyRound,
+    to: '/super-admin/settings/credentials',
+    accent: 'from-teal-500/10 to-teal-500/0',
   },
   {
     key: 'security',

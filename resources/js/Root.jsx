@@ -173,6 +173,7 @@ const PharmacyOrders = lazyWithRetry(() => import('./pages/PharmacyOrders'));
 const SuperAdminDashboard = lazyWithRetry(() => import('./pages/SuperAdminDashboard'));
 const SuperAdminSettings = lazyWithRetry(() => import('./pages/SuperAdminSettings'));
 const SuperAdminEmailSettings = lazyWithRetry(() => import('./pages/super-admin/EmailSettings'));
+const SuperAdminCredentialsSettings = lazyWithRetry(() => import('./pages/super-admin/CredentialsSettings'));
 const SuperAdminSecuritySettings = lazyWithRetry(() => import('./pages/super-admin/SecuritySettings'));
 const SuperAdminGeneralSettings = lazyWithRetry(() => import('./pages/super-admin/GeneralSettings'));
 const SuperAdminNotificationSettings = lazyWithRetry(() => import('./pages/super-admin/NotificationSettings'));
@@ -334,6 +335,7 @@ function App() {
                 <Route path="super-admin/dashboard" element={<Suspense fallback={<PageLoader />}><SuperAdminDashboard /></Suspense>} />
                 <Route path="super-admin/settings" element={<Suspense fallback={<PageLoader />}><SuperAdminSettings /></Suspense>} />
                 <Route path="super-admin/settings/email" element={<Suspense fallback={<PageLoader />}><SuperAdminEmailSettings /></Suspense>} />
+                <Route path="super-admin/settings/credentials" element={<Suspense fallback={<PageLoader />}><SuperAdminCredentialsSettings /></Suspense>} />
                 <Route path="super-admin/settings/security" element={<Suspense fallback={<PageLoader />}><SuperAdminSecuritySettings /></Suspense>} />
                 <Route path="super-admin/settings/general" element={<Suspense fallback={<PageLoader />}><SuperAdminGeneralSettings /></Suspense>} />
                 <Route path="super-admin/settings/notification" element={<Suspense fallback={<PageLoader />}><SuperAdminNotificationSettings /></Suspense>} />
