@@ -9,6 +9,31 @@ const api = axios.create({
     withCredentials: true,
 });
 
+const getStoredAuthToken = () => {
+    const candidates = [
+        localStorage.getItem('auth_token'),
+        localStorage.getItem('token'),
+        localStorage.getItem('access_token'),
+    ];
+
+    const token = candidates.find((value) =>
+        typeof value === 'string' &&
+        value.trim() !== '' &&
+        value !== 'null' &&
+        value !== 'undefined'
+    );
+
+    return token || null;
+};
+
+const clearStoredAuth = () => {
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('token');
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('user_name');
+    localStorage.removeItem('user_role');
+};
+
 // Add CSRF token to requests
 api.interceptors.request.use((config) => {
     const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
@@ -17,7 +42,7 @@ api.interceptors.request.use((config) => {
     }
     
     // Add auth token if available
-    const authToken = localStorage.getItem('auth_token');
+    const authToken = getStoredAuthToken();
     if (authToken) {
         config.headers['Authorization'] = `Bearer ${authToken}`;
     }
@@ -68,25 +93,14 @@ api.interceptors.response.use(
                 currentPath === '/cookie-policy' ||
                 currentPath.startsWith('/cookie-policy/');
             
-            // Check if we're on a protected route (not a public path)
-            // Protected routes are anything that's not in the public paths list above
-            const isOnProtectedRoute = !isPublicPath;
-            
-            // Check if we have a token BEFORE clearing it
-            const hasToken = localStorage.getItem('auth_token');
-            
-            // If we're on a protected route and have a token, don't redirect or clear token
-            // This might be a temporary API issue (e.g., endpoint doesn't exist, permission issue)
-            // Only clear token and redirect if we're on a protected route AND we don't have a token
-            if (isPublicPath || (isOnProtectedRoute && hasToken)) {
-                // Don't clear token or redirect - might be a temporary API issue
+            // On public pages, don't force logout/redirect.
+            if (isPublicPath) {
                 return Promise.reject(error);
             }
-            
-            // Clear token only if we're going to redirect
-            localStorage.removeItem('auth_token');
-            localStorage.removeItem('user_name');
-            localStorage.removeItem('user_role');
+
+            // Any 401 on protected routes means auth is no longer valid.
+            clearStoredAuth();
+            sessionStorage.setItem('session_expired', '1');
             
             // Only redirect if not on a public path and not already redirecting
             if (!isPublicPath && currentPath !== '/login' && !sessionStorage.getItem('redirecting_to_login')) {
@@ -102,7 +116,7 @@ api.interceptors.response.use(
                                                  !window.location.pathname.startsWith('/about') &&
                                                  !window.location.pathname.startsWith('/contact');
                     if (stillOnProtectedPath) {
-                        window.location.href = '/login';
+                        window.location.href = '/login?reason=session-expired';
                     }
                 }, 100);
             }

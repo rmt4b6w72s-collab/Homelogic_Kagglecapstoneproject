@@ -225,6 +225,23 @@ export default function Layout() {
                 return response.data;
             } catch (err) {
                 console.error('Failed to fetch current user:', err);
+
+                // If auth is no longer valid (common after idle timeout), force a clean logout.
+                if (err?.response?.status === 401) {
+                    localStorage.removeItem('auth_token');
+                    localStorage.removeItem('user_name');
+                    localStorage.removeItem('user_role');
+                    sessionStorage.setItem('session_expired', '1');
+
+                    if (!sessionStorage.getItem('redirecting_to_login')) {
+                        sessionStorage.setItem('redirecting_to_login', 'true');
+                        setTimeout(() => {
+                            sessionStorage.removeItem('redirecting_to_login');
+                            window.location.href = '/login?reason=session-expired';
+                        }, 50);
+                    }
+                }
+
                 return null;
             }
         },
@@ -281,7 +298,8 @@ export default function Layout() {
             } finally {
                 localStorage.removeItem('auth_token');
                 localStorage.removeItem('user_name');
-                window.location.href = '/login';
+                sessionStorage.setItem('session_expired', '1');
+                window.location.href = '/login?reason=session-expired';
             }
         };
 

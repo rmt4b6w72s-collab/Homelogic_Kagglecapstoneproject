@@ -80,17 +80,15 @@ export function useRealtimeUpdates(channels = [], options = {}) {
  * Hook for listening to facility-wide updates
  */
 export function useFacilityUpdates(facilityId, eventTypes = [], options = {}) {
-  if (!facilityId) {
-    return;
-  }
-
-  const channels = [
-    {
-      channel: `facility.${facilityId}`,
-      events: eventTypes,
-      onEvent: options.onEvent,
-    },
-  ];
+  const channels = facilityId
+    ? [
+        {
+          channel: `facility.${facilityId}`,
+          events: eventTypes,
+          onEvent: options.onEvent,
+        },
+      ]
+    : [];
 
   useRealtimeUpdates(channels, {
     ...options,
@@ -102,17 +100,15 @@ export function useFacilityUpdates(facilityId, eventTypes = [], options = {}) {
  * Hook for listening to branch-specific updates
  */
 export function useBranchUpdates(branchId, eventTypes = [], options = {}) {
-  if (!branchId) {
-    return;
-  }
-
-  const channels = [
-    {
-      channel: `branch.${branchId}`,
-      events: eventTypes,
-      onEvent: options.onEvent,
-    },
-  ];
+  const channels = branchId
+    ? [
+        {
+          channel: `branch.${branchId}`,
+          events: eventTypes,
+          onEvent: options.onEvent,
+        },
+      ]
+    : [];
 
   useRealtimeUpdates(channels, {
     ...options,
@@ -124,17 +120,15 @@ export function useBranchUpdates(branchId, eventTypes = [], options = {}) {
  * Hook for listening to resident-specific updates
  */
 export function useResidentUpdates(residentId, eventTypes = [], options = {}) {
-  if (!residentId) {
-    return;
-  }
-
-  const channels = [
-    {
-      channel: `resident.${residentId}`,
-      events: eventTypes,
-      onEvent: options.onEvent,
-    },
-  ];
+  const channels = residentId
+    ? [
+        {
+          channel: `resident.${residentId}`,
+          events: eventTypes,
+          onEvent: options.onEvent,
+        },
+      ]
+    : [];
 
   useRealtimeUpdates(channels, {
     ...options,
@@ -146,14 +140,14 @@ export function useResidentUpdates(residentId, eventTypes = [], options = {}) {
  * Hook for listening to user notifications
  */
 export function useUserNotifications(userId, options = {}) {
-  if (!userId) {
-    return;
-  }
-
   const queryClient = useQueryClient();
   const echoRef = useRef(null);
 
   useEffect(() => {
+    if (!userId) {
+      return;
+    }
+
     const echo = getEcho();
     if (!echo) {
       return;

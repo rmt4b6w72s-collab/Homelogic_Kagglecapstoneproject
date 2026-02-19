@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Lock, Mail, Eye, EyeOff, ShieldCheck, ClipboardList, Clock, Home, Info, Building2 } from 'lucide-react';
+import { toast } from 'sonner';
 import api from '../services/api';
 import { useAnimateOnMount } from '../hooks/useAnimateOnMount';
 import { slideInLeft, slideInRight, fadeIn, shake, shouldAnimate } from '../utils/animationPresets';
@@ -55,6 +56,8 @@ export default function Login() {
                             // Only clear if still on login page and component is mounted
                             if (window.location.pathname === '/login' && isMountedRef.current) {
                                 localStorage.removeItem('auth_token');
+                                localStorage.removeItem('token');
+                                localStorage.removeItem('access_token');
                                 localStorage.removeItem('user_name');
                                 localStorage.removeItem('user_role');
                             }
@@ -99,6 +102,26 @@ export default function Login() {
         requestLocation();
     }, []);
 
+    useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        const reason = params.get('reason');
+        const fromSessionFlag = sessionStorage.getItem('session_expired') === '1';
+
+        if (reason === 'session-expired' || fromSessionFlag) {
+            toast.info('Your session expired due to inactivity. Please sign in again.', {
+                duration: 3500,
+            });
+            sessionStorage.removeItem('session_expired');
+
+            if (reason === 'session-expired') {
+                params.delete('reason');
+                const query = params.toString();
+                const nextUrl = query ? `/login?${query}` : '/login';
+                window.history.replaceState({}, '', nextUrl);
+            }
+        }
+    }, [location.search]);
+
     // Animate error message
     useEffect(() => {
         if (error && errorRef.current && shouldAnimate()) {
@@ -126,9 +149,17 @@ export default function Login() {
 
             const response = await api.post('/login', loginData);
 
-            if (response.data.token) {
+            const token =
+                response.data?.token ||
+                response.data?.access_token ||
+                response.data?.data?.token ||
+                null;
+
+            if (token) {
                 // Store token and user info
-                localStorage.setItem('auth_token', response.data.token);
+                localStorage.setItem('auth_token', token);
+                localStorage.setItem('token', token);
+                localStorage.setItem('access_token', token);
                 if (response.data.user) {
                     localStorage.setItem('user_name', response.data.user.name || response.data.user.email);
                     localStorage.setItem('user_role', response.data.user.role || '');
