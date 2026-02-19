@@ -141,6 +141,13 @@ export default function MedicationHistory() {
     const history = historyResponse?.data || [];
     const totalPages = historyResponse?.last_page || 1;
     const total = historyResponse?.total || 0;
+    const lateNoteMarker = '[Late Administration]';
+
+    const getStatusLabel = (statusValue) => {
+        if (statusValue === 'hospital_admission') return 'Hospital Admission';
+        if (statusValue === 'pharmacy_administration_confirm') return 'Pharmacy Administration Confirm';
+        return statusValue?.charAt(0).toUpperCase() + statusValue?.slice(1);
+    };
 
     return (
         <div className="space-y-6">
@@ -250,7 +257,109 @@ export default function MedicationHistory() {
                     />
                 ) : (
                     <>
-                        <div className="overflow-x-auto">
+                        <div className="md:hidden p-3 space-y-3">
+                            {history.map((administration) => {
+                                const resident = administration.resident;
+                                const medication = administration.medication;
+                                const statusClass = statusStyles[administration.status] || 'bg-gray-100 text-gray-800';
+                                const administeredBy =
+                                    administration.administered_by?.name ??
+                                    administration.administered_by?.full_name ??
+                                    administration.administeredBy?.name ??
+                                    administration.administered_by_name ??
+                                    administration.administered_by_full_name ??
+                                    administration.administered_by;
+                                const isLateAdministration = typeof administration.notes === 'string' && administration.notes.includes(lateNoteMarker);
+                                const cleanedNotes = isLateAdministration
+                                    ? administration.notes.replace(lateNoteMarker, '').trim()
+                                    : administration.notes;
+
+                                return (
+                                    <div key={administration.id} className="bg-white border border-gray-200 rounded-xl shadow-sm p-4">
+                                        <div className="flex items-start justify-between gap-3 mb-3">
+                                            <div>
+                                                <p className="text-sm font-semibold text-gray-900">
+                                                    {resident?.first_name} {resident?.last_name}
+                                                </p>
+                                                <p className="text-xs text-gray-500">{resident?.branch?.name || 'Branch N/A'}</p>
+                                            </div>
+                                            <div className="flex flex-wrap items-center justify-end gap-2">
+                                                <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusClass}`}>
+                                                    {getStatusLabel(administration.status)}
+                                                </span>
+                                                {isLateAdministration && (
+                                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">
+                                                        Late
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-2 text-sm">
+                                            <div>
+                                                <p className="text-xs uppercase tracking-wide text-gray-500">Medication</p>
+                                                <p className="font-medium text-gray-900">{medication?.name || 'Medication'}</p>
+                                                <p className="text-xs text-gray-500">{medication?.instructions || 'Instructions not set'}</p>
+                                            </div>
+
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <div>
+                                                    <p className="text-xs uppercase tracking-wide text-gray-500">Administered</p>
+                                                    <p className="font-medium text-gray-900">{formatDate(administration.administered_at)}</p>
+                                                    <p className="text-xs text-gray-500">{formatTime(administration.administered_at)}</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs uppercase tracking-wide text-gray-500">Administered By</p>
+                                                    {administeredBy ? (
+                                                        <>
+                                                            <p className="font-medium text-gray-900">{administeredBy}</p>
+                                                            {administration.administered_by?.position && (
+                                                                <p className="text-xs text-gray-500">{administration.administered_by.position}</p>
+                                                            )}
+                                                        </>
+                                                    ) : (
+                                                        <p className="text-sm text-gray-400">Not recorded</p>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            <div>
+                                                <p className="text-xs uppercase tracking-wide text-gray-500">Dosage / Notes</p>
+                                                <p className="text-gray-900">{administration.dosage_given || 'Dose not recorded'}</p>
+                                                {(cleanedNotes || isLateAdministration) && (
+                                                    <p className="text-xs text-gray-500 mt-1 whitespace-pre-line">
+                                                        {cleanedNotes || 'Late administration recorded outside scheduled window.'}
+                                                    </p>
+                                                )}
+                                            </div>
+
+                                            {administration.status === 'hospital_admission' && (
+                                                <div className="pt-1">
+                                                    {administration.document_path ? (
+                                                        <a
+                                                            href={`/storage/${administration.document_path}`}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="inline-flex items-center gap-2 px-3 py-2 bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] rounded-lg hover:bg-[var(--theme-primary-hover)] transition-colors text-sm font-semibold"
+                                                        >
+                                                            <FileText className="w-4 h-4" />
+                                                            View Document
+                                                        </a>
+                                                    ) : (
+                                                        <span className="inline-flex items-center gap-1 px-3 py-1 bg-gray-50 text-gray-500 rounded-md text-xs">
+                                                            <FileText className="w-3 h-3" />
+                                                            No document attached
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+
+                        <div className="hidden md:block overflow-x-auto">
                             <table className="min-w-full divide-y divide-gray-200">
                                 <thead className="bg-gray-50">
                                     <tr>
@@ -286,7 +395,6 @@ export default function MedicationHistory() {
                                             administration.administered_by_name ??
                                             administration.administered_by_full_name ??
                                             administration.administered_by;
-                                        const lateNoteMarker = '[Late Administration]';
                                         const isLateAdministration = typeof administration.notes === 'string' && administration.notes.includes(lateNoteMarker);
                                         const cleanedNotes = isLateAdministration
                                             ? administration.notes.replace(lateNoteMarker, '').trim()
@@ -314,11 +422,7 @@ export default function MedicationHistory() {
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm">
                                                     <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusClass}`}>
-                                                        {administration.status === 'hospital_admission'
-                                                            ? 'Hospital Admission'
-                                                            : administration.status === 'pharmacy_administration_confirm'
-                                                            ? 'Pharmacy Administration Confirm'
-                                                            : administration.status?.charAt(0).toUpperCase() + administration.status?.slice(1)}
+                                                        {getStatusLabel(administration.status)}
                                                     </span>
                                                     {isLateAdministration && (
                                                         <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">
