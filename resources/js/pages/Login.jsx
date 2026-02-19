@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { Lock, Mail, Eye, EyeOff, ShieldCheck, ClipboardList, Clock, Home, Info, Building2 } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '../services/api';
@@ -346,6 +346,15 @@ export default function Login() {
                                     >
                                         {loading ? 'Signing in...' : locationLoading ? 'Getting location...' : 'Sign In'}
                                     </button>
+
+                                    <div className="text-center">
+                                        <Link
+                                            to="/forgot-password"
+                                            className="text-sm font-semibold text-blue-700 hover:text-blue-800 hover:underline"
+                                        >
+                                            Forgot your password?
+                                        </Link>
+                                    </div>
                                 </form>
 
                                 <div className="pt-4 border-t-2 border-gray-300">

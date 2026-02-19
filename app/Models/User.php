@@ -13,6 +13,7 @@ use Filament\Panel;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Hash;
 use App\Models\Notification;
+use App\Notifications\PasswordResetLinkNotification;
 use App\Traits\Loggable;
 use App\Traits\FormatsPhoneNumbers;
 
@@ -541,6 +542,14 @@ class User extends Authenticatable implements FilamentUser
         }
 
         return Hash::check($pin, $this->clock_pin);
+    }
+
+    /**
+     * Send password reset notification with SPA reset URL.
+     */
+    public function sendPasswordResetNotification($token): void
+    {
+        $this->notify(new PasswordResetLinkNotification($token));
     }
 
     /**

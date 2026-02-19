@@ -119,6 +119,8 @@ function lazyWithRetry(importFn, retries = 3) {
 
 // Critical components - load immediately (Login, Layout)
 import Login from './pages/Login';
+const ForgotPassword = lazyWithRetry(() => import('./pages/ForgotPassword'));
+const ResetPassword = lazyWithRetry(() => import('./pages/ResetPassword'));
 
 // Lazy load all page components for code splitting with retry logic
 const Dashboard = lazyWithRetry(() => import('./pages/Dashboard'), 5);
@@ -242,6 +244,8 @@ function App() {
             {/* Public routes - must be defined before catch-all */}
             <Route path="/" element={<Suspense fallback={<PageLoader />}><Welcome /></Suspense>} />
             <Route path="/login" element={<Login />} />
+            <Route path="/forgot-password" element={<Suspense fallback={<PageLoader />}><ForgotPassword /></Suspense>} />
+            <Route path="/reset-password" element={<Suspense fallback={<PageLoader />}><ResetPassword /></Suspense>} />
             <Route path="/features" element={<Suspense fallback={<PageLoader />}><Features /></Suspense>} />
             <Route path="/pricing" element={<Suspense fallback={<PageLoader />}><Pricing /></Suspense>} />
             <Route path="/modules" element={<Suspense fallback={<PageLoader />}><Modules /></Suspense>} />

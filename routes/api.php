@@ -48,6 +48,7 @@ use App\Http\Controllers\Api\EmailNotificationConfigController;
 use App\Http\Controllers\Api\EmailTemplateController;
 use App\Http\Controllers\Api\BehaviorDataController;
 use App\Http\Controllers\Api\ResidentChartController;
+use App\Http\Controllers\Api\PasswordResetController;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Session\Middleware\StartSession;
@@ -68,6 +69,10 @@ Route::prefix('v1')->middleware([\App\Http\Middleware\SetFacilityContext::class]
             AddQueuedCookiesToResponse::class,
             StartSession::class,
         ])->withoutMiddleware([\App\Http\Middleware\SetFacilityContext::class]);
+    Route::post('/forgot-password', [PasswordResetController::class, 'sendResetLink'])
+        ->withoutMiddleware([\App\Http\Middleware\SetFacilityContext::class]);
+    Route::post('/reset-password', [PasswordResetController::class, 'reset'])
+        ->withoutMiddleware([\App\Http\Middleware\SetFacilityContext::class]);
     Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
     Route::get('/user', [AuthController::class, 'user'])
         ->middleware('auth:sanctum')

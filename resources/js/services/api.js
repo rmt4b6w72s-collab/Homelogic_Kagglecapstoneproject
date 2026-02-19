@@ -68,6 +68,10 @@ api.interceptors.response.use(
                 currentPath === '/' ||  // Root welcome page
                 currentPath === '/login' ||
                 currentPath.startsWith('/login/') ||
+                currentPath === '/forgot-password' ||
+                currentPath.startsWith('/forgot-password/') ||
+                currentPath === '/reset-password' ||
+                currentPath.startsWith('/reset-password/') ||
                 currentPath === '/staff/clock-in' ||
                 currentPath.startsWith('/staff/clock-in/') ||
                 currentPath === '/features' ||
