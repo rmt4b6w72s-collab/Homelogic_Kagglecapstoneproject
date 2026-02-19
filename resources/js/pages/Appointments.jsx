@@ -847,7 +847,69 @@ export default function Appointments() {
                             />
                         ) : data?.data?.length > 0 ? (
                             <div className="bg-white rounded-lg shadow overflow-hidden">
-                                <div className="overflow-x-auto">
+                                <div className="md:hidden p-3 space-y-3">
+                                    {data.data.map((appointment) => {
+                                        if (!appointment) return null;
+                                        const date = appointment.appointment_date ? new Date(appointment.appointment_date) : null;
+                                        const dateStr = date && !isNaN(date.getTime())
+                                            ? date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                                            : 'N/A';
+
+                                        let timeStr = '';
+                                        if (appointment.appointment_time) {
+                                            const timeParts = appointment.appointment_time.split(':');
+                                            if (timeParts.length >= 2) {
+                                                const hours = parseInt(timeParts[0]) || 0;
+                                                const minutes = timeParts[1] || '00';
+                                                const hour12 = hours % 12 || 12;
+                                                const ampm = hours >= 12 ? 'PM' : 'AM';
+                                                timeStr = `${hour12}:${minutes} ${ampm}`;
+                                            }
+                                        }
+
+                                        const statusClasses =
+                                            appointment.status === 'scheduled'
+                                                ? 'bg-amber-100 text-amber-800'
+                                                : appointment.status === 'confirmed'
+                                                    ? 'bg-[var(--theme-primary-bg)] text-[var(--theme-primary)]'
+                                                    : appointment.status === 'completed'
+                                                        ? 'bg-green-100 text-green-700'
+                                                        : appointment.status === 'cancelled'
+                                                            ? 'bg-red-100 text-red-800'
+                                                            : 'bg-gray-100 text-gray-800';
+
+                                        return (
+                                            <div key={appointment.id} className="border border-gray-200 rounded-xl p-4 shadow-sm">
+                                                <div className="flex items-start justify-between gap-3">
+                                                    <div>
+                                                        <p className="text-sm font-semibold text-gray-900">
+                                                            {appointment?.resident?.first_name || ''} {appointment?.resident?.last_name || ''}
+                                                        </p>
+                                                        <p className="text-xs text-gray-500 mt-1">
+                                                            {dateStr}{timeStr ? ` • ${timeStr}` : ''}
+                                                        </p>
+                                                    </div>
+                                                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusClasses}`}>
+                                                        {appointment.status?.charAt(0).toUpperCase() + appointment.status?.slice(1)}
+                                                    </span>
+                                                </div>
+
+                                                <div className="mt-3 space-y-2 text-sm">
+                                                    <div>
+                                                        <p className="text-xs uppercase tracking-wide text-gray-500">Type</p>
+                                                        <p className="text-gray-900">{appointment?.appointment_type?.name || appointment?.appointmentType?.name || 'Other'}</p>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-xs uppercase tracking-wide text-gray-500">Details</p>
+                                                        <p className="text-gray-900">{appointment?.description || appointment?.provider_name || '-'}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+
+                                <div className="hidden md:block overflow-x-auto">
                                     <table className="min-w-full divide-y divide-gray-200">
                                         <thead className="bg-gray-50">
                                             <tr>

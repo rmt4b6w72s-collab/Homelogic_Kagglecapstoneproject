@@ -584,10 +584,18 @@ export default function ViewVitals() {
     };
 
     const totalPages = vitalsData?.last_page || 1;
+    const vitalRows = vitalsData?.data || [];
+
+    const getStatusClasses = (status) => {
+        if (status === 'approved') return 'bg-green-900 text-green-300';
+        if (status === 'critical') return 'bg-red-900 text-red-300';
+        if (status === 'pending_review') return 'bg-yellow-900 text-yellow-300';
+        return 'bg-gray-700 text-gray-300';
+    };
 
     return (
         <div className="min-h-screen bg-gray-50">
-            <div className="p-6">
+            <div className="p-4 md:p-6">
                 {/* Filters Section */}
                 <div className="bg-white rounded-lg shadow p-4 mb-6">
                     <div className="flex flex-wrap items-center gap-4">
@@ -736,7 +744,77 @@ export default function ViewVitals() {
 
                 {/* Table */}
                 <div className="bg-white rounded-lg shadow-lg overflow-hidden" style={{ position: 'relative', zIndex: 1 }}>
-                    <div className="overflow-x-auto" style={{ position: 'relative' }}>
+                    <div className="md:hidden p-3 space-y-3">
+                        {isLoading ? (
+                            <div className="py-8 text-center">
+                                <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-[var(--theme-primary)]"></div>
+                            </div>
+                        ) : error ? (
+                            <div className="py-6 text-center text-red-600 text-sm">
+                                {error.message || 'Unable to load vitals data.'}
+                            </div>
+                        ) : vitalRows.length > 0 ? (
+                            vitalRows.map((vital) => {
+                                const date = new Date(vital.measurement_date);
+                                return (
+                                    <div key={vital.id} className="border border-gray-200 rounded-xl p-4 shadow-sm">
+                                        <div className="flex items-start justify-between mb-3">
+                                            <div>
+                                                <p className="text-sm font-semibold text-gray-900">
+                                                    {date.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' })}
+                                                </p>
+                                            </div>
+                                            <span className={`px-2 py-1 rounded-full text-xs ${getStatusClasses(vital.status)}`}>
+                                                {vital.status || 'approved'}
+                                            </span>
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-3 text-sm">
+                                            <div>
+                                                <p className="text-xs text-gray-500 uppercase tracking-wide">Blood Pressure</p>
+                                                <p className="font-medium text-gray-900">{vital.systolic && vital.diastolic ? `${vital.systolic}/${vital.diastolic}` : '-'}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-xs text-gray-500 uppercase tracking-wide">Temperature</p>
+                                                <p className="font-medium text-gray-900">{vital.temperature ? `${vital.temperature}°F` : '-'}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-xs text-gray-500 uppercase tracking-wide">Pulse</p>
+                                                <p className="font-medium text-gray-900">{vital.pulse || '-'}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-xs text-gray-500 uppercase tracking-wide">Oxygen Saturation</p>
+                                                <p className="font-medium text-gray-900">{vital.oxygen_saturation ? `${vital.oxygen_saturation}%` : '-'}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-xs text-gray-500 uppercase tracking-wide">Pain</p>
+                                                <p className="font-medium text-gray-900">{vital.pain_level || '-'}</p>
+                                            </div>
+                                        </div>
+
+                                        {vital.status === 'pending_review' && (
+                                            <div className="mt-3">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleApprove(vital.id)}
+                                                    disabled={updateStatusMutation.isPending}
+                                                    className="w-full px-3 py-2 rounded-lg border border-green-400 text-green-700 bg-white hover:bg-green-50 text-sm font-medium disabled:opacity-50"
+                                                >
+                                                    Approve
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })
+                        ) : (
+                            <div className="py-6 text-center text-gray-500 text-sm">
+                                No vitals data found for the selected period
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="hidden md:block overflow-x-auto" style={{ position: 'relative' }}>
                         <table className="w-full">
                             <thead className="bg-gray-50">
                                 <tr>
@@ -790,10 +868,7 @@ export default function ViewVitals() {
                                                         </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm">
                                                     <span className={`px-2 py-1 rounded-full text-xs ${
-                                                        vital.status === 'approved' ? 'bg-green-900 text-green-300' :
-                                                        vital.status === 'critical' ? 'bg-red-900 text-red-300' :
-                                                        vital.status === 'pending_review' ? 'bg-yellow-900 text-yellow-300' :
-                                                        'bg-gray-700 text-gray-300'
+                                                        getStatusClasses(vital.status)
                                                     }`}>
                                                         {vital.status || 'approved'}
                                                     </span>
