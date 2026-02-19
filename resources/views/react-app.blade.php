@@ -18,9 +18,9 @@
         {{-- Favicon and App Icons --}}
         <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('images/logonew.png') }}">
         <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('images/logonew.png') }}">
-        <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('images/apple-touch-icon.png') }}">
-        <link rel="icon" type="image/png" sizes="192x192" href="{{ asset('images/icon-192x192.png') }}">
-        <link rel="icon" type="image/png" sizes="512x512" href="{{ asset('images/icon-512x512.png') }}">
+        <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('images/logonew.png') }}">
+        <link rel="icon" type="image/png" sizes="192x192" href="{{ asset('images/logonew.png') }}">
+        <link rel="icon" type="image/png" sizes="512x512" href="{{ asset('images/logonew.png') }}">
         <link rel="shortcut icon" href="{{ asset('images/logonew.png') }}">
         
         {{-- Suppress Cloudflare cookie warnings IMMEDIATELY - before any other scripts --}}

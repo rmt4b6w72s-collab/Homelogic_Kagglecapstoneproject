@@ -3,7 +3,9 @@
  * Handles push notification subscription and management
  */
 
-const VAPID_PUBLIC_KEY = process.env.VITE_VAPID_PUBLIC_KEY || '';
+import api from './api';
+
+const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY || '';
 
 /**
  * Request push notification permission
@@ -47,10 +49,11 @@ export async function subscribeToPush() {
     // Get service worker registration
     const registration = await navigator.serviceWorker.ready;
 
-    // Check if already subscribed
+    // Check if already subscribed (re-sync with backend in case it was lost)
     let subscription = await registration.pushManager.getSubscription();
     if (subscription) {
-      console.log('[PushNotifications] Already subscribed');
+      console.log('[PushNotifications] Already subscribed, syncing with backend');
+      await sendSubscriptionToBackend(subscription).catch(() => {});
       return subscription;
     }
 
@@ -67,7 +70,7 @@ export async function subscribeToPush() {
 
     console.log('[PushNotifications] Subscribed to push notifications');
 
-    // Send subscription to backend
+    // Send subscription to backend (uses api so Bearer token is sent)
     await sendSubscriptionToBackend(subscription);
 
     return subscription;
@@ -142,60 +145,38 @@ export async function getSubscription() {
 }
 
 /**
- * Send subscription to backend
+ * Send subscription to backend (uses api client for auth)
  */
 async function sendSubscriptionToBackend(subscription) {
   try {
-    const response = await fetch('/api/v1/push-subscriptions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
+    const contentEncoding = subscription.options?.applicationServerKey ? 'aes128gcm' : 'aesgcm';
+    await api.post('/push-subscriptions', {
+      endpoint: subscription.endpoint,
+      keys: {
+        p256dh: arrayBufferToBase64(subscription.getKey('p256dh')),
+        auth: arrayBufferToBase64(subscription.getKey('auth')),
       },
-      credentials: 'include',
-      body: JSON.stringify({
-        endpoint: subscription.endpoint,
-        keys: {
-          p256dh: arrayBufferToBase64(subscription.getKey('p256dh')),
-          auth: arrayBufferToBase64(subscription.getKey('auth')),
-        },
-      }),
+      content_encoding: contentEncoding,
     });
-
-    if (!response.ok) {
-      throw new Error('Failed to save subscription to backend');
-    }
-
     console.log('[PushNotifications] Subscription saved to backend');
   } catch (error) {
     console.error('[PushNotifications] Failed to save subscription:', error);
+    throw error;
   }
 }
 
 /**
- * Remove subscription from backend
+ * Remove subscription from backend (uses api client for auth)
  */
 async function removeSubscriptionFromBackend(subscription) {
   try {
-    const response = await fetch('/api/v1/push-subscriptions', {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-      credentials: 'include',
-      body: JSON.stringify({
-        endpoint: subscription.endpoint,
-      }),
+    await api.delete('/push-subscriptions', {
+      data: { endpoint: subscription.endpoint },
     });
-
-    if (!response.ok) {
-      throw new Error('Failed to remove subscription from backend');
-    }
-
     console.log('[PushNotifications] Subscription removed from backend');
   } catch (error) {
     console.error('[PushNotifications] Failed to remove subscription:', error);
+    throw error;
   }
 }
 

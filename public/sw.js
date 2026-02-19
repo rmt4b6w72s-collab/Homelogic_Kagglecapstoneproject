@@ -12,8 +12,6 @@ const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 const STATIC_ASSETS = [
   '/',
   '/images/logonew.png',
-  '/images/icon-192x192.png',
-  '/images/icon-512x512.png',
 ];
 
 /**
@@ -216,8 +214,8 @@ self.addEventListener('push', (event) => {
   let notificationData = {
     title: 'HomeLogic360',
     body: 'You have a new notification',
-    icon: '/images/icon-192x192.png',
-    badge: '/images/icon-192x192.png',
+    icon: '/images/logonew.png',
+    badge: '/images/logonew.png',
     tag: 'default',
   };
   

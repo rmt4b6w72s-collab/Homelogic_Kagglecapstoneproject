@@ -232,6 +232,10 @@ Route::prefix('v1')->middleware([\App\Http\Middleware\SetFacilityContext::class]
     Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead'])->middleware('auth:sanctum');
     Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->middleware('auth:sanctum');
 
+    // Push subscriptions (PWA push notifications)
+    Route::post('/push-subscriptions', [\App\Http\Controllers\Api\PushSubscriptionController::class, 'store'])->middleware('auth:sanctum');
+    Route::delete('/push-subscriptions', [\App\Http\Controllers\Api\PushSubscriptionController::class, 'destroy'])->middleware('auth:sanctum');
+
     // Reminders
     Route::get('/reminders', [ReminderController::class, 'index'])->middleware('auth:sanctum');
     Route::get('/reminders/upcoming', [ReminderController::class, 'upcoming'])->middleware('auth:sanctum');

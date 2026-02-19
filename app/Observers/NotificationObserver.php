@@ -4,6 +4,7 @@ namespace App\Observers;
 
 use App\Models\Notification;
 use App\Events\NotificationCreated;
+use App\Services\PushNotificationService;
 
 class NotificationObserver
 {
@@ -12,8 +13,15 @@ class NotificationObserver
      */
     public function created(Notification $notification): void
     {
-        // Broadcast real-time notification
+        // Broadcast real-time notification (in-app when tab is open)
         event(new NotificationCreated($notification));
+
+        // Send PWA push notification (device notification when app is in background/closed)
+        try {
+            app(PushNotificationService::class)->sendForNotification($notification);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('[NotificationObserver] Push send failed: ' . $e->getMessage());
+        }
     }
 
     /**

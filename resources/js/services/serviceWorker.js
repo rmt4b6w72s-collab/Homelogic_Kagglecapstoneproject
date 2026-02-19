@@ -66,7 +66,7 @@ function showUpdateNotification(registration) {
   if ('Notification' in window && Notification.permission === 'granted') {
     new Notification('App Update Available', {
       body: 'A new version of HomeLogic360 is available. Reload to update.',
-      icon: '/images/icon-192x192.png',
+      icon: '/images/logonew.png',
       tag: 'sw-update',
     });
   }

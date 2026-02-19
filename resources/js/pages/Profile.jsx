@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../services/api';
+import { subscribeToPush, unsubscribeFromPush, isSubscribed } from '../services/pushNotifications';
 import {
     User as UserIcon,
     Mail,
@@ -30,7 +31,8 @@ import {
     FileText,
     Star,
     Bell,
-    BellOff
+    BellOff,
+    Smartphone
 } from 'lucide-react';
 
 export default function Profile() {
@@ -59,7 +61,10 @@ export default function Profile() {
         }
         return false;
     });
-    
+    const [pushEnabled, setPushEnabled] = useState(false);
+    const [pushLoading, setPushLoading] = useState(false);
+    const [pushSupported] = useState(() => typeof window !== 'undefined' && 'serviceWorker' in navigator && 'PushManager' in window);
+
     // Get current user from local storage or API
     const { data: user, isLoading, error } = useQuery({
         queryKey: ['current-user'],
@@ -80,6 +85,16 @@ export default function Profile() {
             setIsImageErrored(false);
         }
     }, [user]);
+
+    // Check push subscription status when profile loads
+    useEffect(() => {
+        if (!pushSupported) return;
+        let cancelled = false;
+        isSubscribed().then((subscribed) => {
+            if (!cancelled) setPushEnabled(!!subscribed);
+        });
+        return () => { cancelled = true; };
+    }, [pushSupported]);
 
     const handleFileChange = (e) => {
         if (e.target.files && e.target.files[0]) {
@@ -158,6 +173,29 @@ export default function Profile() {
         }
         setSuccessMessage(enabled ? 'Success notifications disabled' : 'Success notifications enabled');
         setTimeout(() => setSuccessMessage(null), 3000);
+    };
+
+    const handleTogglePush = async (enable) => {
+        if (!pushSupported || pushLoading) return;
+        setPushLoading(true);
+        setErrorMessage(null);
+        try {
+            if (enable) {
+                await subscribeToPush();
+                setPushEnabled(true);
+                setSuccessMessage('Push notifications enabled. You’ll get alerts even when the app is closed.');
+            } else {
+                await unsubscribeFromPush();
+                setPushEnabled(false);
+                setSuccessMessage('Push notifications disabled.');
+            }
+            setTimeout(() => setSuccessMessage(null), 3000);
+        } catch (err) {
+            setErrorMessage(err?.message || 'Could not update push notifications.');
+            if (enable) setPushEnabled(false);
+        } finally {
+            setPushLoading(false);
+        }
     };
 
     const handleSave = async () => {
@@ -649,6 +687,41 @@ export default function Profile() {
                                 />
                             </button>
                         </div>
+                        {pushSupported && (
+                            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
+                                <div className="flex-1">
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <Smartphone className="w-5 h-5 text-[var(--theme-primary)]" />
+                                        <label className="text-sm font-semibold text-gray-900">
+                                            App push notifications (PWA)
+                                        </label>
+                                    </div>
+                                    <p className="text-xs text-gray-600 mt-1">
+                                        {pushEnabled
+                                            ? 'Receive notifications on this device when the app is in the background or closed.'
+                                            : 'Enable to get alerts (e.g. new incidents, reminders) on your device.'}
+                                    </p>
+                                    {errorMessage && (
+                                        <p className="text-xs text-red-600 mt-1">{errorMessage}</p>
+                                    )}
+                                </div>
+                                <button
+                                    onClick={() => handleTogglePush(!pushEnabled)}
+                                    disabled={pushLoading}
+                                    className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[var(--theme-primary)] focus:ring-offset-2 disabled:opacity-50 ${
+                                        pushEnabled ? 'bg-[var(--theme-primary)]' : 'bg-gray-300'
+                                    }`}
+                                    role="switch"
+                                    aria-checked={pushEnabled}
+                                >
+                                    <span
+                                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                                            pushEnabled ? 'translate-x-5' : 'translate-x-0'
+                                        }`}
+                                    />
+                                </button>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
