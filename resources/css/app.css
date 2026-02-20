@@ -971,3 +971,27 @@ footer.bg-gray-900 a:hover,
 footer[class*="bg-gray-900"] a:hover {
     color: #67e8f9 !important; /* cyan-300 */
 }
+
+/* Behavior chart modal readability override */
+/* Global theme rules are very aggressive; scope hard overrides for this modal only. */
+.behavior-chart-modal h1,
+.behavior-chart-modal h2,
+.behavior-chart-modal h3,
+.behavior-chart-modal h4,
+.behavior-chart-modal h5,
+.behavior-chart-modal h6,
+.behavior-chart-modal p,
+.behavior-chart-modal label,
+.behavior-chart-modal th,
+.behavior-chart-modal td,
+.behavior-chart-modal span:not([class*="bg-"]) {
+    color: #111827 !important;
+    opacity: 1 !important;
+}
+
+.behavior-chart-modal input,
+.behavior-chart-modal textarea,
+.behavior-chart-modal select,
+.behavior-chart-modal option {
+    color: #111827 !important;
+}
