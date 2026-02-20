@@ -18,17 +18,26 @@ export default function EmailSettings() {
   const { data: currentUser } = useQuery({
     queryKey: ['me'],
     queryFn: async () => {
-      const response = await api.get('/me');
-      return response.data?.data || response.data;
+      const response = await api.get('/user');
+      return response.data;
     },
   });
 
   const facilityId = useMemo(() => {
+    const role = String(currentUser?.role || '').toLowerCase().trim();
+    const isSuperAdmin = role === 'super_admin' || role === 'superadmin' || role === 'super admin';
+
     if (typeof window !== 'undefined') {
       const stored = window.localStorage.getItem('super_admin_selected_facility_id');
-      if (stored) return stored;
+      if (stored && isSuperAdmin) return stored;
     }
-    return currentUser?.facility_id;
+
+    return (
+      currentUser?.facility_id ||
+      currentUser?.assigned_branch?.facility_id ||
+      currentUser?.assigned_branch?.facility?.id ||
+      null
+    );
   }, [currentUser]);
 
   const { data: settings, isLoading } = useQuery({
