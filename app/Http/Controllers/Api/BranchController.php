@@ -79,6 +79,14 @@ class BranchController extends BaseApiController
         }
 
         $branch = Branch::findOrFail($id);
+
+        // Ensure explicit clears from frontend are persisted as null values.
+        foreach (['address', 'phone', 'email', 'latitude', 'longitude'] as $nullableField) {
+            if ($request->exists($nullableField) && $request->input($nullableField) === '') {
+                $request->merge([$nullableField => null]);
+            }
+        }
+
         $validated = $request->validate([
             'name' => 'sometimes|required|string|max:255',
             'address' => 'nullable|string|max:1000',

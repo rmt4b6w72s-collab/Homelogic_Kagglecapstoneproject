@@ -228,8 +228,8 @@ function BranchForm({ record, facilities, currentUser, isSuperAdmin, isFacilityA
     phone: record?.phone || '',
     email: record?.email || '',
     is_active: record?.is_active ?? true,
-    latitude: record?.latitude || '',
-    longitude: record?.longitude || '',
+    latitude: record?.latitude ?? '',
+    longitude: record?.longitude ?? '',
   });
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
@@ -272,19 +272,16 @@ function BranchForm({ record, facilities, currentUser, isSuperAdmin, isFacilityA
         is_active: Boolean(form.is_active),
       };
 
-      // Add optional fields only if they have values
-      if (form.address?.trim()) {
-        submitData.address = form.address.trim();
-      }
-      if (form.phone) {
-        const unformatted = unformatPhoneNumber(form.phone);
-        if (unformatted) {
-          submitData.phone = unformatted;
-        }
-      }
-      if (form.email?.trim()) {
-        submitData.email = form.email.trim();
-      }
+      // Always send optional fields so clearing values persists on update.
+      const addressRaw = String(form.address ?? '').trim();
+      submitData.address = addressRaw === '' ? null : addressRaw;
+
+      const phoneRaw = String(form.phone ?? '').trim();
+      submitData.phone = phoneRaw === '' ? null : (unformatPhoneNumber(phoneRaw) || null);
+
+      const emailRaw = String(form.email ?? '').trim();
+      submitData.email = emailRaw === '' ? null : emailRaw;
+
       const latitudeRaw = String(form.latitude ?? '').trim();
       const longitudeRaw = String(form.longitude ?? '').trim();
 
