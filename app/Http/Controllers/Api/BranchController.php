@@ -34,7 +34,7 @@ class BranchController extends BaseApiController
         
         // Allow administrators and super admins to create branches even without specific permission
         $isSuperAdmin = $user && ($user->role === 'super_admin' || $user->hasRole('super_admin'));
-        $isAdmin = $user && ($user->role === 'administrator' || $user->role === 'admin');
+        $isAdmin = $user && in_array($user->role, ['administrator', 'admin', 'facility_admin', 'manager'], true);
         
         // Check permission only if user is not an admin or super admin
         if (!$isSuperAdmin && !$isAdmin) {
@@ -69,7 +69,7 @@ class BranchController extends BaseApiController
         
         // Allow administrators and super admins to edit branches even without specific permission
         $isSuperAdmin = $user && ($user->role === 'super_admin' || $user->hasRole('super_admin'));
-        $isAdmin = $user && ($user->role === 'administrator' || $user->role === 'admin');
+        $isAdmin = $user && in_array($user->role, ['administrator', 'admin', 'facility_admin', 'manager'], true);
         
         // Check permission only if user is not an admin or super admin
         if (!$isSuperAdmin && !$isAdmin) {
@@ -99,7 +99,7 @@ class BranchController extends BaseApiController
         
         // Allow administrators and super admins to delete branches even without specific permission
         $isSuperAdmin = $user && ($user->role === 'super_admin' || $user->hasRole('super_admin'));
-        $isAdmin = $user && ($user->role === 'administrator' || $user->role === 'admin');
+        $isAdmin = $user && in_array($user->role, ['administrator', 'admin', 'facility_admin', 'manager'], true);
         
         // Check permission only if user is not an admin or super admin
         if (!$isSuperAdmin && !$isAdmin) {

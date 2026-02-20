@@ -5,9 +5,11 @@ import { Building2, Plus, Search, Edit, Trash2, MapPin, Phone, Mail, Building, N
 import SectionCard from '../components/SectionCard';
 import { getUserLocation } from '../utils/location';
 import { formatPhoneNumber, unformatPhoneNumber } from '../utils/phoneFormatter';
+import { useToastContext } from '../contexts/ToastContext';
 
 export default function Branches() {
   const queryClient = useQueryClient();
+  const toast = useToastContext();
   const [search, setSearch] = useState('');
   const [facilityFilter, setFacilityFilter] = useState('');
   const [showForm, setShowForm] = useState(false);
@@ -51,7 +53,13 @@ export default function Branches() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id) => api.delete(`/branches/${id}`),
-    onSuccess: () => queryClient.invalidateQueries(['branches']),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['branches'] });
+      toast.showToast('Branch deleted successfully', 'success');
+    },
+    onError: (error) => {
+      toast.showToast(error?.response?.data?.message || 'Failed to delete branch', 'error');
+    },
   });
 
   const handleCloseForm = () => {
@@ -71,7 +79,8 @@ export default function Branches() {
           onClose={handleCloseForm}
           onSuccess={() => {
             handleCloseForm();
-            queryClient.invalidateQueries(['branches']);
+            queryClient.invalidateQueries({ queryKey: ['branches'] });
+            queryClient.refetchQueries({ queryKey: ['branches'] });
           }}
         />
       </div>
@@ -226,6 +235,7 @@ function BranchForm({ record, facilities, currentUser, isSuperAdmin, isFacilityA
   const [submitting, setSubmitting] = useState(false);
   const [geocoding, setGeocoding] = useState(false);
   const [gettingLocation, setGettingLocation] = useState(false);
+  const toast = useToastContext();
 
   // Update facility_id when initialFacilityId changes (when currentUser loads)
   React.useEffect(() => {
@@ -275,19 +285,29 @@ function BranchForm({ record, facilities, currentUser, isSuperAdmin, isFacilityA
       if (form.email?.trim()) {
         submitData.email = form.email.trim();
       }
-      if (form.latitude && !isNaN(parseFloat(form.latitude))) {
-        submitData.latitude = parseFloat(form.latitude);
+      const latitudeRaw = String(form.latitude ?? '').trim();
+      const longitudeRaw = String(form.longitude ?? '').trim();
+
+      if (latitudeRaw === '') {
+        submitData.latitude = null;
+      } else if (!Number.isNaN(Number(latitudeRaw))) {
+        submitData.latitude = parseFloat(latitudeRaw);
       }
-      if (form.longitude && !isNaN(parseFloat(form.longitude))) {
-        submitData.longitude = parseFloat(form.longitude);
+
+      if (longitudeRaw === '') {
+        submitData.longitude = null;
+      } else if (!Number.isNaN(Number(longitudeRaw))) {
+        submitData.longitude = parseFloat(longitudeRaw);
       }
 
       console.log('Submitting branch data:', submitData);
       
       if (record) {
         await api.put(`/branches/${record.id}`, submitData);
+        toast.showToast('Branch updated successfully', 'success', { isFormSubmission: true });
       } else {
         await api.post('/branches', submitData);
+        toast.showToast('Branch created successfully', 'success', { isFormSubmission: true });
       }
       onSuccess();
     } catch (e) {
@@ -395,11 +415,11 @@ function BranchForm({ record, facilities, currentUser, isSuperAdmin, isFacilityA
                           enableHighAccuracy: true,
                         });
                         if (location) {
-                          setForm({
-                            ...form,
+                          setForm((prev) => ({
+                            ...prev,
                             latitude: location.latitude,
                             longitude: location.longitude,
-                          });
+                          }));
                         } else {
                           alert('Unable to get your current location. Please allow location access or enter coordinates manually.');
                         }
@@ -427,11 +447,11 @@ function BranchForm({ record, facilities, currentUser, isSuperAdmin, isFacilityA
                       try {
                         const response = await api.post('/geocode', { address: form.address });
                         if (response.data.success) {
-                          setForm({
-                            ...form,
+                          setForm((prev) => ({
+                            ...prev,
                             latitude: response.data.latitude,
                             longitude: response.data.longitude,
-                          });
+                          }));
                         } else {
                           alert('Unable to geocode address. Please enter coordinates manually.');
                         }
