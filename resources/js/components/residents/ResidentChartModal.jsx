@@ -165,7 +165,7 @@ export default function ResidentChartModal({ isOpen, onClose, resident, initialC
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm overflow-y-auto">
-            <div className="bg-white w-full max-w-6xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] border border-gray-200">
+            <div className="bg-white w-full max-w-6xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] border border-gray-200 text-gray-900">
                 {/* Header */}
                 <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
                     <h2 className="text-xl font-bold text-gray-900 flex items-center gap-3">
@@ -180,17 +180,17 @@ export default function ResidentChartModal({ isOpen, onClose, resident, initialC
                 <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
                     {/* Behaviors Section */}
                     <div>
-                        <h3 className="text-[var(--theme-primary)] font-bold text-lg mb-4">Behaviors</h3>
+                        <h3 className="text-gray-900 font-bold text-lg mb-4">Behaviors</h3>
                         <div className="overflow-hidden border border-gray-200 rounded-xl shadow-sm">
                             <table className="w-full text-left border-collapse">
-                                <thead className="bg-gray-50 text-gray-600 text-xs uppercase tracking-wider">
+                                <thead className="bg-gray-50 text-gray-900 text-xs uppercase tracking-wider">
                                     <tr>
                                         <th className="px-4 py-3 font-bold border-b border-gray-200 border-r border-gray-200">Category</th>
                                         <th className="px-4 py-3 font-bold border-b border-gray-200 border-r border-gray-200">Log</th>
                                         <th className="px-4 py-3 font-bold border-b border-gray-200">Date</th>
                                     </tr>
                                 </thead>
-                                <tbody className="text-gray-700">
+                                <tbody className="text-gray-900">
                                     {Object.entries(groupedItems).map(([catName, items]) => (
                                         items.map((item, idx) => (
                                             <tr key={item.behavior_definition_id} className="border-b border-gray-100 hover:bg-gray-50/50">
@@ -204,7 +204,7 @@ export default function ResidentChartModal({ isOpen, onClose, resident, initialC
                                                     <select
                                                         value={item.value ? "true" : "false"}
                                                         onChange={(e) => handleItemChange(item.behavior_definition_id, e.target.value === "true")}
-                                                        className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-primary-bg)] focus:border-[var(--theme-primary)] transition-all"
+                                                        className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[var(--theme-primary-bg)] focus:border-[var(--theme-primary)] transition-all"
                                                     >
                                                         <option value="false">No</option>
                                                         <option value="true">Yes</option>
@@ -226,7 +226,7 @@ export default function ResidentChartModal({ isOpen, onClose, resident, initialC
                     {/* Behavior Descriptions Section */}
                     <div>
                         <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-[var(--theme-primary)] font-bold text-lg">Behavior Descriptions</h3>
+                            <h3 className="text-gray-900 font-bold text-lg">Behavior Descriptions</h3>
                             <button
                                 onClick={handleAddLog}
                                 className="flex items-center gap-2 px-4 py-2 bg-[var(--theme-primary)] text-white rounded-lg text-sm font-semibold hover:bg-[var(--theme-primary-hover)] shadow-sm transition-all active:scale-95"
@@ -237,7 +237,7 @@ export default function ResidentChartModal({ isOpen, onClose, resident, initialC
                         </div>
                         <div className="overflow-x-auto border border-gray-200 rounded-xl shadow-sm">
                             <table className="w-full text-left border-collapse min-w-[1000px]">
-                                <thead className="bg-gray-50 text-gray-600 text-xs uppercase tracking-wider">
+                                <thead className="bg-gray-50 text-gray-900 text-xs uppercase tracking-wider">
                                     <tr>
                                         <th className="px-4 py-3 font-bold border-b border-gray-200 border-r border-gray-200">Date</th>
                                         <th className="px-4 py-3 font-bold border-b border-gray-200 border-r border-gray-200">Behavior Description</th>
@@ -248,7 +248,7 @@ export default function ResidentChartModal({ isOpen, onClose, resident, initialC
                                         <th className="px-4 py-3 font-bold border-b border-gray-200">Action</th>
                                     </tr>
                                 </thead>
-                                <tbody className="text-gray-700">
+                                <tbody className="text-gray-900">
                                     {chartData.logs.map((log, index) => (
                                         <tr key={index} className="border-b border-gray-100 hover:bg-gray-50/50">
                                             <td className="p-3 border-r border-gray-200">
@@ -256,14 +256,14 @@ export default function ResidentChartModal({ isOpen, onClose, resident, initialC
                                                     type="datetime-local"
                                                     value={log.occurred_at}
                                                     onChange={(e) => handleLogChange(index, 'occurred_at', e.target.value)}
-                                                    className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-primary-bg)] focus:border-[var(--theme-primary)]"
+                                                    className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[var(--theme-primary-bg)] focus:border-[var(--theme-primary)]"
                                                 />
                                             </td>
                                             <td className="p-3 border-r border-gray-200">
                                                 <textarea
                                                     value={log.behavior_description}
                                                     onChange={(e) => handleLogChange(index, 'behavior_description', e.target.value)}
-                                                    className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-primary-bg)] focus:border-[var(--theme-primary)] min-h-[80px]"
+                                                    className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[var(--theme-primary-bg)] focus:border-[var(--theme-primary)] min-h-[80px]"
                                                     placeholder="Enter Behavior"
                                                 />
                                             </td>
@@ -271,7 +271,7 @@ export default function ResidentChartModal({ isOpen, onClose, resident, initialC
                                                 <textarea
                                                     value={log.triggers}
                                                     onChange={(e) => handleLogChange(index, 'triggers', e.target.value)}
-                                                    className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-primary-bg)] focus:border-[var(--theme-primary)] min-h-[80px]"
+                                                    className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[var(--theme-primary-bg)] focus:border-[var(--theme-primary)] min-h-[80px]"
                                                     placeholder="Enter Triggers"
                                                 />
                                             </td>
@@ -279,7 +279,7 @@ export default function ResidentChartModal({ isOpen, onClose, resident, initialC
                                                 <textarea
                                                     value={log.caregiver_intervention}
                                                     onChange={(e) => handleLogChange(index, 'caregiver_intervention', e.target.value)}
-                                                    className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-primary-bg)] focus:border-[var(--theme-primary)] min-h-[80px]"
+                                                    className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[var(--theme-primary-bg)] focus:border-[var(--theme-primary)] min-h-[80px]"
                                                     placeholder="Enter Intervention"
                                                 />
                                             </td>
@@ -287,7 +287,7 @@ export default function ResidentChartModal({ isOpen, onClose, resident, initialC
                                                 <select
                                                     value={log.reported_to_provider ? "true" : "false"}
                                                     onChange={(e) => handleLogChange(index, 'reported_to_provider', e.target.value === "true")}
-                                                    className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-primary-bg)] focus:border-[var(--theme-primary)]"
+                                                    className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[var(--theme-primary-bg)] focus:border-[var(--theme-primary)]"
                                                 >
                                                     <option value="false">No</option>
                                                     <option value="true">Yes</option>
@@ -297,7 +297,7 @@ export default function ResidentChartModal({ isOpen, onClose, resident, initialC
                                                 <textarea
                                                     value={log.outcome}
                                                     onChange={(e) => handleLogChange(index, 'outcome', e.target.value)}
-                                                    className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-primary-bg)] focus:border-[var(--theme-primary)] min-h-[80px]"
+                                                    className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[var(--theme-primary-bg)] focus:border-[var(--theme-primary)] min-h-[80px]"
                                                     placeholder="Enter Outcome"
                                                 />
                                             </td>
