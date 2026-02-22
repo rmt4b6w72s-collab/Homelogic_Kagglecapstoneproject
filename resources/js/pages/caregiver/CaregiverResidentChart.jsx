@@ -47,7 +47,9 @@ export default function CaregiverResidentChart() {
                         params: { date: selectedDate }
                     });
                     const fetchedChart = chartRes.data.chart;
-                    if (fetchedChart && fetchedChart.chart_date === selectedDate) {
+                    const chartDateStr = fetchedChart?.chart_date ? String(fetchedChart.chart_date).slice(0, 10) : null;
+                    const selectedDateStr = String(selectedDate).slice(0, 10);
+                    if (fetchedChart && chartDateStr === selectedDateStr) {
                         chart = fetchedChart;
                     }
                 } catch (error) {
@@ -65,30 +67,43 @@ export default function CaregiverResidentChart() {
     });
 
     useEffect(() => {
-        if (initData) {
-            const { categories, chart } = initData;
+        if (!initData) return;
+        const { categories, chart } = initData;
 
-            // Map definitions to items - always start fresh if isNew is true
-            const initialItems = [];
-            categories.forEach(cat => {
-                cat.definitions.forEach(def => {
-                    // Only use existing item value if chart exists and we're not creating new
-                    const existingItem = (!isNew && chart?.items) ? chart.items.find(item => item.behavior_definition_id === def.id) : null;
-                    initialItems.push({
-                        behavior_definition_id: def.id,
-                        name: def.name,
-                        category_name: cat.name,
-                        category_id: cat.id,
-                        value: existingItem ? !!existingItem.value : false
-                    });
+        const initialItems = [];
+        (categories || []).forEach(cat => {
+            (cat.definitions || []).forEach(def => {
+                const existingItem = (!isNew && chart?.items) ? chart.items.find(item => item.behavior_definition_id === def.id) : null;
+                initialItems.push({
+                    behavior_definition_id: def.id,
+                    name: def.name,
+                    category_name: cat.name,
+                    category_id: cat.id,
+                    value: existingItem ? !!existingItem.value : false
                 });
             });
+        });
 
-            setChartData({
-                items: initialItems,
-                logs: (!isNew && chart?.logs) ? chart.logs : []
-            });
-        }
+        const logs = (!isNew && chart?.logs?.length)
+            ? chart.logs.map((log) => {
+                let occurredAt = log.occurred_at;
+                if (occurredAt) {
+                    const d = new Date(occurredAt);
+                    if (!Number.isNaN(d.getTime())) {
+                        occurredAt = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}T${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+                    }
+                }
+                return {
+                    occurred_at: occurredAt || '',
+                    behavior_description: log.behavior_description ?? '',
+                    triggers: log.triggers ?? '',
+                    caregiver_intervention: log.caregiver_intervention ?? '',
+                    reported_to_provider: Boolean(log.reported_to_provider),
+                    outcome: log.outcome ?? ''
+                };
+            })
+            : [];
+        setChartData({ items: initialItems, logs });
     }, [initData, isNew]);
 
     const checkTimeValidity = () => {
@@ -166,8 +181,8 @@ export default function CaregiverResidentChart() {
             });
 
             toast.success(`Chart ${status === 'submitted' ? 'submitted' : 'saved as draft'} successfully!`, '', { isFormSubmission: true });
-            queryClient.invalidateQueries(['resident-chart-init', residentId]);
-            // Invalidate behavior charts list query so it refreshes in admin view
+            queryClient.invalidateQueries({ queryKey: ['resident-chart-init', residentId, selectedDate, isNew] });
+            await queryClient.refetchQueries({ queryKey: ['resident-chart-init', residentId, selectedDate, isNew] });
             queryClient.invalidateQueries(['behavior-charts']);
             if (status === 'submitted') navigate('/charts');
         } catch (error) {

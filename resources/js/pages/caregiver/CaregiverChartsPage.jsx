@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Search, ClipboardList, Plus, Clock } from 'lucide-react';
+import { toast } from 'sonner';
 import api from '../../services/api';
 
 function getInitials(first = '', last = '') {
@@ -12,6 +13,7 @@ export default function CaregiverChartsPage() {
     const navigate = useNavigate();
     const [search, setSearch] = useState('');
     const [debouncedSearch, setDebouncedSearch] = useState('');
+    const [pendingLoadingId, setPendingLoadingId] = useState(null);
 
     React.useEffect(() => {
         const timeout = setTimeout(() => {
@@ -37,6 +39,25 @@ export default function CaregiverChartsPage() {
 
     const handleOpenChart = (residentId) => {
         navigate(`/charts/resident/${residentId}`);
+    };
+
+    const handlePendingCharts = async (residentId) => {
+        setPendingLoadingId(residentId);
+        try {
+            const res = await api.get(`/resident-charts/${residentId}/pending`);
+            const list = res.data?.data ?? [];
+            if (list.length > 0) {
+                const mostRecent = list[0];
+                const date = mostRecent.chart_date;
+                navigate(`/charts/resident/${residentId}?date=${date}`);
+            } else {
+                toast.info('No pending charts for this resident.');
+            }
+        } catch (err) {
+            toast.error(err.response?.data?.message || 'Could not load pending charts.');
+        } finally {
+            setPendingLoadingId(null);
+        }
     };
 
     return (
@@ -102,9 +123,15 @@ export default function CaregiverChartsPage() {
                                     New Charts
                                 </button>
                                 <button
-                                    className="flex-1 px-4 py-2.5 border-2 border-gray-200 text-gray-700 rounded-xl text-xs font-bold hover:bg-gray-50 hover:border-gray-300 transition-all active:scale-95 flex items-center justify-center gap-2"
+                                    onClick={() => handlePendingCharts(resident.id)}
+                                    disabled={pendingLoadingId === resident.id}
+                                    className="flex-1 px-4 py-2.5 border-2 border-gray-200 text-gray-700 rounded-xl text-xs font-bold hover:bg-gray-50 hover:border-gray-300 transition-all active:scale-95 flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
                                 >
-                                    <Clock className="w-4 h-4 text-gray-400" />
+                                    {pendingLoadingId === resident.id ? (
+                                        <span className="inline-block w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
+                                    ) : (
+                                        <Clock className="w-4 h-4 text-gray-400" />
+                                    )}
                                     Pending Charts
                                 </button>
                             </div>

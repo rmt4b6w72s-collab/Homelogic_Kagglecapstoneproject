@@ -80,6 +80,14 @@ class ResidentChartController extends BaseApiController
             ->where('chart_date', $date)
             ->first();
 
+        // Ensure chart_date is a string for reliable frontend comparison
+        $chartPayload = $chart ? $chart->toArray() : null;
+        if ($chartPayload !== null) {
+            $chartPayload['chart_date'] = $chart->chart_date instanceof \Carbon\Carbon
+                ? $chart->chart_date->toDateString()
+                : (string) $chart->chart_date;
+        }
+
         // Also fetch all active behavior definitions to show in the "New Chart" modal
         $definitions = BehaviorDefinition::with('category')
             ->where('is_active', true)
@@ -88,7 +96,7 @@ class ResidentChartController extends BaseApiController
 
         return response()->json([
             'resident' => $resident,
-            'chart' => $chart,
+            'chart' => $chartPayload,
             'is_pending' => $chart && $chart->status === 'draft',
             'is_submitted' => $chart && $chart->status === 'submitted',
         ]);
@@ -191,6 +199,26 @@ class ResidentChartController extends BaseApiController
         ])->findOrFail($id);
 
         return response()->json($chart);
+    }
+
+    /**
+     * Get pending (draft) charts for a resident for the caregiver portal.
+     */
+    public function pending(Resident $resident): JsonResponse
+    {
+        $charts = BehaviorChart::with(['items', 'logs'])
+            ->where('resident_id', $resident->id)
+            ->where('status', 'draft')
+            ->orderBy('chart_date', 'desc')
+            ->get()
+            ->map(fn ($chart) => [
+                'id' => $chart->id,
+                'chart_date' => $chart->chart_date instanceof \Carbon\Carbon
+                    ? $chart->chart_date->toDateString()
+                    : (string) $chart->chart_date,
+            ]);
+
+        return response()->json(['data' => $charts]);
     }
 
     /**
