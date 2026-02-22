@@ -284,33 +284,37 @@ export default function EmailSettings() {
         </TabsList>
 
         <TabsContent value="recipients">
-          <div className="bg-white rounded-xl shadow-sm p-6 space-y-6">
+          <div className="bg-white rounded-xl shadow-sm p-6 md:p-8 space-y-8">
             <div>
-              <h2 className="text-lg font-semibold text-gray-900 mb-2">
+              <h2 className="text-xl font-semibold text-gray-900 mb-2">
                 Configure Email Recipients
               </h2>
-              <p className="text-sm text-gray-500 mb-4">
-                Select who should receive emails for each notification type. You can configure by role and/or specific users.
+              <p className="text-sm text-gray-500 max-w-2xl">
+                Choose a notification type below, then select which roles and users should receive those emails. Changes are saved automatically.
               </p>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Notification Type
+            <div className="rounded-xl border-2 border-gray-200 bg-gray-50/50 p-5">
+              <label className="block text-sm font-semibold text-gray-800 mb-2">
+                Step 1 — Choose notification type
               </label>
               <NotificationTypeSelector
                 value={selectedNotificationType}
                 onChange={setSelectedNotificationType}
+                className="max-w-md bg-white"
               />
             </div>
 
             {selectedNotificationType && (
-              <div className="border-t border-gray-200 pt-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-md font-medium text-gray-900">
-                    Recipient Configuration for {selectedNotificationType.replace(/_/g, ' ')}
-                  </h3>
-                  <label className="flex items-center gap-2">
+              <div className="rounded-xl border-2 border-gray-200 bg-white p-5 md:p-6 space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <div>
+                    <h3 className="text-base font-semibold text-gray-900">
+                      Step 2 — Recipients for this notification
+                    </h3>
+                    <p className="text-xs text-gray-500 mt-0.5">Pick roles and/or specific users. They’ll get this notification by email.</p>
+                  </div>
+                  <label className="flex items-center gap-3 cursor-pointer shrink-0">
                     <input
                       type="checkbox"
                       checked={currentConfig?.enabled ?? true}
@@ -321,9 +325,9 @@ export default function EmailSettings() {
                           recipient_user_ids: currentConfig?.recipient_user_ids || [],
                         });
                       }}
-                      className="w-4 h-4 text-[var(--theme-primary)] border-gray-300 rounded focus:ring-[var(--theme-primary)]"
+                      className="w-5 h-5 text-[var(--theme-primary)] border-gray-300 rounded focus:ring-2 focus:ring-[var(--theme-primary)]"
                     />
-                    <span className="text-sm text-gray-700">Enable this notification</span>
+                    <span className="text-sm font-medium text-gray-700">Enable this notification</span>
                   </label>
                 </div>
                 <EmailRecipientConfig
@@ -332,6 +336,10 @@ export default function EmailSettings() {
                   onChange={handleConfigChange}
                 />
               </div>
+            )}
+
+            {!selectedNotificationType && (
+              <p className="text-sm text-gray-500">Select a notification type above to configure recipients.</p>
             )}
           </div>
         </TabsContent>
