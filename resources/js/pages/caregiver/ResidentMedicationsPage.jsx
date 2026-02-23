@@ -671,6 +671,16 @@ function QuickAdminister({ medication, onSuccess }) {
         [medication.start_date, medication.end_date]
     );
 
+    const hasAdminForWindow = React.useCallback((scheduledDate) => {
+        if (!todayAdminData?.data?.length) return false;
+        const toleranceMs = 60 * 60 * 1000;
+        return todayAdminData.data.some((admin) => {
+            if (admin.status === 'missed') return false;
+            const adminTime = getPacificDate(new Date(admin.administered_at));
+            return Math.abs(adminTime.getTime() - scheduledDate.getTime()) <= toleranceMs;
+        });
+    }, [todayAdminData]);
+
     // Check if current time is within 60 minutes before or after any scheduled time
     const checkTimeWindow = React.useCallback(() => {
         const windowBeforeMinutes = 60;
@@ -728,6 +738,9 @@ function QuickAdminister({ medication, onSuccess }) {
 
         for (const window of windows) {
             if (now >= window.start && now <= window.end) {
+                if (hasAdminForWindow(window.scheduledDate)) {
+                    continue;
+                }
                 setIsWithinTimeWindow(true);
                 setTimeMessage('');
                 setNextWindowStart(null);
@@ -773,6 +786,7 @@ function QuickAdminister({ medication, onSuccess }) {
         medication.time_3,
         medication.time_4,
         parseTimeToToday,
+        hasAdminForWindow,
     ]);
 
     // Check time window on mount and update every minute
@@ -1014,6 +1028,7 @@ function QuickAdminister({ medication, onSuccess }) {
                                         : trimmedNotes || undefined;
 
                                     const administeredAt = getPacificISODateTime();
+                                    const realUtcNow = new Date().toISOString();
                                     const statusLabel = status.charAt(0).toUpperCase() + status.slice(1);
                                     
                                     // Optimistically update the cache immediately
@@ -1025,17 +1040,18 @@ function QuickAdminister({ medication, onSuccess }) {
                                     const currentCheckData = queryClient.getQueryData(checkQueryKey);
                                     
                                     // Create optimistic administration record
+                                    // Use real UTC for administered_at so getPacificDate() parses correctly
                                     const optimisticAdmin = {
                                         id: `temp-${Date.now()}`,
                                         medication_id: medication.id,
                                         resident_id: medication.resident_id,
                                         branch_id: medication.branch_id,
-                                        administered_at: administeredAt,
+                                        administered_at: realUtcNow,
                                         status,
                                         dosage_given: trimmedDosage,
                                         notes: finalNotes,
-                                        created_at: administeredAt,
-                                        updated_at: administeredAt,
+                                        created_at: realUtcNow,
+                                        updated_at: realUtcNow,
                                     };
                                     
                                     // Optimistically update cache for both query keys
