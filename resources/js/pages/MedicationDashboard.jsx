@@ -116,9 +116,12 @@ export default function MedicationDashboard() {
 
     const { data, isLoading, error, refetch } = useQuery({
         queryKey: ['medication-dashboard'],
-        queryFn: async () => (await api.get('/medications/dashboard')).data,
+        queryFn: async () => {
+            const response = await api.get('/medications/dashboard');
+            return response.data;
+        },
         refetchInterval: 60000,
-        retry: 1,
+        retry: 2,
     });
 
     const today = data?.today || {};
@@ -247,15 +250,28 @@ export default function MedicationDashboard() {
     }
 
     if (error) {
+        const errorMsg = error?.response?.data?.error || error?.response?.data?.message || error?.message || 'Unknown error';
         return (
             <div className="space-y-6">
                 <h1 className="text-2xl font-bold text-gray-900">Medication Dashboard</h1>
                 <div className="bg-white rounded-xl shadow-sm border-l-4 border-red-500 p-4">
-                    <div className="flex items-center space-x-3">
-                        <AlertCircle className="w-5 h-5 text-red-600" />
-                        <p className="text-red-800 text-sm">
-                            Failed to load medication dashboard. Please try again.
-                        </p>
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                            <AlertCircle className="w-5 h-5 text-red-600" />
+                            <div>
+                                <p className="text-red-800 text-sm font-medium">
+                                    Failed to load medication dashboard.
+                                </p>
+                                <p className="text-red-600 text-xs mt-1">{errorMsg}</p>
+                            </div>
+                        </div>
+                        <button
+                            onClick={() => refetch()}
+                            className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-red-700 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors"
+                        >
+                            <RefreshCw className="w-3.5 h-3.5" />
+                            Retry
+                        </button>
                     </div>
                 </div>
             </div>

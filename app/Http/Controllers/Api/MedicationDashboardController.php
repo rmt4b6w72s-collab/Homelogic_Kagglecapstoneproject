@@ -9,35 +9,56 @@ use App\Models\Resident;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class MedicationDashboardController extends BaseApiController
 {
     public function index(Request $request): JsonResponse
     {
-        $user = $request->user();
-        $now = Carbon::now(config('app.timezone'));
-        $today = $now->toDateString();
+        try {
+            $user = $request->user();
+            $now = Carbon::now(config('app.timezone'));
+            $today = $now->toDateString();
 
-        $isCaregiver = $this->isCaregiver($user);
-        $branchIds = $this->resolveBranchIds($user, $isCaregiver);
+            $isCaregiver = $this->isCaregiver($user);
+            $branchIds = $this->resolveBranchIds($user, $isCaregiver);
 
-        $todayStats = $this->getTodayStats($branchIds, $today);
-        $upcoming = $this->getUpcomingMedications($branchIds, $now);
-        $missedToday = $this->getMissedToday($branchIds, $today);
-        $adherenceTrend = $this->getAdherenceTrend($branchIds, $now);
-        $recentActivity = $this->getRecentActivity($branchIds);
-        $residentSummary = $this->getResidentSummary($branchIds, $today);
-        $deliveryStatus = $this->getDeliveryStatus($branchIds, $today);
+            if (empty($branchIds)) {
+                return response()->json([
+                    'today' => ['scheduled' => 0, 'administered' => 0, 'missed' => 0, 'refused' => 0, 'adherence' => 0, 'active_medications' => 0],
+                    'upcoming' => [],
+                    'missed_today' => [],
+                    'adherence_trend' => [],
+                    'recent_activity' => [],
+                    'resident_summary' => [],
+                    'delivery_status' => ['today_count' => 0, 'pending_verification' => 0, 'recent' => []],
+                ]);
+            }
 
-        return response()->json([
-            'today' => $todayStats,
-            'upcoming' => $upcoming,
-            'missed_today' => $missedToday,
-            'adherence_trend' => $adherenceTrend,
-            'recent_activity' => $recentActivity,
-            'resident_summary' => $residentSummary,
-            'delivery_status' => $deliveryStatus,
-        ]);
+            $activeMeds = $this->getActiveMedications($branchIds, $today);
+
+            return response()->json([
+                'today' => $this->getTodayStats($branchIds, $today, $activeMeds),
+                'upcoming' => $this->getUpcomingMedications($activeMeds, $now),
+                'missed_today' => $this->getMissedToday($branchIds, $today),
+                'adherence_trend' => $this->getAdherenceTrend($branchIds, $now),
+                'recent_activity' => $this->getRecentActivity($branchIds),
+                'resident_summary' => $this->getResidentSummary($branchIds, $today, $activeMeds),
+                'delivery_status' => $this->getDeliveryStatus($branchIds, $today),
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Medication dashboard error', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'message' => 'Failed to load medication dashboard.',
+                'error' => config('app.debug') ? $e->getMessage() : 'Internal server error',
+            ], 500);
+        }
     }
 
     private function resolveBranchIds($user, bool $isCaregiver): array
@@ -53,22 +74,30 @@ class MedicationDashboardController extends BaseApiController
         return [];
     }
 
-    private function getTodayStats(array $branchIds, string $today): array
+    private function getActiveMedications(array $branchIds, string $today)
     {
-        $activeMeds = Medication::where('is_active', true)
+        return Medication::with(['resident:id,first_name,last_name,profile_image_url', 'drug:id,name'])
+            ->where('is_active', true)
             ->whereIn('branch_id', $branchIds)
             ->where('start_date', '<=', $today)
             ->where(fn ($q) => $q->whereNull('end_date')->orWhere('end_date', '>=', $today))
             ->get();
+    }
 
-        $scheduled = 0;
-        foreach ($activeMeds as $med) {
+    private function countScheduledDoses($medications): int
+    {
+        $count = 0;
+        foreach ($medications as $med) {
             for ($i = 1; $i <= 4; $i++) {
-                if ($med->{"time_{$i}"}) {
-                    $scheduled++;
-                }
+                if ($med->{"time_{$i}"}) $count++;
             }
         }
+        return $count;
+    }
+
+    private function getTodayStats(array $branchIds, string $today, $activeMeds): array
+    {
+        $scheduled = $this->countScheduledDoses($activeMeds);
 
         $baseQuery = MedicationAdministration::whereIn('branch_id', $branchIds)
             ->whereDate('administered_at', $today);
@@ -88,20 +117,17 @@ class MedicationDashboardController extends BaseApiController
         ];
     }
 
-    private function getUpcomingMedications(array $branchIds, Carbon $now): array
+    private function getUpcomingMedications($activeMeds, Carbon $now): array
     {
-        $today = $now->toDateString();
-        $windowHours = 4;
-
-        $activeMeds = Medication::with(['resident:id,first_name,last_name,profile_image_url', 'drug:id,name'])
-            ->where('is_active', true)
-            ->whereIn('branch_id', $branchIds)
-            ->where('start_date', '<=', $today)
-            ->where(fn ($q) => $q->whereNull('end_date')->orWhere('end_date', '>=', $today))
-            ->get();
-
         $upcoming = [];
-        $cutoff = $now->copy()->addHours($windowHours);
+        $cutoff = $now->copy()->addHours(4);
+
+        $medicationIds = $activeMeds->pluck('id')->toArray();
+        $todayAdmins = MedicationAdministration::whereIn('medication_id', $medicationIds)
+            ->whereDate('administered_at', $now->toDateString())
+            ->whereIn('status', ['completed', 'refused', 'hospital_admission', 'pharmacy_administration_confirm'])
+            ->get()
+            ->groupBy('medication_id');
 
         foreach ($activeMeds as $med) {
             for ($i = 1; $i <= 4; $i++) {
@@ -111,17 +137,17 @@ class MedicationDashboardController extends BaseApiController
                 $parts = explode(':', $timeStr);
                 if (count($parts) < 2) continue;
 
-                $scheduledTime = $now->copy()->setTime((int)$parts[0], (int)$parts[1], 0);
-
+                $scheduledTime = $now->copy()->setTime((int) $parts[0], (int) $parts[1], 0);
                 if ($scheduledTime->lt($now) || $scheduledTime->gt($cutoff)) continue;
 
-                $hasAdmin = MedicationAdministration::where('medication_id', $med->id)
-                    ->whereBetween('administered_at', [
+                $medAdmins = $todayAdmins->get($med->id, collect());
+                $hasAdmin = $medAdmins->contains(function ($admin) use ($scheduledTime) {
+                    $adminAt = Carbon::parse($admin->administered_at);
+                    return $adminAt->between(
                         $scheduledTime->copy()->subMinutes(60),
-                        $scheduledTime->copy()->addMinutes(60),
-                    ])
-                    ->whereIn('status', ['completed', 'refused', 'hospital_admission', 'pharmacy_administration_confirm'])
-                    ->exists();
+                        $scheduledTime->copy()->addMinutes(60)
+                    );
+                });
 
                 if ($hasAdmin) continue;
 
@@ -142,7 +168,6 @@ class MedicationDashboardController extends BaseApiController
         }
 
         usort($upcoming, fn ($a, $b) => $a['minutes_until'] - $b['minutes_until']);
-
         return array_slice($upcoming, 0, 15);
     }
 
@@ -177,8 +202,16 @@ class MedicationDashboardController extends BaseApiController
 
     private function getAdherenceTrend(array $branchIds, Carbon $now): array
     {
-        $trend = [];
+        $dateFrom = $now->copy()->subDays(6)->startOfDay();
+        $dateTo = $now->copy()->endOfDay();
 
+        $dailyData = MedicationAdministration::whereIn('branch_id', $branchIds)
+            ->whereBetween('administered_at', [$dateFrom, $dateTo])
+            ->selectRaw('DATE(administered_at) as date, status, count(*) as count')
+            ->groupBy('date', 'status')
+            ->get();
+
+        $trend = [];
         for ($daysAgo = 6; $daysAgo >= 0; $daysAgo--) {
             $date = $now->copy()->subDays($daysAgo);
             $dateStr = $date->toDateString();
@@ -189,19 +222,12 @@ class MedicationDashboardController extends BaseApiController
                 ->where(fn ($q) => $q->whereNull('end_date')->orWhere('end_date', '>=', $dateStr))
                 ->get();
 
-            $scheduled = 0;
-            foreach ($activeMeds as $med) {
-                for ($i = 1; $i <= 4; $i++) {
-                    if ($med->{"time_{$i}"}) $scheduled++;
-                }
-            }
+            $scheduled = $this->countScheduledDoses($activeMeds);
 
-            $base = MedicationAdministration::whereIn('branch_id', $branchIds)
-                ->whereDate('administered_at', $dateStr);
-
-            $administered = (clone $base)->where('status', 'completed')->count();
-            $missed = (clone $base)->where('status', 'missed')->count();
-            $refused = (clone $base)->where('status', 'refused')->count();
+            $dayData = $dailyData->where('date', $dateStr);
+            $administered = (int) $dayData->where('status', 'completed')->sum('count');
+            $missed = (int) $dayData->where('status', 'missed')->sum('count');
+            $refused = (int) $dayData->where('status', 'refused')->sum('count');
 
             $adherence = $scheduled > 0 ? round(($administered / $scheduled) * 100) : 0;
 
@@ -249,50 +275,46 @@ class MedicationDashboardController extends BaseApiController
             ->toArray();
     }
 
-    private function getResidentSummary(array $branchIds, string $today): array
+    private function getResidentSummary(array $branchIds, string $today, $activeMeds): array
     {
-        $residents = Resident::whereIn('branch_id', $branchIds)
+        $medsByResident = $activeMeds->groupBy('resident_id');
+
+        if ($medsByResident->isEmpty()) {
+            return [];
+        }
+
+        $residentIds = $medsByResident->keys()->toArray();
+
+        $residents = Resident::whereIn('id', $residentIds)
             ->where('status', 'active')
-            ->select('id', 'first_name', 'last_name', 'profile_image_url', 'branch_id')
+            ->select('id', 'first_name', 'last_name', 'profile_image_url')
+            ->get()
+            ->keyBy('id');
+
+        $todayAdmins = MedicationAdministration::whereIn('resident_id', $residentIds)
+            ->whereDate('administered_at', $today)
+            ->selectRaw('resident_id, status, count(*) as count')
+            ->groupBy('resident_id', 'status')
             ->get();
 
+        $adminsByResident = $todayAdmins->groupBy('resident_id');
+
         $summary = [];
+        foreach ($medsByResident as $residentId => $meds) {
+            $resident = $residents->get($residentId);
+            if (!$resident) continue;
 
-        foreach ($residents as $resident) {
-            $activeMedCount = Medication::where('resident_id', $resident->id)
-                ->where('is_active', true)
-                ->where('start_date', '<=', $today)
-                ->where(fn ($q) => $q->whereNull('end_date')->orWhere('end_date', '>=', $today))
-                ->count();
-
-            if ($activeMedCount === 0) continue;
-
-            $activeMeds = Medication::where('resident_id', $resident->id)
-                ->where('is_active', true)
-                ->where('start_date', '<=', $today)
-                ->where(fn ($q) => $q->whereNull('end_date')->orWhere('end_date', '>=', $today))
-                ->get();
-
-            $scheduled = 0;
-            foreach ($activeMeds as $med) {
-                for ($i = 1; $i <= 4; $i++) {
-                    if ($med->{"time_{$i}"}) $scheduled++;
-                }
-            }
-
-            $base = MedicationAdministration::where('resident_id', $resident->id)
-                ->whereDate('administered_at', $today);
-
-            $administered = (clone $base)->where('status', 'completed')->count();
-            $missedToday = (clone $base)->where('status', 'missed')->count();
-
+            $scheduled = $this->countScheduledDoses($meds);
+            $resAdmins = $adminsByResident->get($residentId, collect());
+            $administered = (int) $resAdmins->where('status', 'completed')->sum('count');
+            $missedToday = (int) $resAdmins->where('status', 'missed')->sum('count');
             $adherence = $scheduled > 0 ? round(($administered / $scheduled) * 100) : 0;
 
             $summary[] = [
-                'resident_id' => $resident->id,
+                'resident_id' => $residentId,
                 'resident_name' => trim($resident->first_name . ' ' . $resident->last_name),
                 'resident_image' => $resident->profile_image_url,
-                'active_medications' => $activeMedCount,
+                'active_medications' => $meds->count(),
                 'scheduled_today' => $scheduled,
                 'administered_today' => $administered,
                 'missed_today' => $missedToday,
