@@ -1203,8 +1203,6 @@ function QuickAdminister({ medication, onSuccess }) {
                                         
                                         const msg = e?.response?.data?.message || 'Unable to record administration.';
                                         setError(msg);
-                                        // Re-open modal to show error
-                                        setIsDosageModalOpen(true);
                                     } finally {
                                         setSubmitting(false);
                                     }
