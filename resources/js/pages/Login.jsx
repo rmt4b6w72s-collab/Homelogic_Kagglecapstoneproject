@@ -1,76 +1,12 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { Lock, Mail, Eye, EyeOff, Clock, Home, Building2 } from 'lucide-react';
+import { Lock, Mail, Eye, EyeOff, ShieldCheck, ClipboardList, Clock, Home, Info, Building2 } from 'lucide-react';
 import { toast } from 'sonner';
 import api, { storeAuthToken } from '../services/api';
 import { useAnimateOnMount } from '../hooks/useAnimateOnMount';
 import { slideInLeft, slideInRight, fadeIn, shake, shouldAnimate } from '../utils/animationPresets';
 import { getUserLocation, formatDistance } from '../utils/location';
 import logger from '../utils/logger';
-
-const SLIDES = [
-    '/images/slides/slide-1-problem.png',
-    '/images/slides/slide-3-hero.png',
-    '/images/slides/slide-6-features-resident.png',
-    '/images/slides/slide-5-features-care.png',
-    '/images/slides/slide-7-features-operations.png',
-    '/images/slides/slide-8-analytics.png',
-    '/images/slides/slide-4-transform.png',
-];
-
-function ImageCarousel() {
-    const [current, setCurrent] = useState(0);
-    const [loaded, setLoaded] = useState({});
-    const timerRef = useRef(null);
-
-    const advance = useCallback(() => {
-        setCurrent((prev) => (prev + 1) % SLIDES.length);
-    }, []);
-
-    useEffect(() => {
-        timerRef.current = setInterval(advance, 5000);
-        return () => clearInterval(timerRef.current);
-    }, [advance]);
-
-    const goTo = (idx) => {
-        setCurrent(idx);
-        clearInterval(timerRef.current);
-        timerRef.current = setInterval(advance, 5000);
-    };
-
-    return (
-        <div className="relative w-full h-full rounded-2xl overflow-hidden shadow-2xl">
-            {SLIDES.map((src, i) => (
-                <img
-                    key={src}
-                    src={src}
-                    alt=""
-                    onLoad={() => setLoaded((s) => ({ ...s, [i]: true }))}
-                    className="absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ease-in-out"
-                    style={{ opacity: i === current && loaded[i] ? 1 : 0 }}
-                    draggable={false}
-                />
-            ))}
-            {!loaded[current] && (
-                <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[#1e3a5f] to-[#2a7a6f]">
-                    <div className="h-8 w-8 border-3 border-white/40 border-t-white rounded-full animate-spin" />
-                </div>
-            )}
-            <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-2 z-10">
-                {SLIDES.map((_, i) => (
-                    <button
-                        key={i}
-                        onClick={() => goTo(i)}
-                        className={`h-2 rounded-full transition-all duration-300 ${
-                            i === current ? 'w-6 bg-white' : 'w-2 bg-white/50 hover:bg-white/70'
-                        }`}
-                        aria-label={`Go to slide ${i + 1}`}
-                    />
-                ))}
-            </div>
-        </div>
-    );
-}
 
 export default function Login() {
     const navigate = useNavigate();
@@ -250,9 +186,56 @@ export default function Login() {
         <div className="h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 via-blue-50 to-slate-100 overflow-hidden">
             <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center">
                 <div className="w-full grid lg:grid-cols-2 gap-6 items-center">
-                    {/* Brand / Image Carousel Panel */}
-                    <div ref={brandPanelRef} className="hidden lg:block h-[560px]">
-                        <ImageCarousel />
+                    {/* Brand / Welcome Panel - Compact with High Contrast */}
+                    <div 
+                        ref={brandPanelRef}
+                        className="hidden lg:flex flex-col items-center justify-center p-8 rounded-2xl shadow-2xl" 
+                        style={{ background: `linear-gradient(135deg, #1e40af, #2563eb, #3b82f6)` }}
+                    >
+                        <div className="text-center space-y-6">
+                            <a
+                                href="/"
+                                className="flex flex-col items-center space-y-4 hover:opacity-90 transition-opacity cursor-pointer group no-underline"
+                            >
+                                <div className="h-16 w-16 rounded-full shadow-xl ring-4 ring-white/30 overflow-hidden bg-white/20 backdrop-blur-sm group-hover:ring-white/50 transition-all">
+                                    <img
+                                        src="/images/logonew.png"
+                                        alt="HomeLogic360"
+                                        className="h-full w-full object-cover"
+                                        onError={(e) => {
+                                            e.target.style.display = 'none';
+                                        }}
+                                    />
+                                </div>
+                                <div>
+                                    <p className="uppercase tracking-[0.3em] text-xs font-bold text-white/90 mb-2">
+                                        HomeLogic360
+                                    </p>
+                                    <h1 className="text-2xl font-bold leading-tight text-white drop-shadow-lg">
+                                        AFH Management System
+                                    </h1>
+                                </div>
+                            </a>
+                            <a
+                                href="/"
+                                className="text-xs text-white/90 font-medium hover:text-white underline"
+                            >
+                                Click here to return to welcome page
+                            </a>
+                            <p className="text-white text-sm leading-relaxed max-w-sm font-medium drop-shadow">
+                                Streamline resident care, staff communication, and critical operations in one secure platform.
+                            </p>
+                            <div className="flex flex-col gap-3 text-sm">
+                                <div className="flex items-center justify-center space-x-2 bg-white/10 backdrop-blur-sm rounded-lg px-4 py-2.5 border border-white/20">
+                                    <ShieldCheck className="h-5 w-5 text-white" />
+                                    <span className="text-white font-semibold">Enterprise Security</span>
+                                </div>
+                                <div className="flex items-center justify-center space-x-2 bg-white/10 backdrop-blur-sm rounded-lg px-4 py-2.5 border border-white/20">
+                                    <ClipboardList className="h-5 w-5 text-white" />
+                                    <span className="text-white font-semibold">Centralized Operations</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     {/* Authentication Panel - Compact with High Contrast */}
