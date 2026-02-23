@@ -80,6 +80,7 @@ const navigation = [
         icon: Pill, 
         path: '/medications', 
         children: [
+            { name: 'Dashboard', path: '/medications/dashboard' },
             { name: 'Medications', path: '/medications' },
             { name: 'Medication Deliveries', path: '/medication-deliveries' },
             { name: 'Medication Report', path: '/medications/report' },

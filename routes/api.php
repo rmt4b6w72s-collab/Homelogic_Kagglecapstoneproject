@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\LeaveRequestController;
 use App\Http\Controllers\Api\RoleController;
 use App\Http\Controllers\Api\ChartController;
 use App\Http\Controllers\Api\MedicationAdministrationController;
+use App\Http\Controllers\Api\MedicationDashboardController;
 use App\Http\Controllers\Api\AssessmentController;
 use App\Http\Controllers\Api\AssessmentQuestionController;
 use App\Http\Controllers\Api\SleepRecordController;
@@ -121,6 +122,9 @@ Route::prefix('v1')->middleware([\App\Http\Middleware\SetFacilityContext::class]
     Route::apiResource('assessments', AssessmentController::class)->middleware('auth:sanctum');
     Route::patch('/assessments/{id}/status', [AssessmentController::class, 'updateStatus'])->middleware('auth:sanctum');
     Route::patch('/assessments/{assessment}/questions/{question}', [AssessmentQuestionController::class, 'update'])->middleware('auth:sanctum');
+
+    // Medication Dashboard
+    Route::get('/medications/dashboard', [MedicationDashboardController::class, 'index'])->middleware('auth:sanctum');
 
     // Medications
     Route::apiResource('medications', MedicationController::class)->middleware('auth:sanctum');
