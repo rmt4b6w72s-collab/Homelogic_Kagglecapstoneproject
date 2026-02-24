@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import { useBranchUpdates } from '../hooks/useRealtimeUpdates';
 import logger from '../utils/logger';
 import {
     setPacificServerTime,
@@ -190,6 +191,21 @@ export default function Medications() {
             setPacificServerTime(currentUser.app_current_time, currentUser.app_timezone_offset);
         }
     }, [currentUser?.app_current_time]);
+
+    // Real-time: refresh medication and administration data when any administration is recorded
+    useBranchUpdates(
+        currentUser?.branch_id || currentUser?.assigned_branch_id,
+        ['medication.administration.created'],
+        {
+            queryKeys: [
+                ['medications'],
+                ['medication-administrations'],
+            ],
+            showToast: true,
+            getToastMessage: (_event, data) =>
+                `${data.medication?.name || 'Medication'} administered to ${data.resident?.name || 'resident'}`,
+        }
+    );
 
     // Check if user is a caregiver
     const isCaregiver = React.useMemo(() => {

@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import api from '../services/api';
 import { Clock, User, Calendar, Search, Filter, Download, MapPin } from 'lucide-react';
 import SectionCard from '../components/SectionCard';
 import EmptyState from '../components/ui/EmptyState';
 import { format } from 'date-fns';
+import { useStaffClockUpdates } from '../hooks/useRealtimeUpdates';
+import logger from '../utils/logger';
 
 export default function StaffClockInsView() {
     const [search, setSearch] = useState('');
@@ -15,6 +17,16 @@ export default function StaffClockInsView() {
     const [dateTo, setDateTo] = useState('');
     const [showFilters, setShowFilters] = useState(false);
     const [page, setPage] = useState(1);
+    const [currentUser, setCurrentUser] = useState(null);
+
+    useEffect(() => {
+        api.get('/user')
+            .then((r) => setCurrentUser(r.data))
+            .catch((e) => logger.error('Failed to fetch user:', e));
+    }, []);
+
+    // Real-time: update table immediately when staff clock in or out
+    useStaffClockUpdates(currentUser?.facility_id, { showToast: true });
     const controlClass = 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-[var(--theme-primary)]';
     const iconInputClass = 'w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-[var(--theme-primary)]';
 

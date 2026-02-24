@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Bell, Clock3, Check, AlarmClockOff, Flame, Pill } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import { useFacilityUpdates } from '../hooks/useRealtimeUpdates';
+import logger from '../utils/logger';
 
 const PACIFIC_FORMATTER = new Intl.DateTimeFormat('en-US', {
     timeZone: 'America/Los_Angeles',
@@ -14,8 +16,15 @@ const PACIFIC_FORMATTER = new Intl.DateTimeFormat('en-US', {
 
 export default function ReminderPanel() {
     const [isOpen, setIsOpen] = useState(false);
+    const [currentUser, setCurrentUser] = useState(null);
     const queryClient = useQueryClient();
     const navigate = useNavigate();
+
+    useEffect(() => {
+        api.get('/user')
+            .then((r) => setCurrentUser(r.data))
+            .catch((e) => logger.error('[ReminderPanel] user fetch failed:', e));
+    }, []);
 
     const { data, isLoading, refetch } = useQuery({
         queryKey: ['reminders', 'upcoming'],
@@ -26,6 +35,16 @@ export default function ReminderPanel() {
         refetchInterval: 60000,
         refetchOnWindowFocus: true,
     });
+
+    // Real-time: refresh reminders whenever a new medication administration is recorded
+    useFacilityUpdates(
+        currentUser?.facility_id,
+        ['medication.administration.created'],
+        {
+            queryKeys: [['reminders', 'upcoming']],
+            invalidateQueries: true,
+        }
+    );
 
     const events = data?.events ?? [];
 

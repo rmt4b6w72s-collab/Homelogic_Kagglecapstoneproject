@@ -1,114 +1,92 @@
 /**
- * Laravel Echo Service
- * Handles real-time WebSocket connections using Pusher
+ * Laravel Echo Service — Reverb WebSocket backend
  */
 
 import Echo from 'laravel-echo';
 import Pusher from 'pusher-js';
 import logger from '../utils/logger';
 
-// Make Pusher available globally for Laravel Echo
 window.Pusher = Pusher;
 
-// Get configuration from environment or use defaults
-const pusherKey = import.meta.env.VITE_PUSHER_APP_KEY || '';
-const pusherCluster = import.meta.env.VITE_PUSHER_APP_CLUSTER || 'mt1';
-const pusherHost = import.meta.env.VITE_PUSHER_HOST;
-const pusherPort = import.meta.env.VITE_PUSHER_PORT || 443;
-const pusherScheme = import.meta.env.VITE_PUSHER_SCHEME || 'https';
+const reverbKey    = import.meta.env.VITE_REVERB_APP_KEY    || '';
+const reverbHost   = import.meta.env.VITE_REVERB_HOST       || 'localhost';
+const reverbPort   = parseInt(import.meta.env.VITE_REVERB_PORT   || '8080', 10);
+const reverbScheme = import.meta.env.VITE_REVERB_SCHEME     || 'http';
 
-// Get auth token from localStorage
 function getAuthToken() {
-  return localStorage.getItem('auth_token');
+    return localStorage.getItem('auth_token');
 }
 
-// Get CSRF token from meta tag
 function getCsrfToken() {
-  return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+    return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
 }
 
-// Create Echo instance
 let echoInstance = null;
 
 export function initializeEcho() {
-  if (echoInstance) {
-    return echoInstance;
-  }
+    if (echoInstance) return echoInstance;
 
-  if (!pusherKey) {
-    logger.warn('[Echo] Pusher key not configured. Real-time features will be disabled.');
-    return null;
-  }
+    if (!reverbKey) {
+        logger.warn('[Echo] VITE_REVERB_APP_KEY not set. Real-time features disabled.');
+        return null;
+    }
 
-  try {
-    echoInstance = new Echo({
-      broadcaster: 'pusher',
-      key: pusherKey,
-      cluster: pusherCluster,
-      host: pusherHost,
-      port: pusherPort,
-      scheme: pusherScheme,
-      encrypted: pusherScheme === 'https',
-      forceTLS: pusherScheme === 'https',
-      enabledTransports: ['ws', 'wss'],
-      authEndpoint: '/api/v1/broadcasting/auth',
-      auth: {
-        headers: {
-          'Authorization': `Bearer ${getAuthToken()}`,
-          'X-CSRF-TOKEN': getCsrfToken(),
-          'Accept': 'application/json',
-        },
-      },
-    });
+    try {
+        echoInstance = new Echo({
+            broadcaster: 'reverb',
+            key: reverbKey,
+            wsHost: reverbHost,
+            wsPort: reverbPort,
+            wssPort: reverbPort,
+            forceTLS: reverbScheme === 'https',
+            enabledTransports: ['ws', 'wss'],
+            authEndpoint: '/api/v1/broadcasting/auth',
+            auth: {
+                headers: {
+                    Authorization: `Bearer ${getAuthToken()}`,
+                    'X-CSRF-TOKEN': getCsrfToken(),
+                    Accept: 'application/json',
+                },
+            },
+        });
 
-    // Handle connection events
-    echoInstance.connector.pusher.connection.bind('connected', () => {
-      logger.debug('[Echo] Connected to Pusher');
-    });
+        echoInstance.connector.pusher.connection.bind('connected', () => {
+            logger.debug('[Echo] Connected to Reverb');
+        });
 
-    echoInstance.connector.pusher.connection.bind('disconnected', () => {
-      logger.debug('[Echo] Disconnected from Pusher');
-    });
+        echoInstance.connector.pusher.connection.bind('disconnected', () => {
+            logger.debug('[Echo] Disconnected from Reverb');
+        });
 
-    echoInstance.connector.pusher.connection.bind('error', (error) => {
-      logger.error('[Echo] Connection error:', error);
-    });
+        echoInstance.connector.pusher.connection.bind('error', (error) => {
+            logger.error('[Echo] Connection error:', error);
+        });
 
-    logger.debug('[Echo] Initialized successfully');
-    return echoInstance;
-  } catch (error) {
-    logger.error('[Echo] Failed to initialize:', error);
-    return null;
-  }
+        logger.debug('[Echo] Initialized successfully (Reverb)');
+        return echoInstance;
+    } catch (error) {
+        logger.error('[Echo] Failed to initialize:', error);
+        return null;
+    }
 }
 
-/**
- * Get Echo instance (initialize if needed)
- */
 export function getEcho() {
-  if (!echoInstance) {
-    return initializeEcho();
-  }
-  return echoInstance;
+    if (!echoInstance) return initializeEcho();
+    return echoInstance;
 }
 
-/**
- * Disconnect Echo
- */
 export function disconnectEcho() {
-  if (echoInstance) {
-    echoInstance.disconnect();
-    echoInstance = null;
-    logger.debug('[Echo] Disconnected');
-  }
+    if (echoInstance) {
+        echoInstance.disconnect();
+        echoInstance = null;
+        logger.debug('[Echo] Disconnected');
+    }
 }
 
-/**
- * Reconnect Echo (useful after login)
- */
+/** Call after a fresh login so the auth header is up-to-date */
 export function reconnectEcho() {
-  disconnectEcho();
-  return initializeEcho();
+    disconnectEcho();
+    return initializeEcho();
 }
 
 export default getEcho;

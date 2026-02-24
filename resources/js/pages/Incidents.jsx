@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useForm, FormProvider } from 'react-hook-form';
 import api from '../services/api';
+import { useFacilityUpdates } from '../hooks/useRealtimeUpdates';
 import { offlinePost } from '../services/offlineApi';
 import { 
     AlertTriangle, Plus, Edit, Trash2, Eye, X, 
@@ -161,6 +162,20 @@ export default function Incidents() {
         };
         fetchUser();
     }, []);
+
+    // Real-time: refresh incident list when a new incident is created
+    useFacilityUpdates(
+        currentUser?.facility_id,
+        ['incident.created'],
+        {
+            queryKeys: [['incidents']],
+            showToast: true,
+            getToastMessage: (_event, data) => {
+                const severity = data.severity ? ` (${data.severity})` : '';
+                return `New incident reported for ${data.resident?.name || 'resident'}${severity}`;
+            },
+        }
+    );
 
     // Check if user is a caregiver
     const isCaregiver = React.useMemo(() => {

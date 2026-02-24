@@ -38,7 +38,7 @@ import ActionableItemsSection from '../components/dashboard/ActionableItemsSecti
 import MobileDashboard from '../components/dashboard/MobileDashboard';
 import UpcomingEventsWidget from '../components/dashboard/UpcomingEventsWidget';
 import CaregiverDashboard from '../components/dashboard/CaregiverDashboard';
-import { useUserNotifications, useFacilityUpdates } from '../hooks/useRealtimeUpdates';
+import { useUserNotifications, useFacilityUpdates, useStaffClockUpdates } from '../hooks/useRealtimeUpdates';
 
 // Register Chart.js components
 ChartJS.register(
@@ -242,6 +242,32 @@ export default function Dashboard() {
             navigate('/super-admin/dashboard', { replace: true });
         }
     }, [currentUser, navigate]);
+
+    // Real-time: invalidate dashboard stats when medication, vitals, incidents, or staff events fire
+    useFacilityUpdates(
+        currentUser?.facility_id,
+        ['medication.administration.created', 'vital.sign.created', 'incident.created'],
+        {
+            queryKeys: [
+                ['dashboard-stats'],
+                ['dashboard-daily-activities'],
+                ['dashboard-module-stats'],
+            ],
+        }
+    );
+
+    // Real-time: staff clock-in/out events
+    useStaffClockUpdates(currentUser?.facility_id, {
+        queryKeys: [['dashboard-stats'], ['staff-clock-ins-all']],
+        showToast: true,
+        getToastMessage: (_event, data) =>
+            data.clock_out_at
+                ? `${data.staff?.name || 'Staff'} clocked out`
+                : `${data.staff?.name || 'Staff'} clocked in`,
+    });
+
+    // Real-time: personal notifications
+    useUserNotifications(currentUser?.id, { showToast: true });
 
     const { data: stats, isLoading, error } = useQuery({
         queryKey: ['dashboard-stats'],

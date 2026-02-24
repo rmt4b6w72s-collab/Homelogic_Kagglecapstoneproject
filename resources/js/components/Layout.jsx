@@ -60,6 +60,8 @@ import {
     getTimezoneDisplayParts,
 } from '../utils/pacificTime';
 import logger from '../utils/logger';
+import { useUserNotifications, useFacilityUpdates } from '../hooks/useRealtimeUpdates';
+import { reconnectEcho } from '../services/echo';
 
 const navigation = [
     { name: 'Dashboard', icon: LayoutDashboard, path: '/dashboard', children: null },
@@ -257,9 +259,24 @@ export default function Layout() {
         if (currentUserData) {
             setCurrentUser(currentUserData);
             setPacificServerTime(currentUserData?.app_current_time, currentUserData?.app_timezone_offset);
+            // Re-connect Echo once we have the auth token (ensures auth header is fresh)
+            reconnectEcho();
         }
         setIsLoadingUser(isLoadingUserData);
     }, [currentUserData, isLoadingUserData]);
+
+    // Real-time: push notifications to this user
+    useUserNotifications(currentUserData?.id, { showToast: true });
+
+    // Real-time: facility-wide events that should refresh dashboard counters
+    useFacilityUpdates(
+        currentUserData?.facility_id,
+        ['medication.administration.created', 'vital.sign.created', 'incident.created'],
+        {
+            queryKeys: [['dashboard-stats']],
+            invalidateQueries: true,
+        }
+    );
 
     // User menu is now handled by Radix DropdownMenu - no need for manual click outside handling
 
