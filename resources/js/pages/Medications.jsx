@@ -2307,8 +2307,8 @@ function QuickAdminister({ medication, onSuccess }) {
                                         ? `${trimmedNotes ? `${trimmedNotes}\n` : ''}${lateNoteMarker}`
                                         : trimmedNotes || undefined;
 
-                                    const administeredAt = getPacificISODateTime();
-                                    const realUtcNow = new Date().toISOString();
+                                    const administeredAt = new Date().toISOString();
+                                    const realUtcNow = administeredAt;
                                     const statusLabel = status.charAt(0).toUpperCase() + status.slice(1);
 
                                     // Optimistically update the cache immediately
@@ -2590,7 +2590,7 @@ function QuickAdminister({ medication, onSuccess }) {
                                         formData.append('medication_id', medication.id);
                                         formData.append('resident_id', medication.resident_id);
                                         formData.append('branch_id', medication.branch_id);
-                                        formData.append('administered_at', getPacificISODateTime());
+                                        formData.append('administered_at', new Date().toISOString());
                                         formData.append('status', 'hospital_admission');
                                         formData.append('notes', hospitalNotes);
 

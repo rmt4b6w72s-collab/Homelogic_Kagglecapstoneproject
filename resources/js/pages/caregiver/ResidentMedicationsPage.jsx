@@ -1053,7 +1053,7 @@ function QuickAdminister({ medication, onSuccess }) {
                                         ? `${trimmedNotes ? `${trimmedNotes}\n` : ''}${lateNoteMarker}`
                                         : trimmedNotes || undefined;
 
-                                    const administeredAt = getPacificISODateTime();
+                                    const administeredAt = new Date().toISOString();
                                     const realUtcNow = new Date().toISOString();
                                     const statusLabel = status.charAt(0).toUpperCase() + status.slice(1);
                                     
