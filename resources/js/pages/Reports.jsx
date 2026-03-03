@@ -24,6 +24,7 @@ import {
     Building2,
     DollarSign,
 } from 'lucide-react';
+import PrintableReportLayout from '../components/reports/PrintableReportLayout';
 
 export default function Reports() {
     const navigate = useNavigate();
@@ -354,10 +355,11 @@ export default function Reports() {
     ];
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
-            <div className="max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-8">
+        <PrintableReportLayout title="Reports">
+            <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
+                <div className="max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-8">
 
-                {/* Featured Analytics Dashboard */}
+                    {/* Featured Analytics Dashboard */}
                 {reportCategories[0] && (
                     <div className="mb-6">
                         <div
@@ -451,6 +453,7 @@ export default function Reports() {
                     ))
                 )}
             </div>
-        </div>
+            </div>
+        </PrintableReportLayout>
     );
 }

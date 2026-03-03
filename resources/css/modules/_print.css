@@ -1,0 +1,41 @@
+/* Printable reports: hide app chrome so only report content + header print */
+
+@media print {
+    /* Hide sidebar (first child of main app flex container) */
+    .flex.h-screen > aside {
+        display: none !important;
+    }
+
+    /* Hide top bar (header inside content area) */
+    .flex.h-screen > div > header {
+        display: none !important;
+    }
+
+    /* Hide the Print button in report layout (no-print class) */
+    .no-print {
+        display: none !important;
+    }
+
+    /* Ensure report content takes full width and prints cleanly */
+    .print-report {
+        min-height: auto;
+        background: white;
+    }
+
+    .print-report-header {
+        box-shadow: none;
+        border: 1px solid #e5e7eb;
+        margin-bottom: 1rem;
+    }
+
+    .print-report-content {
+        break-inside: avoid;
+    }
+
+    /* Optional: ensure charts/cards have background when "Background graphics" is off */
+    .print-report canvas,
+    .print-report [class*="bg-"] {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+}

@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { getLocalDateString } from '../../utils/pacificTime';
 import { usePreventDateInputReload } from '../../hooks/usePreventDateInputReload';
+import PrintableReportLayout from '../../components/reports/PrintableReportLayout';
 
 export default function ChartReports() {
     const [dateFrom, setDateFrom] = useState(() => {
@@ -87,18 +88,22 @@ export default function ChartReports() {
     }
 
     return (
-        <div ref={containerRef} className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-            <div className="max-w-7xl mx-auto px-4 py-8">
-                {/* Header */}
-                <div className="mb-8">
-                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-                        <div>
-                            <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-                                <BarChart3 className="h-8 w-8 text-[var(--theme-primary)]" />
-                                Chart Reports Dashboard
-                            </h1>
-                            <p className="mt-2 text-gray-600">Comprehensive overview of all facility metrics and analytics</p>
-                        </div>
+        <PrintableReportLayout
+            title="Chart Reports Dashboard"
+            subtitle={`${dateFrom} to ${dateTo}`}
+        >
+            <div ref={containerRef} className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+                <div className="max-w-7xl mx-auto px-4 py-8">
+                    {/* Page header (report title is in PrintableReportLayout) */}
+                    <div className="mb-8">
+                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+                            <div>
+                                <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+                                    <BarChart3 className="h-8 w-8 text-[var(--theme-primary)]" />
+                                    Chart Reports Dashboard
+                                </h1>
+                                <p className="mt-2 text-gray-600">Comprehensive overview of all facility metrics and analytics</p>
+                            </div>
                         <div className="flex items-center gap-3">
                             <button
                                 onClick={handleExport}
@@ -612,7 +617,8 @@ export default function ChartReports() {
                         <p className="text-gray-600">Start recording data to see analytics and insights here.</p>
                     </div>
                 )}
+                </div>
             </div>
-        </div>
+        </PrintableReportLayout>
     );
 }

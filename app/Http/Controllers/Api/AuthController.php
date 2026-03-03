@@ -455,6 +455,15 @@ class AuthController extends Controller
             }
         }
 
+        // Report header context for printable reports (facility/branch name and address)
+        $payload['report_context'] = [
+            'facility_name' => $facility ? $facility->name : ($payload['facility_branding']['name'] ?? ''),
+            'facility_address' => $facility ? ($facility->address ?? '') : '',
+            'facility_phone' => $facility ? ($facility->phone ?? '') : '',
+            'branch_name' => $user->assignedBranch ? $user->assignedBranch->name : null,
+            'branch_address' => $user->assignedBranch ? ($user->assignedBranch->address ?? '') : '',
+        ];
+
         // Include effective permissions for navigation checks
         // Get all permissions the user effectively has (considering facility overrides)
         // Ensure it's always an array to prevent frontend errors

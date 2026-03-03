@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { getLocalDateString } from '../../utils/pacificTime';
 import { usePreventDateInputReload } from '../../hooks/usePreventDateInputReload';
+import PrintableReportLayout from '../../components/reports/PrintableReportLayout';
 
 export default function SleepCharts() {
     const [dateFrom, setDateFrom] = useState(() => {
@@ -85,18 +86,22 @@ export default function SleepCharts() {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-            <div className="max-w-7xl mx-auto px-4 py-8">
-                {/* Header */}
-                <div className="mb-8">
-                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-                        <div>
-                            <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-                                <Moon className="h-8 w-8 text-[var(--theme-primary)]" />
-                                Sleep Analytics Dashboard
-                            </h1>
-                            <p className="mt-2 text-gray-600">Comprehensive sleep data analysis and insights</p>
-                        </div>
+        <PrintableReportLayout
+            title="Sleep Analytics Dashboard"
+            subtitle={`${dateFrom} to ${dateTo}`}
+        >
+            <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+                <div className="max-w-7xl mx-auto px-4 py-8">
+                    {/* Header */}
+                    <div className="mb-8">
+                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+                            <div>
+                                <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+                                    <Moon className="h-8 w-8 text-[var(--theme-primary)]" />
+                                    Sleep Analytics Dashboard
+                                </h1>
+                                <p className="mt-2 text-gray-600">Comprehensive sleep data analysis and insights</p>
+                            </div>
                         <div className="flex items-center gap-3">
                             <button
                                 onClick={handleExport}
@@ -468,6 +473,7 @@ export default function SleepCharts() {
                     </div>
                 </div>
             </div>
-        </div>
+            </div>
+        </PrintableReportLayout>
     );
 }
