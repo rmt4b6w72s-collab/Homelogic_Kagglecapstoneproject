@@ -40,12 +40,12 @@ class AuthController extends Controller
                 ], 422);
             }
             
-            // Find facility by provider code
+            // Find facility by provider code (excludes soft-deleted)
             $facility = Facility::whereRaw('LOWER(provider_code) = ?', [strtolower($request->provider_code)])->first();
             
             if (!$facility) {
                 return response()->json([
-                    'message' => 'Invalid provider code',
+                    'message' => 'Invalid provider code or facility no longer active.',
                 ], 422);
             }
             
@@ -102,6 +102,16 @@ class AuthController extends Controller
                     'message' => 'This account has been deactivated. Please contact an administrator.',
                 ], 403);
             }
+
+            // Block login if user belongs to a deleted (soft-deleted) facility
+            if ($user->facility_id) {
+                $userFacility = Facility::find($user->facility_id);
+                if (!$userFacility) {
+                    return response()->json([
+                        'message' => 'This facility is no longer active. Please contact an administrator.',
+                    ], 403);
+                }
+            }
             
             // Clear any existing session before logging in to avoid conflicts
             if ($request->hasSession()) {
@@ -126,6 +136,21 @@ class AuthController extends Controller
                 return response()->json([
                     'message' => 'This account has been deactivated. Please contact an administrator.',
                 ], 403);
+            }
+
+            // Block access if user's facility has been deleted (soft-deleted)
+            if ($user->facility_id) {
+                $userFacility = Facility::find($user->facility_id);
+                if (!$userFacility) {
+                    Auth::logout();
+                    $request->session()->invalidate();
+                    $request->session()->regenerateToken();
+                    $request->user()->tokens()->delete();
+
+                    return response()->json([
+                        'message' => 'This facility is no longer active. Please contact an administrator.',
+                    ], 403);
+                }
             }
 
             // Validate provider code if provided (for single-facility emails, provider_code is optional but validated if provided)
@@ -228,6 +253,14 @@ class AuthController extends Controller
             if (!$user) {
                 return response()->json(['message' => 'Unauthenticated'], 401);
             }
+            // Reject if user's facility has been deleted (so frontend redirects to login)
+            if ($user->facility_id) {
+                $facility = Facility::find($user->facility_id);
+                if (!$facility) {
+                    $request->user()->currentAccessToken()->delete();
+                    return response()->json(['message' => 'This facility is no longer active.'], 401);
+                }
+            }
             return response()->json($this->transformUser($user));
         } catch (\Exception $e) {
             \Log::error('Error in user endpoint: ' . $e->getMessage(), [
@@ -289,6 +322,15 @@ class AuthController extends Controller
 
         if (!$user) {
             return response()->json(['valid' => false], 401);
+        }
+
+        // Invalidate token if user's facility has been deleted (soft-deleted)
+        if ($user->facility_id) {
+            $facility = Facility::find($user->facility_id);
+            if (!$facility) {
+                $request->user()->currentAccessToken()->delete();
+                return response()->json(['valid' => false], 401);
+            }
         }
 
         return response()->json([

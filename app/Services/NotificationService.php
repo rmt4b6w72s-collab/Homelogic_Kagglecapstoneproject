@@ -63,6 +63,17 @@ class NotificationService
     }
 
     /**
+     * Skip sending notification when facility is missing or soft-deleted (e.g. facility was deleted from super admin).
+     */
+    protected function shouldSkipNotificationForFacility($facility): bool
+    {
+        if (!$facility) {
+            return true;
+        }
+        return method_exists($facility, 'trashed') && $facility->trashed();
+    }
+
+    /**
      * Send email notification for late medication
      */
     public function sendLateMedicationEmail(Medication $medication, Resident $resident, $caregivers): void
@@ -72,6 +83,13 @@ class NotificationService
         
         // Get facility from resident's branch
         $facility = $this->mailConfigService->getFacilityFromResident($resident);
+        if ($this->shouldSkipNotificationForFacility($facility)) {
+            Log::info('Late medication email skipped - facility missing or deleted', [
+                'medication_id' => $medication->id,
+                'resident_id' => $resident->id,
+            ]);
+            return;
+        }
         
         // Configure mail for facility if available
         if ($facility) {
@@ -142,6 +160,10 @@ class NotificationService
         
         // Get facility from resident's branch
         $facility = $this->mailConfigService->getFacilityFromResident($resident);
+        if ($this->shouldSkipNotificationForFacility($facility)) {
+            Log::info('Late vital sign email skipped - facility missing or deleted', ['resident_id' => $resident->id]);
+            return;
+        }
         
         // Configure mail for facility if available
         if ($facility) {
@@ -194,6 +216,10 @@ class NotificationService
     public function sendAppointmentEmail(Appointment $appointment, $recipients, string $eventType): void
     {
         $facility = $this->mailConfigService->getFacilityFromResident($appointment->resident);
+        if ($this->shouldSkipNotificationForFacility($facility)) {
+            Log::info('Appointment email skipped - facility missing or deleted', ['appointment_id' => $appointment->id]);
+            return;
+        }
         
         if ($facility) {
             $this->mailConfigService->configureForFacility($facility);
@@ -254,7 +280,10 @@ class NotificationService
     public function sendIncidentEmail(Incident $incident, $recipients, string $eventType): void
     {
         $facility = $this->mailConfigService->getFacilityFromResident($incident->resident);
-        
+        if ($this->shouldSkipNotificationForFacility($facility)) {
+            Log::info('Incident email skipped - facility missing or deleted', ['incident_id' => $incident->id]);
+            return;
+        }
         if ($facility) {
             $this->mailConfigService->configureForFacility($facility);
         }
@@ -295,10 +324,11 @@ class NotificationService
     public function sendLeaveRequestEmail(LeaveRequest $leaveRequest, $recipients, string $eventType): void
     {
         $facility = $this->mailConfigService->getFacilityFromUser($leaveRequest->staff);
-        
-        if ($facility) {
-            $this->mailConfigService->configureForFacility($facility);
+        if ($this->shouldSkipNotificationForFacility($facility)) {
+            Log::info('Leave request email skipped - facility missing or deleted', ['leave_request_id' => $leaveRequest->id]);
+            return;
         }
+        $this->mailConfigService->configureForFacility($facility);
         
         // Use a generic notification type since leave requests aren't in preferences yet
         // Default to enabled
@@ -458,7 +488,10 @@ class NotificationService
     public function sendMedicationAdministrationEmail(MedicationAdministration $administration, $recipients): void
     {
         $facility = $this->mailConfigService->getFacilityFromResident($administration->resident);
-        
+        if ($this->shouldSkipNotificationForFacility($facility)) {
+            Log::info('Medication administration email skipped - facility missing or deleted', ['administration_id' => $administration->id]);
+            return;
+        }
         if ($facility) {
             $this->mailConfigService->configureForFacility($facility);
         }
@@ -498,7 +531,10 @@ class NotificationService
     public function sendVitalSignEmail($vitalSign, $recipients, bool $isCritical = false): void
     {
         $facility = $this->mailConfigService->getFacilityFromResident($vitalSign->resident);
-        
+        if ($this->shouldSkipNotificationForFacility($facility)) {
+            Log::info('Vital sign email skipped - facility missing or deleted', ['vital_sign_id' => $vitalSign->id]);
+            return;
+        }
         if ($facility) {
             $this->mailConfigService->configureForFacility($facility);
         }
@@ -540,10 +576,11 @@ class NotificationService
     public function sendSleepRecordEmail(SleepRecord $sleepRecord, $recipients): void
     {
         $facility = $this->mailConfigService->getFacilityFromResident($sleepRecord->resident);
-        
-        if ($facility) {
-            $this->mailConfigService->configureForFacility($facility);
+        if ($this->shouldSkipNotificationForFacility($facility)) {
+            Log::info('Sleep record email skipped - facility missing or deleted', ['sleep_record_id' => $sleepRecord->id]);
+            return;
         }
+        $this->mailConfigService->configureForFacility($facility);
         
         $recipientsToNotify = collect($recipients)->filter(function ($user) {
             return $user->email;
@@ -578,10 +615,11 @@ class NotificationService
     public function sendAssessmentEmail(Assessment $assessment, $recipients, string $eventType): void
     {
         $facility = $this->mailConfigService->getFacilityFromResident($assessment->resident);
-        
-        if ($facility) {
-            $this->mailConfigService->configureForFacility($facility);
+        if ($this->shouldSkipNotificationForFacility($facility)) {
+            Log::info('Assessment email skipped - facility missing or deleted', ['assessment_id' => $assessment->id]);
+            return;
         }
+        $this->mailConfigService->configureForFacility($facility);
         
         $recipientsToNotify = collect($recipients)->filter(function ($user) {
             return $user->email;
@@ -693,10 +731,14 @@ class NotificationService
     public function sendMedicationDeliveryEmail(MedicationDelivery $delivery, $recipients): void
     {
         $facility = $this->mailConfigService->getFacilityFromResident($delivery->resident);
-        
-        if ($facility) {
-            $this->mailConfigService->configureForFacility($facility);
+        if ($this->shouldSkipNotificationForFacility($facility)) {
+            Log::info('Medication delivery email skipped - facility missing or deleted', [
+                'delivery_id' => $delivery->id,
+            ]);
+            return;
         }
+
+        $this->mailConfigService->configureForFacility($facility);
         
         $recipientsToNotify = collect($recipients)->filter(function ($user) {
             return $user->email;
@@ -731,7 +773,10 @@ class NotificationService
     public function sendResidentSignOutEmail(ResidentSignOut $signOut, $recipients, string $eventType): void
     {
         $facility = $this->mailConfigService->getFacilityFromResident($signOut->resident);
-        
+        if ($this->shouldSkipNotificationForFacility($facility)) {
+            Log::info('Resident sign-out email skipped - facility missing or deleted', ['sign_out_id' => $signOut->id]);
+            return;
+        }
         if ($facility) {
             $this->mailConfigService->configureForFacility($facility);
         }
@@ -772,10 +817,11 @@ class NotificationService
     public function sendStaffClockInEmail(StaffClockIn $clockIn, $recipients, string $eventType): void
     {
         $facility = $clockIn->branch?->facility;
-        
-        if ($facility) {
-            $this->mailConfigService->configureForFacility($facility);
+        if ($this->shouldSkipNotificationForFacility($facility)) {
+            Log::info('Staff clock-in email skipped - facility missing or deleted', ['clock_in_id' => $clockIn->id]);
+            return;
         }
+        $this->mailConfigService->configureForFacility($facility);
         
         $recipientsToNotify = collect($recipients)->filter(function ($user) {
             return $user->email;
@@ -811,10 +857,11 @@ class NotificationService
     public function sendVisitorEmail(Visitor $visitor, $recipients, string $eventType): void
     {
         $facility = $this->mailConfigService->getFacilityFromResident($visitor->resident);
-        
-        if ($facility) {
-            $this->mailConfigService->configureForFacility($facility);
+        if ($this->shouldSkipNotificationForFacility($facility)) {
+            Log::info('Visitor email skipped - facility missing or deleted', ['visitor_id' => $visitor->id]);
+            return;
         }
+        $this->mailConfigService->configureForFacility($facility);
         
         $recipientsToNotify = collect($recipients)->filter(function ($user) {
             return $user->email;
@@ -850,10 +897,11 @@ class NotificationService
     public function sendEmployeeDocumentEmail(EmployeeDocument $document, $recipients, string $eventType): void
     {
         $facility = $this->mailConfigService->getFacilityFromUser($document->staff);
-        
-        if ($facility) {
-            $this->mailConfigService->configureForFacility($facility);
+        if ($this->shouldSkipNotificationForFacility($facility)) {
+            Log::info('Employee document email skipped - facility missing or deleted', ['document_id' => $document->id]);
+            return;
         }
+        $this->mailConfigService->configureForFacility($facility);
         
         $recipientsToNotify = collect($recipients)->filter(function ($user) {
             return $user->email;
@@ -889,10 +937,15 @@ class NotificationService
     public function sendMedicationEmail(Medication $medication, $recipients): void
     {
         $facility = $this->mailConfigService->getFacilityFromResident($medication->resident);
-        
-        if ($facility) {
-            $this->mailConfigService->configureForFacility($facility);
+        if ($this->shouldSkipNotificationForFacility($facility)) {
+            Log::info('Medication email skipped - facility missing or deleted', [
+                'medication_id' => $medication->id,
+                'resident_id' => $medication->resident_id,
+            ]);
+            return;
         }
+
+        $this->mailConfigService->configureForFacility($facility);
         
         $recipientsToNotify = collect($recipients)->filter(function ($user) {
             return $user->email;

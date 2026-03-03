@@ -492,8 +492,8 @@ class DashboardService
             }
         }
 
-        // If no facility found, try additional fallback methods for administrators
-        if (!$facilityId && $user && $user->role !== 'super_admin' && $isAdministrator) {
+        // If no facility found, try additional fallback methods for administrators (only if residents table has created_by)
+        if (!$facilityId && $user && $user->role !== 'super_admin' && $isAdministrator && Schema::hasColumn('residents', 'created_by')) {
             // Try to find facility from any residents created by this user
             $residentWithFacility = Resident::withoutGlobalScopes()
                 ->where('created_by', $user->id)
