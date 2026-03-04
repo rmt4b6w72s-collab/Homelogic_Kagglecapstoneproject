@@ -168,10 +168,12 @@ if (typeof window !== 'undefined') {
             setupOnlineSync();
         });
 
-        // Initialize Echo for real-time updates
-        import('./services/echo').then(({ initializeEcho }) => {
-            initializeEcho();
-        });
+        // Initialize Echo only when user is logged in (avoids WebSocket errors on public pages like /contact)
+        if (localStorage.getItem('auth_token')) {
+            import('./services/echo').then(({ initializeEcho }) => {
+                initializeEcho();
+            });
+        }
     }, 1000);
 }
 
