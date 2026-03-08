@@ -23,7 +23,6 @@ import {
     AlertTriangle,
     Building2,
     DollarSign,
-    ClipboardList,
     FileArchive,
 } from 'lucide-react';
 import PrintableReportLayout, { ReportPrintButton } from '../components/reports/PrintableReportLayout';
