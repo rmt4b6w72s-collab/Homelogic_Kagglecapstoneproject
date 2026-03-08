@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../services/api';
-import { Users, Plus, Mail, Edit, Trash2, Copy, Check, Building2 } from 'lucide-react';
+import { format } from 'date-fns';
+import { Users, Plus, Mail, Edit, Trash2, Copy, Check, Building2, MessageSquare, Send } from 'lucide-react';
 import SectionCard from '../../components/SectionCard';
 import EmptyState from '../../components/ui/EmptyState';
 import logger from '../../utils/logger';
@@ -24,6 +25,7 @@ export default function ResidentContacts() {
   const [form, setForm] = useState({ name: '', email: '', phone: '', relation: '' });
   const [inviteLink, setInviteLink] = useState(null);
   const [copied, setCopied] = useState(false);
+  const [messageBody, setMessageBody] = useState('');
 
   const { data: branchesData } = useQuery({
     queryKey: ['branches-list-contacts'],
@@ -54,6 +56,30 @@ export default function ResidentContacts() {
     enabled: !!residentId,
   });
   const contacts = contactsData?.data ?? [];
+
+  const { data: messagesData, isLoading: messagesLoading } = useQuery({
+    queryKey: ['family-messages', residentId],
+    queryFn: async () => {
+      const res = await api.get('/family/messages', { params: { resident_id: residentId } });
+      return res.data;
+    },
+    enabled: !!residentId,
+  });
+  const messages = messagesData?.data ?? [];
+
+  const sendMessageMutation = useMutation({
+    mutationFn: async () => {
+      await api.post('/family/messages', { resident_id: Number(residentId), body: messageBody.trim() });
+    },
+    onSuccess: () => {
+      setMessageBody('');
+      queryClient.invalidateQueries(['family-messages', residentId]);
+    },
+    onError: (e) => {
+      logger.error('Send message failed', e);
+      alert(e?.response?.data?.message || 'Failed to send message');
+    },
+  });
 
   const createMutation = useMutation({
     mutationFn: (body) => api.post('/resident-contacts', { ...body, resident_id: Number(residentId) }),
@@ -354,6 +380,67 @@ export default function ResidentContacts() {
                 ))}
               </ul>
             )}
+          </SectionCard>
+
+          <SectionCard title="Messages with family">
+            <p className="text-sm text-gray-600 mb-4">View and reply to messages from this resident&apos;s family in the Family Portal.</p>
+            <div className="border border-gray-200 rounded-lg overflow-hidden flex flex-col" style={{ minHeight: 280 }}>
+              <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50/50" style={{ maxHeight: 320 }}>
+                {messagesLoading ? (
+                  <div className="flex justify-center py-8">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[var(--theme-primary)]" />
+                  </div>
+                ) : messages.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    <MessageSquare className="w-10 h-10 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm">No messages yet. Family can message you from the portal; replies appear here.</p>
+                  </div>
+                ) : (
+                  messages.map((m) => (
+                    <div
+                      key={m.id}
+                      className={`flex ${m.sender_type === 'staff' ? 'justify-end' : 'justify-start'}`}
+                    >
+                      <div
+                        className={`max-w-[85%] rounded-lg px-4 py-2 ${
+                          m.sender_type === 'staff'
+                            ? 'bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)]'
+                            : 'bg-white border border-gray-200 text-gray-900'
+                        }`}
+                      >
+                        <p className="text-xs opacity-90">{m.sender_name}</p>
+                        <p className="text-sm mt-0.5">{m.body}</p>
+                        <p className="text-xs opacity-70 mt-1">{m.created_at ? format(new Date(m.created_at), 'MMM d, h:mm a') : ''}</p>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+              <div className="border-t border-gray-200 p-3 flex gap-2 bg-white">
+                <input
+                  type="text"
+                  value={messageBody}
+                  onChange={(e) => setMessageBody(e.target.value)}
+                  placeholder="Type a message to family..."
+                  className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-[var(--theme-primary)]"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      if (messageBody.trim() && residentId) sendMessageMutation.mutate();
+                    }
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => residentId && messageBody.trim() && sendMessageMutation.mutate()}
+                  disabled={!messageBody.trim() || !residentId || sendMessageMutation.isPending}
+                  className="px-4 py-2 bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] rounded-lg hover:opacity-90 disabled:opacity-50 flex items-center gap-2"
+                >
+                  <Send className="w-4 h-4" />
+                  Send
+                </button>
+              </div>
+            </div>
           </SectionCard>
         </>
       )}
