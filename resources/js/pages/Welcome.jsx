@@ -5,7 +5,7 @@ import {
   AlertCircle, Building2, Stethoscope, BarChart3, Shield, Clock,
   CheckCircle, FileText, TrendingUp, Zap, Database, Settings,
   Mail, Lock, Bell, Server, UserCheck, MapPin, ShoppingCart,
-  DollarSign, Bed, ArrowRight, Cloud, Play
+  DollarSign, Bed, ArrowRight, Cloud
 } from 'lucide-react';
 import PublicNavigation from '../components/PublicNavigation';
 import PublicFooter from '../components/PublicFooter';
@@ -483,20 +483,14 @@ export default function Welcome() {
           <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
             A short walkthrough of the platform (2–3 minutes). See resident management, medication tracking, and reporting in action.
           </p>
-          <div className="aspect-video bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl border-2 border-dashed border-gray-300 flex items-center justify-center">
-            <div className="text-center p-8">
-              <div className="w-20 h-20 rounded-full bg-blue-100 flex items-center justify-center mx-auto mb-4">
-                <Play className="w-10 h-10 text-blue-600 ml-1" />
-              </div>
-              <p className="text-gray-600 font-medium mb-2">Product video coming soon</p>
-              <p className="text-sm text-gray-500 mb-6">In the meantime, request a live demo to see the platform.</p>
-              <button
-                onClick={() => navigate('/contact?demo=1')}
-                className="bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-blue-700 transition-all"
-              >
-                Request Demo
-              </button>
-            </div>
+          <div className="aspect-video rounded-2xl overflow-hidden shadow-lg border border-gray-200">
+            <iframe
+              src="https://www.youtube.com/embed/kYCc5ygwVDM"
+              title="HomeLogic360 product video"
+              className="w-full h-full"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen
+            />
           </div>
         </div>
       </section>
