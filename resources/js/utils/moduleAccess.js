@@ -43,6 +43,8 @@ export const MODULE_MAP = {
   '/reports/vitals-history': 'reports',
   '/reports/sleep-charts': 'reports',
   '/reports/staff-charts': 'reports',
+  '/reports/care-logs': 'reports',
+  '/reports/inspection-package': 'reports',
   
   // Residents module
   '/administration/residents': 'residents',
@@ -60,6 +62,11 @@ export const MODULE_MAP = {
   // Leave Requests module
   '/leave-requests': 'leave_requests',
   '/administration/leave-requests': 'leave_requests',
+  
+  // Staff Scheduling module
+  '/staff/schedule': 'staff_scheduling',
+  '/staff/availability': 'staff_scheduling',
+  '/staff/attendance': 'staff_scheduling',
   
   // Billing & Expenses module
   '/billing/expense-categories': 'billing_expenses',

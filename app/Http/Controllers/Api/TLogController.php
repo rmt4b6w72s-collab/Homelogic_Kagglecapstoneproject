@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class TLogController extends BaseApiController
 {
@@ -290,5 +291,68 @@ class TLogController extends BaseApiController
         $fileName = $attachment->file_name ?? basename($attachment->file_path);
 
         return response()->download($filePath, $fileName);
+    }
+
+    /**
+     * Export resident care logs (T-Logs) as CSV for compliance/reporting.
+     * Query params: date_from, date_to, branch_id, resident_id
+     */
+    public function exportCareLogs(Request $request): StreamedResponse|JsonResponse
+    {
+        $query = TLog::with(['resident', 'branch', 'reporter', 'enteredBy']);
+
+        $this->applyBranchFilter($query, $request);
+
+        if ($request->filled('resident_id')) {
+            $query->where('resident_id', $request->get('resident_id'));
+        }
+        if ($request->filled('branch_id')) {
+            $query->where('branch_id', $request->get('branch_id'));
+        }
+        if ($request->filled('date_from')) {
+            $query->whereDate('reported_on', '>=', $request->get('date_from'));
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('reported_on', '<=', $request->get('date_to'));
+        }
+
+        $tLogs = $query->orderBy('reported_on', 'desc')->orderBy('created_at', 'desc')->get();
+
+        $filename = 'resident_care_logs_' . now()->format('Y-m-d_H-i-s') . '.csv';
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ];
+
+        return response()->streamDownload(function () use ($tLogs) {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, [
+                'Resident Name',
+                'Branch',
+                'Date',
+                'Types',
+                'Notification Level',
+                'Summary',
+                'Description',
+                'Reporter',
+                'Entered By',
+                'Reported On',
+            ]);
+            foreach ($tLogs as $log) {
+                fputcsv($file, [
+                    $log->resident?->name ?? '',
+                    $log->branch?->name ?? '',
+                    $log->reported_on?->format('Y-m-d') ?? '',
+                    is_array($log->types) ? implode(', ', $log->types) : (string) $log->types,
+                    $log->notification_level ?? '',
+                    $log->summary ?? '',
+                    $log->description ?? '',
+                    $log->reporter?->name ?? '',
+                    $log->enteredBy?->name ?? '',
+                    $log->reported_on?->format('Y-m-d H:i') ?? '',
+                ]);
+            }
+            fclose($file);
+        }, $filename, $headers);
     }
 }

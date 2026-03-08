@@ -198,6 +198,8 @@ const AppointmentsCharts = lazyWithRetry(() => import('./pages/reports/Appointme
 const VitalsHistory = lazyWithRetry(() => import('./pages/reports/VitalsHistory'));
 const SleepCharts = lazyWithRetry(() => import('./pages/reports/SleepCharts'));
 const StaffCharts = lazyWithRetry(() => import('./pages/reports/StaffCharts'));
+const CareLogsReport = lazyWithRetry(() => import('./pages/reports/CareLogsReport'));
+const InspectionPackage = lazyWithRetry(() => import('./pages/reports/InspectionPackage'));
 const ChartData = lazyWithRetry(() => import('./pages/ChartData'));
 const BehaviorChartsView = lazyWithRetry(() => import('./pages/administration/BehaviorChartsView'));
 const CaregiverChartsPage = lazyWithRetry(() => import('./pages/caregiver/CaregiverChartsPage'));
@@ -205,6 +207,13 @@ const CaregiverResidentChart = lazyWithRetry(() => import('./pages/caregiver/Car
 const PublicStaffClockIn = lazyWithRetry(() => import('./pages/public/PublicStaffClockIn'));
 const StaffClock = lazyWithRetry(() => import('./pages/StaffClock'));
 const StaffClockInsView = lazyWithRetry(() => import('./pages/StaffClockInsView'));
+const StaffSchedule = lazyWithRetry(() => import('./pages/staff/StaffSchedule'));
+const StaffAvailability = lazyWithRetry(() => import('./pages/staff/StaffAvailability'));
+const PortalLayout = lazyWithRetry(() => import('./components/PortalLayout'));
+const PortalDashboard = lazyWithRetry(() => import('./pages/portal/PortalDashboard'));
+const PortalCareUpdates = lazyWithRetry(() => import('./pages/portal/PortalCareUpdates'));
+const PortalMessages = lazyWithRetry(() => import('./pages/portal/PortalMessages'));
+const AcceptInvite = lazyWithRetry(() => import('./pages/portal/AcceptInvite'));
 const ResidentSignOut = lazyWithRetry(() => import('./pages/ResidentSignOut'));
 const ResidentSignOutsView = lazyWithRetry(() => import('./pages/ResidentSignOutsView'));
 const Visitors = lazyWithRetry(() => import('./pages/Visitors'));
@@ -263,6 +272,13 @@ function App() {
             <Route path="/documentation" element={<Suspense fallback={<PageLoader />}><Documentation /></Suspense>} />
             <Route path="/blog" element={<Suspense fallback={<PageLoader />}><Blog /></Suspense>} />
             <Route path="/blog/:slug" element={<Suspense fallback={<PageLoader />}><BlogPost /></Suspense>} />
+            <Route path="/portal/accept-invite" element={<Suspense fallback={<PageLoader />}><AcceptInvite /></Suspense>} />
+            {/* Family portal - protected */}
+            <Route path="portal" element={<ProtectedRoute><Suspense fallback={<PageLoader />}><PortalLayout /></Suspense></ProtectedRoute>}>
+                <Route index element={<Suspense fallback={<PageLoader />}><PortalDashboard /></Suspense>} />
+                <Route path="care-updates" element={<Suspense fallback={<PageLoader />}><PortalCareUpdates /></Suspense>} />
+                <Route path="messages" element={<Suspense fallback={<PageLoader />}><PortalMessages /></Suspense>} />
+            </Route>
             {/* Protected routes - dashboard and app pages */}
             {/* Match all paths that aren't public routes (defined above) */}
             {/* React Router matches in order, so / won't match here since it's defined above */}
@@ -315,6 +331,9 @@ function App() {
                 <Route path="check-in-dashboard" element={<Suspense fallback={<PageLoader />}><CheckInDashboard /></Suspense>} />
                 <Route path="staff/clock" element={<Suspense fallback={<PageLoader />}><StaffClock /></Suspense>} />
                 <Route path="staff/clock-ins" element={<Suspense fallback={<PageLoader />}><StaffClockInsView /></Suspense>} />
+                <Route path="staff/schedule" element={<Suspense fallback={<PageLoader />}><ModuleProtectedRoute module="staff_scheduling"><StaffSchedule /></ModuleProtectedRoute></Suspense>} />
+                <Route path="staff/availability" element={<Suspense fallback={<PageLoader />}><ModuleProtectedRoute module="staff_scheduling"><StaffAvailability /></ModuleProtectedRoute></Suspense>} />
+                <Route path="staff/attendance" element={<Suspense fallback={<PageLoader />}><ModuleProtectedRoute module="staff_scheduling"><StaffClockInsView /></ModuleProtectedRoute></Suspense>} />
                 <Route path="residents/sign-out" element={<Suspense fallback={<PageLoader />}><ResidentSignOut /></Suspense>} />
                 <Route path="residents/sign-outs/view-all" element={<Suspense fallback={<PageLoader />}><ResidentSignOutsView /></Suspense>} />
                 <Route path="visitors" element={<Suspense fallback={<PageLoader />}><Visitors /></Suspense>} />
@@ -336,6 +355,8 @@ function App() {
                 <Route path="reports/vitals-history" element={<Suspense fallback={<PageLoader />}><VitalsHistory /></Suspense>} />
                 <Route path="reports/sleep-charts" element={<Suspense fallback={<PageLoader />}><SleepCharts /></Suspense>} />
                 <Route path="reports/staff-charts" element={<Suspense fallback={<PageLoader />}><StaffCharts /></Suspense>} />
+                <Route path="reports/care-logs" element={<Suspense fallback={<PageLoader />}><CareLogsReport /></Suspense>} />
+                <Route path="reports/inspection-package" element={<Suspense fallback={<PageLoader />}><InspectionPackage /></Suspense>} />
 
                 {/* Super Admin */}
                 <Route path="super-admin/dashboard" element={<Suspense fallback={<PageLoader />}><SuperAdminDashboard /></Suspense>} />

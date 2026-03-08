@@ -7,6 +7,7 @@ use App\Models\IncidentAttachment;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class IncidentController extends BaseApiController
 {
@@ -451,5 +452,85 @@ class IncidentController extends BaseApiController
         $incident->markAsClosed(auth()->user(), $request->get('notes'));
 
         return response()->json($incident->load(['resident', 'branch', 'reportedBy', 'assignedTo', 'resolvedBy']));
+    }
+
+    /**
+     * Export incidents as CSV for compliance. Query params: date_from, date_to, branch_id, status
+     */
+    public function export(Request $request): StreamedResponse|JsonResponse
+    {
+        if ($error = $this->requireModuleAccess(\App\Constants\Modules::INCIDENTS)) {
+            return $error;
+        }
+
+        $query = Incident::with(['resident', 'branch', 'reportedBy', 'assignedTo', 'resolvedBy']);
+        $this->applyFacilityFilter($query, $request->user());
+        $this->applyBranchFilter($query, $request);
+
+        if ($request->filled('date_from')) {
+            $query->whereDate('incident_date', '>=', $request->get('date_from'));
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('incident_date', '<=', $request->get('date_to'));
+        }
+        if ($request->filled('branch_id')) {
+            $query->where('branch_id', $request->get('branch_id'));
+        }
+        if ($request->filled('status') && $request->get('status') !== 'all') {
+            $query->where('status', $request->get('status'));
+        }
+
+        $incidents = $query->orderBy('incident_date', 'desc')->orderBy('created_at', 'desc')->get();
+
+        $filename = 'incident_reports_' . now()->format('Y-m-d_H-i-s') . '.csv';
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ];
+
+        return response()->streamDownload(function () use ($incidents) {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, [
+                'Incident Number',
+                'Resident',
+                'Branch',
+                'Type',
+                'Severity',
+                'Priority',
+                'Status',
+                'Incident Date',
+                'Location',
+                'Description',
+                'Action Taken',
+                'Witnesses',
+                'Follow Up',
+                'Reported By',
+                'Assigned To',
+                'Resolved By',
+                'Resolved At',
+            ]);
+            foreach ($incidents as $inc) {
+                fputcsv($file, [
+                    $inc->incident_number ?? '',
+                    $inc->resident ? trim($inc->resident->first_name . ' ' . $inc->resident->last_name) : '',
+                    $inc->branch?->name ?? '',
+                    $inc->incident_type ?? '',
+                    $inc->severity ?? '',
+                    $inc->priority ?? '',
+                    $inc->status ?? '',
+                    $inc->incident_date?->format('Y-m-d H:i') ?? '',
+                    $inc->location ?? '',
+                    $inc->description ?? '',
+                    $inc->action_taken ?? '',
+                    $inc->witnesses ?? '',
+                    $inc->follow_up ?? '',
+                    $inc->reportedBy?->name ?? '',
+                    $inc->assignedTo?->name ?? '',
+                    $inc->resolvedBy?->name ?? '',
+                    $inc->resolved_at?->format('Y-m-d H:i') ?? '',
+                ]);
+            }
+            fclose($file);
+        }, $filename, $headers);
     }
 }

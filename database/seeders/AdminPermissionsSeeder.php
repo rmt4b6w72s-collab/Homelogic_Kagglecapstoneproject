@@ -74,6 +74,8 @@ class AdminPermissionsSeeder extends Seeder
             ['name' => 'edit_leave_requests', 'group' => 'Staff', 'description' => 'Edit leave requests'],
             ['name' => 'approve_leave_requests', 'group' => 'Staff', 'description' => 'Approve leave requests'],
             ['name' => 'reject_leave_requests', 'group' => 'Staff', 'description' => 'Reject leave requests'],
+            ['name' => 'view_schedules', 'group' => 'Staff', 'description' => 'View staff schedules'],
+            ['name' => 'manage_schedules', 'group' => 'Staff', 'description' => 'Create, edit and delete shifts and availability'],
             
             // Role & Permission permissions
             ['name' => 'view_roles', 'group' => 'Roles', 'description' => 'View roles list'],

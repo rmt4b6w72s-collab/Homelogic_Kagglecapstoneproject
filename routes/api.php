@@ -102,6 +102,26 @@ Route::prefix('v1')->middleware([\App\Http\Middleware\SetFacilityContext::class]
     Route::get('/residents/{id}/appointments', [ResidentController::class, 'appointments'])->middleware('auth:sanctum');
     Route::get('/residents/{id}/vitals', [ResidentController::class, 'vitals'])->middleware('auth:sanctum');
 
+    // Resident contacts (family portal invites) - staff only
+    Route::get('/resident-contacts', [\App\Http\Controllers\Api\ResidentContactController::class, 'index'])->middleware('auth:sanctum');
+    Route::post('/resident-contacts', [\App\Http\Controllers\Api\ResidentContactController::class, 'store'])->middleware('auth:sanctum');
+    Route::get('/resident-contacts/{id}', [\App\Http\Controllers\Api\ResidentContactController::class, 'show'])->middleware('auth:sanctum');
+    Route::put('/resident-contacts/{id}', [\App\Http\Controllers\Api\ResidentContactController::class, 'update'])->middleware('auth:sanctum');
+    Route::delete('/resident-contacts/{id}', [\App\Http\Controllers\Api\ResidentContactController::class, 'destroy'])->middleware('auth:sanctum');
+    Route::post('/resident-contacts/{id}/send-invite', [\App\Http\Controllers\Api\ResidentContactController::class, 'sendInvite'])->middleware('auth:sanctum');
+
+    // Family portal - family users only
+    Route::get('/family/residents', [\App\Http\Controllers\Api\FamilyController::class, 'residents'])->middleware('auth:sanctum');
+    Route::get('/family/care-updates', [\App\Http\Controllers\Api\FamilyController::class, 'careUpdates'])->middleware('auth:sanctum');
+    Route::get('/family/messages/threads', [\App\Http\Controllers\Api\FamilyMessageController::class, 'threads'])->middleware('auth:sanctum');
+    Route::get('/family/messages', [\App\Http\Controllers\Api\FamilyMessageController::class, 'index'])->middleware('auth:sanctum');
+    Route::post('/family/messages', [\App\Http\Controllers\Api\FamilyMessageController::class, 'store'])->middleware('auth:sanctum');
+    Route::post('/family/messages/{id}/mark-read', [\App\Http\Controllers\Api\FamilyMessageController::class, 'markRead'])->middleware('auth:sanctum');
+
+    // Family invite (public)
+    Route::get('/family/invite/{token}', [\App\Http\Controllers\Api\FamilyInviteController::class, 'show']);
+    Route::post('/family/invite/accept', [\App\Http\Controllers\Api\FamilyInviteController::class, 'accept'])->middleware('throttle:10,1');
+
     // Appointments
     Route::get('/appointment-types', [AppointmentController::class, 'types'])->middleware('auth:sanctum');
     Route::get('/appointments/statistics', [AppointmentController::class, 'statistics'])->middleware('auth:sanctum'); // Must come BEFORE apiResource
@@ -109,11 +129,16 @@ Route::prefix('v1')->middleware([\App\Http\Middleware\SetFacilityContext::class]
     Route::patch('/appointments/{id}/status', [AppointmentController::class, 'updateStatus'])->middleware('auth:sanctum');
 
     // Incidents
+    Route::get('/incidents/export', [\App\Http\Controllers\Api\IncidentController::class, 'export'])->middleware('auth:sanctum');
     Route::apiResource('incidents', \App\Http\Controllers\Api\IncidentController::class)->middleware('auth:sanctum');
     Route::post('/incidents/{id}/mark-resolved', [\App\Http\Controllers\Api\IncidentController::class, 'markResolved'])->middleware('auth:sanctum');
     Route::post('/incidents/{id}/mark-closed', [\App\Http\Controllers\Api\IncidentController::class, 'markClosed'])->middleware('auth:sanctum');
 
+    // Compliance / Inspection Package
+    Route::get('/compliance/inspection-package', [\App\Http\Controllers\Api\ComplianceReportController::class, 'inspectionPackage'])->middleware('auth:sanctum');
+
     // T-Logs
+    Route::get('/t-logs/export/care-logs', [\App\Http\Controllers\Api\TLogController::class, 'exportCareLogs'])->middleware('auth:sanctum');
     Route::apiResource('t-logs', \App\Http\Controllers\Api\TLogController::class)->middleware('auth:sanctum');
     Route::post('/t-logs/{id}/attachments', [\App\Http\Controllers\Api\TLogController::class, 'uploadAttachment'])->middleware('auth:sanctum');
     Route::get('/t-logs/{id}/attachments/{attachmentId}/download', [\App\Http\Controllers\Api\TLogController::class, 'downloadAttachment'])->middleware('auth:sanctum');
@@ -216,6 +241,10 @@ Route::prefix('v1')->middleware([\App\Http\Middleware\SetFacilityContext::class]
 
     // Leave Requests
     Route::apiResource('leave-requests', LeaveRequestController::class)->middleware('auth:sanctum');
+
+    // Staff Scheduling
+    Route::apiResource('shifts', \App\Http\Controllers\Api\ShiftController::class)->middleware('auth:sanctum');
+    Route::apiResource('staff-availability', \App\Http\Controllers\Api\StaffAvailabilityController::class)->middleware('auth:sanctum');
 
     // Roles & permissions
     Route::apiResource('roles', RoleController::class)->middleware('auth:sanctum');

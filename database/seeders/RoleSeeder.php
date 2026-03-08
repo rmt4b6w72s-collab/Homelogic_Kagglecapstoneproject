@@ -55,6 +55,11 @@ class RoleSeeder extends Seeder
             'guard_name' => 'web',
         ]);
 
+        $family = Role::create([
+            'name' => 'family',
+            'guard_name' => 'web',
+        ]);
+
         // Get all permissions
         $allPermissions = Permission::all()->pluck('id')->toArray();
 
@@ -80,7 +85,8 @@ class RoleSeeder extends Seeder
             'Reports & Analytics',
             'Notifications'
         ])->pluck('id')->toArray();
-        $manager->syncPermissions($managerPermissions);
+        $managerPermissions = array_merge($managerPermissions, Permission::whereIn('name', ['view_schedules', 'manage_schedules'])->pluck('id')->toArray());
+        $manager->syncPermissions(array_unique($managerPermissions));
 
         // Supervisor - Supervisory permissions
         $supervisorPermissions = Permission::whereIn('group', [
@@ -98,7 +104,8 @@ class RoleSeeder extends Seeder
             'delete_leave_requests',
             'delete_assignments'
         ])->pluck('id')->toArray();
-        $supervisor->syncPermissions($supervisorPermissions);
+        $supervisorPermissions = array_merge($supervisorPermissions, Permission::whereIn('name', ['view_schedules', 'manage_schedules'])->pluck('id')->toArray());
+        $supervisor->syncPermissions(array_unique($supervisorPermissions));
 
         // Nurse - Clinical permissions
         $nursePermissions = Permission::whereIn('group', [
@@ -117,7 +124,8 @@ class RoleSeeder extends Seeder
             'edit_own_profile',
             'view_own_leave_requests',
             'create_leave_requests',
-            'edit_own_leave_requests'
+            'edit_own_leave_requests',
+            'view_schedules'
         ])->pluck('id')->toArray());
         $nurse->syncPermissions($nursePermissions);
 
@@ -133,7 +141,8 @@ class RoleSeeder extends Seeder
             'view_own_leave_requests',
             'create_leave_requests',
             'edit_own_leave_requests',
-            'view_notifications'
+            'view_notifications',
+            'view_schedules'
         ])->pluck('id')->toArray();
         $caregiver->syncPermissions($caregiverPermissions);
 
@@ -148,6 +157,14 @@ class RoleSeeder extends Seeder
             'view_notifications'
         ])->pluck('id')->toArray();
         $supportStaff->syncPermissions($supportPermissions);
+
+        // Family - portal access only; data scoped via resident_contacts in API
+        $familyPermissions = Permission::whereIn('name', [
+            'view_own_profile',
+            'edit_own_profile',
+            'view_notifications'
+        ])->pluck('id')->toArray();
+        $family->syncPermissions($familyPermissions);
 
         $this->command->info('Roles and permissions assigned successfully.');
     }

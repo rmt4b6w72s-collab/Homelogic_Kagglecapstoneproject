@@ -220,6 +220,20 @@ class User extends Authenticatable implements FilamentUser
         return $this->hasOne(StaffClockIn::class, 'staff_id')->where('is_active', true);
     }
 
+    public function residentContacts()
+    {
+        return $this->hasMany(ResidentContact::class);
+    }
+
+    public function isFamily(): bool
+    {
+        $role = $this->role ? strtolower(trim($this->role)) : '';
+        if ($role === 'family' || $role === 'family_member') {
+            return true;
+        }
+        return $this->hasRole('family') || $this->hasRole('family_member');
+    }
+
     public function roles()
     {
         return $this->morphToMany(Role::class, 'model', 'model_has_roles');

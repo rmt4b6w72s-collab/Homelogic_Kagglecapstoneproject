@@ -129,6 +129,11 @@ class Resident extends Model
         return $this->hasMany(TLog::class);
     }
 
+    public function residentContacts(): HasMany
+    {
+        return $this->hasMany(ResidentContact::class);
+    }
+
     public function medications(): HasMany
     {
         return $this->hasMany(Medication::class);

@@ -124,6 +124,16 @@ const navigation = [
         ]
     },
     { 
+        name: 'Staff Scheduling', 
+        icon: Clock, 
+        path: '/staff/schedule', 
+        children: [
+            { name: 'Schedule', path: '/staff/schedule' },
+            { name: 'Availability', path: '/staff/availability' },
+            { name: 'Attendance', path: '/staff/attendance' },
+        ]
+    },
+    { 
         name: 'Pharmacy', 
         icon: Building2, 
         path: '/pharmacy/dashboard', 

@@ -23,6 +23,8 @@ import {
     AlertTriangle,
     Building2,
     DollarSign,
+    ClipboardList,
+    FileArchive,
 } from 'lucide-react';
 import PrintableReportLayout, { ReportPrintButton } from '../components/reports/PrintableReportLayout';
 
@@ -244,6 +246,26 @@ export default function Reports() {
                     icon: Moon,
                     link: '/reports/sleep-charts',
                     value: statsData?.sleep || 0,
+                    gradient: 'from-[var(--theme-primary)] to-[var(--theme-primary-dark)]',
+                    iconBg: 'bg-[var(--theme-primary-bg-light)]',
+                    iconColor: 'text-[var(--theme-primary)]',
+                },
+                {
+                    title: 'Resident Care Logs',
+                    description: 'T-Log / care notes for compliance and inspection',
+                    icon: ClipboardList,
+                    link: '/reports/care-logs',
+                    value: 0,
+                    gradient: 'from-[var(--theme-primary)] to-[var(--theme-primary-dark)]',
+                    iconBg: 'bg-[var(--theme-primary-bg-light)]',
+                    iconColor: 'text-[var(--theme-primary)]',
+                },
+                {
+                    title: 'Inspection Package',
+                    description: 'ZIP of care logs, incidents, medications, vitals for inspections',
+                    icon: FileArchive,
+                    link: '/reports/inspection-package',
+                    value: 0,
                     gradient: 'from-[var(--theme-primary)] to-[var(--theme-primary-dark)]',
                     iconBg: 'bg-[var(--theme-primary-bg-light)]',
                     iconColor: 'text-[var(--theme-primary)]',

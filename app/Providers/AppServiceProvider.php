@@ -44,7 +44,9 @@ use App\Models\PharmacySupplier;
 use App\Models\GroceryStatusUpdate;
 use App\Observers\GroceryStatusUpdateObserver;
 use App\Models\Notification;
+use App\Models\Shift;
 use App\Observers\NotificationObserver;
+use App\Observers\ShiftObserver;
 use App\Listeners\LogAuthentication;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Logout;
@@ -94,6 +96,7 @@ class AppServiceProvider extends ServiceProvider
         PharmacySupplier::observe(PharmacySupplierObserver::class);
         GroceryStatusUpdate::observe(GroceryStatusUpdateObserver::class);
         Notification::observe(NotificationObserver::class);
+        Shift::observe(ShiftObserver::class);
         
         // Register authentication event listeners
         Event::listen(Login::class, LogAuthentication::class);

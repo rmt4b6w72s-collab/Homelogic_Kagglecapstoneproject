@@ -20,6 +20,7 @@ class Modules
     public const GROCERY_STATUS = 'grocery_status';
     public const FIRE_DRILLS = 'fire_drills';
     public const BILLING_EXPENSES = 'billing_expenses';
+    public const STAFF_SCHEDULING = 'staff_scheduling';
 
     /**
      * Get all available modules
@@ -43,6 +44,7 @@ class Modules
             self::GROCERY_STATUS => 'Grocery Status',
             self::FIRE_DRILLS => 'Fire Drills',
             self::BILLING_EXPENSES => 'Billing & Expenses',
+            self::STAFF_SCHEDULING => 'Staff Scheduling',
         ];
     }
 

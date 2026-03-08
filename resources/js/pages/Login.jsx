@@ -46,10 +46,10 @@ export default function Login() {
                 if (window.location.pathname === '/login' && isMountedRef.current && location.pathname === '/login') {
                     // Validate token by making a quick API call
                     api.get('/user')
-                        .then(() => {
-                            // Token is valid, redirect to dashboard
+                        .then((res) => {
                             if (window.location.pathname === '/login' && isMountedRef.current) {
-                                navigate('/dashboard', { replace: true });
+                                const role = res.data?.role ?? '';
+                                navigate(role === 'family' ? '/portal' : '/dashboard', { replace: true });
                             }
                         })
                         .catch((err) => {
@@ -162,9 +162,8 @@ export default function Login() {
                     localStorage.setItem('user_name', response.data.user.name || response.data.user.email);
                     localStorage.setItem('user_role', response.data.user.role || '');
                 }
-                
-                // Redirect all users to React dashboard
-                navigate('/dashboard');
+                const role = response.data.user?.role ?? '';
+                navigate(role === 'family' ? '/portal' : '/dashboard');
             }
         } catch (err) {
             // Handle location-based errors with distance information
