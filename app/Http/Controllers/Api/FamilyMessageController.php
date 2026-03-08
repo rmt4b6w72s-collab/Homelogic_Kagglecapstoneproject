@@ -47,18 +47,14 @@ class FamilyMessageController extends BaseApiController
 
     /**
      * List threads (residents with recent messages) for current user.
+     * Family: any resident they're linked to that has at least one message (from staff or family).
      */
     public function threads(Request $request): JsonResponse
     {
         $user = $request->user();
         if ($user->isFamily()) {
-            $contactIds = ResidentContact::where('user_id', $user->id)->pluck('id');
-            $residentIds = ResidentContact::where('user_id', $user->id)->pluck('resident_id')->unique();
+            $residentIds = ResidentContact::where('user_id', $user->id)->pluck('resident_id')->unique()->values();
             $messages = FamilyMessage::whereIn('resident_id', $residentIds)
-                ->where(function ($q) use ($contactIds) {
-                    $q->where('sender_type', 'family')->whereIn('sender_id', $contactIds)
-                        ->orWhere('recipient_type', 'family')->whereIn('recipient_id', $contactIds);
-                })
                 ->orderByDesc('created_at')
                 ->get()
                 ->unique('resident_id')
