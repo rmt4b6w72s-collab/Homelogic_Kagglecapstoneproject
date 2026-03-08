@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { useNavigate, useLocation, useSearchParams, Link } from 'react-router-dom';
 import { Lock, Mail, Eye, EyeOff, ShieldCheck, ClipboardList, Clock, Home, Info, Building2 } from 'lucide-react';
 import { toast } from 'sonner';
 import api, { storeAuthToken } from '../services/api';
@@ -22,6 +22,15 @@ export default function Login() {
     const formRef = useAnimateOnMount('slideUp', { delay: 200, duration: 600 });
     const errorRef = useRef(null);
 
+    // If user landed on /login with an invite token (e.g. bad redirect), send them to accept-invite
+    const [searchParams] = useSearchParams();
+    React.useEffect(() => {
+        const inviteToken = searchParams.get('token');
+        if (location.pathname === '/login' && inviteToken) {
+            navigate('/portal/accept-invite?token=' + encodeURIComponent(inviteToken), { replace: true });
+        }
+    }, [location.pathname, searchParams, navigate]);
+
     // Redirect if already logged in (but validate token first)
     // Only do this if we're actually on the login page
     // Use a ref to track if component is mounted to prevent redirects after unmount
@@ -35,6 +44,8 @@ export default function Login() {
     }, []);
     
     React.useEffect(() => {
+        // Don't run redirect-if-logged-in if we're about to redirect to accept-invite
+        if (searchParams.get('token')) return;
         // Only run if we're on the login page and component is still mounted
         if (location.pathname !== '/login' || !isMountedRef.current) return;
         

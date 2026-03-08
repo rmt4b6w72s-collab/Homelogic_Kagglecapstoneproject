@@ -253,6 +253,8 @@ function App() {
             {/* Public routes - must be defined before catch-all */}
             <Route path="/" element={<Suspense fallback={<PageLoader />}><Welcome /></Suspense>} />
             <Route path="/login" element={<Login />} />
+            {/* Family portal invite - must be before path="portal" and path="/*" so it isn't caught by protected routes */}
+            <Route path="/portal/accept-invite" element={<Suspense fallback={<PageLoader />}><AcceptInvite /></Suspense>} />
             <Route path="/forgot-password" element={<Suspense fallback={<PageLoader />}><ForgotPassword /></Suspense>} />
             <Route path="/reset-password" element={<Suspense fallback={<PageLoader />}><ResetPassword /></Suspense>} />
             <Route path="/features" element={<Suspense fallback={<PageLoader />}><Features /></Suspense>} />
@@ -273,8 +275,7 @@ function App() {
             <Route path="/documentation" element={<Suspense fallback={<PageLoader />}><Documentation /></Suspense>} />
             <Route path="/blog" element={<Suspense fallback={<PageLoader />}><Blog /></Suspense>} />
             <Route path="/blog/:slug" element={<Suspense fallback={<PageLoader />}><BlogPost /></Suspense>} />
-            <Route path="/portal/accept-invite" element={<Suspense fallback={<PageLoader />}><AcceptInvite /></Suspense>} />
-            {/* Family portal - protected */}
+            {/* Family portal - protected (accept-invite is above as public) */}
             <Route path="portal" element={<ProtectedRoute><Suspense fallback={<PageLoader />}><PortalLayout /></Suspense></ProtectedRoute>}>
                 <Route index element={<Suspense fallback={<PageLoader />}><PortalDashboard /></Suspense>} />
                 <Route path="care-updates" element={<Suspense fallback={<PageLoader />}><PortalCareUpdates /></Suspense>} />
