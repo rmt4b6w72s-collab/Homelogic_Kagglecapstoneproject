@@ -431,11 +431,9 @@ class AuthController extends Controller
         if ($facility) {
             $payload['facility_branding'] = $facility->branding;
             
-            // Include enabled modules for this facility
-            $enabledModules = $facility->modules()
-                ->where('is_enabled', true)
-                ->pluck('module')
-                ->toArray();
+            // Include enabled modules for this facility (hasModuleAccess treats "no record" as enabled)
+            $allModuleKeys = array_keys(\App\Constants\Modules::all());
+            $enabledModules = array_values(array_filter($allModuleKeys, fn ($key) => $facility->hasModuleAccess($key)));
             $payload['enabled_modules'] = $enabledModules;
         } else {
             // Default branding for super admin / HomeLogic360
