@@ -27,7 +27,12 @@ import {
     AlertCircle,
     ArrowLeft,
     User,
+    ChevronDown,
+    ChevronRight,
+    Search,
+    Filter,
 } from 'lucide-react';
+
 import Select from '../../components/ui/radix/Select';
 import logger from '../../utils/logger';
 
@@ -136,6 +141,11 @@ export default function ResidentMedicationsPage() {
     const navigate = useNavigate();
     const { residentId } = useParams();
     const [currentUser, setCurrentUser] = useState(null);
+    const [activeTab, setActiveTab] = useState('scheduled'); // 'scheduled', 'am', 'pm', 'prn'
+    const [expandedRows, setExpandedRows] = useState(new Set());
+    const [search, setSearch] = useState('');
+    const [activeOnly, setActiveOnly] = useState(true);
+
 
     // Fetch current user
     React.useEffect(() => {
@@ -205,155 +215,278 @@ export default function ResidentMedicationsPage() {
         ? [resident.first_name, resident.middle_names, resident.last_name].filter(Boolean).join(' ') 
         : 'Resident';
 
-    const { activePeriodMedications, endedPeriodMedications } = React.useMemo(() => {
-        const now = getPacificNow();
-        const active = [];
-        const ended = [];
+    const { scheduledMeds, amMeds, pmMeds, prnMeds } = React.useMemo(() => {
+        const displayList = activeOnly ? activePeriodMedications : medicationsList;
+        const filteredList = search 
+            ? displayList.filter(m => (m.name || m.drug?.name || '').toLowerCase().includes(search.toLowerCase()))
+            : displayList;
 
-        medicationsList.forEach((medication) => {
-            if (isMedicationPeriodActiveNow(medication, now)) {
-                active.push(medication);
-            } else {
-                ended.push(medication);
+        const scheduled = [];
+        const am = [];
+        const pm = [];
+        const prn = [];
+
+        filteredList.forEach((medication) => {
+            const instruction = (medication.instructions || '').toLowerCase().trim();
+            const isPrn = instruction.includes('prn') || instruction.includes('as needed');
+            const times = [
+                medication.time_1,
+                medication.time_2,
+                medication.time_3,
+                medication.time_4,
+            ].filter(Boolean);
+            const hasTimes = times.length > 0;
+
+            if (isPrn) {
+                prn.push(medication);
+            } else if (hasTimes) {
+                scheduled.push(medication);
+
+                // Categorize by time
+                const hasAm = times.some(t => {
+                    const [h] = t.split(':').map(Number);
+                    return h < 12;
+                });
+                const hasPm = times.some(t => {
+                    const [h] = t.split(':').map(Number);
+                    return h >= 12;
+                });
+
+                if (hasAm) am.push(medication);
+                if (hasPm) pm.push(medication);
             }
         });
 
-        return { activePeriodMedications: active, endedPeriodMedications: ended };
-    }, [medicationsList]);
+        return { scheduledMeds: scheduled, amMeds: am, pmMeds: pm, prnMeds: prn };
+    }, [medicationsList, activePeriodMedications, activeOnly, search]);
 
-    const renderMedicationCard = (medication) => {
+    // Get current tab's medications
+    const currentTabMedications = React.useMemo(() => {
+        switch (activeTab) {
+            case 'scheduled': return scheduledMeds;
+            case 'am': return amMeds;
+            case 'pm': return pmMeds;
+            case 'prn': return prnMeds;
+            default: return scheduledMeds;
+        }
+    }, [activeTab, scheduledMeds, amMeds, pmMeds, prnMeds]);
+
+    // Toggle row expansion
+    const toggleRow = React.useCallback((id) => {
+        setExpandedRows(prev => {
+            const next = new Set(prev);
+            if (next.has(id)) {
+                next.delete(id);
+            } else {
+                next.add(id);
+            }
+            return next;
+        });
+    }, []);
+
+
+    const renderMedicationRow = (medication, index) => {
         const periodActive = isMedicationPeriodActiveNow(medication);
+        const isExpanded = expandedRows.has(medication.id);
+        const instruction = (medication.instructions || '').toLowerCase().trim();
+        const isPrn = instruction.includes('prn') || instruction.includes('as needed');
+        const medName = (medication.name || medication.drug?.name || 'Medication').toUpperCase();
+
+        // Determine type badges
+        const typeBadges = [];
+        if (medication.quantity) typeBadges.push(formatNumberUS(medication.quantity));
+        if (medication.form) typeBadges.push(medication.form);
+        if (medication.route) typeBadges.push(medication.route);
+
+        // Schedule label
+        const scheduleLabel = isPrn ? 'PRN' : formatInstructionDisplay(medication.instructions) || 'Scheduled';
+
+        // Format times for display
+        const times = [
+            medication.time_1,
+            medication.time_2,
+            medication.time_3,
+            medication.time_4,
+        ].filter(Boolean)
+            .sort((a, b) => {
+                const toMin = (v) => { const [h, m] = v.split(':').map(Number); return h * 60 + (m || 0); };
+                return toMin(a) - toMin(b);
+            })
+            .map(t => formatPacificTimeValue(t))
+            .filter(Boolean);
 
         return (
-            <div
-                key={medication.id}
-                className={`bg-white rounded-lg shadow p-6 ${periodActive ? '' : 'border border-amber-200'}`}
-            >
-                <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                        <div className="flex items-start justify-between gap-3 mb-2">
-                            <div>
-                                <h3 className="text-lg font-semibold text-gray-900">
-                                    {medication.name || 'Medication'}
-                                </h3>
-                            </div>
-                            <div className="flex flex-col items-end gap-2">
-                                {medication.is_active && periodActive && (
-                                    <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">
-                                        Active
-                                    </span>
-                                )}
-                                {!periodActive && (
-                                    <span className="px-3 py-1 bg-amber-100 text-amber-800 rounded-full text-xs font-medium">
-                                        Period Ended
-                                    </span>
-                                )}
-                            </div>
+            <div key={medication.id} className={`${index > 0 ? 'border-t border-gray-100' : ''}`}>
+                {/* Compact Row */}
+                <div
+                    className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors hover:bg-gray-50 ${isExpanded ? 'bg-blue-50/40' : (index % 2 === 0 ? 'bg-white' : 'bg-gray-50/50')} ${!periodActive ? 'opacity-70' : ''}`}
+                    onClick={() => toggleRow(medication.id)}
+                >
+                    {/* Expand/Collapse Icon */}
+                    <div className="flex-shrink-0 text-gray-400">
+                        {isExpanded ? (
+                            <ChevronDown className="w-4 h-4 text-[var(--theme-primary)]" />
+                        ) : (
+                            <ChevronRight className="w-4 h-4" />
+                        )}
+                    </div>
+
+                    {/* Pill Icon */}
+                    <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${periodActive ? 'bg-[var(--theme-primary)]/10' : 'bg-gray-100'}`}>
+                        <Pill className={`w-4 h-4 ${periodActive ? 'text-[var(--theme-primary)]' : 'text-gray-400'}`} />
+                    </div>
+
+                    {/* Medication Name */}
+                    <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                            <h3 className="text-sm font-bold text-gray-900 truncate">
+                                {medName}
+                            </h3>
+                            {/* Type badges */}
+                            {typeBadges.map((badge, i) => (
+                                <span key={i} className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-100 text-blue-700">
+                                    {badge}
+                                </span>
+                            ))}
+                            {/* Schedule type badge */}
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium ${isPrn ? 'bg-purple-100 text-purple-700' : 'bg-gray-200 text-gray-700'}`}>
+                                {isPrn ? 'PRN' : 'Scheduled'}
+                            </span>
                         </div>
+                    </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                            {medication.instructions && (
-                                <div className="flex items-start space-x-2">
-                                    <Pill className="w-4 h-4 text-gray-400 mt-1" />
-                                    <div>
-                                        <p className="text-xs text-gray-500">Instructions</p>
-                                        <p className="text-sm font-medium text-gray-900">
-                                            {formatInstructionDisplay(medication.instructions)}
-                                        </p>
-                                    </div>
-                                </div>
-                            )}
-                            
-                            {medication.quantity && (
-                                <div className="flex items-start space-x-2">
-                                    <Pill className="w-4 h-4 text-gray-400 mt-1" />
-                                    <div>
-                                        <p className="text-xs text-gray-500">Quantity</p>
-                                        <p className="text-sm font-medium text-gray-900">
-                                            {formatNumberUS(medication.quantity)}
-                                        </p>
-                                    </div>
-                                </div>
-                            )}
-
-                            {medication.start_date && (
-                                <div className="flex items-start space-x-2">
-                                    <Calendar className="w-4 h-4 text-gray-400 mt-1" />
-                                    <div>
-                                        <p className="text-xs text-gray-500">Start Date</p>
-                                        <p className="text-sm font-medium text-gray-900">
-                                            {formatPacificDate(parsePacificDateString(medication.start_date))}
-                                        </p>
-                                    </div>
-                                </div>
-                            )}
-
-                            {medication.end_date && (
-                                <div className="flex items-start space-x-2">
-                                    <Calendar className="w-4 h-4 text-gray-400 mt-1" />
-                                    <div>
-                                        <p className="text-xs text-gray-500">End Date</p>
-                                        <p className={`text-sm font-medium ${periodActive ? 'text-gray-900' : 'text-amber-700'}`}>
-                                            {formatPacificDate(parsePacificDateString(medication.end_date))}
-                                        </p>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Medication Times */}
-                        {(medication.time_1 || medication.time_2 || medication.time_3 || medication.time_4) && (
-                            <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-                                <div className="mb-2 flex items-center justify-between">
-                                    <p className="text-xs font-medium text-gray-700">Administration Times:</p>
-                                    {!periodActive && (
-                                        <span className="text-xs text-amber-600 font-medium">
-                                            Outside administration period
-                                        </span>
-                                    )}
-                                </div>
-                                <MedicationTimeBadges medication={medication} />
-
-                                {/* Quick Administer */}
-                                <QuickAdminister medication={medication} onSuccess={() => { 
-                                    queryClient.invalidateQueries(['resident-medications', residentId]); 
-                                    queryClient.invalidateQueries(['medication-administrations']); 
-                                    queryClient.invalidateQueries(['medication-administrations-today', medication.id]);
-                                    queryClient.invalidateQueries(['medication-administrations-today-check', medication.id]);
-                                }} />
+                    {/* Schedule Info */}
+                    <div className="hidden md:flex items-center gap-4 flex-shrink-0">
+                        {times.length > 0 && (
+                            <div className="text-xs text-gray-600">
+                                <span className="text-gray-400 mr-1">
+                                    <Clock className="w-3 h-3 inline-block" />
+                                </span>
+                                {times.join(', ')}
                             </div>
                         )}
-
-                        {medication.diagnosis && (
-                            <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-                                <p className="text-sm text-gray-700">
-                                    <span className="font-medium">Diagnosis: </span>
-                                    {medication.diagnosis}
-                                </p>
-                            </div>
-                        )}
-
-                        {medication.notes && (
-                            <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-                                <p className="text-sm text-gray-700">
-                                    <span className="font-medium">Notes: </span>
-                                    {medication.notes}
-                                </p>
-                            </div>
-                        )}
-
-                        {!periodActive && medication.end_date && (
-                            <div className="mt-4 p-3 bg-amber-50 rounded-lg border border-amber-200">
-                                <p className="text-sm text-amber-700">
-                                    Medication period ended on {formatPacificDate(parsePacificDateString(medication.end_date))}.
-                                </p>
+                        {medication.instructions && (
+                            <div className="text-xs text-gray-600 max-w-[150px] truncate">
+                                {scheduleLabel}
                             </div>
                         )}
                     </div>
+
+                    {/* Status Badge */}
+                    <div className="flex-shrink-0">
+                        {medication.is_active && periodActive ? (
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-[10px] font-semibold bg-green-100 text-green-700">
+                                Active
+                            </span>
+                        ) : !periodActive ? (
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-700">
+                                Ended
+                            </span>
+                        ) : (
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-[10px] font-semibold bg-gray-100 text-gray-500">
+                                Inactive
+                            </span>
+                        )}
+                    </div>
+
+                    {/* Detail Entry Button */}
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            toggleRow(medication.id);
+                        }}
+                        className="flex-shrink-0 hidden sm:inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-white bg-[var(--theme-primary)] rounded-md hover:bg-[var(--theme-primary-hover)] transition-colors shadow-sm"
+                    >
+                        Review & Administer
+                        <ChevronRight className="w-3 h-3" />
+                    </button>
                 </div>
+
+                {/* Expanded Details Panel */}
+                {isExpanded && (
+                    <div className="bg-gray-50 border-t border-gray-200 px-4 py-4 sm:px-8" style={{ animation: 'fadeSlideIn 0.2s ease-out' }}>
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                            {/* Section 1: Medication Details */}
+                            <div className="space-y-4">
+                                <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Medication Details</h4>
+
+                                {medication.instructions && (
+                                    <div className="flex items-start gap-2">
+                                        <Pill className="w-3.5 h-3.5 text-gray-400 mt-0.5 flex-shrink-0" />
+                                        <div>
+                                            <p className="text-[10px] text-gray-400 uppercase tracking-wider">Instructions</p>
+                                            <p className="text-sm text-gray-900">{formatInstructionDisplay(medication.instructions)}</p>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {medication.diagnosis && (
+                                    <div className="flex items-start gap-2">
+                                        <AlertCircle className="w-3.5 h-3.5 text-gray-400 mt-0.5 flex-shrink-0" />
+                                        <div>
+                                            <p className="text-[10px] text-gray-400 uppercase tracking-wider">Diagnosis / Goal</p>
+                                            <p className="text-sm text-gray-900 line-clamp-2" title={medication.diagnosis}>{medication.diagnosis}</p>
+                                        </div>
+                                    </div>
+                                )}
+
+                                <div className="flex items-start gap-2">
+                                    <Calendar className="w-3.5 h-3.5 text-gray-400 mt-0.5 flex-shrink-0" />
+                                    <div>
+                                        <p className="text-[10px] text-gray-400 uppercase tracking-wider">Period</p>
+                                        <p className="text-sm text-gray-900">
+                                            {medication.start_date ? formatPacificDate(parsePacificDateString(medication.start_date)) : '—'} 
+                                            {medication.end_date ? ` to ${formatPacificDate(parsePacificDateString(medication.end_date))}` : ' (Ongoing)'}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Section 2: Administration Status */}
+                            <div className="space-y-4">
+                                <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Today's Status</h4>
+                                <MedicationTimeBadges medication={medication} />
+                                
+                                <div className="pt-2 border-t border-gray-200">
+                                    <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Record Administration</h4>
+                                    <QuickAdminister 
+                                        medication={medication} 
+                                        onSuccess={() => { 
+                                            queryClient.invalidateQueries(['resident-medications', residentId]); 
+                                            queryClient.invalidateQueries(['medication-administrations']); 
+                                            queryClient.invalidateQueries(['medication-administrations-today', medication.id]);
+                                            queryClient.invalidateQueries(['medication-administrations-today-check', medication.id]);
+                                        }} 
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Section 3: Notes & Actions */}
+                            <div className="space-y-4">
+                                <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Notes & History</h4>
+                                {medication.notes ? (
+                                    <div className="bg-white p-3 rounded border border-gray-200 text-sm text-gray-600 italic">
+                                        {medication.notes}
+                                    </div>
+                                ) : (
+                                    <p className="text-sm text-gray-400 italic">No additional notes provided.</p>
+                                )}
+                                <div className="pt-2">
+                                    <button
+                                        onClick={() => navigate(`/medications/history?medication_id=${medication.id}&resident_id=${residentId}`)}
+                                        className="w-full text-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                                    >
+                                        View Full Administration History
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         );
     };
+
 
     if (residentLoading || isLoading) {
         return (
@@ -365,67 +498,168 @@ export default function ResidentMedicationsPage() {
     }
 
     return (
-        <div>
-            <div className="bg-white rounded-lg shadow p-6 mb-6">
-                <div className="flex items-center gap-4 mb-4">
+        <div className="space-y-6">
+            {/* Header Section */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div className="flex items-center gap-4">
                     <button
-                        onClick={() => navigate('/medications')}
-                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                        onClick={() => navigate('/medications/residents')}
+                        className="p-2 hover:bg-gray-100 rounded-full transition-colors group"
+                        title="Back to Residents"
                     >
-                        <ArrowLeft className="w-5 h-5 text-gray-600" />
+                        <ArrowLeft className="w-5 h-5 text-gray-400 group-hover:text-[var(--theme-primary)]" />
                     </button>
+                    <div className="w-12 h-12 rounded-full bg-[var(--theme-primary)]/10 flex items-center justify-center">
+                        <User className="w-6 h-6 text-[var(--theme-primary)]" />
+                    </div>
                     <div>
-                        <h2 className="text-xl font-semibold text-gray-900">Medications for {residentName}</h2>
-                        <p className="text-gray-600">View and administer medications for this resident.</p>
+                        <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Medications for {residentName}</h2>
+                        <p className="text-sm text-gray-500 font-medium">View and administer medications for this resident.</p>
+                    </div>
+                </div>
+                
+                <div className="flex items-center gap-3">
+                    <div className="text-right hidden lg:block">
+                        <p className="text-[10px] text-gray-400 uppercase font-bold tracking-widest">Today's Date</p>
+                        <p className="text-sm font-semibold text-gray-700">{formatPacificDate(getPacificNow())}</p>
+                    </div>
+                    <div className="h-10 w-px bg-gray-100 hidden lg:block mx-1"></div>
+                    <button
+                        onClick={() => queryClient.invalidateQueries(['resident-medications', residentId])}
+                        className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all shadow-sm"
+                    >
+                        Sync Data
+                    </button>
+                    <button
+                        onClick={() => navigate('/medications/history?resident_id=' + residentId)}
+                        className="px-4 py-2 bg-[var(--theme-primary)]/10 text-[var(--theme-primary)] rounded-lg text-sm font-bold hover:bg-[var(--theme-primary)]/20 transition-all"
+                    >
+                        History
+                    </button>
+                </div>
+            </div>
+
+            {/* Filter Section */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+                <div className="flex flex-col sm:flex-row items-center gap-4">
+                    <div className="relative flex-1 w-full">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <input
+                            type="text"
+                            placeholder="Search by medication name..."
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            className="w-full pl-10 pr-4 py-2 bg-gray-50 border-none rounded-lg text-sm focus:ring-2 focus:ring-[var(--theme-primary)] transition-all"
+                        />
+                    </div>
+                    <div className="flex items-center gap-2 w-full sm:w-auto">
+                        <button
+                            onClick={() => setActiveOnly(!activeOnly)}
+                            className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${
+                                activeOnly ? 'bg-[var(--theme-primary)] text-white shadow-md' : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
+                            }`}
+                        >
+                            <Filter className="w-4 h-4" />
+                            {activeOnly ? 'Active Only' : 'All Meds'}
+                        </button>
+                        <button
+                            onClick={() => { setSearch(''); setActiveOnly(true); }}
+                            className="px-4 py-2 text-sm font-semibold text-gray-500 hover:text-gray-700 transition-colors"
+                        >
+                            Reset
+                        </button>
                     </div>
                 </div>
             </div>
 
-            {medicationsList.length > 0 ? (
-                <div className="space-y-8">
-                    {activePeriodMedications.length > 0 && (
-                        <div>
-                            <div className="flex items-center justify-between mb-3">
-                                <h3 className="text-base font-semibold text-gray-900">
-                                    Active Medication Periods
-                                </h3>
-                                <span className="text-xs text-gray-500">
-                                    Showing {formatNumberUS(activePeriodMedications.length)} medication{activePeriodMedications.length === 1 ? '' : 's'}
-                                </span>
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                {activePeriodMedications.map(renderMedicationCard)}
-                            </div>
+            {/* Main Content with Tabs */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                {/* Tabs Header */}
+                <div className="px-4 pt-4 border-b border-gray-100 bg-gray-50/50">
+                    <div className="max-w-full overflow-x-auto">
+                        <div className="flex items-center gap-1 min-w-max pb-1">
+                            {[
+                                { key: 'scheduled', label: 'Scheduled', count: scheduledMeds.length, color: 'bg-blue-500' },
+                                { key: 'am', label: 'AM', count: amMeds.length, color: 'bg-amber-500' },
+                                { key: 'pm', label: 'PM', count: pmMeds.length, color: 'bg-indigo-500' },
+                                { key: 'prn', label: 'PRN', count: prnMeds.length, color: 'bg-purple-500' },
+                            ].map(tab => (
+                                <button
+                                    key={tab.key}
+                                    onClick={() => { setActiveTab(tab.key); setExpandedRows(new Set()); }}
+                                    className={`relative flex items-center gap-2 px-6 py-3 text-sm font-bold rounded-t-xl transition-all ${
+                                        activeTab === tab.key
+                                            ? 'bg-white text-gray-900 border-x border-t border-gray-100 -mb-px shadow-[0_-2px_10px_rgba(0,0,0,0.02)]'
+                                            : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100/50'
+                                    }`}
+                                >
+                                    {tab.label}
+                                    <span className={`inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-[10px] font-black text-white ${
+                                        activeTab === tab.key ? tab.color : 'bg-gray-300'
+                                    }`}>
+                                        {tab.count}
+                                    </span>
+                                    {activeTab === tab.key && (
+                                        <div className={`absolute bottom-0 left-4 right-4 h-1 rounded-t-full ${tab.color.replace('bg-', 'bg-')}`}></div>
+                                    )}
+                                </button>
+                            ))}
                         </div>
-                    )}
+                    </div>
+                </div>
 
-                    {endedPeriodMedications.length > 0 && (
-                        <div>
-                            <div className="flex items-center justify-between mb-3">
-                                <h3 className="text-base font-semibold text-gray-900">
-                                    Completed Medication Periods
-                                </h3>
-                                <span className="text-xs text-gray-500">
-                                    Showing {formatNumberUS(endedPeriodMedications.length)} medication{endedPeriodMedications.length === 1 ? '' : 's'}
-                                </span>
+                {/* List Content */}
+                <div className="min-h-[400px]">
+                    {currentTabMedications.length > 0 ? (
+                        <div className="divide-y divide-gray-50">
+                            {currentTabMedications.map((med, idx) => renderMedicationRow(med, idx))}
+                        </div>
+                    ) : (
+                        <div className="flex flex-col items-center justify-center py-24 px-6 text-center">
+                            <div className="w-16 h-16 rounded-full bg-gray-50 flex items-center justify-center mb-4">
+                                <Pill className="w-8 h-8 text-gray-300" />
                             </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                {endedPeriodMedications.map(renderMedicationCard)}
-                            </div>
+                            <h3 className="text-lg font-bold text-gray-900 mb-1">No medications found</h3>
+                            <p className="text-sm text-gray-500 max-w-xs mx-auto">
+                                {search 
+                                    ? `No medications matching "${search}" were found in the ${activeTab} tab.`
+                                    : `There are currently no medications in the ${activeTab} category.`}
+                            </p>
+                            {search && (
+                                <button
+                                    onClick={() => setSearch('')}
+                                    className="mt-4 text-sm font-bold text-[var(--theme-primary)] hover:underline"
+                                >
+                                    Clear search
+                                </button>
+                            )}
                         </div>
                     )}
                 </div>
-            ) : (
-                <div className="bg-white rounded-lg shadow p-12 text-center col-span-full">
-                    <Pill className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-600 text-lg font-medium">No medications found</p>
-                    <p className="text-gray-500 text-sm mt-2">
-                        This resident does not have any medications assigned.
-                    </p>
+            </div>
+            
+            {/* Footer Legend */}
+            <div className="flex flex-wrap items-center justify-center gap-6 px-4 text-[10px] text-gray-400 uppercase font-black tracking-widest">
+                <div className="flex items-center gap-1.5">
+                    <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                    Scheduled
                 </div>
-            )}
+                <div className="flex items-center gap-1.5">
+                    <div className="w-2 h-2 rounded-full bg-amber-500"></div>
+                    AM Only
+                </div>
+                <div className="flex items-center gap-1.5">
+                    <div className="w-2 h-2 rounded-full bg-indigo-500"></div>
+                    PM Only
+                </div>
+                <div className="flex items-center gap-1.5">
+                    <div className="w-2 h-2 rounded-full bg-purple-500"></div>
+                    PRN (As Needed)
+                </div>
+            </div>
         </div>
     );
+
 }
 
 // Medication Time Badges Component
