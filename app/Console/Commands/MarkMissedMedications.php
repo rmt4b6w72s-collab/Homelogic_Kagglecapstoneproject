@@ -67,7 +67,7 @@ class MarkMissedMedications extends Command
         $systemUser = User::where('email', 'system@evergreen.care')->first();
         if (!$systemUser) {
             $systemUser = User::create([
-                'name' => 'System Automation',
+                'name' => 'System',
                 'email' => 'system@evergreen.care',
                 'password' => bcrypt(\Illuminate\Support\Str::random(16)),
                 'role' => 'admin',
@@ -165,7 +165,7 @@ class MarkMissedMedications extends Command
         $systemUser = User::where('email', 'system@evergreen.care')->first();
         if (!$systemUser) {
             $systemUser = User::create([
-                'name' => 'System Automation',
+                'name' => 'System',
                 'email' => 'system@evergreen.care',
                 'password' => bcrypt(\Illuminate\Support\Str::random(16)),
                 'role' => 'admin',

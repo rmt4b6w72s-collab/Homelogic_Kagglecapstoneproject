@@ -68,7 +68,13 @@ export default function StaffSchedule() {
     },
   });
   const shifts = shiftsData?.data ?? [];
-  const canManage = currentUser?.role === 'super_admin' || currentUser?.isAnyAdmin || currentUser?.permissions?.includes?.('manage_schedules');
+  const canManage = 
+    currentUser?.role === 'super_admin' || 
+    currentUser?.role === 'administrator' || 
+    currentUser?.role === 'admin' || 
+    currentUser?.is_any_admin || 
+    currentUser?.permissions?.includes?.('manage_schedules');
+
 
   const createMutation = useMutation({
     mutationFn: (body) => api.post('/shifts', body),

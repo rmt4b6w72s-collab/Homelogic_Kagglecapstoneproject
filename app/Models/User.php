@@ -60,7 +60,8 @@ class User extends Authenticatable implements FilamentUser
      *
      * @var array<int, string>
      */
-    protected $appends = ['profile_image_url', 'is_caregiver'];
+    protected $appends = ['profile_image_url', 'is_caregiver', 'is_any_admin', 'is_facility_administrator', 'is_branch_admin'];
+
 
     /**
      * The attributes that should be hidden for serialization.
@@ -391,6 +392,22 @@ class User extends Authenticatable implements FilamentUser
     {
         return $this->isFacilityAdministrator() || $this->isBranchAdmin();
     }
+
+    public function getIsAnyAdminAttribute(): bool
+    {
+        return $this->isAnyAdmin();
+    }
+
+    public function getIsFacilityAdministratorAttribute(): bool
+    {
+        return $this->isFacilityAdministrator();
+    }
+
+    public function getIsBranchAdminAttribute(): bool
+    {
+        return $this->isBranchAdmin();
+    }
+
 
     // Scopes
     public function scopeCaregivers($query)

@@ -262,13 +262,15 @@ export default function MedicationHistory() {
                                 const resident = administration.resident;
                                 const medication = administration.medication;
                                 const statusClass = statusStyles[administration.status] || 'bg-gray-100 text-gray-800';
-                                const administeredBy =
-                                    administration.administered_by?.name ??
-                                    administration.administered_by?.full_name ??
-                                    administration.administeredBy?.name ??
-                                    administration.administered_by_name ??
-                                    administration.administered_by_full_name ??
-                                    administration.administered_by;
+                                const administeredBy = administration.status === 'missed' 
+                                    ? 'System'
+                                    : (administration.administered_by?.name ??
+                                       administration.administered_by?.full_name ??
+                                       administration.administeredBy?.name ??
+                                       administration.administered_by_name ??
+                                       administration.administered_by_full_name ??
+                                       administration.administered_by);
+
                                 const isLateAdministration = typeof administration.notes === 'string' && administration.notes.includes(lateNoteMarker);
                                 const cleanedNotes = isLateAdministration
                                     ? administration.notes.replace(lateNoteMarker, '').trim()
@@ -388,13 +390,15 @@ export default function MedicationHistory() {
                                         const resident = administration.resident;
                                         const medication = administration.medication;
                                         const statusClass = statusStyles[administration.status] || 'bg-gray-100 text-gray-800';
-                                        const administeredBy =
-                                            administration.administered_by?.name ??
-                                            administration.administered_by?.full_name ??
-                                            administration.administeredBy?.name ??
-                                            administration.administered_by_name ??
-                                            administration.administered_by_full_name ??
-                                            administration.administered_by;
+                                        const administeredBy = administration.status === 'missed'
+                                            ? 'System'
+                                            : (administration.administered_by?.name ??
+                                               administration.administered_by?.full_name ??
+                                               administration.administeredBy?.name ??
+                                               administration.administered_by_name ??
+                                               administration.administered_by_full_name ??
+                                               administration.administered_by);
+
                                         const isLateAdministration = typeof administration.notes === 'string' && administration.notes.includes(lateNoteMarker);
                                         const cleanedNotes = isLateAdministration
                                             ? administration.notes.replace(lateNoteMarker, '').trim()
