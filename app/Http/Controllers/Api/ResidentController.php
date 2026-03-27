@@ -162,7 +162,11 @@ class ResidentController extends BaseApiController
     public function store(StoreResidentRequest $request): JsonResponse
     {
         $user = auth()->user();
-        
+
+        if ($this->isCaregiver($user)) {
+            return $this->error('Caregivers cannot create or edit resident records.', 403);
+        }
+
         // Allow administrators and super admins to create residents even without specific permission
         $isSuperAdmin = $user && ($user->role === 'super_admin' || $user->hasRole('super_admin'));
         $isAdmin = $user && $user->isAnyAdmin();
@@ -217,29 +221,24 @@ class ResidentController extends BaseApiController
     public function update(UpdateResidentRequest $request, $id): JsonResponse
     {
         $user = auth()->user();
-        
+
+        if ($this->isCaregiver($user)) {
+            return $this->error('Caregivers cannot edit resident records.', 403);
+        }
+
         // Allow administrators and super admins to edit residents even without specific permission
         $isSuperAdmin = $user && ($user->role === 'super_admin' || $user->hasRole('super_admin'));
         $isAdmin = $user && $user->isAnyAdmin();
-        
+
         // Check permission only if user is not an admin or super admin
         if (!$isSuperAdmin && !$isAdmin) {
-        if ($error = $this->requirePermission('edit_residents')) {
-            return $error;
+            if ($error = $this->requirePermission('edit_residents')) {
+                return $error;
             }
         }
 
         // Find resident without global scope to check permissions manually
         $resident = Resident::withoutGlobalScope(\App\Models\Scopes\FacilityScope::class)->findOrFail($id);
-        $user = $request->user();
-
-        // Check caregiver access
-        if ($this->isCaregiver($user)) {
-            $caregiverBranchId = (int) ($user->assigned_branch_id ?? 0);
-            if ($caregiverBranchId === 0 || (int) $resident->branch_id !== $caregiverBranchId) {
-                return $this->error('You do not have permission to update this resident.', 403);
-            }
-        }
 
         // Check facility access for non-super admins
         $currentUser = \Illuminate\Support\Facades\Auth::user();
@@ -345,7 +344,11 @@ class ResidentController extends BaseApiController
     public function destroy($id): JsonResponse
     {
         $user = auth()->user();
-        
+
+        if ($this->isCaregiver($user)) {
+            return $this->error('Caregivers cannot delete resident records.', 403);
+        }
+
         // Allow administrators and super admins to delete residents even without specific permission
         $isSuperAdmin = $user && ($user->role === 'super_admin' || $user->hasRole('super_admin'));
         $isAdmin = $user && $user->isAnyAdmin();

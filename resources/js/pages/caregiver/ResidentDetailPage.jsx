@@ -19,6 +19,7 @@ import api from '../../services/api';
 import Breadcrumbs from '../../components/ui/Breadcrumbs';
 import ResidentDocuments from '../../components/ResidentDocuments';
 import logger from '../../utils/logger';
+import { isCaregiverRole } from '../../utils/userRoles';
 
 const tabs = [
     { id: 'profile', label: 'Profile Overview', icon: Users },
@@ -124,6 +125,16 @@ export default function ResidentDetailPage() {
         special_instructions: '',
         notes: '',
     });
+
+    const { data: currentUser } = useQuery({
+        queryKey: ['current-user'],
+        queryFn: async () => {
+            const res = await api.get('/user');
+            return res.data;
+        },
+    });
+
+    const canEditResident = !isCaregiverRole(currentUser?.role);
 
     const { data, isLoading, error } = useQuery({
         queryKey: ['resident-detail', residentId],
@@ -459,8 +470,9 @@ export default function ResidentDetailPage() {
                     <div className="space-y-4">
                         <div className="flex items-center justify-between">
                             <h2 className="text-lg font-semibold text-gray-900">Care Plan & Notes</h2>
-                            {!editingCarePlan && (
+                            {canEditResident && !editingCarePlan && (
                                 <button
+                                    type="button"
                                     onClick={() => setEditingCarePlan(true)}
                                     className="inline-flex items-center gap-2 rounded-lg bg-[var(--theme-primary)] px-4 py-2 text-sm font-medium text-[var(--theme-text-on-primary)] hover:bg-[var(--theme-primary-hover)] transition-colors"
                                 >

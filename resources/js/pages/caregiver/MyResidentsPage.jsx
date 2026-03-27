@@ -5,6 +5,7 @@ import { Users, Search, MapPin, Calendar, Phone, Activity, Edit } from 'lucide-r
 import api from '../../services/api';
 import logger from '../../utils/logger';
 import ResidentForm from '../../components/ResidentForm';
+import { isCaregiverRole } from '../../utils/userRoles';
 
 const initialStats = [
     { key: 'active', label: 'Active Residents', icon: Users },
@@ -85,6 +86,8 @@ export default function MyResidentsPage() {
     });
 
     const residents = React.useMemo(() => data?.data ?? [], [data?.data]);
+
+    const canEditResidents = !isCaregiverRole(currentUser?.role);
 
     const stats = React.useMemo(() => {
         const totals = { active: 0, inactive: 0 };
@@ -207,17 +210,19 @@ export default function MyResidentsPage() {
                         Last updated {formatDate(resident.updated_at)}
                     </div>
                     <div className="flex gap-2">
-                        <button
-                            type="button"
-                            onClick={() => {
-                                setEditing(resident);
-                                setShowForm(true);
-                            }}
-                            className="inline-flex items-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50"
-                        >
-                            <Edit className="mr-2 h-4 w-4" />
-                            Edit
-                        </button>
+                        {canEditResidents ? (
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setEditing(resident);
+                                    setShowForm(true);
+                                }}
+                                className="inline-flex items-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50"
+                            >
+                                <Edit className="mr-2 h-4 w-4" />
+                                Edit
+                            </button>
+                        ) : null}
                         <button
                             type="button"
                             onClick={() => navigate(`/my-residents/${resident.id}`)}
@@ -330,7 +335,7 @@ export default function MyResidentsPage() {
                 </section>
             )}
 
-            {showForm && (
+            {canEditResidents && showForm && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-md p-4 animate-in fade-in duration-300">
                     <div className="w-full max-w-4xl bg-white rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
                         <ResidentForm
