@@ -147,6 +147,8 @@ export default function ResidentMedicationsPage() {
     const [expandedRows, setExpandedRows] = useState(new Set());
     const [search, setSearch] = useState('');
     const [activeOnly, setActiveOnly] = useState(true);
+    const [selectedMeds, setSelectedMeds] = useState(new Set());
+    const [isBulkAdministering, setIsBulkAdministering] = useState(false);
 
 
     // Fetch current user
@@ -271,10 +273,10 @@ export default function ResidentMedicationsPage() {
 
             if (isPrn) {
                 prn.push(medication);
-            } else if (hasTimes) {
-                scheduled.push(medication);
+            } else {
+                if (hasTimes) scheduled.push(medication);
 
-                // Categorize by time
+                // Categorize by individual time slots
                 const hasAm = times.some(t => {
                     const [h] = t.split(':').map(Number);
                     return h < 12;
@@ -320,6 +322,7 @@ export default function ResidentMedicationsPage() {
     const renderMedicationRow = (medication, index) => {
         const periodActive = isMedicationPeriodActiveNow(medication);
         const isExpanded = expandedRows.has(medication.id);
+        const isSelected = selectedMeds.has(medication.id);
         const instruction = (medication.instructions || '').toLowerCase().trim();
         const isPrn = instruction.includes('prn') || instruction.includes('as needed');
         const medName = (medication.name || medication.drug?.name || 'Medication').toUpperCase();
@@ -333,13 +336,24 @@ export default function ResidentMedicationsPage() {
         // Schedule label
         const scheduleLabel = isPrn ? 'PRN' : formatInstructionDisplay(medication.instructions) || 'Scheduled';
 
-        // Format times for display
+        // Format times for display, filtering by tab if needed
         const times = [
             medication.time_1,
             medication.time_2,
             medication.time_3,
             medication.time_4,
         ].filter(Boolean)
+            .filter(t => {
+                if (activeTab === 'am') {
+                    const [h] = t.split(':').map(Number);
+                    return h < 12;
+                }
+                if (activeTab === 'pm') {
+                    const [h] = t.split(':').map(Number);
+                    return h >= 12;
+                }
+                return true;
+            })
             .sort((a, b) => {
                 const toMin = (v) => { const [h, m] = v.split(':').map(Number); return h * 60 + (m || 0); };
                 return toMin(a) - toMin(b);
@@ -351,9 +365,27 @@ export default function ResidentMedicationsPage() {
             <div key={medication.id} className={`${index > 0 ? 'border-t border-gray-100' : ''}`}>
                 {/* Compact Row */}
                 <div
-                    className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors hover:bg-gray-50 ${isExpanded ? 'bg-blue-50/40' : (index % 2 === 0 ? 'bg-white' : 'bg-gray-50/50')} ${!periodActive ? 'opacity-70' : ''}`}
+                    className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors hover:bg-gray-50 ${isExpanded ? 'bg-blue-50/40' : (isSelected ? 'bg-blue-100/50' : (index % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'))} ${!periodActive ? 'opacity-70' : ''}`}
                     onClick={() => toggleRow(medication.id)}
                 >
+                    {/* Checkbox for Bulk Administration */}
+                    {activeTab !== 'prn' && (
+                        <div 
+                            className="flex-shrink-0 mr-1"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                const next = new Set(selectedMeds);
+                                if (next.has(medication.id)) next.delete(medication.id);
+                                else next.add(medication.id);
+                                setSelectedMeds(next);
+                            }}
+                        >
+                            <div className={`w-5 h-5 rounded border flex items-center justify-center transition-all ${isSelected ? 'bg-[var(--theme-primary)] border-[var(--theme-primary)]' : 'border-gray-300 bg-white'}`}>
+                                {isSelected && <CheckCircle className="w-3.5 h-3.5 text-white" />}
+                            </div>
+                        </div>
+                    )}
+
                     {/* Expand/Collapse Icon */}
                     <div className="flex-shrink-0 text-gray-400">
                         {isExpanded ? (
@@ -479,7 +511,7 @@ export default function ResidentMedicationsPage() {
                             {/* Section 2: Administration Status */}
                             <div className="space-y-4">
                                 <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Today's Status</h4>
-                                <MedicationTimeBadges medication={medication} />
+                                <MedicationTimeBadges medication={medication} activeTab={activeTab} />
                                 
                                 <div className="pt-2 border-t border-gray-200">
                                     <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Record Administration</h4>
@@ -519,6 +551,45 @@ export default function ResidentMedicationsPage() {
                 )}
             </div>
         );
+    };
+
+    const handleBulkAdminister = async () => {
+        if (selectedMeds.size === 0) return;
+        setIsBulkAdministering(true);
+        
+        try {
+            const medsToAdmin = currentTabMedications.filter(m => selectedMeds.has(m.id));
+            const now = getPacificISODateTime();
+            
+            // For simple bulk administration, we record a standard 'completed' status for all selected
+            // We'll use a Promise.all to fire off the requests
+            const promises = medsToAdmin.map(med => 
+                offlinePost('/medication-administrations', {
+                    medication_id: med.id,
+                    resident_id: med.resident_id,
+                    branch_id: med.branch_id,
+                    administered_at: now,
+                    status: 'completed',
+                    dosage_given: med.quantity ? `${med.quantity} ${med.form || ''}` : 'As prescribed',
+                    notes: 'Bulk administered from dashboard',
+                })
+            );
+            
+            await Promise.all(promises);
+            
+            // Clear selection and refresh
+            setSelectedMeds(new Set());
+            queryClient.invalidateQueries(['resident-medications', residentId]);
+            queryClient.invalidateQueries(['medication-administrations']);
+            
+            // Show toast or success
+            alert(`Successfully administered ${medsToAdmin.length} medications.`);
+        } catch (err) {
+            logger.error('Bulk administration failed:', err);
+            alert('Some medications could not be administered.');
+        } finally {
+            setIsBulkAdministering(false);
+        }
     };
 
 
@@ -576,9 +647,9 @@ export default function ResidentMedicationsPage() {
                 </div>
             </div>
 
-            {/* Filter Section */}
+            {/* Filter & Bulk Actions Section */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-                <div className="flex flex-col sm:flex-row items-center gap-4">
+                <div className="flex flex-col lg:flex-row lg:items-center gap-4">
                     <div className="relative flex-1 w-full">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                         <input
@@ -589,7 +660,33 @@ export default function ResidentMedicationsPage() {
                             className="w-full pl-10 pr-4 py-2 bg-gray-50 border-none rounded-lg text-sm focus:ring-2 focus:ring-[var(--theme-primary)] transition-all"
                         />
                     </div>
-                    <div className="flex items-center gap-2 w-full sm:w-auto">
+                    
+                    <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
+                        {selectedMeds.size > 0 && (
+                            <div className="flex items-center gap-2 pr-2 border-r border-gray-100 mr-2">
+                                <span className="text-xs font-bold text-gray-500">{selectedMeds.size} selected</span>
+                                <button
+                                    onClick={handleBulkAdminister}
+                                    disabled={isBulkAdministering}
+                                    className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-bold shadow-sm hover:bg-green-700 transition-all flex items-center gap-2 disabled:opacity-50"
+                                >
+                                    {isBulkAdministering ? (
+                                        <RefreshCw className="w-4 h-4 animate-spin" />
+                                    ) : (
+                                        <CheckCircle className="w-4 h-4" />
+                                    )}
+                                    Administer All
+                                </button>
+                                <button
+                                    onClick={() => setSelectedMeds(new Set())}
+                                    className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+                                    title="Deselect All"
+                                >
+                                    <X className="w-4 h-4" />
+                                </button>
+                            </div>
+                        )}
+
                         <button
                             onClick={() => setActiveOnly(!activeOnly)}
                             className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${
@@ -600,7 +697,7 @@ export default function ResidentMedicationsPage() {
                             {activeOnly ? 'Active Only' : 'All Meds'}
                         </button>
                         <button
-                            onClick={() => { setSearch(''); setActiveOnly(true); }}
+                            onClick={() => { setSearch(''); setActiveOnly(true); setSelectedMeds(new Set()); }}
                             className="px-4 py-2 text-sm font-semibold text-gray-500 hover:text-gray-700 transition-colors"
                         >
                             Reset
@@ -623,7 +720,7 @@ export default function ResidentMedicationsPage() {
                             ].map(tab => (
                                 <button
                                     key={tab.key}
-                                    onClick={() => { setActiveTab(tab.key); setExpandedRows(new Set()); }}
+                                    onClick={() => { setActiveTab(tab.key); setExpandedRows(new Set()); setSelectedMeds(new Set()); }}
                                     className={`relative flex items-center gap-2 px-6 py-3 text-sm font-bold rounded-t-xl transition-all ${
                                         activeTab === tab.key
                                             ? 'bg-white text-gray-900 border-x border-t border-gray-100 -mb-px shadow-[0_-2px_10px_rgba(0,0,0,0.02)]'
@@ -700,7 +797,7 @@ export default function ResidentMedicationsPage() {
 }
 
 // Medication Time Badges Component
-function MedicationTimeBadges({ medication }) {
+function MedicationTimeBadges({ medication, activeTab }) {
     const formatTime = (timeValue) => formatPacificTimeValue(timeValue);
 
     // Fetch today's administrations for this medication
@@ -802,7 +899,18 @@ function MedicationTimeBadges({ medication }) {
         { value: medication.time_2, label: 'Time 2' },
         { value: medication.time_3, label: 'Time 3' },
         { value: medication.time_4, label: 'Time 4' },
-    ].filter(t => t.value).sort((a, b) => {
+    ].filter(t => {
+        if (!t.value) return false;
+        if (activeTab === 'am') {
+            const [h] = t.value.split(':').map(Number);
+            return h < 12;
+        }
+        if (activeTab === 'pm') {
+            const [h] = t.value.split(':').map(Number);
+            return h >= 12;
+        }
+        return true;
+    }).sort((a, b) => {
         const toMin = (v) => { const [h, m] = v.split(':').map(Number); return h * 60 + (m || 0); };
         return toMin(a.value) - toMin(b.value);
     });
