@@ -520,7 +520,11 @@ export default function ResidentMedicationsPage() {
                                 )}
                                 <div className="pt-2">
                                     <button
-                                        onClick={() => navigate(`/medications/history?medication_id=${medication.id}&resident_id=${residentId}`)}
+                                        type="button"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            navigate(`/medication-history?resident=${residentId}&medication=${medication.id}`);
+                                        }}
                                         className="w-full text-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
                                     >
                                         View Full Administration History
@@ -617,7 +621,8 @@ export default function ResidentMedicationsPage() {
                     </button>
 
                     <button
-                        onClick={() => navigate('/medications/history?resident_id=' + residentId)}
+                        type="button"
+                        onClick={() => navigate(`/medication-history?resident=${residentId}`)}
                         className="px-4 py-2 bg-[var(--theme-primary)]/10 text-[var(--theme-primary)] rounded-lg text-sm font-bold hover:bg-[var(--theme-primary)]/20 transition-all"
                     >
                         History
