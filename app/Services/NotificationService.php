@@ -79,6 +79,16 @@ class NotificationService
     }
 
     /**
+     * Facility-originated mail must not go to platform super admins.
+     */
+    protected function filterFacilityMailRecipients($users): \Illuminate\Support\Collection
+    {
+        return collect($users)->filter(function (User $user) {
+            return $user->email && ! $user->isSuperAdmin();
+        });
+    }
+
+    /**
      * Send email notification for late medication
      */
     public function sendLateMedicationEmail(Medication $medication, Resident $resident, $caregivers): void
@@ -113,7 +123,7 @@ class NotificationService
             
             // If config has recipients, use them; otherwise fall back to existing logic
             if ($configRecipients->isNotEmpty()) {
-                $caregiversToNotify = $configRecipients;
+                $caregiversToNotify = $this->filterFacilityMailRecipients($configRecipients);
             } else {
                 // Fallback to existing email preference logic
                 $caregiversToNotify = $this->emailPreferenceService->filterUsersForEmail(
@@ -239,7 +249,7 @@ class NotificationService
             
             // If config has recipients, use them; otherwise fall back to existing logic
             if ($configRecipients->isNotEmpty()) {
-                $recipientsToNotify = $configRecipients;
+                $recipientsToNotify = $this->filterFacilityMailRecipients($configRecipients);
             } else {
                 $recipientsToNotify = $this->emailPreferenceService->filterUsersForEmail(
                     $recipients,
@@ -337,9 +347,7 @@ class NotificationService
         
         // Use a generic notification type since leave requests aren't in preferences yet
         // Default to enabled
-        $recipientsToNotify = collect($recipients)->filter(function ($user) {
-            return $user->email;
-        });
+        $recipientsToNotify = $this->filterFacilityMailRecipients($recipients);
         
         foreach ($recipientsToNotify as $recipient) {
             if ($recipient->email) {
@@ -377,9 +385,7 @@ class NotificationService
         }
         
         // Pharmacy notifications - default to enabled for all
-        $recipientsToNotify = collect($recipients)->filter(function ($user) {
-            return $user->email;
-        });
+        $recipientsToNotify = $this->filterFacilityMailRecipients($recipients);
         
         foreach ($recipientsToNotify as $recipient) {
             if ($recipient->email) {
@@ -420,9 +426,7 @@ class NotificationService
             $this->mailConfigService->configureForFacility($facility);
         }
         
-        $recipientsToNotify = collect($recipients)->filter(function ($user) {
-            return $user->email;
-        });
+        $recipientsToNotify = $this->filterFacilityMailRecipients($recipients);
         
         foreach ($recipientsToNotify as $recipient) {
             if ($recipient->email) {
@@ -459,9 +463,7 @@ class NotificationService
             $this->mailConfigService->configureForFacility($facility);
         }
         
-        $recipientsToNotify = collect($recipients)->filter(function ($user) {
-            return $user->email;
-        });
+        $recipientsToNotify = $this->filterFacilityMailRecipients($recipients);
         
         foreach ($recipientsToNotify as $recipient) {
             if ($recipient->email) {
@@ -612,9 +614,7 @@ class NotificationService
         }
         $this->mailConfigService->configureForFacility($facility);
         
-        $recipientsToNotify = collect($recipients)->filter(function ($user) {
-            return $user->email;
-        });
+        $recipientsToNotify = $this->filterFacilityMailRecipients($recipients);
         
         foreach ($recipientsToNotify as $recipient) {
             if ($recipient->email) {
@@ -651,9 +651,7 @@ class NotificationService
         }
         $this->mailConfigService->configureForFacility($facility);
         
-        $recipientsToNotify = collect($recipients)->filter(function ($user) {
-            return $user->email;
-        });
+        $recipientsToNotify = $this->filterFacilityMailRecipients($recipients);
         
         foreach ($recipientsToNotify as $recipient) {
             if ($recipient->email) {
@@ -690,9 +688,7 @@ class NotificationService
             $this->mailConfigService->configureForFacility($facility);
         }
         
-        $recipientsToNotify = collect($recipients)->filter(function ($user) {
-            return $user->email;
-        });
+        $recipientsToNotify = $this->filterFacilityMailRecipients($recipients);
         
         foreach ($recipientsToNotify as $recipient) {
             if ($recipient->email) {
@@ -728,9 +724,7 @@ class NotificationService
             $this->mailConfigService->configureForFacility($facility);
         }
         
-        $recipientsToNotify = collect($recipients)->filter(function ($user) {
-            return $user->email;
-        });
+        $recipientsToNotify = $this->filterFacilityMailRecipients($recipients);
         
         foreach ($recipientsToNotify as $recipient) {
             if ($recipient->email) {
@@ -770,9 +764,7 @@ class NotificationService
 
         $this->mailConfigService->configureForFacility($facility);
         
-        $recipientsToNotify = collect($recipients)->filter(function ($user) {
-            return $user->email;
-        });
+        $recipientsToNotify = $this->filterFacilityMailRecipients($recipients);
         
         foreach ($recipientsToNotify as $recipient) {
             if ($recipient->email) {
@@ -853,9 +845,7 @@ class NotificationService
         }
         $this->mailConfigService->configureForFacility($facility);
         
-        $recipientsToNotify = collect($recipients)->filter(function ($user) {
-            return $user->email;
-        });
+        $recipientsToNotify = $this->filterFacilityMailRecipients($recipients);
         
         foreach ($recipientsToNotify as $recipient) {
             if ($recipient->email) {
@@ -893,9 +883,7 @@ class NotificationService
         }
         $this->mailConfigService->configureForFacility($facility);
         
-        $recipientsToNotify = collect($recipients)->filter(function ($user) {
-            return $user->email;
-        });
+        $recipientsToNotify = $this->filterFacilityMailRecipients($recipients);
         
         foreach ($recipientsToNotify as $recipient) {
             if ($recipient->email) {
@@ -933,9 +921,7 @@ class NotificationService
         }
         $this->mailConfigService->configureForFacility($facility);
         
-        $recipientsToNotify = collect($recipients)->filter(function ($user) {
-            return $user->email;
-        });
+        $recipientsToNotify = $this->filterFacilityMailRecipients($recipients);
         
         foreach ($recipientsToNotify as $recipient) {
             if ($recipient->email) {
@@ -985,12 +971,12 @@ class NotificationService
         $this->mailConfigService->configureForFacility($facility);
 
         $facilityAdmins = User::where('facility_id', $facility->id)
-            ->whereIn('role', ['super_admin', 'administrator', 'admin'])
+            ->whereIn('role', ['administrator', 'admin'])
             ->where('is_active', true)
             ->get();
 
         $branchAdmins = User::where('assigned_branch_id', $medication->branch_id)
-            ->whereIn('role', ['super_admin', 'administrator', 'admin'])
+            ->whereIn('role', ['administrator', 'admin'])
             ->where('is_active', true)
             ->get();
 
@@ -1046,9 +1032,7 @@ class NotificationService
 
         $this->mailConfigService->configureForFacility($facility);
         
-        $recipientsToNotify = collect($recipients)->filter(function ($user) {
-            return $user->email;
-        });
+        $recipientsToNotify = $this->filterFacilityMailRecipients($recipients);
         
         foreach ($recipientsToNotify as $recipient) {
             if ($recipient->email) {
@@ -1084,9 +1068,7 @@ class NotificationService
             $this->mailConfigService->configureForFacility($facility);
         }
         
-        $recipientsToNotify = collect($recipients)->filter(function ($user) {
-            return $user->email;
-        });
+        $recipientsToNotify = $this->filterFacilityMailRecipients($recipients);
         
         foreach ($recipientsToNotify as $recipient) {
             if ($recipient->email) {

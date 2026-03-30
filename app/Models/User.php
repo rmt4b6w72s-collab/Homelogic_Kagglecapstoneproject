@@ -406,6 +406,18 @@ class User extends Authenticatable implements FilamentUser
     }
 
     /**
+     * Platform super admin — must not receive facility-originated notification emails.
+     */
+    public function isSuperAdmin(): bool
+    {
+        if ($this->role === 'super_admin') {
+            return true;
+        }
+
+        return $this->hasRole('super_admin');
+    }
+
+    /**
      * Check if user is a facility administrator (sees all branches in facility)
      */
     public function isFacilityAdministrator(): bool

@@ -23,6 +23,11 @@ class EmailPreferenceService
             return false;
         }
 
+        // Super admins never receive facility notification emails (staff preferences / config recipients)
+        if ($user->isSuperAdmin()) {
+            return false;
+        }
+
         // Get facility from user if not provided
         if (!$facility) {
             $facility = $user->facility;

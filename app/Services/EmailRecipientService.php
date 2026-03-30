@@ -61,8 +61,8 @@ class EmailRecipientService
             $recipients = $recipients->merge($specificUsers);
         }
 
-        // Remove duplicates and return
-        return $recipients->unique('id');
+        // Remove duplicates; super admins must not receive facility notification emails
+        return $recipients->unique('id')->reject(fn (User $u) => $u->isSuperAdmin())->values();
     }
 
     /**
