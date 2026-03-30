@@ -75,6 +75,11 @@ function severityBadge(sev) {
   );
 }
 
+function importantInfoHasContent(info) {
+  if (!info || typeof info !== 'object') return false;
+  return Object.values(info).some((v) => v != null && String(v).trim() !== '');
+}
+
 export default function PortalDashboard() {
   const { data, isLoading } = useQuery({
     queryKey: ['family-care-updates'],
