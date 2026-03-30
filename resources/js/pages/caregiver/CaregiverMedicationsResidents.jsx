@@ -1,14 +1,15 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { Users, Search, MapPin, Calendar, Pill, User } from 'lucide-react';
+import { Users, Search, MapPin, Calendar, Pill } from 'lucide-react';
 import api from '../../services/api';
 import logger from '../../utils/logger';
+import Tooltip from '../../components/ui/Tooltip';
+import EntityCardShell, { EntityCardHeader } from '../../components/ui/EntityCardShell';
+import CardIconButton from '../../components/ui/CardIconButton';
+import DataPill from '../../components/ui/DataPill';
+import ResidentAvatarInline from '../../components/ui/ResidentAvatarInline';
 import { formatPacificCalendarMedium, formatPacificDateTimeShort } from '../../utils/pacificTime';
-
-function getInitials(first = '', last = '') {
-    return `${first?.[0] ?? ''}${last?.[0] ?? ''}`.toUpperCase();
-}
 
 export default function CaregiverMedicationsResidents() {
     const navigate = useNavigate();
@@ -57,98 +58,61 @@ export default function CaregiverMedicationsResidents() {
         const branchName = resident?.branch?.name ?? 'Unassigned';
 
         return (
-            <article
-                key={resident.id}
-                className="group flex flex-col rounded-2xl border border-transparent bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-xl"
-                style={{ 
-                    '--hover-border-color': 'var(--theme-primary-bg)',
-                }}
-                onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = 'var(--theme-primary-bg)';
-                }}
-                onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = 'transparent';
-                }}
-            >
-                <div className="flex items-start gap-4">
-                    <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-full border text-white"
-                        style={{ borderColor: 'var(--theme-primary-bg)', backgroundColor: 'var(--theme-primary)' }}
-                    >
-                        {resident.profile_image_url || resident.profile_image ? (
-                            <img
-                                src={resident.profile_image_url || `/storage/${resident.profile_image}`}
-                                alt={fullName || 'Resident profile'}
-                                className="h-full w-full object-cover"
-                                onError={(event) => {
-                                    event.currentTarget.style.display = 'none';
-                                    event.currentTarget.nextElementSibling.style.display = 'flex';
-                                }}
+            <EntityCardShell key={resident.id}>
+                <EntityCardHeader
+                    left={
+                        <div className="flex flex-wrap items-start gap-3">
+                            <ResidentAvatarInline resident={resident} className="h-10 w-10 text-xs" />
+                            <div className="space-y-2">
+                                <span className="font-mono text-xs font-bold tracking-wide text-slate-500">
+                                    #{resident.id}
+                                </span>
+                                <span
+                                    className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
+                                        isActive
+                                            ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
+                                            : 'border-amber-200 bg-amber-50 text-amber-800'
+                                    }`}
+                                >
+                                    {isActive ? 'Active' : 'Inactive'}
+                                </span>
+                            </div>
+                        </div>
+                    }
+                    right={
+                        <Tooltip content="View medications" position="top">
+                            <CardIconButton
+                                variant="primary"
+                                icon={Pill}
+                                aria-label="View medications"
+                                onClick={() => navigate(`/medications/residents/${resident.id}`)}
                             />
-                        ) : null}
-                        <div
-                            className={`absolute inset-0 ${resident.profile_image ? 'hidden' : 'flex'} items-center justify-center text-lg font-semibold uppercase text-white`}
-                            style={{ backgroundColor: 'var(--theme-primary)' }}
-                        >
-                            {getInitials(resident.first_name, resident.last_name) || <User className="h-6 w-6" />}
-                        </div>
-                    </div>
-                    <div className="flex-1">
-                        <div className="flex items-center gap-3">
-                            <h3 className="text-lg font-semibold text-gray-900">{fullName || 'Unnamed Resident'}</h3>
-                            <span
-                                className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${
-                                    isActive
-                                        ? ''
-                                        : 'bg-amber-50 text-amber-700 ring-amber-200'
-                                }`}
-                                style={isActive ? {
-                                    backgroundColor: 'var(--theme-primary-bg)',
-                                    color: 'var(--theme-primary)',
-                                    '--tw-ring-color': 'var(--theme-primary-bg)'
-                                } : {}}
-                            >
-                                {isActive ? 'Active' : 'Inactive'}
-                            </span>
-                        </div>
-                        <p className="mt-1 text-sm text-gray-500">
-                            Resident since {formatPacificCalendarMedium(resident.admission_date)}
-                        </p>
-                    </div>
+                        </Tooltip>
+                    }
+                />
+
+                <h3 className="text-lg font-bold leading-snug text-slate-900 sm:text-xl">
+                    {fullName || 'Unnamed Resident'}
+                </h3>
+                <p className="mt-1 text-sm text-slate-500">
+                    Resident since {formatPacificCalendarMedium(resident.admission_date)}
+                </p>
+
+                <div className="mt-4 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+                    <DataPill icon={MapPin}>
+                        <span className="font-normal text-slate-600">{branchName}</span>
+                    </DataPill>
+                    <DataPill icon={Calendar}>
+                        <span className="font-normal text-slate-600">
+                            {formatPacificCalendarMedium(resident.date_of_birth)}
+                        </span>
+                    </DataPill>
                 </div>
 
-                <dl className="mt-6 grid grid-cols-1 gap-4 text-sm text-gray-600 sm:grid-cols-2">
-                    <div className="flex items-center gap-2 rounded-xl border border-gray-100 bg-gray-50/60 px-3 py-2">
-                        <MapPin className="h-4 w-4" style={{ color: 'var(--theme-primary)' }} />
-                        <div>
-                            <dt className="text-xs uppercase tracking-wide text-gray-500">Branch</dt>
-                            <dd className="font-medium text-gray-900">{branchName}</dd>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-2 rounded-xl border border-gray-100 bg-gray-50/60 px-3 py-2">
-                        <Calendar className="h-4 w-4" style={{ color: 'var(--theme-primary)' }} />
-                        <div>
-                            <dt className="text-xs uppercase tracking-wide text-gray-500">Date of Birth</dt>
-                            <dd className="font-medium text-gray-900">
-                                {formatPacificCalendarMedium(resident.date_of_birth)}
-                            </dd>
-                        </div>
-                    </div>
-                </dl>
-
-                <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
-                    <div className="text-xs text-gray-400">
-                        Last updated {formatPacificDateTimeShort(resident.updated_at)}
-                    </div>
-                    <button
-                        type="button"
-                        onClick={() => navigate(`/medications/residents/${resident.id}`)}
-                        className="inline-flex items-center gap-2 rounded-lg bg-[var(--theme-primary)] px-4 py-2 text-sm font-semibold text-[var(--theme-text-on-primary)] shadow-sm transition hover:bg-[var(--theme-primary-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--theme-primary)]"
-                    >
-                        <Pill className="w-4 h-4" />
-                        Medications
-                    </button>
-                </div>
-            </article>
+                <p className="mt-4 text-xs text-slate-400">
+                    Last updated {formatPacificDateTimeShort(resident.updated_at)}
+                </p>
+            </EntityCardShell>
         );
     };
 

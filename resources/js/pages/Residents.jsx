@@ -3,7 +3,24 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../services/api';
 import logger from '../utils/logger';
-import { Search, Users, Plus, Edit, XCircle, CheckCircle, Filter, Eye, X, Building2 } from 'lucide-react';
+import {
+    Search,
+    Users,
+    Plus,
+    Edit,
+    XCircle,
+    CheckCircle,
+    Filter,
+    Eye,
+    X,
+    Building2,
+    Home,
+    Calendar,
+    Cake,
+    CalendarClock,
+    Stethoscope,
+    AlertTriangle,
+} from 'lucide-react';
 import Select from '../components/ui/radix/Select';
 import ScrollReveal from '../components/ui/ScrollReveal';
 import Tooltip from '../components/ui/Tooltip';
@@ -13,6 +30,10 @@ import { formatPhoneNumber } from '../utils/phoneFormatter';
 import BranchSelector from '../components/BranchSelector';
 import ResidentForm from '../components/ResidentForm';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
+import EntityCardShell, { EntityCardHeader } from '../components/ui/EntityCardShell';
+import CardIconButton from '../components/ui/CardIconButton';
+import DataPill from '../components/ui/DataPill';
+import ResidentAvatarInline from '../components/ui/ResidentAvatarInline';
 import { formatPacificDate, calculateAgeFromPacificBirthDate } from '../utils/pacificTime';
 
 export default function Residents() {
@@ -126,140 +147,131 @@ export default function Residents() {
     const renderResidentCard = (resident) => {
         const isInactive = !isResidentActive(resident);
         const ageYears = calculateAgeFromPacificBirthDate(resident.date_of_birth);
+        const fullName = [resident.first_name, resident.middle_names, resident.last_name].filter(Boolean).join(' ');
         return (
-            <div
+            <EntityCardShell
                 key={resident.id}
-                className={`bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow ${isInactive ? 'border border-red-200 bg-red-50/60' : ''}`}
+                className={
+                    isInactive
+                        ? 'border-red-200/90 bg-red-50/60 hover:border-red-300/90'
+                        : ''
+                }
             >
-                <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center space-x-3 flex-1">
-                        {resident.profile_image_url ? (
-                            <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-gray-200 flex-shrink-0">
-                                <img
-                                    src={resident.profile_image_url}
-                                    alt={`${resident.first_name} ${resident.last_name}`}
-                                    className="w-full h-full object-cover"
-                                    onError={(e) => {
-                                        const fullName = `${resident.first_name} ${resident.last_name}`;
-                                        e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&background=25603E&color=fff&size=128`;
-                                    }}
-                                />
-                            </div>
-                        ) : (
-                            <div className="w-16 h-16 rounded-full bg-[var(--theme-primary)] flex items-center justify-center text-[var(--theme-text-on-primary)] font-semibold text-lg flex-shrink-0">
-                                {resident.first_name?.[0]?.toUpperCase() || ''}
-                                {resident.last_name?.[0]?.toUpperCase() || ''}
-                            </div>
-                        )}
-                        <div className="flex-1">
-                            <div className="flex items-center gap-2">
-                                <h3 className="text-lg font-semibold text-gray-900">
-                                    {resident.first_name}{' '}
-                                    {resident.middle_names ? `${resident.middle_names} ` : ''}
-                                    {resident.last_name}
-                                </h3>
-                                {isInactive && (
-                                    <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-red-100 text-red-700">
-                                        Deactivated
+                <EntityCardHeader
+                    left={
+                        <div className="flex flex-wrap items-start gap-3">
+                            <ResidentAvatarInline resident={resident} className="h-10 w-10 text-xs" />
+                            <div className="space-y-2">
+                                <span className="font-mono text-xs font-bold tracking-wide text-slate-500">
+                                    #{resident.id}
+                                </span>
+                                <div className="flex flex-wrap gap-1.5">
+                                    <span
+                                        className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
+                                            isInactive
+                                                ? 'border-red-200 bg-red-100 text-red-800'
+                                                : 'border-emerald-200 bg-emerald-50 text-emerald-800'
+                                        }`}
+                                    >
+                                        {isInactive ? 'Inactive' : 'Active'}
                                     </span>
-                                )}
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <div className="flex space-x-1.5 ml-2 flex-shrink-0">
-                        <button
-                            onClick={() => {
-                                const path = '/my-residents/' + resident.id;
-                                navigate(path);
-                            }}
-                            className="p-1.5 bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] hover:bg-[var(--theme-primary-hover)] rounded-lg transition-all duration-200 border-2 border-[var(--theme-primary)] shadow-md hover:shadow-lg transform hover:scale-105"
-                            title="View Details"
-                        >
-                            <Eye className="w-3.5 h-3.5" />
-                        </button>
-                        {canEdit && (
-                            <button
-                                onClick={() => {
-                                    setEditing(resident);
-                                    setShowForm(true);
-                                }}
-                                className="p-1.5 bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] hover:bg-[var(--theme-primary-hover)] rounded-lg transition-all duration-200 border-2 border-[var(--theme-primary)] shadow-md hover:shadow-lg transform hover:scale-105"
-                                title="Edit"
-                            >
-                                <Edit className="w-3.5 h-3.5" />
-                            </button>
-                        )}
-                        {canEdit && (
-                            <button
-                                type="button"
-                                onClick={() =>
-                                    setResidentStatusConfirm({
-                                        id: resident.id,
-                                        currentActive: isResidentActive(resident),
-                                    })
-                                }
-                                className={
-                                    'p-1.5 rounded-lg transition-all duration-200 border-2 shadow-md hover:shadow-lg transform hover:scale-105 ' +
-                                    (resident.is_active 
-                                        ? 'bg-amber-500 text-white hover:bg-amber-600 border-amber-600' 
-                                        : 'bg-green-600 text-white hover:bg-green-700 border-green-600')
-                                }
-                                title={resident.is_active ? 'Deactivate' : 'Activate'}
-                            >
-                            {resident.is_active ? (
-                                <XCircle className="w-3.5 h-3.5" />
-                            ) : (
-                                <CheckCircle className="w-3.5 h-3.5" />
+                    }
+                    right={
+                        <>
+                            <Tooltip content="View details" position="top">
+                                <CardIconButton
+                                    variant="view"
+                                    icon={Eye}
+                                    aria-label="View details"
+                                    onClick={() => navigate(`/my-residents/${resident.id}`)}
+                                />
+                            </Tooltip>
+                            {canEdit && (
+                                <Tooltip content="Edit resident" position="top">
+                                    <CardIconButton
+                                        variant="edit"
+                                        icon={Edit}
+                                        aria-label="Edit resident"
+                                        onClick={() => {
+                                            setEditing(resident);
+                                            setShowForm(true);
+                                        }}
+                                    />
+                                </Tooltip>
                             )}
-                        </button>
-                        )}
-                    </div>
-                </div>
-                <div className="space-y-2 text-sm">
+                            {canEdit && (
+                                <Tooltip
+                                    content={resident.is_active ? 'Deactivate' : 'Activate'}
+                                    position="top"
+                                >
+                                    <CardIconButton
+                                        variant={resident.is_active ? 'deactivate' : 'activate'}
+                                        icon={resident.is_active ? XCircle : CheckCircle}
+                                        aria-label={resident.is_active ? 'Deactivate' : 'Activate'}
+                                        onClick={() =>
+                                            setResidentStatusConfirm({
+                                                id: resident.id,
+                                                currentActive: isResidentActive(resident),
+                                            })
+                                        }
+                                    />
+                                </Tooltip>
+                            )}
+                        </>
+                    }
+                />
+
+                <h3 className="text-lg font-bold leading-snug text-slate-900 sm:text-xl">{fullName}</h3>
+
+                <div className="mt-4 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
                     {resident.branch && (
-                        <div className="flex justify-between">
-                            <span className="text-gray-600">Branch:</span>
-                            <span className="font-medium text-gray-900">{resident.branch.name}</span>
-                        </div>
+                        <DataPill icon={Building2}>
+                            <span className="font-medium">{resident.branch.name}</span>
+                        </DataPill>
                     )}
-                    <div className="flex justify-between">
-                        <span className="text-gray-600">Room:</span>
-                        <span className="font-medium text-gray-900">{resident.room_number || resident.room || 'N/A'}</span>
-                    </div>
-                    <div className="flex justify-between">
-                        <span className="text-gray-600">DOB:</span>
-                        <span className="font-medium text-gray-900">
-                            {resident.date_of_birth ? formatPacificDate(resident.date_of_birth) : 'N/A'}
+                    <DataPill icon={Home}>
+                        <span className="font-normal text-slate-600">
+                            Room: {resident.room_number || resident.room || 'N/A'}
                         </span>
-                    </div>
-                    <div className="flex justify-between">
-                        <span className="text-gray-600">Age:</span>
-                        <span className="font-medium text-gray-900">
-                            {ageYears !== null ? `${ageYears} yrs` : 'N/A'}
+                    </DataPill>
+                    <DataPill icon={Calendar}>
+                        <span className="font-normal text-slate-600">
+                            DOB: {resident.date_of_birth ? formatPacificDate(resident.date_of_birth) : 'N/A'}
                         </span>
-                    </div>
-                    <div className="flex justify-between">
-                        <span className="text-gray-600">Admission:</span>
-                        <span className="font-medium text-gray-900">
+                    </DataPill>
+                    <DataPill icon={Cake}>
+                        <span className="font-normal text-slate-600">
+                            Age: {ageYears !== null ? `${ageYears} yrs` : 'N/A'}
+                        </span>
+                    </DataPill>
+                    <DataPill icon={CalendarClock} className="sm:col-span-2">
+                        <span className="font-normal text-slate-600">
+                            Admission:{' '}
                             {resident.admission_date ? formatPacificDate(resident.admission_date) : 'N/A'}
                         </span>
-                    </div>
+                    </DataPill>
                     {resident.allergies && (
-                        <div className="flex justify-between">
-                            <span className="text-gray-600">Allergies:</span>
-                            <span className="font-medium text-gray-900">
-                                {Array.isArray(resident.allergies) ? resident.allergies.join(', ') : resident.allergies}
+                        <DataPill icon={AlertTriangle} className="sm:col-span-2">
+                            <span className="font-normal text-slate-600 line-clamp-2">
+                                Allergies:{' '}
+                                {Array.isArray(resident.allergies)
+                                    ? resident.allergies.join(', ')
+                                    : resident.allergies}
                             </span>
-                        </div>
+                        </DataPill>
                     )}
                     {resident.diagnosis && (
-                        <div className="flex justify-between">
-                            <span className="text-gray-600">Diagnosis:</span>
-                            <span className="font-medium text-gray-900">{resident.diagnosis}</span>
-                        </div>
+                        <DataPill icon={Stethoscope} className="sm:col-span-2">
+                            <span className="font-normal text-slate-600 line-clamp-2">
+                                Diagnosis: {resident.diagnosis}
+                            </span>
+                        </DataPill>
                     )}
                 </div>
-            </div>
+            </EntityCardShell>
         );
     };
 

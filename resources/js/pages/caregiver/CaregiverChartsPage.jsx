@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Search, ClipboardList, Plus, Clock } from 'lucide-react';
+import { Search, ClipboardList, Plus, Clock, Calendar, Stethoscope, User, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '../../services/api';
-
-function getInitials(first = '', last = '') {
-    return `${first?.[0] ?? ''}${last?.[0] ?? ''}`.toUpperCase();
-}
+import EntityCardShell, { EntityCardHeader } from '../../components/ui/EntityCardShell';
+import CardIconButton from '../../components/ui/CardIconButton';
+import DataPill from '../../components/ui/DataPill';
+import ResidentAvatarInline from '../../components/ui/ResidentAvatarInline';
+import Tooltip from '../../components/ui/Tooltip';
 
 export default function CaregiverChartsPage() {
     const navigate = useNavigate();
@@ -92,54 +93,74 @@ export default function CaregiverChartsPage() {
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {residents.map((resident) => (
-                        <div key={resident.id} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-                            <div className="flex items-center gap-4 mb-6">
-                                <div className="w-16 h-16 rounded-full bg-[var(--theme-primary)] flex items-center justify-center text-white font-bold text-xl overflow-hidden">
-                                    {resident.profile_image_url ? (
-                                        <img src={resident.profile_image_url} alt={resident.name} className="w-full h-full object-cover" />
-                                    ) : (
-                                        getInitials(resident.first_name, resident.last_name)
-                                    )}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <h3 className="text-lg font-bold text-gray-900 truncate">
-                                        {[resident.first_name, resident.last_name].filter(Boolean).join(' ')}
-                                    </h3>
-                                    <div className="space-y-1 mt-1">
-                                        <p className="text-xs text-gray-500 truncate">DOB: {resident.date_of_birth}</p>
-                                        <p className="text-xs text-gray-500 truncate">Diagnosis: {resident.diagnosis || 'N/A'}</p>
-                                        <p className="text-xs text-gray-500 truncate">
+                    {residents.map((resident) => {
+                        const fullName = [resident.first_name, resident.last_name].filter(Boolean).join(' ');
+                        const pending = pendingLoadingId === resident.id;
+                        return (
+                            <EntityCardShell key={resident.id}>
+                                <EntityCardHeader
+                                    left={
+                                        <div className="flex flex-wrap items-start gap-3">
+                                            <ResidentAvatarInline resident={resident} className="h-10 w-10 text-xs" />
+                                            <div className="space-y-2">
+                                                <span className="font-mono text-xs font-bold tracking-wide text-slate-500">
+                                                    #{resident.id}
+                                                </span>
+                                                <span className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-800">
+                                                    Active
+                                                </span>
+                                            </div>
+                                        </div>
+                                    }
+                                    right={
+                                        <>
+                                            <Tooltip content="Open behavior charts" position="top">
+                                                <CardIconButton
+                                                    variant="primary"
+                                                    icon={Plus}
+                                                    aria-label="New charts"
+                                                    onClick={() => handleOpenChart(resident.id)}
+                                                />
+                                            </Tooltip>
+                                            <Tooltip content="Pending charts" position="top">
+                                                <CardIconButton
+                                                    variant="view"
+                                                    icon={pending ? Loader2 : Clock}
+                                                    aria-label="Pending charts"
+                                                    disabled={pending}
+                                                    onClick={() => handlePendingCharts(resident.id)}
+                                                    className={pending ? '[&_svg]:animate-spin' : ''}
+                                                />
+                                            </Tooltip>
+                                        </>
+                                    }
+                                />
+
+                                <h3 className="text-lg font-bold leading-snug text-slate-900 sm:text-xl truncate">
+                                    {fullName}
+                                </h3>
+
+                                <div className="mt-4 grid grid-cols-1 gap-2.5">
+                                    <DataPill icon={Calendar}>
+                                        <span className="font-normal text-slate-600">
+                                            DOB: {resident.date_of_birth || 'N/A'}
+                                        </span>
+                                    </DataPill>
+                                    <DataPill icon={Stethoscope}>
+                                        <span className="font-normal text-slate-600 line-clamp-2">
+                                            Diagnosis: {resident.diagnosis || 'N/A'}
+                                        </span>
+                                    </DataPill>
+                                    <DataPill icon={User}>
+                                        <span className="font-normal text-slate-600 truncate">
                                             Physician:{' '}
                                             {resident.primary_care_doctor || resident.physician_name || 'N/A'}
-                                        </p>
-                                    </div>
+                                        </span>
+                                    </DataPill>
                                 </div>
-                            </div>
-
-                            <div className="flex gap-1.5">
-                                <button
-                                    onClick={() => handleOpenChart(resident.id)}
-                                    className="flex-1 px-2.5 py-1.5 bg-[var(--theme-primary)] text-white rounded-lg text-xs font-semibold hover:bg-[var(--theme-primary-hover)] transition-all shadow-sm active:scale-[0.98] flex items-center justify-center gap-1"
-                                >
-                                    <Plus className="w-3.5 h-3.5 shrink-0" />
-                                    New Charts
-                                </button>
-                                <button
-                                    onClick={() => handlePendingCharts(resident.id)}
-                                    disabled={pendingLoadingId === resident.id}
-                                    className="flex-1 px-2.5 py-1.5 border border-gray-200 text-gray-700 rounded-lg text-xs font-semibold hover:bg-gray-50 hover:border-gray-300 transition-all active:scale-[0.98] flex items-center justify-center gap-1 disabled:opacity-60 disabled:cursor-not-allowed"
-                                >
-                                    {pendingLoadingId === resident.id ? (
-                                        <span className="inline-block w-3.5 h-3.5 border-2 border-gray-400 border-t-transparent rounded-full animate-spin shrink-0" />
-                                    ) : (
-                                        <Clock className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                                    )}
-                                    Pending Charts
-                                </button>
-                            </div>
-                        </div>
-                    ))}
+                            </EntityCardShell>
+                        );
+                    })}
                 </div>
             )}
         </div>

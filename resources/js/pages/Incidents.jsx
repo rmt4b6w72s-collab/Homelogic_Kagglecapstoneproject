@@ -13,6 +13,10 @@ import {
 import Card from '../components/Card';
 import Modal from '../components/ui/Modal';
 import Tooltip from '../components/ui/Tooltip';
+import EntityCardShell, { EntityCardHeader } from '../components/ui/EntityCardShell';
+import CardIconButton from '../components/ui/CardIconButton';
+import DataPill, { DataPillSection } from '../components/ui/DataPill';
+import ResidentAvatarInline from '../components/ui/ResidentAvatarInline';
 import FormInput from '../components/forms/FormInput';
 import FormTextarea from '../components/forms/FormTextarea';
 import FormSelect from '../components/forms/FormSelect';
@@ -758,14 +762,10 @@ export default function Incidents() {
                 <>
                     <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                         {incidents.map((incident) => (
-                            <article
-                                key={incident.id}
-                                className="group relative flex flex-col overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-[0_4px_24px_rgba(15,23,42,0.06)] transition duration-300 hover:-translate-y-0.5 hover:border-slate-300/90 hover:shadow-[0_12px_40px_rgba(15,23,42,0.1)]"
-                            >
-                                <div className="h-1 w-full bg-gradient-to-r from-[var(--theme-primary)] via-[var(--theme-primary-hover)] to-slate-300/80" />
-                                <div className="flex flex-1 flex-col p-5 sm:p-6">
-                                    <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
-                                        <div className="space-y-2">
+                            <EntityCardShell key={incident.id}>
+                                <EntityCardHeader
+                                    left={
+                                        <>
                                             <span className="font-mono text-xs font-bold tracking-wide text-[var(--theme-primary)]">
                                                 {incident.incident_number}
                                             </span>
@@ -786,114 +786,102 @@ export default function Incidents() {
                                                     {incident.status?.replace('_', ' ')}
                                                 </span>
                                             </div>
-                                        </div>
-                                        <div className="flex shrink-0 gap-1.5">
+                                        </>
+                                    }
+                                    right={
+                                        <>
                                             <Tooltip content="View details" position="top">
-                                                <button
-                                                    type="button"
+                                                <CardIconButton
+                                                    variant="view"
+                                                    icon={Eye}
+                                                    aria-label="View details"
                                                     onClick={() => {
                                                         setSelectedIncident(incident);
                                                         setShowViewModal(true);
                                                     }}
-                                                    className="rounded-lg border border-sky-200 bg-sky-50 p-2 shadow-sm transition hover:border-sky-300 hover:bg-sky-100"
-                                                    aria-label="View details"
-                                                >
-                                                    <Eye
-                                                        className="h-4 w-4 !text-sky-600"
-                                                        strokeWidth={2.5}
-                                                    />
-                                                </button>
+                                                />
                                             </Tooltip>
                                             <Tooltip content="Edit incident" position="top">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleOpenForm(incident)}
-                                                    className="rounded-lg border border-amber-300 bg-amber-50 p-2 shadow-sm transition hover:border-amber-400 hover:bg-amber-100"
+                                                <CardIconButton
+                                                    variant="edit"
+                                                    icon={Edit}
                                                     aria-label="Edit incident"
-                                                >
-                                                    <Edit
-                                                        className="h-4 w-4 !text-amber-700"
-                                                        strokeWidth={2.5}
-                                                    />
-                                                </button>
+                                                    onClick={() => handleOpenForm(incident)}
+                                                />
                                             </Tooltip>
                                             {incident.status !== 'resolved' && incident.status !== 'closed' && (
                                                 <Tooltip content="Mark as resolved" position="top">
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setResolveConfirmIncident(incident)}
-                                                        className="rounded-lg border border-emerald-300 bg-emerald-50 p-2 shadow-sm transition hover:border-emerald-400 hover:bg-emerald-100"
+                                                    <CardIconButton
+                                                        variant="resolve"
+                                                        icon={CheckCircle}
                                                         aria-label="Mark as resolved"
-                                                    >
-                                                        <CheckCircle
-                                                            className="h-4 w-4 !text-emerald-600"
-                                                            strokeWidth={2.5}
-                                                        />
-                                                    </button>
+                                                        onClick={() => setResolveConfirmIncident(incident)}
+                                                    />
                                                 </Tooltip>
                                             )}
                                             {!isCaregiver && (
                                                 <Tooltip content="Delete incident" position="top">
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setDeleteConfirmIncident(incident)}
-                                                        className="rounded-lg border border-red-200 bg-red-50 p-2 shadow-sm transition hover:border-red-300 hover:bg-red-100"
+                                                    <CardIconButton
+                                                        variant="delete"
+                                                        icon={Trash2}
                                                         aria-label="Delete incident"
-                                                    >
-                                                        <Trash2
-                                                            className="h-4 w-4 !text-red-600"
-                                                            strokeWidth={2.5}
-                                                        />
-                                                    </button>
+                                                        onClick={() => setDeleteConfirmIncident(incident)}
+                                                    />
                                                 </Tooltip>
                                             )}
-                                        </div>
-                                    </div>
+                                        </>
+                                    }
+                                />
 
-                                    <h3 className="text-lg font-bold leading-snug text-slate-900 sm:text-xl">
-                                        {incident.incident_type}
-                                    </h3>
+                                <h3 className="text-lg font-bold leading-snug text-slate-900 sm:text-xl">
+                                    {incident.incident_type}
+                                </h3>
 
-                                    <div className="mt-4 grid grid-cols-1 gap-2.5 text-sm text-slate-600 sm:grid-cols-2">
-                                        <div className="flex items-center gap-2 rounded-lg bg-slate-50/80 px-3 py-2">
-                                            <User className="h-4 w-4 shrink-0 text-slate-400" />
-                                            <span className="truncate font-medium text-slate-800">
-                                                {incident.resident?.first_name} {incident.resident?.last_name}
+                                <div className="mt-4 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+                                    <DataPill
+                                        leading={
+                                            incident.resident ? (
+                                                <ResidentAvatarInline resident={incident.resident} />
+                                            ) : null
+                                        }
+                                        icon={!incident.resident ? User : undefined}
+                                        contentClassName="font-medium"
+                                    >
+                                        {incident.resident
+                                            ? `${incident.resident.first_name ?? ''} ${incident.resident.last_name ?? ''}`.trim() ||
+                                              '—'
+                                            : '—'}
+                                    </DataPill>
+                                    {incident.location && (
+                                        <DataPill icon={MapPin}>
+                                            <span className="font-normal text-slate-600">{incident.location}</span>
+                                        </DataPill>
+                                    )}
+                                    <DataPill icon={Calendar} className="sm:col-span-2">
+                                        <span className="font-normal text-slate-600">
+                                            {new Date(incident.incident_date).toLocaleString()}
+                                        </span>
+                                    </DataPill>
+                                    {incident.assigned_to && incident.assigned_to_user && (
+                                        <DataPill icon={User} className="sm:col-span-2">
+                                            <span className="font-normal text-slate-600">
+                                                Assigned: {incident.assigned_to_user.name}
                                             </span>
-                                        </div>
-                                        {incident.location && (
-                                            <div className="flex items-center gap-2 rounded-lg bg-slate-50/80 px-3 py-2">
-                                                <MapPin className="h-4 w-4 shrink-0 text-slate-400" />
-                                                <span className="truncate">{incident.location}</span>
-                                            </div>
-                                        )}
-                                        <div className="flex items-center gap-2 rounded-lg bg-slate-50/80 px-3 py-2 sm:col-span-2">
-                                            <Calendar className="h-4 w-4 shrink-0 text-slate-400" />
-                                            <span>{new Date(incident.incident_date).toLocaleString()}</span>
-                                        </div>
-                                        {incident.assigned_to && incident.assigned_to_user && (
-                                            <div className="flex items-center gap-2 rounded-lg bg-slate-50/80 px-3 py-2 sm:col-span-2">
-                                                <User className="h-4 w-4 shrink-0 text-slate-400" />
-                                                <span className="truncate">Assigned: {incident.assigned_to_user.name}</span>
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    <div className="mt-4 flex-1">
-                                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Description</p>
-                                        <p className="mt-1 line-clamp-3 text-sm leading-relaxed text-slate-600">
-                                            {incident.description || '—'}
-                                        </p>
-                                    </div>
-
-                                    {incident.attachments && incident.attachments.length > 0 && (
-                                        <div className="mt-3 flex items-center gap-2 text-xs font-medium text-slate-500">
-                                            <FileText className="h-3.5 w-3.5" />
-                                            {incident.attachments.length} attachment(s)
-                                        </div>
+                                        </DataPill>
                                     )}
                                 </div>
-                            </article>
+
+                                <DataPillSection label="Description">
+                                    <p className="line-clamp-3">{incident.description || '—'}</p>
+                                </DataPillSection>
+
+                                {incident.attachments && incident.attachments.length > 0 && (
+                                    <div className="mt-3 flex items-center gap-2 text-xs font-medium text-slate-500">
+                                        <FileText className="h-3.5 w-3.5" />
+                                        {incident.attachments.length} attachment(s)
+                                    </div>
+                                )}
+                            </EntityCardShell>
                         ))}
                     </div>
 
