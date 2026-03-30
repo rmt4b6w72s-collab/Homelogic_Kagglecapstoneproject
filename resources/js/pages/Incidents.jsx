@@ -658,18 +658,18 @@ export default function Incidents() {
                                                     setSelectedIncident(incident);
                                                     setShowViewModal(true);
                                                 }}
-                                                className="rounded-lg border border-slate-200 bg-white p-2 text-slate-600 transition hover:border-slate-300 hover:bg-slate-50"
+                                                className="rounded-lg border border-slate-300 bg-slate-100 p-2 text-slate-800 shadow-sm transition hover:border-slate-400 hover:bg-slate-200 hover:text-slate-950"
                                                 title="View"
                                             >
-                                                <Eye className="h-4 w-4" />
+                                                <Eye className="h-4 w-4" strokeWidth={2.5} />
                                             </button>
                                             <button
                                                 type="button"
                                                 onClick={() => handleOpenForm(incident)}
-                                                className="rounded-lg border border-[var(--theme-primary)]/30 bg-[var(--theme-primary-bg)]/50 p-2 text-[var(--theme-primary)] transition hover:bg-[var(--theme-primary-bg)]"
+                                                className="rounded-lg border border-amber-400/90 bg-amber-50 p-2 text-amber-950 shadow-sm transition hover:border-amber-500 hover:bg-amber-100"
                                                 title="Edit"
                                             >
-                                                <Edit className="h-4 w-4" />
+                                                <Edit className="h-4 w-4" strokeWidth={2.5} />
                                             </button>
                                             {incident.status !== 'resolved' && incident.status !== 'closed' && (
                                                 <button
@@ -681,13 +681,13 @@ export default function Incidents() {
                                                             markResolvedMutation.mutate({ id: incident.id, notes: '' });
                                                         }
                                                     }}
-                                                    className="rounded-lg border border-emerald-200 bg-emerald-50/80 p-2 text-emerald-700 transition hover:bg-emerald-100"
+                                                    className="rounded-lg border border-emerald-400 bg-emerald-100 p-2 text-emerald-950 shadow-sm transition hover:border-emerald-500 hover:bg-emerald-200"
                                                     title={incident.status === 'resolved' ? 'Mark closed' : 'Mark resolved'}
                                                 >
                                                     {incident.status === 'resolved' ? (
-                                                        <Lock className="h-4 w-4" />
+                                                        <Lock className="h-4 w-4" strokeWidth={2.5} />
                                                     ) : (
-                                                        <CheckCircle className="h-4 w-4" />
+                                                        <CheckCircle className="h-4 w-4" strokeWidth={2.5} />
                                                     )}
                                                 </button>
                                             )}
@@ -698,10 +698,10 @@ export default function Incidents() {
                                                         deleteMutation.mutate(incident.id);
                                                     }
                                                 }}
-                                                className="rounded-lg border border-red-200 bg-white p-2 text-red-600 transition hover:bg-red-50"
+                                                className="rounded-lg border border-red-300 bg-red-50 p-2 text-red-800 shadow-sm transition hover:border-red-400 hover:bg-red-100 hover:text-red-950"
                                                 title="Delete"
                                             >
-                                                <Trash2 className="h-4 w-4" />
+                                                <Trash2 className="h-4 w-4" strokeWidth={2.5} />
                                             </button>
                                         </div>
                                     </div>
