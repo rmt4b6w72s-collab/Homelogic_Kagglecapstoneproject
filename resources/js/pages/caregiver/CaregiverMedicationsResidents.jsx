@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { Users, Search, MapPin, Calendar, Pill, User } from 'lucide-react';
 import api from '../../services/api';
+import logger from '../../utils/logger';
 import { formatPacificCalendarMedium, formatPacificDateTimeShort } from '../../utils/pacificTime';
 
 function getInitials(first = '', last = '') {

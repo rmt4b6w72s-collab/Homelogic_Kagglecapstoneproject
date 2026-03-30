@@ -176,6 +176,8 @@ export default function ResidentMedicationsPage() {
     }, [currentUser?.app_current_time]);
 
     // Real-time: must match queryKey `resident-medications` (not `medications`) so cache refetches.
+    const todayResidentAdminsQueryKey = ['medication-administrations', 'today', residentId];
+
     useResidentUpdates(
         residentId,
         ['medication.administration.created'],
@@ -183,7 +185,7 @@ export default function ResidentMedicationsPage() {
             queryKeys: [
                 ['resident-medications', residentId],
                 ['medication-administrations', residentId],
-                ['medication-administrations', 'today', residentId],
+                todayResidentAdminsQueryKey,
             ],
             showToast: true,
             getToastMessage: (eventName, data) => {
@@ -220,6 +222,30 @@ export default function ResidentMedicationsPage() {
         },
         enabled: !!residentId,
     });
+
+    /** One request for today's administrations for this resident (replaces N per-medication fetches in badges / Quick Administer). */
+    const { data: todayResidentAdminsPage } = useQuery({
+        queryKey: todayResidentAdminsQueryKey,
+        queryFn: async () => {
+            const today = getPacificISODate();
+            const response = await api.get('/medication-administrations', {
+                params: {
+                    resident_id: residentId,
+                    date_from: today,
+                    date_to: today,
+                    per_page: 500,
+                },
+            });
+            return response.data;
+        },
+        enabled: !!residentId,
+        staleTime: 30 * 1000,
+    });
+
+    const todayAdminsList = React.useMemo(() => {
+        const rows = todayResidentAdminsPage?.data ?? todayResidentAdminsPage ?? [];
+        return Array.isArray(rows) ? rows : [];
+    }, [todayResidentAdminsPage]);
 
     const medicationsList = React.useMemo(() => data?.data ?? [], [data?.data]);
     const resident = residentData;
@@ -386,6 +412,9 @@ export default function ResidentMedicationsPage() {
         const isPrn = instruction.includes('prn') || instruction.includes('as needed');
         const medName = (medication.name || medication.drug?.name || 'Medication').toUpperCase();
 
+        const adminsForMedFromApi = todayAdminsList.filter((a) => Number(a.medication_id) === Number(medication.id));
+        const todayAdminDataForRow = { data: adminsForMedFromApi };
+
         const todayAdministrations = getMedicationAdministrations(medication);
         const canBulkSelect = canSelectMedicationRowForBulkAdministration(medication, {
             slotTime: medication.slotTime,
@@ -547,17 +576,22 @@ export default function ResidentMedicationsPage() {
                             {/* Section 2: Administration Status */}
                             <div className="space-y-4">
                                 <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Today's Status</h4>
-                                <MedicationTimeBadges medication={medication} activeTab={activeTab} />
+                                <MedicationTimeBadges
+                                    medication={medication}
+                                    activeTab={activeTab}
+                                    todayAdminData={todayAdminDataForRow}
+                                />
                                 
                                 <div className="pt-2 border-t border-gray-200">
                                     <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Record Administration</h4>
                                     <QuickAdminister 
-                                        medication={medication} 
+                                        medication={medication}
+                                        residentId={residentId}
+                                        todayResidentAdminsQueryKey={todayResidentAdminsQueryKey}
+                                        todayAdminData={todayAdminDataForRow}
                                         onSuccess={() => { 
-                                            queryClient.invalidateQueries(['resident-medications', residentId]); 
-                                            queryClient.invalidateQueries(['medication-administrations']); 
-                                            queryClient.invalidateQueries(['medication-administrations-today', medication.id]);
-                                            queryClient.invalidateQueries(['medication-administrations-today-check', medication.id]);
+                                            queryClient.invalidateQueries(['resident-medications', residentId]);
+                                            queryClient.invalidateQueries({ queryKey: todayResidentAdminsQueryKey });
                                         }} 
                                     />
                                 </div>
@@ -599,14 +633,8 @@ export default function ResidentMedicationsPage() {
         
         try {
             const medsToAdmin = currentTabMedications.filter(m => selectedMeds.has(m.uniqueId));
-            const today = getPacificISODate();
-            const response = await api.get('/medication-administrations', {
-                params: { resident_id: residentId, date_from: today, date_to: today, per_page: 500 },
-            });
-            const rows = response.data?.data ?? response.data ?? [];
-            const list = Array.isArray(rows) ? rows : [];
             const byMedId = new Map();
-            for (const a of list) {
+            for (const a of todayAdminsList) {
                 if (!byMedId.has(a.medication_id)) byMedId.set(a.medication_id, []);
                 byMedId.get(a.medication_id).push(a);
             }
@@ -625,30 +653,23 @@ export default function ResidentMedicationsPage() {
                 );
             }
             const now = new Date().toISOString();
-            
-            const promises = allowed.map(med => {
-                return offlinePost('/medication-administrations', {
-                    medication_id: med.id,
-                    resident_id: med.resident_id,
-                    branch_id: med.branch_id,
-                    administered_at: now,
-                    status: 'completed',
-                    dosage_given: med.quantity ? `${med.quantity} ${med.form || ''}` : 'As prescribed',
-                    notes: `Bulk administered from dashboard. Target slot: ${med.slotTime || 'N/A'}`,
-                });
-            });
-            
-            await Promise.all(promises);
+
+            const items = allowed.map((med) => ({
+                medication_id: med.id,
+                resident_id: med.resident_id,
+                branch_id: med.branch_id,
+                administered_at: now,
+                status: 'completed',
+                dosage_given: med.quantity ? `${med.quantity} ${med.form || ''}` : 'As prescribed',
+                notes: `Bulk administered from dashboard. Target slot: ${med.slotTime || 'N/A'}`,
+            }));
+
+            await api.post('/medication-administrations/bulk', { items });
 
             setSelectedMeds(new Set());
-            // Narrow updates only: broad invalidateQueries(['medication-administrations']) refetches
-            // every administration query app-wide and feels very slow after "Administer All".
             await Promise.all([
                 refetchMeds(),
-                ...allowed.flatMap((med) => [
-                    queryClient.invalidateQueries({ queryKey: ['medication-administrations-today', med.id], exact: true }),
-                    queryClient.invalidateQueries({ queryKey: ['medication-administrations-today-check', med.id], exact: true }),
-                ]),
+                queryClient.invalidateQueries({ queryKey: todayResidentAdminsQueryKey }),
             ]);
 
             alert(`Successfully administered ${allowed.length} records.`);
@@ -878,26 +899,9 @@ export default function ResidentMedicationsPage() {
 
 }
 
-// Medication Time Badges Component
-function MedicationTimeBadges({ medication, activeTab }) {
+// Medication Time Badges Component (todayAdminData supplied by parent — one API call per resident, not per row)
+function MedicationTimeBadges({ medication, activeTab, todayAdminData }) {
     const formatTime = (timeValue) => formatPacificTimeValue(timeValue);
-
-    // Fetch today's administrations for this medication
-    const { data: todayAdminData } = useQuery({
-        queryKey: ['medication-administrations-today', medication.id],
-        queryFn: async () => {
-            const today = getPacificISODate();
-            const response = await api.get('/medication-administrations', {
-                params: {
-                    medication_id: medication.id,
-                    date_from: today,
-                    date_to: today,
-                    per_page: 100,
-                },
-            });
-            return response.data;
-        },
-    });
 
     // Helper to get the status of a time (completed, missed, refused, or null if not administered)
     const parseScheduledTime = (timeValue) => toPacificDateFromTime(timeValue, { referenceDate: getPacificNow() });
@@ -1066,7 +1070,7 @@ function MedicationTimeBadges({ medication, activeTab }) {
 }
 
 // Quick Administer Component
-function QuickAdminister({ medication, onSuccess }) {
+function QuickAdminister({ medication, onSuccess, residentId, todayResidentAdminsQueryKey, todayAdminData }) {
     const queryClient = useQueryClient();
     const [status, setStatus] = useState('completed');
     const [submitting, setSubmitting] = useState(false);
@@ -1102,22 +1106,8 @@ function QuickAdminister({ medication, onSuccess }) {
         [normalizedInstruction]
     );
 
-    // Fetch today's administrations to check daily limit
-    const { data: todayAdminData } = useQuery({
-        queryKey: ['medication-administrations-today-check', medication.id],
-        queryFn: async () => {
-            const today = getPacificISODate();
-            const response = await api.get('/medication-administrations', {
-                params: {
-                    medication_id: medication.id,
-                    date_from: today,
-                    date_to: today,
-                    per_page: 100,
-                },
-            });
-            return response.data;
-        },
-    });
+    // Today's administrations for this medication (from parent single-resident query)
+    const todayAdminDataResolved = todayAdminData ?? { data: [] };
 
     // Check if daily limit is reached by counting unique administered time slots
     React.useEffect(() => {
@@ -1132,7 +1122,7 @@ function QuickAdminister({ medication, onSuccess }) {
             return;
         }
 
-        const admins = todayAdminData?.data?.filter(a => a.status !== 'missed') || [];
+        const admins = todayAdminDataResolved?.data?.filter(a => a.status !== 'missed') || [];
         if (admins.length === 0) {
             setIsDailyLimitReached(false);
             return;
@@ -1154,7 +1144,7 @@ function QuickAdminister({ medication, onSuccess }) {
         }
 
         setIsDailyLimitReached(administeredSlots >= timeSlots.length);
-    }, [todayAdminData, isPrnMedication, medication.time_1, medication.time_2, medication.time_3, medication.time_4]);
+    }, [todayAdminDataResolved, isPrnMedication, medication.time_1, medication.time_2, medication.time_3, medication.time_4]);
 
     // Helper function to parse time and convert to today's date with an optional day offset
     const parseTimeToToday = React.useCallback(
@@ -1181,15 +1171,15 @@ function QuickAdminister({ medication, onSuccess }) {
     );
 
     const hasAdminForWindow = React.useCallback((scheduledDate) => {
-        if (!todayAdminData?.data?.length) return false;
+        if (!todayAdminDataResolved?.data?.length) return false;
         const toleranceMs = 60 * 60 * 1000;
-        return todayAdminData.data.some((admin) => {
+        return todayAdminDataResolved.data.some((admin) => {
             if (admin.status === 'missed') return false;
             const adminTime = parseAdminTimeToPacific(admin.administered_at);
             if (!adminTime) return false;
             return Math.abs(adminTime.getTime() - scheduledDate.getTime()) <= toleranceMs;
         });
-    }, [todayAdminData]);
+    }, [todayAdminDataResolved]);
 
     // Check if current time is within 60 minutes before or after any scheduled time
     const checkTimeWindow = React.useCallback(() => {
@@ -1497,16 +1487,9 @@ function QuickAdminister({ medication, onSuccess }) {
                                     const realUtcNow = new Date().toISOString();
                                     const statusLabel = status.charAt(0).toUpperCase() + status.slice(1);
                                     
-                                    // Optimistically update the cache immediately
-                                    const queryKey = ['medication-administrations-today', medication.id];
-                                    const checkQueryKey = ['medication-administrations-today-check', medication.id];
-                                    
-                                    // Get current cache data
-                                    const currentData = queryClient.getQueryData(queryKey);
-                                    const currentCheckData = queryClient.getQueryData(checkQueryKey);
-                                    
-                                    // Create optimistic administration record
-                                    // Use real UTC for administered_at so getPacificDate() parses correctly
+                                    const sharedKey = todayResidentAdminsQueryKey;
+                                    const currentShared = sharedKey ? queryClient.getQueryData(sharedKey) : undefined;
+
                                     const optimisticAdmin = {
                                         id: `temp-${Date.now()}`,
                                         medication_id: medication.id,
@@ -1519,53 +1502,23 @@ function QuickAdminister({ medication, onSuccess }) {
                                         created_at: realUtcNow,
                                         updated_at: realUtcNow,
                                     };
-                                    
-                                    // Optimistically update cache for both query keys
-                                    // Also update the MedicationTimeBadges query key to ensure badges update immediately
-                                    const badgesQueryKey = ['medication-administrations-today', medication.id];
-                                    
-                                    queryClient.setQueryData(queryKey, (old) => {
-                                        if (!old) {
+
+                                    if (sharedKey) {
+                                        queryClient.setQueryData(sharedKey, (old) => {
+                                            if (!old) {
+                                                return {
+                                                    data: [optimisticAdmin],
+                                                    total: 1,
+                                                    current_page: 1,
+                                                };
+                                            }
                                             return {
-                                                data: [optimisticAdmin],
-                                                total: 1,
+                                                ...old,
+                                                data: [...(old.data || []), optimisticAdmin],
+                                                total: (old.total || (old.data?.length ?? 0)) + 1,
                                             };
-                                        }
-                                        return {
-                                            ...old,
-                                            data: [...(old.data || []), optimisticAdmin],
-                                            total: (old.total || 0) + 1,
-                                        };
-                                    });
-                                    
-                                    queryClient.setQueryData(checkQueryKey, (old) => {
-                                        if (!old) {
-                                            return {
-                                                data: [optimisticAdmin],
-                                                total: 1,
-                                            };
-                                        }
-                                        return {
-                                            ...old,
-                                            data: [...(old.data || []), optimisticAdmin],
-                                            total: (old.total || 0) + 1,
-                                        };
-                                    });
-                                    
-                                    // Update badges query cache to show refused/missed immediately
-                                    queryClient.setQueryData(badgesQueryKey, (old) => {
-                                        if (!old) {
-                                            return {
-                                                data: [optimisticAdmin],
-                                                total: 1,
-                                            };
-                                        }
-                                        return {
-                                            ...old,
-                                            data: [...(old.data || []), optimisticAdmin],
-                                            total: (old.total || 0) + 1,
-                                        };
-                                    });
+                                        });
+                                    }
                                     
                                     // Close modal immediately
                                     closeDosageModal();
@@ -1600,44 +1553,23 @@ function QuickAdminister({ medication, onSuccess }) {
                                         
                                         // Replace optimistic update with real data
                                         const realAdmin = result.data?.data || result.data;
-                                        
-                                        queryClient.setQueryData(queryKey, (old) => {
-                                            if (!old) return old;
-                                            const filtered = (old.data || []).filter(a => a.id !== optimisticAdmin.id);
-                                            return {
-                                                ...old,
-                                                data: [...filtered, realAdmin],
-                                            };
-                                        });
-                                        
-                                        queryClient.setQueryData(checkQueryKey, (old) => {
-                                            if (!old) return old;
-                                            const filtered = (old.data || []).filter(a => a.id !== optimisticAdmin.id);
-                                            return {
-                                                ...old,
-                                                data: [...filtered, realAdmin],
-                                            };
-                                        });
-                                        
-                                        // Update badges query with real data
-                                        const badgesQueryKey = ['medication-administrations-today', medication.id];
-                                        queryClient.setQueryData(badgesQueryKey, (old) => {
-                                            if (!old) return old;
-                                            const filtered = (old.data || []).filter(a => a.id !== optimisticAdmin.id);
-                                            return {
-                                                ...old,
-                                                data: [...filtered, realAdmin],
-                                            };
-                                        });
-                                        
-                                        // Invalidate other related queries
-                                        queryClient.invalidateQueries(['medication-administrations']);
-                                        
+
+                                        if (sharedKey) {
+                                            queryClient.setQueryData(sharedKey, (old) => {
+                                                if (!old) return old;
+                                                const filtered = (old.data || []).filter((a) => a.id !== optimisticAdmin.id);
+                                                return {
+                                                    ...old,
+                                                    data: [...filtered, realAdmin],
+                                                };
+                                            });
+                                        }
+
                                         onSuccess?.();
                                     } catch (e) {
-                                        // Revert optimistic update on error
-                                        queryClient.setQueryData(queryKey, currentData);
-                                        queryClient.setQueryData(checkQueryKey, currentCheckData);
+                                        if (sharedKey) {
+                                            queryClient.setQueryData(sharedKey, currentShared);
+                                        }
                                         
                                         const msg = e?.response?.data?.message || 'Unable to record administration.';
                                         setError(msg);

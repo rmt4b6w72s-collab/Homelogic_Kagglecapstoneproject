@@ -162,9 +162,10 @@ Route::prefix('v1')->middleware([\App\Http\Middleware\SetFacilityContext::class]
     // Drugs
     Route::apiResource('drugs', DrugController::class)->middleware('auth:sanctum');
 
-    // Medication Administrations
+    // Medication Administrations (bulk must be registered before apiResource so "bulk" is not treated as an id)
     Route::get('/medication-administrations/stats', [MedicationAdministrationController::class, 'stats'])->middleware('auth:sanctum');
     Route::post('/medication-administrations/mark-missed', [MedicationAdministrationController::class, 'markMissed'])->middleware('auth:sanctum');
+    Route::post('/medication-administrations/bulk', [MedicationAdministrationController::class, 'bulkStore'])->middleware('auth:sanctum');
     Route::apiResource('medication-administrations', MedicationAdministrationController::class)->middleware('auth:sanctum');
 
     // Medication Deliveries

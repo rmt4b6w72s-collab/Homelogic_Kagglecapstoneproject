@@ -7,6 +7,7 @@ use App\Models\MedicationAdministration;
 use App\Models\Medication;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
 class MedicationAdministrationController extends BaseApiController
@@ -361,6 +362,87 @@ class MedicationAdministrationController extends BaseApiController
         // Emails are sent by MedicationAdministrationObserver (facility admin + administrator only).
 
         return response()->json($administration->load(['medication', 'resident', 'branch', 'administeredBy']), 201);
+    }
+
+    /**
+     * Create multiple administrations in one request (e.g. caregiver "Administer All").
+     * Runs in a DB transaction; all succeed or none are persisted.
+     */
+    public function bulkStore(Request $request): JsonResponse
+    {
+        $request->validate([
+            'items' => 'required|array|min:1|max:50',
+        ]);
+
+        $items = $request->input('items');
+
+        try {
+            $created = DB::transaction(function () use ($request, $items) {
+                $out = [];
+                foreach ($items as $index => $item) {
+                    if (! is_array($item)) {
+                        throw new \InvalidArgumentException('Each item must be an object');
+                    }
+
+                    $sub = Request::create('/medication-administrations', 'POST', $item);
+                    $sub->setUserResolver($request->getUserResolver());
+
+                    try {
+                        $response = $this->store($sub);
+                    } catch (\Illuminate\Validation\ValidationException $e) {
+                        throw new \RuntimeException(json_encode([
+                            'type' => 'validation',
+                            'errors' => $e->errors(),
+                            'failed_index' => $index,
+                        ]));
+                    }
+
+                    $status = $response->getStatusCode();
+                    if ($status >= 400) {
+                        $payload = json_decode($response->getContent(), true);
+
+                        throw new \RuntimeException(json_encode([
+                            'type' => 'http',
+                            'message' => is_array($payload) && isset($payload['message'])
+                                ? $payload['message']
+                                : 'Failed to create administration',
+                            'failed_index' => $index,
+                            'http_status' => $status,
+                        ]));
+                    }
+
+                    $out[] = json_decode($response->getContent(), true);
+                }
+
+                return $out;
+            });
+        } catch (\RuntimeException $e) {
+            $decoded = json_decode($e->getMessage(), true);
+            if (is_array($decoded) && ($decoded['type'] ?? null) === 'validation') {
+                return response()->json([
+                    'message' => 'Validation failed',
+                    'errors' => $decoded['errors'] ?? [],
+                    'failed_index' => $decoded['failed_index'] ?? null,
+                ], 422);
+            }
+            if (is_array($decoded) && ($decoded['type'] ?? null) === 'http') {
+                $httpStatus = (int) ($decoded['http_status'] ?? 422);
+
+                return response()->json([
+                    'message' => $decoded['message'] ?? 'Request failed',
+                    'failed_index' => $decoded['failed_index'] ?? null,
+                ], $httpStatus >= 400 && $httpStatus < 600 ? $httpStatus : 422);
+            }
+
+            return response()->json(['message' => $e->getMessage()], 422);
+        } catch (\InvalidArgumentException $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        }
+
+        return response()->json([
+            'data' => $created,
+            'count' => count($created),
+        ], 201);
     }
 
     public function update(Request $request, $id): JsonResponse
