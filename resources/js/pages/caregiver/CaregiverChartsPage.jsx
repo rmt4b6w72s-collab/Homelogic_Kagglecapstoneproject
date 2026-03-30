@@ -117,23 +117,23 @@ export default function CaregiverChartsPage() {
                                 </div>
                             </div>
 
-                            <div className="flex gap-2">
+                            <div className="flex gap-1.5">
                                 <button
                                     onClick={() => handleOpenChart(resident.id)}
-                                    className="flex-1 px-4 py-2.5 bg-[var(--theme-primary)] text-white rounded-xl text-xs font-bold hover:bg-[var(--theme-primary-hover)] transition-all shadow-sm active:scale-95 flex items-center justify-center gap-2"
+                                    className="flex-1 px-2.5 py-1.5 bg-[var(--theme-primary)] text-white rounded-lg text-xs font-semibold hover:bg-[var(--theme-primary-hover)] transition-all shadow-sm active:scale-[0.98] flex items-center justify-center gap-1"
                                 >
-                                    <Plus className="w-4 h-4" />
+                                    <Plus className="w-3.5 h-3.5 shrink-0" />
                                     New Charts
                                 </button>
                                 <button
                                     onClick={() => handlePendingCharts(resident.id)}
                                     disabled={pendingLoadingId === resident.id}
-                                    className="flex-1 px-4 py-2.5 border-2 border-gray-200 text-gray-700 rounded-xl text-xs font-bold hover:bg-gray-50 hover:border-gray-300 transition-all active:scale-95 flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+                                    className="flex-1 px-2.5 py-1.5 border border-gray-200 text-gray-700 rounded-lg text-xs font-semibold hover:bg-gray-50 hover:border-gray-300 transition-all active:scale-[0.98] flex items-center justify-center gap-1 disabled:opacity-60 disabled:cursor-not-allowed"
                                 >
                                     {pendingLoadingId === resident.id ? (
-                                        <span className="inline-block w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
+                                        <span className="inline-block w-3.5 h-3.5 border-2 border-gray-400 border-t-transparent rounded-full animate-spin shrink-0" />
                                     ) : (
-                                        <Clock className="w-4 h-4 text-gray-400" />
+                                        <Clock className="w-3.5 h-3.5 text-gray-400 shrink-0" />
                                     )}
                                     Pending Charts
                                 </button>
