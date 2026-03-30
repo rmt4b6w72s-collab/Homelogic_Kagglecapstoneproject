@@ -25,17 +25,19 @@ export default function PortalCareUpdates() {
   }
 
   const residents = data?.residents ?? [];
+  const linkedIds = data?.linked_resident_ids;
   const tLogs = data?.t_logs ?? [];
   const meds = data?.medication_administrations ?? [];
   const appointments = data?.appointments ?? [];
   const vitals = data?.vitals_summary ?? [];
+  const notLinked = Array.isArray(linkedIds) ? linkedIds.length === 0 : residents.length === 0;
 
   return (
     <div className="max-w-4xl mx-auto">
       <h1 className="text-2xl font-bold text-gray-900 mb-2">Care Updates</h1>
       <p className="text-gray-600 mb-6">View care notes, medications, appointments, and vitals.</p>
 
-      {residents.length === 0 ? (
+      {notLinked ? (
         <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 flex gap-3 text-sm text-amber-950">
           <AlertCircle className="w-5 h-5 shrink-0 text-amber-600" />
           <div>

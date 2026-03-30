@@ -3,12 +3,12 @@
 namespace App\Http\Controllers\Api;
 
 use App\Events\FamilyMessageSent;
-use App\Http\Controllers\Controller;
 use App\Models\FamilyMessage;
-use App\Models\ResidentContact;
 use App\Models\Resident;
-use Illuminate\Http\Request;
+use App\Models\ResidentContact;
+use App\Models\Scopes\FacilityScope;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class FamilyMessageController extends BaseApiController
 {
@@ -19,18 +19,18 @@ class FamilyMessageController extends BaseApiController
     {
         $user = $request->user();
         $residentId = $request->get('resident_id');
-        if (!$residentId) {
+        if (! $residentId) {
             return response()->json(['message' => 'resident_id is required.'], 422);
         }
 
         if ($user->isFamily()) {
             $allowed = ResidentContact::where('user_id', $user->id)->where('resident_id', $residentId)->exists();
-            if (!$allowed) {
+            if (! $allowed) {
                 return response()->json(['message' => 'Unauthorized.'], 403);
             }
         } else {
             $resident = Resident::find($residentId);
-            if (!$resident || !$this->checkBranchAccess($resident)) {
+            if (! $resident || ! $this->checkBranchAccess($resident)) {
                 return response()->json(['message' => 'Resident not found.'], 404);
             }
         }
@@ -69,9 +69,13 @@ class FamilyMessageController extends BaseApiController
         }
 
         $residentIds = $messages->pluck('resident_id')->unique()->filter()->values();
-        $residents = Resident::whereIn('id', $residentIds)->get()->keyBy('id');
+        $residents = Resident::withoutGlobalScope(FacilityScope::class)
+            ->whereIn('id', $residentIds)
+            ->get()
+            ->keyBy('id');
         $threads = $messages->map(function ($m) use ($residents) {
             $resident = $residents->get($m->resident_id);
+
             return [
                 'resident_id' => $m->resident_id,
                 'resident_name' => $resident?->name ?? 'Resident',
@@ -100,7 +104,7 @@ class FamilyMessageController extends BaseApiController
 
         if ($user->isFamily()) {
             $contact = ResidentContact::where('user_id', $user->id)->where('resident_id', $residentId)->first();
-            if (!$contact) {
+            if (! $contact) {
                 return response()->json(['message' => 'Unauthorized.'], 403);
             }
             $msg = FamilyMessage::create([
@@ -113,11 +117,12 @@ class FamilyMessageController extends BaseApiController
             ]);
             $formatted = $this->formatMessage($msg->fresh());
             broadcast(new FamilyMessageSent((int) $residentId, $formatted))->toOthers();
+
             return response()->json($formatted, 201);
         }
 
         $resident = Resident::find($residentId);
-        if (!$resident || !$this->checkBranchAccess($resident)) {
+        if (! $resident || ! $this->checkBranchAccess($resident)) {
             return response()->json(['message' => 'Resident not found.'], 404);
         }
         $recipientType = $validated['recipient_type'] ?? 'family';
@@ -132,6 +137,7 @@ class FamilyMessageController extends BaseApiController
         ]);
         $formatted = $this->formatMessage($msg->fresh());
         broadcast(new FamilyMessageSent((int) $residentId, $formatted))->toOthers();
+
         return response()->json($formatted, 201);
     }
 
@@ -146,19 +152,20 @@ class FamilyMessageController extends BaseApiController
         if ($user->isFamily()) {
             $contactIds = ResidentContact::where('user_id', $user->id)->pluck('id');
             $allowed = $contactIds->contains($msg->sender_id) || $contactIds->contains($msg->recipient_id);
-            if (!$allowed) {
+            if (! $allowed) {
                 return response()->json(['message' => 'Unauthorized.'], 403);
             }
         } else {
             if ($msg->resident_id) {
                 $resident = Resident::find($msg->resident_id);
-                if (!$resident || !$this->checkBranchAccess($resident)) {
+                if (! $resident || ! $this->checkBranchAccess($resident)) {
                     return response()->json(['message' => 'Unauthorized.'], 403);
                 }
             }
         }
 
         $msg->update(['read_at' => now()]);
+
         return response()->json($this->formatMessage($msg->fresh()));
     }
 
@@ -172,6 +179,7 @@ class FamilyMessageController extends BaseApiController
             $c = ResidentContact::find($m->sender_id);
             $senderName = $c?->name ?? 'Family';
         }
+
         return [
             'id' => $m->id,
             'resident_id' => $m->resident_id,

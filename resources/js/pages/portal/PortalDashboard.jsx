@@ -23,11 +23,13 @@ export default function PortalDashboard() {
   }
 
   const residents = data?.residents ?? [];
+  const linkedIds = data?.linked_resident_ids;
   const tLogs = data?.t_logs ?? [];
   const meds = data?.medication_administrations ?? [];
   const appointments = data?.appointments ?? [];
   const vitals = data?.vitals_summary ?? [];
-  const notLinked = residents.length === 0;
+  // Prefer server-linked IDs from ResidentContact; "residents" payload can be empty if FacilityScope hid them before the fix.
+  const notLinked = Array.isArray(linkedIds) ? linkedIds.length === 0 : residents.length === 0;
 
   return (
     <div className="max-w-4xl mx-auto">

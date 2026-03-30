@@ -49,11 +49,15 @@ export default function PortalLayout() {
           <Link to="/portal" className="text-lg font-semibold text-gray-900 block truncate">
             Family Portal
           </Link>
-          {careSummary?.residents?.length ? (
+          {(careSummary?.linked_resident_ids?.length ?? careSummary?.residents?.length) ? (
             <p className="text-xs text-gray-500 truncate">
-              {(careSummary.residents.length === 1
+              {careSummary?.residents?.length === 1
                 ? careSummary.residents[0].name
-                : `${careSummary.residents.length} residents`)}
+                : careSummary?.residents?.length > 1
+                  ? `${careSummary.residents.length} residents`
+                  : careSummary?.linked_resident_ids?.length
+                    ? `${careSummary.linked_resident_ids.length} linked resident(s)`
+                    : null}
             </p>
           ) : null}
         </div>

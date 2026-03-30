@@ -27,7 +27,11 @@ class FamilyController extends Controller
         }
 
         $contactIds = ResidentContact::where('user_id', $user->id)->pluck('resident_id')->unique()->values();
-        $residents = Resident::with('branch')
+        // Same as care-updates: family access is driven by ResidentContact; do not let FacilityScope hide residents.
+        $residents = Resident::withoutGlobalScope(FacilityScope::class)
+            ->with(['branch' => function ($q) {
+                $q->withoutGlobalScope(FacilityScope::class)->select('id', 'name', 'facility_id');
+            }])
             ->whereIn('id', $contactIds)
             ->get()
             ->map(function ($r) {
@@ -40,7 +44,10 @@ class FamilyController extends Controller
                 ];
             });
 
-        return response()->json(['data' => $residents]);
+        return response()->json([
+            'data' => $residents,
+            'linked_resident_ids' => $contactIds->values()->all(),
+        ]);
     }
 
     /**
@@ -56,6 +63,7 @@ class FamilyController extends Controller
         $residentIds = ResidentContact::where('user_id', $user->id)->pluck('resident_id')->unique()->values()->all();
         if (empty($residentIds)) {
             return response()->json([
+                'linked_resident_ids' => [],
                 'residents' => [],
                 't_logs' => [],
                 'medication_administrations' => [],
@@ -164,11 +172,22 @@ class FamilyController extends Controller
                 ];
             });
 
-        $residentsSummary = Resident::withoutGlobalScope(FacilityScope::class)
-            ->with('branch:id,name,facility_id')
+        $residentsLoaded = Resident::withoutGlobalScope(FacilityScope::class)
+            ->with(['branch' => function ($q) {
+                $q->withoutGlobalScope(FacilityScope::class)->select('id', 'name', 'facility_id');
+            }])
             ->whereIn('id', $residentIds)
             ->get()
-            ->map(function ($r) {
+            ->keyBy('id');
+
+        $contactsByResident = ResidentContact::where('user_id', $user->id)
+            ->whereIn('resident_id', $residentIds)
+            ->get()
+            ->keyBy('resident_id');
+
+        $residentsSummary = collect($residentIds)->map(function ($rid) use ($residentsLoaded, $contactsByResident) {
+            $r = $residentsLoaded->get($rid);
+            if ($r) {
                 return [
                     'id' => $r->id,
                     'name' => $r->name,
@@ -182,9 +201,27 @@ class FamilyController extends Controller
                     'dietary_restrictions' => $r->dietary_restrictions,
                     'special_instructions' => $r->special_instructions,
                 ];
-            });
+            }
+
+            $contact = $contactsByResident->get($rid);
+
+            return [
+                'id' => (int) $rid,
+                'name' => $contact?->name ?? 'Resident',
+                'first_name' => null,
+                'last_name' => null,
+                'room' => null,
+                'room_number' => null,
+                'profile_image_url' => null,
+                'admission_date' => null,
+                'branch_name' => null,
+                'dietary_restrictions' => null,
+                'special_instructions' => null,
+            ];
+        })->values();
 
         return response()->json([
+            'linked_resident_ids' => array_values($residentIds),
             'residents' => $residentsSummary,
             't_logs' => $tLogs,
             'medication_administrations' => $medicationAdministrations,
