@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Controller;
 use App\Models\Appointment;
 use App\Models\MedicationAdministration;
 use App\Models\Resident;
