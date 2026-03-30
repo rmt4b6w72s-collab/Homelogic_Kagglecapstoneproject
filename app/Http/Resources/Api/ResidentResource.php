@@ -48,8 +48,8 @@ class ResidentResource extends JsonResource
             'vital_signs' => VitalSignResource::collection($this->whenLoaded('vitalSigns')),
             'sleep_records' => SleepRecordResource::collection($this->whenLoaded('sleepRecords')),
             'sleep_patterns' => SleepPatternResource::collection($this->whenLoaded('sleepPatterns')),
-            'medications' => $this->whenLoaded('medications', function() {
-                return $this->medications->map(function($medication) {
+            'medications' => $this->whenLoaded('medicationOrders', function() {
+                return $this->medicationOrders->map(function($medication) {
                     return [
                         'id' => $medication->id,
                         'name' => $medication->name,

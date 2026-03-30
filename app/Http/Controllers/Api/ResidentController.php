@@ -95,13 +95,13 @@ class ResidentController extends BaseApiController
                 'vitalSigns',
                 'sleepRecords',
                 'sleepPatterns',
-                'medications' => function($query) {
+                'medicationOrders' => function($query) {
                     // Remove global scope to ensure all medications for this resident are loaded
                     // We've already verified access to the resident, so we can show all their medications
                     $query->withoutGlobalScopes()
                         ->orderBy('start_date', 'desc');
                 },
-                'medications.drug',
+                'medicationOrders.drug',
             ])
             ->findOrFail($id);
 

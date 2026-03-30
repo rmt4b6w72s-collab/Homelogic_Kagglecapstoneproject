@@ -134,7 +134,11 @@ class Resident extends Model
         return $this->hasMany(ResidentContact::class);
     }
 
-    public function medications(): HasMany
+    /**
+     * Medication orders (medications table). Named medicationOrders to avoid clashing with the
+     * legacy `residents.medications` text column, which would otherwise shadow this relationship.
+     */
+    public function medicationOrders(): HasMany
     {
         return $this->hasMany(Medication::class);
     }
