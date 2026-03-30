@@ -197,7 +197,8 @@ export default function ResidentMedicationsPage() {
         queryKey: ['resident', residentId],
         queryFn: async () => {
             const response = await api.get(`/residents/${residentId}`);
-            return response.data;
+            // API wraps payload in { data: { ...resident } } (see BaseApiController::success)
+            return response.data?.data ?? response.data;
         },
         enabled: !!residentId,
     });
