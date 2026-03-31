@@ -390,7 +390,7 @@ export default function Dashboard() {
         refetchIntervalInBackground: false,
     });
 
-    // Fetch upcoming fire drills
+    // Fetch upcoming fire drills (Laravel paginator: { data: FireDrill[] })
     const { data: upcomingFireDrills } = useQuery({
         queryKey: ['upcoming-fire-drills'],
         queryFn: async () => {
@@ -408,14 +408,26 @@ export default function Dashboard() {
                 return { data: [] };
             }
         },
+        // API/cache can occasionally expose non-array `data`; strings pass .length but break .slice().map()
+        select: (payload) => {
+            if (Array.isArray(payload)) {
+                return { data: payload };
+            }
+            if (!payload || typeof payload !== 'object') {
+                return { data: [] };
+            }
+            const rows = payload.data;
+            return { ...payload, data: Array.isArray(rows) ? rows : [] };
+        },
         retry: false,
     });
 
     // Process daily activities for mini calendar
     const calendarData = useMemo(() => {
-        if (!dailyActivities?.data) return [];
+        const days = dailyActivities?.data;
+        if (!Array.isArray(days)) return [];
 
-        return dailyActivities.data.map(day => ({
+        return days.map(day => ({
             date: day.date,
             indicators: [
                 ...(day.appointments_count > 0 ? [{
