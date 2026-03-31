@@ -18,7 +18,8 @@ import {
     getPacificDayIdentifier,
     getPacificParts,
     parsePacificDateString,
-    convertPacificLocalInputToISO,
+    formatPacificTimeFromInstant,
+    getPacificHourFromInstant,
 } from '../../utils/pacificTime';
 import {
     Pill,
@@ -157,6 +158,7 @@ export default function ResidentMedicationsPage() {
     const [activeOnly, setActiveOnly] = useState(true);
     const [selectedMeds, setSelectedMeds] = useState(new Set());
     const [isBulkAdministering, setIsBulkAdministering] = useState(false);
+    const [prnFollowupCompletingId, setPrnFollowupCompletingId] = useState(null);
 
 
     // Fetch current user
@@ -361,7 +363,7 @@ export default function ResidentMedicationsPage() {
                 instructions: 'PRN (as needed)',
             };
             scheduled.push(row);
-            const hour = getPacificParts(new Date(r.scheduled_for)).hour;
+            const hour = getPacificHourFromInstant(r.scheduled_for);
             if (hour < 12) {
                 am.push(row);
             } else {
@@ -466,8 +468,25 @@ export default function ResidentMedicationsPage() {
             const isExpanded = expandedRows.has(medication.uniqueId);
             const medLabel = (medication.medicationName || medication.name || 'Medication').toUpperCase();
             const followupTimeDisplay = medication.scheduledFor
-                ? formatPacificTime(new Date(medication.scheduledFor))
+                ? formatPacificTimeFromInstant(medication.scheduledFor)
                 : '';
+            const completing = prnFollowupCompletingId === medication.reminderEventId;
+            const completeFollowup = async (e) => {
+                e.stopPropagation();
+                if (!medication.reminderEventId || completing) return;
+                setPrnFollowupCompletingId(medication.reminderEventId);
+                try {
+                    await api.post(`/reminder-events/${medication.reminderEventId}/acknowledge`);
+                    await queryClient.invalidateQueries({ queryKey: ['resident-prn-followups', residentId] });
+                    queryClient.invalidateQueries({ queryKey: ['reminders', 'upcoming'] });
+                } catch (err) {
+                    logger.error('Failed to complete PRN follow-up:', err);
+                    const msg = err?.response?.data?.message || 'Could not mark follow-up complete.';
+                    alert(msg);
+                } finally {
+                    setPrnFollowupCompletingId(null);
+                }
+            };
             return (
                 <div key={medication.uniqueId} className={`${index > 0 ? 'border-t border-gray-100' : ''}`}>
                     <div
@@ -504,8 +523,16 @@ export default function ResidentMedicationsPage() {
                                 </div>
                             ) : null}
                         </div>
-                        <div className="flex-shrink-0">
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-[10px] font-semibold bg-sky-100 text-sky-800">
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                            <button
+                                type="button"
+                                onClick={completeFollowup}
+                                disabled={completing}
+                                className="px-3 py-1.5 rounded-lg text-xs font-bold bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] hover:opacity-95 disabled:opacity-50"
+                            >
+                                {completing ? 'Saving…' : 'Mark complete'}
+                            </button>
+                            <span className="hidden sm:inline-flex items-center px-2 py-1 rounded-full text-[10px] font-semibold bg-sky-100 text-sky-800">
                                 Scheduled
                             </span>
                         </div>
@@ -524,16 +551,26 @@ export default function ResidentMedicationsPage() {
                                 {medication.description ? (
                                     <p className="text-gray-600 italic border-l-2 border-sky-200 pl-3">{medication.description}</p>
                                 ) : null}
-                                <button
-                                    type="button"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        navigate('/reminders');
-                                    }}
-                                    className="text-sm font-semibold text-sky-800 hover:underline"
-                                >
-                                    Open reminders
-                                </button>
+                                <div className="flex flex-wrap gap-3 pt-1">
+                                    <button
+                                        type="button"
+                                        onClick={completeFollowup}
+                                        disabled={completing}
+                                        className="px-4 py-2 rounded-lg text-sm font-bold bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] hover:opacity-95 disabled:opacity-50"
+                                    >
+                                        {completing ? 'Saving…' : 'Mark follow-up complete'}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            navigate('/reminders');
+                                        }}
+                                        className="px-4 py-2 rounded-lg text-sm font-semibold border border-sky-300 text-sky-900 hover:bg-white"
+                                    >
+                                        Open reminders
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     )}
@@ -1869,13 +1906,13 @@ function QuickAdminister({ medication, onSuccess, residentId, residentName, curr
                                     setFollowupSubmitting(true);
                                     setFollowupError('');
                                     try {
-                                        const iso = convertPacificLocalInputToISO(`${followupDate}T${followupTime}`);
                                         const medLabel = medication.name || medication.drug?.name || 'Medication';
                                         await api.post('/reminders', {
                                             title: `PRN follow-up: ${medLabel} — ${residentName || 'Resident'}`,
                                             category: 'medication',
                                             schedule_type: 'one_time',
-                                            due_at: iso,
+                                            due_at_local_date: followupDate,
+                                            due_at_local_time: followupTime,
                                             description: followupComments.trim() || null,
                                             channel: 'in_app',
                                             branch_id: medication.branch_id,

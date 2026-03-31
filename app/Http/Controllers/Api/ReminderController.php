@@ -335,13 +335,31 @@ class ReminderController extends BaseApiController
             'status' => ['nullable', Rule::in(['active', 'paused', 'completed', 'cancelled'])],
             'branch_id' => ['nullable', 'integer', 'exists:branches,id'],
             'assignee_user_id' => ['nullable', 'integer', 'exists:users,id'],
+            'due_at_local_date' => ['nullable', 'date_format:Y-m-d'],
+            'due_at_local_time' => ['nullable', 'string', 'regex:/^\d{1,2}:\d{2}$/'],
         ];
 
         $validated = $request->validate($rules);
 
-        if (($validated['schedule_type'] ?? $reminder?->schedule_type) === 'one_time' && empty($validated['due_at'])) {
-            abort(422, 'due_at is required for one-time reminders.');
+        $scheduleType = $validated['schedule_type'] ?? $reminder?->schedule_type;
+        if ($scheduleType === 'one_time') {
+            $localDate = $validated['due_at_local_date'] ?? null;
+            $localTime = $validated['due_at_local_time'] ?? null;
+            if ($localDate && $localTime) {
+                $parts = explode(':', $localTime);
+                $timePadded = sprintf('%02d:%02d', (int) ($parts[0] ?? 0), (int) ($parts[1] ?? 0));
+                $validated['due_at'] = Carbon::createFromFormat(
+                    'Y-m-d H:i',
+                    $localDate.' '.$timePadded,
+                    'America/Los_Angeles'
+                )->utc();
+            }
+            if (empty($validated['due_at'])) {
+                abort(422, 'due_at is required for one-time reminders.');
+            }
         }
+
+        unset($validated['due_at_local_date'], $validated['due_at_local_time']);
 
         return $validated;
     }

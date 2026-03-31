@@ -286,6 +286,25 @@ const getPacificHourMinute24 = (date) => {
     };
 };
 
+/** Pacific wall-clock hour (0–23) and minute from a real absolute instant (e.g. API ISO datetime). */
+export const getPacificHourMinute24FromInstant = (value) => {
+    const inst = value instanceof Date ? value : new Date(value);
+    if (Number.isNaN(inst.getTime())) {
+        return { hour: 0, minute: 0 };
+    }
+    return getPacificHourMinute24(inst);
+};
+
+/** "h:mm AM/PM" for a real UTC/ISO instant, in America/Los_Angeles (use for API timestamps, not fake-UTC dates). */
+export const formatPacificTimeFromInstant = (value) => {
+    if (!value) return '';
+    const { hour, minute } = getPacificHourMinute24FromInstant(value);
+    return formatHourMinute24ToAmPm(hour, minute);
+};
+
+/** Pacific wall-clock hour 0–23 from an API ISO instant (for sorting / AM–PM buckets). */
+export const getPacificHourFromInstant = (value) => getPacificHourMinute24FromInstant(value).hour;
+
 export const formatPacificDate = (date) => {
     // If no date provided and we have a server reference, format directly from components
     if (!date && pacificServerReference && pacificReferencePerformance !== null) {
