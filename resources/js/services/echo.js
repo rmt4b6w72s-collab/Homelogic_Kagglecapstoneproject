@@ -1,5 +1,6 @@
 /**
- * Laravel Echo Service — Reverb WebSocket backend
+ * Laravel Echo — Pusher (hosted) or Reverb (self-hosted) WebSocket backend.
+ * Prefer Pusher in production (no Nginx WebSocket config on your server).
  */
 
 import Echo from 'laravel-echo';
@@ -8,11 +9,14 @@ import logger from '../utils/logger';
 
 window.Pusher = Pusher;
 
-const reverbKey    = import.meta.env.VITE_REVERB_APP_KEY    || '';
-const reverbHost   = import.meta.env.VITE_REVERB_HOST       || 'localhost';
-const reverbPort   = parseInt(import.meta.env.VITE_REVERB_PORT   || '8080', 10);
-const reverbScheme = import.meta.env.VITE_REVERB_SCHEME     || 'http';
-const forceTLS     = reverbScheme === 'https';
+const pusherKey = import.meta.env.VITE_PUSHER_APP_KEY || '';
+const pusherCluster = import.meta.env.VITE_PUSHER_APP_CLUSTER || 'mt1';
+
+const reverbKey = import.meta.env.VITE_REVERB_APP_KEY || '';
+const reverbHost = import.meta.env.VITE_REVERB_HOST || 'localhost';
+const reverbPort = parseInt(import.meta.env.VITE_REVERB_PORT || '8080', 10);
+const reverbScheme = import.meta.env.VITE_REVERB_SCHEME || 'http';
+const reverbForceTLS = reverbScheme === 'https';
 
 function getAuthToken() {
     return localStorage.getItem('auth_token');
@@ -22,56 +26,78 @@ function getCsrfToken() {
     return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
 }
 
+const authConfig = {
+    authEndpoint: '/api/v1/broadcasting/auth',
+    auth: {
+        headers: {
+            Authorization: `Bearer ${getAuthToken()}`,
+            'X-CSRF-TOKEN': getCsrfToken(),
+            Accept: 'application/json',
+        },
+    },
+};
+
+function bindConnectionLogging(echoInstance, label) {
+    const conn = echoInstance?.connector?.pusher?.connection;
+    if (!conn) return;
+    conn.bind('connected', () => {
+        logger.debug(`[Echo] Connected (${label})`);
+    });
+    conn.bind('disconnected', () => {
+        logger.debug(`[Echo] Disconnected (${label})`);
+    });
+    conn.bind('error', (error) => {
+        logger.error('[Echo] Connection error:', error);
+    });
+}
+
 let echoInstance = null;
 
 export function initializeEcho() {
     if (echoInstance) return echoInstance;
 
-    if (!reverbKey) {
-        logger.warn('[Echo] VITE_REVERB_APP_KEY not set. Real-time features disabled.');
-        return null;
+    if (pusherKey) {
+        try {
+            echoInstance = new Echo({
+                broadcaster: 'pusher',
+                key: pusherKey,
+                cluster: pusherCluster,
+                forceTLS: true,
+                ...authConfig,
+            });
+            bindConnectionLogging(echoInstance, 'Pusher');
+            logger.debug('[Echo] Initialized (Pusher)');
+            return echoInstance;
+        } catch (error) {
+            logger.error('[Echo] Failed to initialize (Pusher):', error);
+            return null;
+        }
     }
 
-    try {
-        echoInstance = new Echo({
-            broadcaster: 'reverb',
-            key: reverbKey,
-            wsHost: reverbHost,
-            // Non-TLS dev: wsPort; TLS prod (Nginx proxies 443 → Reverb): use same public port (usually 443)
-            wsPort: forceTLS ? (reverbPort || 443) : (reverbPort || 8080),
-            wssPort: reverbPort || 443,
-            forceTLS,
-            enabledTransports: ['ws', 'wss'],
-            // Avoid Pusher analytics calls to third-party hosts (not used with Reverb)
-            disableStats: true,
-            authEndpoint: '/api/v1/broadcasting/auth',
-            auth: {
-                headers: {
-                    Authorization: `Bearer ${getAuthToken()}`,
-                    'X-CSRF-TOKEN': getCsrfToken(),
-                    Accept: 'application/json',
-                },
-            },
-        });
-
-        echoInstance.connector.pusher.connection.bind('connected', () => {
-            logger.debug('[Echo] Connected to Reverb');
-        });
-
-        echoInstance.connector.pusher.connection.bind('disconnected', () => {
-            logger.debug('[Echo] Disconnected from Reverb');
-        });
-
-        echoInstance.connector.pusher.connection.bind('error', (error) => {
-            logger.error('[Echo] Connection error:', error);
-        });
-
-        logger.debug('[Echo] Initialized successfully (Reverb)');
-        return echoInstance;
-    } catch (error) {
-        logger.error('[Echo] Failed to initialize:', error);
-        return null;
+    if (reverbKey) {
+        try {
+            echoInstance = new Echo({
+                broadcaster: 'reverb',
+                key: reverbKey,
+                wsHost: reverbHost,
+                wsPort: reverbForceTLS ? (reverbPort || 443) : (reverbPort || 8080),
+                wssPort: reverbPort || 443,
+                forceTLS: reverbForceTLS,
+                enabledTransports: ['ws', 'wss'],
+                disableStats: true,
+                ...authConfig,
+            });
+            bindConnectionLogging(echoInstance, 'Reverb');
+            logger.debug('[Echo] Initialized (Reverb)');
+            return echoInstance;
+        } catch (error) {
+            logger.error('[Echo] Failed to initialize (Reverb):', error);
+            return null;
+        }
     }
+
+    logger.warn('[Echo] No VITE_PUSHER_APP_KEY or VITE_REVERB_APP_KEY. Real-time features disabled.');
+    return null;
 }
 
 export function getEcho() {
