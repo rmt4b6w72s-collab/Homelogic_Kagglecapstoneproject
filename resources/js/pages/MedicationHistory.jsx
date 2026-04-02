@@ -1,7 +1,7 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import api from '../services/api';
-import { Calendar, ClipboardList, Pill, User, ChevronLeft, ChevronRight, FileText, Trash2 } from 'lucide-react';
+import { Calendar, ClipboardList, Pill, User, ChevronLeft, ChevronRight, FileText } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import { formatPacificDate as formatDate, formatPacificTime as formatTime } from '../utils/pacificTime';
 import EmptyState from '../components/ui/EmptyState';
@@ -35,7 +35,6 @@ export default function MedicationHistory() {
         return Number.isNaN(raw) || raw < 1 ? 1 : raw;
     });
     const perPage = 25;
-    const queryClient = useQueryClient();
 
     useEffect(() => {
         const nextResident = searchParams.get('resident') || '';
@@ -80,38 +79,6 @@ export default function MedicationHistory() {
         queryFn: async () => {
             const res = await api.get('/user');
             return res.data;
-        },
-    });
-
-    const isCaregiver = useMemo(() => {
-        if (!currentUser) return false;
-        const role = (currentUser.role || '').toLowerCase().trim();
-        return ['caregiver', 'care_giver', 'nurse', 'registered_nurse', 'licensed_nurse'].includes(role);
-    }, [currentUser]);
-
-    const canBulkDeleteHistory = useMemo(() => {
-        if (!currentUser || isCaregiver) return false;
-        const isSuperAdmin = currentUser.role === 'super_admin';
-        const isAdmin = currentUser.role === 'administrator' || currentUser.role === 'admin';
-        const permissions = Array.isArray(currentUser.permissions) ? currentUser.permissions : [];
-        return isSuperAdmin || isAdmin || permissions.includes('delete_medications');
-    }, [currentUser, isCaregiver]);
-
-    const [bulkSelectedIds, setBulkSelectedIds] = useState([]);
-    const [bulkConfirm, setBulkConfirm] = useState('');
-    const [bulkDateFrom, setBulkDateFrom] = useState('');
-    const [bulkDateTo, setBulkDateTo] = useState('');
-
-    const bulkDeleteMutation = useMutation({
-        mutationFn: async (payload) => {
-            const res = await api.post('/medication-administrations/bulk-delete', payload);
-            return res.data;
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['medication-history'] });
-            queryClient.invalidateQueries({ queryKey: ['medication-administrations'] });
-            setBulkSelectedIds([]);
-            setBulkConfirm('');
         },
     });
 
@@ -270,102 +237,6 @@ export default function MedicationHistory() {
                         </div>
                     </div>
                 </div>
-
-                {canBulkDeleteHistory && (
-                    <div className="mt-8 pt-6 border-t border-red-200 rounded-lg bg-red-50/50 p-4 sm:p-5">
-                        <h3 className="text-sm font-semibold text-red-900 flex items-center gap-2 mb-1">
-                            <Trash2 className="w-4 h-4 shrink-0" aria-hidden />
-                            Bulk delete administration history (test data)
-                        </h3>
-                        <p className="text-xs text-red-800/90 mb-4">
-                            Permanently removes MAR rows for the selected residents. Optional date range limits what is deleted; leave dates empty to remove all
-                            records for those residents. This does not remove medications or residents—only administration history.
-                        </p>
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-800 mb-2">
-                                    Residents (hold Ctrl/Cmd to select multiple)
-                                </label>
-                                <select
-                                    multiple
-                                    size={Math.min(10, Math.max(4, residents.length || 4))}
-                                    value={bulkSelectedIds}
-                                    onChange={(e) => {
-                                        const selected = Array.from(e.target.selectedOptions).map((o) => o.value);
-                                        setBulkSelectedIds(selected);
-                                    }}
-                                    className="w-full min-h-[120px] px-3 py-2 border border-red-200 rounded-lg bg-white text-sm"
-                                >
-                                    {residents.map((resident) => (
-                                        <option key={resident.id} value={String(resident.id)}>
-                                            {resident.first_name} {resident.last_name}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-                            <div className="space-y-3">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-800 mb-1">Limit to date range (optional)</label>
-                                    <div className="flex flex-col sm:flex-row gap-2">
-                                        <input
-                                            type="date"
-                                            value={bulkDateFrom}
-                                            onChange={(e) => setBulkDateFrom(e.target.value)}
-                                            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                                        />
-                                        <input
-                                            type="date"
-                                            value={bulkDateTo}
-                                            onChange={(e) => setBulkDateTo(e.target.value)}
-                                            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                                        />
-                                    </div>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-800 mb-1">Type DELETE to confirm</label>
-                                    <input
-                                        type="text"
-                                        value={bulkConfirm}
-                                        onChange={(e) => setBulkConfirm(e.target.value)}
-                                        placeholder="DELETE"
-                                        autoComplete="off"
-                                        className="w-full px-3 py-2 border border-red-300 rounded-lg text-sm font-mono"
-                                    />
-                                </div>
-                                <button
-                                    type="button"
-                                    disabled={
-                                        bulkDeleteMutation.isPending ||
-                                        bulkSelectedIds.length === 0 ||
-                                        bulkConfirm !== 'DELETE'
-                                    }
-                                    onClick={() => {
-                                        const payload = {
-                                            resident_ids: bulkSelectedIds.map((id) => parseInt(id, 10)),
-                                            confirmation: 'DELETE',
-                                        };
-                                        if (bulkDateFrom) payload.date_from = bulkDateFrom;
-                                        if (bulkDateTo) payload.date_to = bulkDateTo;
-                                        bulkDeleteMutation.mutate(payload);
-                                    }}
-                                    className="w-full sm:w-auto px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-semibold hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    {bulkDeleteMutation.isPending ? 'Deleting…' : 'Delete selected history'}
-                                </button>
-                                {bulkDeleteMutation.isError && (
-                                    <p className="text-xs text-red-700">
-                                        {bulkDeleteMutation.error?.response?.data?.message ||
-                                            bulkDeleteMutation.error?.message ||
-                                            'Request failed.'}
-                                    </p>
-                                )}
-                                {bulkDeleteMutation.isSuccess && bulkDeleteMutation.data?.message && (
-                                    <p className="text-xs text-green-800">{bulkDeleteMutation.data.message}</p>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                )}
             </div>
 
             <div className="bg-white rounded-lg shadow-sm overflow-hidden">
