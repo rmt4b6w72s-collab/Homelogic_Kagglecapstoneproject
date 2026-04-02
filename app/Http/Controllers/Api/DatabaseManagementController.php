@@ -291,9 +291,11 @@ class DatabaseManagementController extends Controller
     }
 
     /**
-     * Corrupted backups had stderr merged into the .sql file (old `2>&1` shell redirect). That includes
-     * [Warning] lines and mysqldump Error lines (e.g. PROCESS privilege) anywhere in the file — not only at the top.
-     * Remove any line that is clearly mysqldump/mysql CLI output (not valid SQL).
+     * Old automatic backups used `mysqldump ... > file 2>&1`, merging stderr into the file. Recovery:
+     * 1) Cut from the first real dump header (`-- MySQL dump` / `-- MariaDB dump`) so leading warnings/errors vanish.
+     * 2) Remove any remaining lines that are clearly mysqldump/mysql CLI output.
+     *
+     * Manual backups usually need no changes and compare equal after sanitization.
      *
      * @return array{path: string, temp: bool, error?: string}
      */
@@ -304,28 +306,53 @@ class DatabaseManagementController extends Controller
             return ['path' => $backupPath, 'temp' => false];
         }
 
-        // Any stderr line from the mysql or mysqldump client (warnings, errors, etc.).
-        $fixed = preg_replace('/^\s*(mysqldump|mysql):\s*.*$/m', '', $raw);
-        if (! is_string($fixed) || $fixed === $raw) {
-            return ['path' => $backupPath, 'temp' => false];
-        }
+        $cleaned = $this->sanitizeCorruptedMysqlDump($raw);
 
-        $fixed = preg_replace("/\n{3,}/", "\n\n", $fixed);
-        $trimmed = ltrim((string) $fixed);
-        if ($trimmed === '') {
+        if ($cleaned === '') {
             return [
                 'path' => $backupPath,
                 'temp' => false,
-                'error' => 'This backup file contains only mysqldump/mysql error output, not valid SQL. The dump likely failed when it was created (e.g. missing PROCESS privilege). Create a new backup after deploying the latest app, or grant the DB user PROCESS / fix mysqldump on the server.',
+                'error' => 'This backup file contains no usable SQL after removing mysqldump error text. The automatic backup likely failed when it was created. Use another backup file or create a new backup.',
             ];
         }
 
+        if ($cleaned === $raw) {
+            return ['path' => $backupPath, 'temp' => false];
+        }
+
         $temp = sys_get_temp_dir().'/hl360-restore-'.uniqid('', true).'.sql';
-        if (file_put_contents($temp, $trimmed) === false) {
+        if (file_put_contents($temp, $cleaned) === false) {
             return ['path' => $backupPath, 'temp' => false];
         }
 
         return ['path' => $temp, 'temp' => true];
+    }
+
+    /**
+     * Repair .sql files where stderr was mixed into stdout (legacy backup command).
+     */
+    private function sanitizeCorruptedMysqlDump(string $raw): string
+    {
+        $s = preg_replace('/^\xEF\xBB\xBF/', '', $raw);
+
+        // Prefer MariaDB string first (both can appear; pick earliest position).
+        $cutAt = null;
+        foreach (['-- MariaDB dump', '-- MySQL dump'] as $needle) {
+            $p = stripos($s, $needle);
+            if ($p !== false && ($cutAt === null || $p < $cutAt)) {
+                $cutAt = $p;
+            }
+        }
+        if ($cutAt !== null && $cutAt > 0) {
+            $s = substr($s, $cutAt);
+        }
+
+        // Lines mysqldump/mysql wrote into the stream (warnings, errors, PROCESS privilege, etc.).
+        $s = preg_replace('/^\s*(mysqldump|mysql):\s*.*$/m', '', $s);
+        $s = preg_replace('/^\s*Warning:\s*(mysqldump|mysql):\s*.*$/m', '', $s);
+        $s = preg_replace("/\n{3,}/", "\n\n", $s);
+
+        return ltrim((string) $s);
     }
 
     /**
