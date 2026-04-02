@@ -162,12 +162,13 @@ class DatabaseManagementController extends Controller
     {
         $user = Auth::user();
 
-        if (! $this->canManageFacilityBackup($user)) {
-            return response()->json(['message' => 'Unauthorized. Super admin access required.'], 403);
+        // Align with stats(): anyone who can see backup counts must be able to load the list (otherwise UI shows 0 files with a 403).
+        if (! $this->canManageDatabase($user)) {
+            return response()->json(['message' => 'Unauthorized'], 403);
         }
 
         $request->validate([
-            'facility_id' => 'required|integer|exists:facilities,id',
+            'facility_id' => 'required|integer|min:1',
             'include_full_database' => 'sometimes|boolean',
         ]);
 
@@ -185,14 +186,18 @@ class DatabaseManagementController extends Controller
                         continue;
                     }
                     $dirFacilityId = (int) $basename;
-                    foreach (glob($dir.'/*.sql') ?: [] as $file) {
+                    foreach (scandir($dir) ?: [] as $name) {
+                        if ($name === '.' || $name === '..') {
+                            continue;
+                        }
+                        if (! preg_match('/\.sql$/i', $name)) {
+                            continue;
+                        }
+                        $file = $dir.'/'.$name;
                         if (! is_file($file)) {
                             continue;
                         }
-                        $filename = basename($file);
-                        if (! str_ends_with($filename, '.sql')) {
-                            continue;
-                        }
+                        $filename = $name;
                         $backups[] = [
                             'filename' => $filename,
                             'facility_id' => $dirFacilityId,
@@ -211,12 +216,18 @@ class DatabaseManagementController extends Controller
             if ($request->boolean('include_full_database', true)) {
                 $rootDir = storage_path('app/backups');
                 if (is_dir($rootDir)) {
-                    $legacy = glob($rootDir.'/backup_*.sql') ?: [];
-                    foreach ($legacy as $file) {
-                        if (str_contains($file, '/facilities/')) {
+                    foreach (scandir($rootDir) ?: [] as $name) {
+                        if ($name === '.' || $name === '..') {
                             continue;
                         }
-                        $filename = basename($file);
+                        if (! preg_match('/^backup_.*\.sql$/i', $name)) {
+                            continue;
+                        }
+                        $file = $rootDir.'/'.$name;
+                        if (! is_file($file) || str_contains($file, '/facilities/')) {
+                            continue;
+                        }
+                        $filename = $name;
                         $backups[] = [
                             'filename' => $filename,
                             'facility_id' => null,
@@ -239,6 +250,11 @@ class DatabaseManagementController extends Controller
 
             return response()->json(['data' => $backups, 'meta' => $meta]);
         } catch (\Exception $e) {
+            Log::error('recentBackups failed', [
+                'facility_id' => $request->input('facility_id'),
+                'error' => $e->getMessage(),
+            ]);
+
             return response()->json([
                 'data' => [],
                 'meta' => $this->getBackupListingMeta((int) $request->input('facility_id', 0)),
@@ -253,8 +269,8 @@ class DatabaseManagementController extends Controller
     {
         $user = Auth::user();
 
-        if (! $this->canManageFacilityBackup($user)) {
-            return response()->json(['message' => 'Unauthorized. Super admin access required.'], 403);
+        if (! $this->canManageDatabase($user)) {
+            return response()->json(['message' => 'Unauthorized'], 403);
         }
 
         $validated = $request->validate([
@@ -649,15 +665,31 @@ class DatabaseManagementController extends Controller
             $n = 0;
             $facilitiesRoot = storage_path('app/backups/facilities');
             if (is_dir($facilitiesRoot)) {
-                foreach (glob($facilitiesRoot.'/*/*.sql') ?: [] as $f) {
-                    if (is_file($f)) {
-                        $n++;
+                foreach (glob($facilitiesRoot.'/*', GLOB_ONLYDIR) ?: [] as $dir) {
+                    foreach (scandir($dir) ?: [] as $name) {
+                        if ($name === '.' || $name === '..') {
+                            continue;
+                        }
+                        if (! preg_match('/\.sql$/i', $name)) {
+                            continue;
+                        }
+                        $f = $dir.'/'.$name;
+                        if (is_file($f)) {
+                            $n++;
+                        }
                     }
                 }
             }
             $rootDir = storage_path('app/backups');
             if (is_dir($rootDir)) {
-                foreach (glob($rootDir.'/backup_*.sql') ?: [] as $f) {
+                foreach (scandir($rootDir) ?: [] as $name) {
+                    if ($name === '.' || $name === '..') {
+                        continue;
+                    }
+                    if (! preg_match('/^backup_.*\.sql$/i', $name)) {
+                        continue;
+                    }
+                    $f = $rootDir.'/'.$name;
                     if (is_file($f)) {
                         $n++;
                     }
@@ -692,8 +724,14 @@ class DatabaseManagementController extends Controller
                 }
                 $fid = (int) $basename;
                 $count = 0;
-                foreach (glob($dir.'/*.sql') ?: [] as $sqlPath) {
-                    if (is_file($sqlPath)) {
+                foreach (scandir($dir) ?: [] as $name) {
+                    if ($name === '.' || $name === '..') {
+                        continue;
+                    }
+                    if (! preg_match('/\.sql$/i', $name)) {
+                        continue;
+                    }
+                    if (is_file($dir.'/'.$name)) {
                         $count++;
                     }
                 }
@@ -709,7 +747,14 @@ class DatabaseManagementController extends Controller
 
         $rootDir = storage_path('app/backups');
         if (is_dir($rootDir)) {
-            foreach (glob($rootDir.'/backup_*.sql') ?: [] as $sqlPath) {
+            foreach (scandir($rootDir) ?: [] as $name) {
+                if ($name === '.' || $name === '..') {
+                    continue;
+                }
+                if (! preg_match('/^backup_.*\.sql$/i', $name)) {
+                    continue;
+                }
+                $sqlPath = $rootDir.'/'.$name;
                 if (is_file($sqlPath)) {
                     $legacyRootTotal++;
                 }

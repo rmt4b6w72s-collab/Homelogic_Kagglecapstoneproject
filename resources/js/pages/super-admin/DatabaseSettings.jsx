@@ -128,7 +128,13 @@ export default function DatabaseSettings() {
     },
   });
 
-  const { data: backupPayload, isLoading: backupsLoading, refetch: refetchBackups } = useQuery({
+  const {
+    data: backupPayload,
+    isLoading: backupsLoading,
+    isError: backupsQueryError,
+    error: backupsQueryErr,
+    refetch: refetchBackups,
+  } = useQuery({
     queryKey: ['database-backups', backupFacilityId],
     queryFn: async () => {
       const response = await api.get('/database/backups', {
@@ -143,6 +149,7 @@ export default function DatabaseSettings() {
       };
     },
     enabled: !!backupFacilityId,
+    retry: 1,
   });
 
   const backups = backupPayload?.list ?? [];
@@ -522,6 +529,22 @@ export default function DatabaseSettings() {
         </div>
         {backupsLoading ? (
           <p className="text-sm text-gray-500">Loading backups…</p>
+        ) : backupsQueryError ? (
+          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900">
+            <p className="font-medium">Could not load backup list</p>
+            <p className="mt-1 text-red-800">
+              {backupsQueryErr?.response?.data?.message ||
+                backupsQueryErr?.message ||
+                'Request failed. If you can see backup counts above but not this list, ensure your account can access the database API (super admin or administrator).'}
+            </p>
+            <button
+              type="button"
+              onClick={() => refetchBackups()}
+              className="mt-3 text-sm font-semibold text-red-900 underline"
+            >
+              Try again
+            </button>
+          </div>
         ) : !backupFacilityId ? (
           <p className="text-sm text-gray-500">Select a facility to list backup files.</p>
         ) : !backups?.length ? (
