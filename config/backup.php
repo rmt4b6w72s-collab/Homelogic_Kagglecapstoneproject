@@ -20,4 +20,10 @@ return [
     /** Keep only this many automatic backups on disk (oldest auto backups deleted). Manual "Backup Now" files are not pruned. */
     'scheduled_keep' => (int) env('AUTO_DB_BACKUP_KEEP', 30),
 
+    /**
+     * Path to the mysql client binary for Super Admin → restore. Use when PHP-FPM has a minimal PATH
+     * (e.g. /usr/bin/mysql). Defaults to "mysql" on PATH.
+     */
+    'mysql_binary' => env('MYSQL_CLI_PATH', 'mysql'),
+
 ];

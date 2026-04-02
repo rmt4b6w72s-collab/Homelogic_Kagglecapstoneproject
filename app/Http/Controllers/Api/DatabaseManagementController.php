@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 
 class DatabaseManagementController extends Controller
@@ -206,24 +207,20 @@ class DatabaseManagementController extends Controller
             $connection = config('database.default');
             $config = config("database.connections.{$connection}");
 
-            if ($config['driver'] === 'mysql') {
-                $host = $config['host'] ?? 'localhost';
-                $database = $config['database'] ?? '';
-                $username = $config['username'] ?? '';
-                $password = $config['password'] ?? '';
+            if (in_array($config['driver'], ['mysql', 'mariadb'], true)) {
+                set_time_limit(0);
 
-                $command = sprintf(
-                    'mysql -h %s -u %s -p%s %s < %s 2>&1',
-                    escapeshellarg($host),
-                    escapeshellarg($username),
-                    escapeshellarg($password),
-                    escapeshellarg($database),
-                    escapeshellarg($backupPath)
-                );
-                exec($command, $output, $returnVar);
+                $restore = $this->runMysqlRestoreFromSqlFile($backupPath, $config);
 
-                if ($returnVar !== 0) {
-                    return response()->json(['message' => 'Failed to restore backup'], 500);
+                if (! $restore['ok']) {
+                    Log::warning('Database restore failed', [
+                        'detail' => $restore['detail'] ?? null,
+                    ]);
+
+                    return response()->json([
+                        'message' => 'Failed to restore backup',
+                        'detail' => $restore['detail'] ?? 'Unknown error (check server logs).',
+                    ], 500);
                 }
             } elseif ($config['driver'] === 'sqlite') {
                 // Handle both absolute paths and relative paths
@@ -279,6 +276,77 @@ class DatabaseManagementController extends Controller
                 'message' => 'Failed to refresh data: ' . $e->getMessage(),
             ], 500);
         }
+    }
+
+    /**
+     * Restore MySQL/MariaDB from a .sql file by piping stdin (avoids shell redirection and broken -p + escapeshellarg).
+     *
+     * @return array{ok: bool, detail?: string}
+     */
+    private function runMysqlRestoreFromSqlFile(string $backupPath, array $config): array
+    {
+        $parts = [config('backup.mysql_binary', 'mysql')];
+
+        $socket = $config['unix_socket'] ?? '';
+        if (is_string($socket) && $socket !== '') {
+            $parts[] = '--socket='.$socket;
+        } else {
+            $parts[] = '-h';
+            $parts[] = $config['host'] ?? '127.0.0.1';
+            $port = (int) ($config['port'] ?? 3306);
+            if ($port !== 3306) {
+                $parts[] = '-P';
+                $parts[] = (string) $port;
+            }
+        }
+
+        $parts[] = '-u';
+        $parts[] = $config['username'] ?? 'root';
+
+        $password = $config['password'] ?? '';
+        if ($password !== '') {
+            // Single argv "-ppassword" — no shell; special characters in password are safe.
+            $parts[] = '-p'.$password;
+        }
+
+        $parts[] = $config['database'] ?? '';
+
+        $descriptorSpec = [
+            0 => ['file', $backupPath, 'r'],
+            1 => ['pipe', 'w'],
+            2 => ['pipe', 'w'],
+        ];
+
+        $process = proc_open($parts, $descriptorSpec, $pipes, null, null);
+
+        if (! is_resource($process)) {
+            return [
+                'ok' => false,
+                'detail' => 'Could not start the mysql client. Ensure the `mysql` CLI is installed and on PATH for the PHP/web user (e.g. www-data).',
+            ];
+        }
+
+        $stdout = stream_get_contents($pipes[1]);
+        $stderr = stream_get_contents($pipes[2]);
+        fclose($pipes[1]);
+        fclose($pipes[2]);
+
+        $exitCode = proc_close($process);
+
+        if ($exitCode === 0) {
+            return ['ok' => true];
+        }
+
+        $combined = trim($stderr !== '' ? $stderr : $stdout);
+        if ($combined === '') {
+            $combined = 'mysql exited with code '.$exitCode.'.';
+        }
+
+        if (strlen($combined) > 2000) {
+            $combined = substr($combined, 0, 2000).'…';
+        }
+
+        return ['ok' => false, 'detail' => $combined];
     }
 
     /**

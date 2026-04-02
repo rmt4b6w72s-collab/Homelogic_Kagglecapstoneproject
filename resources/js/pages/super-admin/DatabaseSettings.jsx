@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Database, Download, Upload, RefreshCw, HardDrive, Archive } from 'lucide-react';
+import { Database, Download, Upload, RefreshCw, HardDrive, Archive, RotateCcw } from 'lucide-react';
 import api from '../../services/api';
 import logger from '../../utils/logger';
 import { useToastContext } from '../../contexts/ToastContext';
@@ -130,10 +130,10 @@ export default function DatabaseSettings() {
       refetchStats();
     },
     onError: (error) => {
-      toast.showToast(
-        error.response?.data?.message || 'Failed to restore backup',
-        'error'
-      );
+      const message = error.response?.data?.message || 'Failed to restore backup';
+      const detail = error.response?.data?.detail;
+      const text = detail ? `${message} ${detail}` : message;
+      toast.showToast(text.length > 800 ? `${text.slice(0, 800)}…` : text, 'error');
     },
   });
 
@@ -438,13 +438,18 @@ export default function DatabaseSettings() {
                       Download
                     </button>
                   </Tooltip>
-                  <button
-                    onClick={() => setRestoreConfirmFile(backup.filename)}
-                    disabled={restoreBackupMutation.isPending}
-                    className="px-2.5 py-1 text-xs sm:px-3 sm:py-1.5 sm:text-sm text-[var(--theme-primary)] border border-[var(--theme-primary)] rounded-lg hover:bg-[var(--theme-primary)]/10 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-                  >
-                    Restore
-                  </button>
+                  <Tooltip content="Restore this backup (overwrites current database)" position="top">
+                    <button
+                      type="button"
+                      onClick={() => setRestoreConfirmFile(backup.filename)}
+                      disabled={restoreBackupMutation.isPending}
+                      className="inline-flex items-center gap-1.5 whitespace-nowrap px-2.5 py-1 text-xs sm:px-3 sm:py-1.5 sm:text-sm font-medium text-red-800 bg-white border border-red-300 rounded-lg hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                      aria-label={`Restore backup ${backup.filename}`}
+                    >
+                      <RotateCcw className="w-4 h-4 shrink-0" strokeWidth={2.5} />
+                      Restore
+                    </button>
+                  </Tooltip>
                 </div>
               </div>
             ))}
