@@ -38,7 +38,13 @@
     /* Ensure report content takes full width and prints cleanly */
     .print-report {
         min-height: auto;
-        background: white;
+        background: white !important;
+    }
+
+    .report-brand-card,
+    .print-report-content {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
     }
 
     .print-report-header {

@@ -5,6 +5,7 @@ import { Calendar, ClipboardList, Pill, User, ChevronLeft, ChevronRight, FileTex
 import { useSearchParams } from 'react-router-dom';
 import { formatPacificDate as formatDate, formatPacificTime as formatTime } from '../utils/pacificTime';
 import EmptyState from '../components/ui/EmptyState';
+import ReportBrandedBanner from '../components/reports/ReportBrandedBanner';
 
 const statusOptions = [
     { value: '', label: 'All statuses' },
@@ -197,10 +198,13 @@ export default function MedicationHistory() {
 
     return (
         <div className="space-y-6">
+            <ReportBrandedBanner
+                reportTitle="Medication Administration History"
+                subtitle="Filter by resident, medication, status, and date range. Export a branded MAR-style PDF when a resident and date range are selected."
+            />
             <div className="bg-white rounded-xl shadow-sm p-6">
                 <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
                     <div>
-                        <h2 className="text-xl font-semibold text-gray-900 mb-2">Medication Administration History</h2>
                         {medicationId && medicationData ? (
                             <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                                 <p className="text-sm text-blue-900">
@@ -211,9 +215,8 @@ export default function MedicationHistory() {
                                 </p>
                             </div>
                         ) : (
-                            <p className="text-gray-600 max-w-2xl">
-                                Review medication administrations captured in Evergreen. Filter by resident, status, and date range to
-                                audit medication compliance and follow-up on missed doses.
+                            <p className="text-gray-600 max-w-2xl text-sm">
+                                Filter by resident, status, and date range to audit compliance and follow up on missed doses.
                             </p>
                         )}
                     </div>
