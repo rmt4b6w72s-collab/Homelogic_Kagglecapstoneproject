@@ -60,7 +60,6 @@ class MedicationLogReportService
         foreach ($medications as $medication) {
             if ($this->isPrnMedication($medication)) {
                 $prnSections[] = $this->buildPrnSection($medication, $byMedication->get($medication->id, collect()));
-
                 continue;
             }
 
@@ -93,7 +92,7 @@ class MedicationLogReportService
                 ? $resident->date_of_birth->format('F j, Y')
                 : '',
             'physician' => $resident->physician_name ?: $resident->primary_care_doctor ?: $resident->pep_or_doctor,
-            'diagnosis' => $this->formatDiagnosis($resident, $medications),
+            'diagnosis' => $this->formatResidentDiagnosis($resident),
             'allergies' => $this->formatAllergies($resident),
             'diet' => $resident->dietary_restrictions ?: '—',
             'rangeLabel' => $dateFrom->format('M d, Y').' - '.$dateTo->format('M d, Y'),
@@ -378,20 +377,18 @@ class MedicationLogReportService
         return true;
     }
 
-    private function formatDiagnosis(Resident $resident, Collection $medications): string
+    /**
+     * Summary "Diagnosis" uses only the resident record. Medication-level `diagnosis`
+     * is often used for sig/directions in this app and must not be merged here.
+     */
+    private function formatResidentDiagnosis(Resident $resident): string
     {
-        $parts = [];
-        if ($resident->diagnosis) {
-            $parts[] = $resident->diagnosis;
+        $d = $resident->diagnosis;
+        if (is_string($d) && trim($d) !== '') {
+            return trim($d);
         }
-        foreach ($medications as $m) {
-            if ($m->diagnosis) {
-                $parts[] = $m->diagnosis;
-            }
-        }
-        $parts = array_unique(array_filter(array_map('trim', $parts)));
 
-        return $parts !== [] ? implode(', ', $parts) : '—';
+        return '—';
     }
 
     private function formatAllergies(Resident $resident): string
