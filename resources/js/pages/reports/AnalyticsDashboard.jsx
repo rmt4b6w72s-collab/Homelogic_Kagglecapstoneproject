@@ -94,6 +94,17 @@ export default function AnalyticsDashboard() {
         return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount || 0);
     };
 
+    const selectedBranchName = branchId ? branches.find(b => b.id == branchId)?.name : null;
+    const selectedResident = React.useMemo(() => {
+        if (!residentId) return null;
+        return residents.find(r => String(r.id) === String(residentId)) ?? null;
+    }, [residentId, residents]);
+    const analyticsSubtitle = React.useMemo(() => {
+        const parts = [`${dateFrom} to ${dateTo}`];
+        if (selectedBranchName) parts.push(selectedBranchName);
+        return parts.join(' · ');
+    }, [dateFrom, dateTo, selectedBranchName]);
+
     const moduleCards = [
         {
             name: 'Vitals',
@@ -264,17 +275,6 @@ export default function AnalyticsDashboard() {
             </div>
         );
     }
-
-    const selectedBranchName = branchId ? branches.find(b => b.id == branchId)?.name : null;
-    const selectedResident = React.useMemo(() => {
-        if (!residentId) return null;
-        return residents.find(r => String(r.id) === String(residentId)) ?? null;
-    }, [residentId, residents]);
-    const analyticsSubtitle = React.useMemo(() => {
-        const parts = [`${dateFrom} to ${dateTo}`];
-        if (selectedBranchName) parts.push(selectedBranchName);
-        return parts.join(' · ');
-    }, [dateFrom, dateTo, selectedBranchName]);
 
     return (
         <PrintableReportLayout

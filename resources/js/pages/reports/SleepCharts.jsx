@@ -72,6 +72,11 @@ export default function SleepCharts() {
         window.URL.revokeObjectURL(url);
     };
 
+    const selectedResident = React.useMemo(() => {
+        if (!residentId) return null;
+        return residents.find(r => String(r.id) === String(residentId)) ?? null;
+    }, [residentId, residents]);
+
     if (isLoading) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
@@ -84,11 +89,6 @@ export default function SleepCharts() {
             </div>
         );
     }
-
-    const selectedResident = React.useMemo(() => {
-        if (!residentId) return null;
-        return residents.find(r => String(r.id) === String(residentId)) ?? null;
-    }, [residentId, residents]);
 
     return (
         <PrintableReportLayout
