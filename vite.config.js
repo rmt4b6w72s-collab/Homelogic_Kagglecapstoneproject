@@ -54,9 +54,16 @@ export default defineConfig({
                 chunkFileNames: 'assets/[name]-[hash].js',
                 entryFileNames: 'assets/[name]-[hash].js',
                 assetFileNames: 'assets/[name]-[hash].[ext]',
-                // Simplified chunking to avoid TDZ issues
-                // Let Vite handle chunking automatically to avoid initialization order problems
-                manualChunks: undefined,
+                // Split large vendors for parallel cache/load (entry still loads first)
+                manualChunks(id) {
+                    if (id.includes('node_modules/react-dom') || id.includes('node_modules/react/')) {
+                        return 'react-vendor';
+                    }
+                    if (id.includes('node_modules/chart.js') || id.includes('node_modules/react-chartjs')) {
+                        return 'chart-vendor';
+                    }
+                    return undefined;
+                },
             },
         },
         // Warn if chunk exceeds 1000KB
@@ -74,8 +81,8 @@ export default defineConfig({
             minifyIdentifiers: false,
             minifySyntax: false,
             minifyWhitespace: true, // Only remove whitespace
-            // Don't do any code transformations
-            treeShaking: false,
+            // Enable tree-shaking to reduce bundle size (revisit if TDZ regressions appear in QA)
+            treeShaking: true,
         },
         // CSS handling - ensure CSS is properly extracted and linked
         cssCodeSplit: true, // Enable CSS code splitting - it works better with Laravel Vite plugin

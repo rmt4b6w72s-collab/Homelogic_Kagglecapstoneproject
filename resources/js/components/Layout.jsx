@@ -64,6 +64,7 @@ import {
 import logger from '../utils/logger';
 import { useUserNotifications, useFacilityUpdates } from '../hooks/useRealtimeUpdates';
 import { reconnectEcho } from '../services/echo';
+import { currentUserQueryOptions } from '../queries/currentUser';
 
 const navigation = [
     { name: 'Dashboard', icon: LayoutDashboard, path: '/dashboard', children: null },
@@ -234,36 +235,8 @@ export default function Layout() {
     const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
     const toast = useToastContext();
 
-    // Fetch current user data using React Query for better cache management
-    const { data: currentUserData, isLoading: isLoadingUserData } = useQuery({
-        queryKey: ['current-user'],
-        queryFn: async () => {
-            try {
-                const response = await api.get('/user');
-                return response.data;
-            } catch (err) {
-                logger.error('Failed to fetch current user:', err);
-
-                // If auth is no longer valid (common after idle timeout), force a clean logout.
-                if (err?.response?.status === 401) {
-                    clearStoredAuth();
-                    sessionStorage.setItem('session_expired', '1');
-
-                    if (!sessionStorage.getItem('redirecting_to_login')) {
-                        sessionStorage.setItem('redirecting_to_login', 'true');
-                        setTimeout(() => {
-                            sessionStorage.removeItem('redirecting_to_login');
-                            window.location.href = '/login?reason=session-expired';
-                        }, 50);
-                    }
-                }
-
-                return null;
-            }
-        },
-        staleTime: 0, // Always fetch fresh data
-        retry: 1,
-    });
+    // Fetch current user — shares cache + staleTime with ThemeWrapper (see queries/currentUser.js)
+    const { data: currentUserData, isLoading: isLoadingUserData } = useQuery(currentUserQueryOptions);
 
     // Update local state when query data changes
     useEffect(() => {

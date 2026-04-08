@@ -15,6 +15,7 @@ import {
 } from 'chart.js';
 import api from '../services/api';
 import logger from '../utils/logger';
+import { currentUserQueryOptions } from '../queries/currentUser';
 import { useTheme } from '../contexts/ThemeContext';
 import { hexToRgb, addOpacity } from '../utils/colorUtils';
 import {
@@ -222,19 +223,7 @@ function ResidentVitalsTrendSection({ residents, defaultTrend }) {
 export default function Dashboard() {
     const navigate = useNavigate();
 
-    // Fetch current user
-    const { data: currentUser } = useQuery({
-        queryKey: ['current-user'],
-        queryFn: async () => {
-            try {
-                const response = await api.get('/user');
-                return response.data;
-            } catch (err) {
-                logger.error('Failed to fetch current user:', err);
-                return null;
-            }
-        },
-    });
+    const { data: currentUser } = useQuery(currentUserQueryOptions);
 
     // Redirect super admins to super admin dashboard
     useEffect(() => {
@@ -251,7 +240,6 @@ export default function Dashboard() {
             queryKeys: [
                 ['dashboard-stats'],
                 ['dashboard-daily-activities'],
-                ['dashboard-module-stats'],
             ],
         }
     );
@@ -308,10 +296,16 @@ export default function Dashboard() {
         retry: false,
         refetchInterval: 120000, // Poll every 2 minutes
         refetchIntervalInBackground: false,
+        // Defer until primary stats load so the first paint does fewer parallel requests
+        enabled: !isLoading,
     });
 
     // Determine user type early
     const isCaregiver = stats?.user_type === 'caregiver';
+
+    // Module overview counts (from /dashboard/stats — avoids 8 separate list API calls)
+    const moduleStats =
+        !isCaregiver && stats?.module_resource_counts ? stats.module_resource_counts : null;
 
     // Fetch trends data for admin users
     const { data: trendsData } = useQuery({
@@ -328,65 +322,6 @@ export default function Dashboard() {
         retry: false,
         enabled: !isCaregiver && !isLoading, // Only fetch for admins after stats load
         refetchInterval: 180000, // Poll every 3 minutes
-        refetchIntervalInBackground: false,
-    });
-
-    // Fetch module statistics for admin users
-    const { data: moduleStats } = useQuery({
-        queryKey: ['dashboard-module-stats'],
-        queryFn: async () => {
-            try {
-                const [assessmentsRes, sleepRes, housekeepingRes, incidentsRes, groceryRes, pharmacyRes, billingRes, fireDrillsRes] = await Promise.all([
-                    api.get('/assessments?per_page=1').catch(() => ({ data: { meta: { total: 0 } } })),
-                    api.get('/sleep-records?per_page=1').catch(() => ({ data: { meta: { total: 0 } } })),
-                    api.get('/cleaning/tasks?per_page=1').catch(() => ({ data: { meta: { total: 0 } } })),
-                    api.get('/incidents?per_page=1').catch(() => ({ data: { meta: { total: 0 } } })),
-                    api.get('/grocery-status-updates?per_page=1').catch(() => ({ data: { meta: { total: 0 } } })),
-                    api.get('/pharmacy-inventory?per_page=1').catch(() => ({ data: { meta: { total: 0 } } })),
-                    api.get('/billing/expenses?per_page=1').catch(() => ({ data: { meta: { total: 0 } } })),
-                    api.get('/fire-drills?per_page=1').catch(() => ({ data: { meta: { total: 0 } } })),
-                ]);
-
-                // Helper function to extract count from various response structures
-                const getCount = (response) => {
-                    if (!response?.data) return 0;
-                    // Try paginated response first (meta.total)
-                    if (response.data.meta?.total !== undefined) return response.data.meta.total;
-                    // Try direct total property
-                    if (response.data.total !== undefined) return response.data.total;
-                    // Try data array length
-                    if (Array.isArray(response.data.data)) return response.data.data.length;
-                    if (Array.isArray(response.data)) return response.data.length;
-                    return 0;
-                };
-
-                return {
-                    assessments: getCount(assessmentsRes),
-                    sleep: getCount(sleepRes),
-                    housekeeping: getCount(housekeepingRes),
-                    incidents: getCount(incidentsRes),
-                    grocery: getCount(groceryRes),
-                    pharmacy: getCount(pharmacyRes),
-                    billing: getCount(billingRes),
-                    fireDrills: getCount(fireDrillsRes),
-                };
-            } catch (err) {
-                logger.error('Module stats API error:', err);
-                return {
-                    assessments: 0,
-                    sleep: 0,
-                    housekeeping: 0,
-                    incidents: 0,
-                    grocery: 0,
-                    pharmacy: 0,
-                    billing: 0,
-                    fireDrills: 0,
-                };
-            }
-        },
-        retry: false,
-        enabled: !isCaregiver && !isLoading,
-        refetchInterval: 300000, // Poll every 5 minutes
         refetchIntervalInBackground: false,
     });
 

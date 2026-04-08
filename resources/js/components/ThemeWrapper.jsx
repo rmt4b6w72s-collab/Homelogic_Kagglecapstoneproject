@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import api from '../services/api';
 import { ThemeProvider } from '../contexts/ThemeContext';
 import logger from '../utils/logger';
+import { currentUserQueryOptions } from '../queries/currentUser';
 
 /**
  * Wrapper component that fetches user data and provides theme
@@ -10,21 +11,8 @@ import logger from '../utils/logger';
  */
 export default function ThemeWrapper({ children }) {
     const { data: userData } = useQuery({
-        queryKey: ['current-user'],
-        queryFn: async () => {
-            try {
-                const response = await api.get('/user');
-                return response.data;
-            } catch (err) {
-                // Don't log 401 errors - they're expected when not logged in
-                if (err.response?.status !== 401) {
-                    logger.error('Failed to fetch user for theme:', err);
-                }
-                return null;
-            }
-        },
-        staleTime: 1 * 60 * 1000, // Reduced to 1 minute for faster updates
-        retry: false, // Don't retry on 401 errors
+        ...currentUserQueryOptions,
+        retry: false,
     });
 
     // Fetch super admin theme if user is super admin
