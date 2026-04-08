@@ -51,6 +51,7 @@ import OfflineIndicator from './OfflineIndicator';
 import RealtimeIndicator from './RealtimeIndicator';
 import DropdownMenu, { DropdownMenuItem, DropdownMenuSeparator } from './ui/radix/DropdownMenu';
 import Tooltip from './ui/Tooltip';
+import PageBackButton from './ui/PageBackButton';
 import { filterNavigationByModuleAccess } from '../utils/moduleAccess';
 import { filterNavigationByPermissionAccess } from '../utils/permissionAccess';
 import {
@@ -758,6 +759,7 @@ export default function Layout() {
                         >
                             <Menu className="w-6 h-6" strokeWidth={2.5} />
                         </button>
+                        <PageBackButton />
                         <div className="flex flex-col">
                             <h1 className="text-lg md:text-xl font-semibold text-[var(--theme-primary)]">
                                 {facilityBranding.name}

@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { LayoutDashboard, FileText, MessageSquare, LogOut } from 'lucide-react';
 import api, { clearStoredAuth } from '../services/api';
 import PortalResidentHeader from './portal/PortalResidentHeader';
+import PageBackButton, { PAGE_BACK_HIDE_PORTAL } from './ui/PageBackButton';
 
 const nav = [
   { name: 'Dashboard', path: '/portal', icon: LayoutDashboard },
@@ -44,6 +45,7 @@ export default function PortalLayout() {
       <header className="bg-white border-b border-gray-200 shadow-sm shrink-0">
         <div className="flex items-center justify-between gap-4 px-4 py-3 max-w-[1600px] mx-auto w-full">
           <div className="flex items-center gap-4 min-w-0 flex-1">
+            <PageBackButton hideOnPaths={PAGE_BACK_HIDE_PORTAL} />
             <Link
               to="/portal"
               className="hidden sm:flex flex-col shrink-0 border-r border-gray-200 pr-4"
