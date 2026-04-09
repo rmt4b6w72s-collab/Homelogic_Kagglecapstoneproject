@@ -1,0 +1,38 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find /home/taal/Documents/Evergreen/resources/js -name \"*.jsx\" -type f -exec wc -l {} +)",
+      "Bash(grep -r \"::all\\(\\)\\\\|->get\\(\\)\" /home/taal/Documents/Evergreen/app/Filament/Widgets/*.php)",
+      "Bash(ls -lh /home/taal/Documents/Evergreen/app/Filament/Pages/*.php)",
+      "Bash(find /home/taal/Documents/Evergreen/public -type f \\\\\\( -name \"*.png\" -o -name \"*.jpg\" -o -name \"*.jpeg\" -o -name \"*.gif\" \\\\\\) -exec ls -lh {} \\\\;)",
+      "Read(//home/taal/Documents/Evergreen/**)",
+      "Bash(sort -k2 -h)",
+      "Bash(find /home/taal/Documents/Evergreen/resources -type f \\\\\\( -name \"*.png\" -o -name \"*.jpg\" -o -name \"*.jpeg\" \\\\\\) -exec ls -lh {} \\\\;)",
+      "Bash(grep -r \"\\\\.map\\\\\\(\" /home/taal/Documents/Evergreen/resources/js/pages/*.jsx)",
+      "Bash(du -sh node_modules/*)",
+      "Bash(grep -n \"all\\(\\)\" /home/taal/Documents/Evergreen/app/Filament/Widgets/*.php)",
+      "Bash(grep -r \"->count\\(\\)\" /home/taal/Documents/Evergreen/app/Http/Controllers/Api/*.php)",
+      "Bash(ls -lh /home/taal/Documents/Evergreen/public/build/assets/*.js)",
+      "Bash(sort -t'-' -k2 -rn)",
+      "Bash(grep -n \"const { data: currentUser\" /home/taal/Documents/Evergreen/resources/js/pages/*.jsx)",
+      "Bash(grep -n \"api\\\\.get.*'/user'\" /home/taal/Documents/Evergreen/resources/js/pages/*.jsx)",
+      "Bash(find /home/taal/Documents/Evergreen/resources/js -name \"*.jsx\" -exec wc -l {} \\\\;)",
+      "Bash(npm run:*)",
+      "Bash(php -l app/Models/Scopes/FacilityScope.php)",
+      "Bash(php -l app/Filament/Pages/Reports.php)",
+      "Bash(php -l app/Http/Controllers/Api/MedicationAdministrationController.php)",
+      "Bash(php -l app/Filament/Pages/CaregiverDashboard.php)",
+      "Bash(php -l database/migrations/2026_04_09_000001_add_performance_indexes_phase2.php)",
+      "Bash(npm uninstall:*)",
+      "Bash(sudo apt-get:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m ':*)",
+      "Bash(php -l app/Filament/Widgets/AssessmentChartWidget.php)",
+      "Bash(php -l app/Filament/Pages/AssessmentsCharts.php)",
+      "Bash(php -l app/Filament/Widgets/AdminHealthOverviewWidget.php)",
+      "Bash(php -l app/Providers/Filament/AdminPanelProvider.php)",
+      "Bash(php -l app/Http/Controllers/Api/ExpenseReportController.php)",
+      "Bash(php -l app/Services/PharmacyDashboardService.php)"
+    ]
+  }
+}
