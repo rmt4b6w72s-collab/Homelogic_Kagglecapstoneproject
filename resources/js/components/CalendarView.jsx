@@ -1,10 +1,17 @@
 import React from 'react';
-import { Calendar, momentLocalizer } from 'react-big-calendar';
-import moment from 'moment';
+import { Calendar, dateFnsLocalizer } from 'react-big-calendar';
+import { format, parse, startOfWeek, getDay } from 'date-fns';
+import { enUS } from 'date-fns/locale/en-US';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import logger from '../utils/logger';
 
-const localizer = momentLocalizer(moment);
+const localizer = dateFnsLocalizer({
+    format,
+    parse,
+    startOfWeek,
+    getDay,
+    locales: { 'en-US': enUS },
+});
 
 export default function CalendarView({ events, onSelectEvent, onSelectSlot, defaultDate, views = ['month', 'week', 'day'], height = '600px', ...props }) {
     // Format events for react-big-calendar
@@ -14,7 +21,7 @@ export default function CalendarView({ events, onSelectEvent, onSelectSlot, defa
         return events.map(event => {
             try {
                 const start = event.start ? new Date(event.start) : new Date();
-                const end = event.end ? new Date(event.end) : (moment ? moment(start).add(1, 'hour').toDate() : new Date(start.getTime() + 3600000));
+                const end = event.end ? new Date(event.end) : new Date(start.getTime() + 3600000);
                 
                 return {
                     ...event,

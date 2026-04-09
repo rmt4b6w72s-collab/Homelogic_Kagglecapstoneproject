@@ -62,26 +62,34 @@ export default defineConfig({
                     if (id.includes('node_modules/chart.js') || id.includes('node_modules/react-chartjs')) {
                         return 'chart-vendor';
                     }
+                    if (id.includes('node_modules/lucide-react')) {
+                        return 'icons-vendor';
+                    }
+                    if (id.includes('node_modules/@tanstack')) {
+                        return 'query-vendor';
+                    }
+                    if (id.includes('node_modules/date-fns')) {
+                        return 'datefns-vendor';
+                    }
+                    if (id.includes('node_modules/@radix-ui')) {
+                        return 'radix-vendor';
+                    }
                     return undefined;
                 },
             },
         },
-        // Warn if chunk exceeds 1000KB
-        chunkSizeWarningLimit: 1000, // Increase limit since we're not minifying
+        chunkSizeWarningLimit: 500,
         // Disable sourcemaps for production
         sourcemap: false,
         // Use esbuild with minimal settings - only compress whitespace
         minify: 'esbuild',
         // Target modern browsers
         target: 'es2020',
-        // Configure esbuild to be extremely conservative
         esbuild: {
             legalComments: 'none',
-            // CRITICAL: Don't rename or transform anything
-            minifyIdentifiers: false,
-            minifySyntax: false,
-            minifyWhitespace: true, // Only remove whitespace
-            // Enable tree-shaking to reduce bundle size (revisit if TDZ regressions appear in QA)
+            minifyIdentifiers: true,
+            minifySyntax: true,
+            minifyWhitespace: true,
             treeShaking: true,
         },
         // CSS handling - ensure CSS is properly extracted and linked

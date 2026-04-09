@@ -190,6 +190,7 @@ export default function Features() {
                 src="/images/slides/slide-7-features-operations.png"
                 alt="Streamline operations with every module you need"
                 className="w-full rounded-2xl shadow-lg"
+                loading="lazy"
                 draggable={false}
               />
             </div>
@@ -237,6 +238,7 @@ export default function Features() {
                 src="/images/slides/slide-5-features-care.png"
                 alt="Resident management and medication tracking"
                 className="w-full rounded-2xl shadow-lg"
+                loading="lazy"
                 draggable={false}
               />
             </div>
@@ -259,6 +261,7 @@ export default function Features() {
             src="/images/slides/slide-4-transform.png"
             alt=""
             className="w-full h-full object-cover"
+            loading="lazy"
             draggable={false}
           />
           <div className="absolute inset-0 bg-black/40"></div>

@@ -73,7 +73,7 @@ class Reports extends Page
         ];
 
         foreach ($residents as $resident) {
-            $latestVitals = $resident->vitalSigns()->latest('measurement_date')->first();
+            $latestVitals = $resident->vitalSigns->sortByDesc('measurement_date')->first();
             
             if ($latestVitals) {
                 if ($latestVitals->systolic <= 120 && $latestVitals->diastolic <= 80 && 
@@ -102,8 +102,8 @@ class Reports extends Page
         
         $performance = [];
         foreach ($caregivers as $caregiver) {
-            $vitalsCount = $caregiver->vitalSigns()->count();
-            $assessmentsCount = $caregiver->assessments()->count();
+            $vitalsCount = $caregiver->vitalSigns->count();
+            $assessmentsCount = $caregiver->assessments->count();
             
             $performance[] = [
                 'name' => $caregiver->name,
@@ -200,8 +200,8 @@ class Reports extends Page
             fputcsv($file, ['Name', 'Email', 'Vitals Recorded', 'Assessments Completed', 'Total Activities', 'Performance Score']);
             
             foreach ($staff as $member) {
-                $vitalsCount = $member->vitalSigns()->count();
-                $assessmentsCount = $member->assessments()->count();
+                $vitalsCount = $member->vitalSigns->count();
+                $assessmentsCount = $member->assessments->count();
                 $totalActivities = $vitalsCount + $assessmentsCount;
                 $performanceScore = $totalActivities > 0 ? round(($totalActivities / 50) * 100, 1) : 0;
                 

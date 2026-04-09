@@ -35,11 +35,11 @@ class DashboardService
         $facilityId = $user->facility_id ?? ($user->assigned_branch_id ?
             (\App\Models\Branch::find($user->assigned_branch_id)?->facility_id ?? 'none') : 'none');
 
-        // Cache stats for 1 minute to reduce database load (reduced from 2 minutes for faster updates)
+        // Cache stats for 5 minutes (clearCacheForUser() handles invalidation when data changes)
         $cacheKey = "dashboard.stats.{$user->id}.{$user->role}.{$facilityId}";
 
         try {
-            return Cache::remember($cacheKey, 60, function () use ($user) {
+            return Cache::remember($cacheKey, 300, function () use ($user) {
                 if (UserRoles::isCaregiverRole($user->role)) {
                     return $this->getCaregiverStats($user);
                 }

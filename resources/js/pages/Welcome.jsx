@@ -232,6 +232,7 @@ export default function Welcome() {
                   src="/images/slides/slide-3-hero.png"
                   alt="HomeLogic360 Dashboard on laptop and tablet"
                   className="relative w-full rounded-2xl shadow-2xl border border-white/20"
+                  loading="lazy"
                   draggable={false}
                 />
               </div>
@@ -268,6 +269,7 @@ export default function Welcome() {
                 src="/images/slides/slide-1-problem.png"
                 alt="Managing care shouldn't be this hard"
                 className="w-full rounded-2xl shadow-lg"
+                loading="lazy"
                 draggable={false}
               />
             </div>
@@ -395,6 +397,7 @@ export default function Welcome() {
                 src="/images/slides/slide-6-features-resident.png"
                 alt="Resident care made simple"
                 className="w-full rounded-2xl shadow-lg"
+                loading="lazy"
                 draggable={false}
               />
             </div>
@@ -411,6 +414,7 @@ export default function Welcome() {
                 src="/images/slides/slide-7-features-operations.png"
                 alt="Streamline operations - every module you need"
                 className="w-full rounded-2xl shadow-lg"
+                loading="lazy"
                 draggable={false}
               />
             </div>
@@ -520,6 +524,7 @@ export default function Welcome() {
                 src="/images/slides/slide-8-analytics.png"
                 alt="Smart analytics with real-time insights"
                 className="w-full rounded-2xl shadow-lg"
+                loading="lazy"
                 draggable={false}
               />
             </div>
@@ -536,6 +541,7 @@ export default function Welcome() {
                 src="/images/slides/slide-5-features-care.png"
                 alt="Resident management and medication tracking"
                 className="w-full rounded-2xl shadow-lg"
+                loading="lazy"
                 draggable={false}
               />
             </div>
@@ -564,6 +570,7 @@ export default function Welcome() {
             src="/images/slides/slide-4-transform.png"
             alt=""
             className="w-full h-full object-cover"
+            loading="lazy"
             draggable={false}
           />
           <div className="absolute inset-0 bg-black/40"></div>

@@ -220,6 +220,7 @@ export default function About() {
                 src="/images/slides/slide-2-struggle.png"
                 alt="Managing care shouldn't be this hard"
                 className="w-full rounded-2xl shadow-lg"
+                loading="lazy"
                 draggable={false}
               />
             </div>
@@ -390,6 +391,7 @@ export default function About() {
             src="/images/slides/slide-4-transform.png"
             alt=""
             className="w-full h-full object-cover"
+            loading="lazy"
             draggable={false}
           />
           <div className="absolute inset-0 bg-black/40"></div>

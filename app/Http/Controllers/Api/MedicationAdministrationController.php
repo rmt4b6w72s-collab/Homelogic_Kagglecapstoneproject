@@ -32,12 +32,19 @@ class MedicationAdministrationController extends BaseApiController
     {
         $query = $this->buildQuery($request);
         
-        // Clone query for different aggregations to avoid modifying the base query
-        $total = (clone $query)->count();
-        $administered = (clone $query)->where('status', 'completed')->count();
-        $missed = (clone $query)->where('status', 'missed')->count();
-        $refused = (clone $query)->where('status', 'refused')->count();
-        
+        // Single aggregate query instead of 4 separate count queries
+        $counts = (clone $query)->selectRaw("
+            count(*) as total,
+            sum(case when status = 'completed' then 1 else 0 end) as administered,
+            sum(case when status = 'missed' then 1 else 0 end) as missed,
+            sum(case when status = 'refused' then 1 else 0 end) as refused
+        ")->first();
+
+        $total = (int) $counts->total;
+        $administered = (int) $counts->administered;
+        $missed = (int) $counts->missed;
+        $refused = (int) $counts->refused;
+
         // Calculate adherence
         $adherence = ($total > 0) ? round(($administered / $total) * 100) : 0;
         
