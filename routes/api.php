@@ -290,6 +290,8 @@ Route::prefix('v1')->middleware([\App\Http\Middleware\SetFacilityContext::class]
     Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->middleware('auth:sanctum');
     Route::delete('/notifications/clear-read', [NotificationController::class, 'clearRead'])->middleware('auth:sanctum');
     Route::delete('/notifications/{id}', [NotificationController::class, 'destroy'])->middleware('auth:sanctum');
+    Route::get('/notification-settings', [\App\Http\Controllers\Api\NotificationPreferenceController2::class, 'index'])->middleware('auth:sanctum');
+    Route::put('/notification-settings', [\App\Http\Controllers\Api\NotificationPreferenceController2::class, 'update'])->middleware('auth:sanctum');
 
     // Push subscriptions (PWA push notifications)
     Route::post('/push-subscriptions', [\App\Http\Controllers\Api\PushSubscriptionController::class, 'store'])->middleware('auth:sanctum');

@@ -38,7 +38,8 @@ import {
     Star,
     Bell,
     BellOff,
-    Smartphone
+    Smartphone,
+    Filter
 } from 'lucide-react';
 
 export default function Profile() {
@@ -753,6 +754,120 @@ export default function Profile() {
                             </div>
                         )}
                     </div>
+                </div>
+            </div>
+
+            {/* Notification Category Preferences */}
+            <NotificationCategoryPreferences />
+        </div>
+    );
+}
+
+function NotificationCategoryPreferences() {
+    const { data, isLoading } = useQuery({
+        queryKey: ['notification-settings'],
+        queryFn: async () => {
+            const res = await api.get('/notification-settings');
+            return res.data.preferences;
+        },
+    });
+
+    const queryClient = useQueryClient();
+    const [localPrefs, setLocalPrefs] = React.useState(null);
+    const [saving, setSaving] = React.useState(false);
+
+    React.useEffect(() => {
+        if (data && !localPrefs) setLocalPrefs(data);
+    }, [data]);
+
+    const prefs = localPrefs || data || [];
+
+    const togglePref = (key, channel) => {
+        setLocalPrefs(prev => prev.map(p =>
+            p.key === key ? { ...p, [channel]: !p[channel] } : p
+        ));
+    };
+
+    const handleSave = async () => {
+        setSaving(true);
+        try {
+            await api.put('/notification-settings', {
+                preferences: prefs.map(p => ({
+                    key: p.key,
+                    in_app_enabled: p.in_app_enabled,
+                    email_enabled: p.email_enabled,
+                    push_enabled: p.push_enabled,
+                })),
+            });
+            queryClient.invalidateQueries({ queryKey: ['notification-settings'] });
+        } catch (err) {
+            // silently fail
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    if (isLoading) return null;
+
+    const hasChanges = JSON.stringify(prefs) !== JSON.stringify(data);
+
+    return (
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden border-l-4 border-l-purple-500 hover:shadow-xl transition-shadow mb-6">
+            <div className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-bold text-[var(--theme-primary)] flex items-center">
+                        <Filter className="w-5 h-5 mr-2" />
+                        Notification Categories
+                    </h3>
+                    {hasChanges && (
+                        <button
+                            onClick={handleSave}
+                            disabled={saving}
+                            className="px-4 py-1.5 bg-[var(--theme-primary)] text-white text-sm font-medium rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50"
+                        >
+                            {saving ? 'Saving...' : 'Save Changes'}
+                        </button>
+                    )}
+                </div>
+                <p className="text-xs text-gray-500 mb-4">Choose which notification types you want to receive.</p>
+
+                <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                        <thead>
+                            <tr className="border-b border-gray-200">
+                                <th className="text-left py-2 pr-4 font-semibold text-gray-700">Category</th>
+                                <th className="text-center py-2 px-3 font-semibold text-gray-700">In-App</th>
+                                <th className="text-center py-2 px-3 font-semibold text-gray-700">Email</th>
+                                <th className="text-center py-2 px-3 font-semibold text-gray-700">Push</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {prefs.map(pref => (
+                                <tr key={pref.key} className="border-b border-gray-100 last:border-0">
+                                    <td className="py-3 pr-4">
+                                        <p className="font-medium text-gray-900">{pref.label}</p>
+                                        <p className="text-xs text-gray-500">{pref.description}</p>
+                                    </td>
+                                    {['in_app_enabled', 'email_enabled', 'push_enabled'].map(channel => (
+                                        <td key={channel} className="text-center py-3 px-3">
+                                            <button
+                                                onClick={() => togglePref(pref.key, channel)}
+                                                className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ${
+                                                    pref[channel] ? 'bg-[var(--theme-primary)]' : 'bg-gray-300'
+                                                }`}
+                                                role="switch"
+                                                aria-checked={pref[channel]}
+                                            >
+                                                <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow transition duration-200 ${
+                                                    pref[channel] ? 'translate-x-4' : 'translate-x-0'
+                                                }`} />
+                                            </button>
+                                        </td>
+                                    ))}
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
