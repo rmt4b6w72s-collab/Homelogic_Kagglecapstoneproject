@@ -51,9 +51,8 @@ export const MODULE_MAP = {
   '/reports/incidents': 'incidents',
   '/reports/pharmacy': 'pharmacy',
   
-  // Residents module
+  // Residents module (/my-residents is core caregiver — no module gate)
   '/administration/residents': 'residents',
-  '/my-residents': 'residents',
   
   // Grocery Status module
   '/grocery-status': 'grocery_status',

@@ -19,8 +19,7 @@ export const PERMISSION_MAP = {
   // Facility admins usually have view_users; view_activity_logs may be missing from older DB seeds
   '/administration/activity-logs': ['view_activity_logs', 'view_users'],
   
-  // Other navigation items that require specific permissions
-  '/my-residents': 'view_residents',
+  // /my-residents is a core caregiver feature — no permission gate needed
 };
 
 /**
