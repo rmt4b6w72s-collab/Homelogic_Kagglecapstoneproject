@@ -83,6 +83,13 @@ function getUpcomingBirthdays(residents, windowDays = 30) {
         .sort((a, b) => a.daysUntil - b.daysUntil);
 }
 
+/** Derive a first name from user object regardless of which field is populated */
+function deriveFirstName(user) {
+    if (user?.first_name) return user.first_name;
+    if (user?.name) return user.name.split(' ')[0];
+    return 'Caregiver';
+}
+
 export default function CaregiverDashboard({
     user,
     stats,
@@ -94,8 +101,9 @@ export default function CaregiverDashboard({
     const now = useLiveClock();
     const currentHour = now.getHours();
     const greeting = currentHour < 12 ? 'Good Morning' : currentHour < 18 ? 'Good Afternoon' : 'Good Evening';
+    const firstName = deriveFirstName(user);
 
-    // ── Fetch active residents for birthday widget (self-contained) ───────────
+    // ── Fetch active residents (shared for birthday widget + quick-access strip) ─
     const { data: residentsData } = useQuery({
         queryKey: ['caregiver-dashboard-residents-birthdays'],
         queryFn: async () => {
@@ -105,10 +113,22 @@ export default function CaregiverDashboard({
         staleTime: 15 * 60 * 1000,
     });
 
-    const upcomingBirthdays = React.useMemo(() => {
-        const list = residentsData?.data ?? (Array.isArray(residentsData) ? residentsData : []);
-        return getUpcomingBirthdays(list, 30);
-    }, [residentsData]);
+    const residentList = React.useMemo(
+        () => residentsData?.data ?? (Array.isArray(residentsData) ? residentsData : []),
+        [residentsData],
+    );
+
+    const upcomingBirthdays = React.useMemo(
+        () => getUpcomingBirthdays(residentList, 30),
+        [residentList],
+    );
+
+    // Build a set of resident IDs that have pending medication reminders
+    const medReminderResidentIds = React.useMemo(() => {
+        const reminders = stats?.medication_reminders;
+        if (!Array.isArray(reminders)) return new Set();
+        return new Set(reminders.map(m => String(m.resident_id)).filter(Boolean));
+    }, [stats?.medication_reminders]);
 
     // ── Fetch PRN follow-ups due today ─────────────────────────────────────────
     const { data: prnFollowupsData } = useQuery({
@@ -154,7 +174,7 @@ export default function CaregiverDashboard({
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
                         <h1 className="text-2xl font-bold mb-1">
-                            {greeting}, {user?.first_name || 'Caregiver'} 👋
+                            {greeting}, {firstName} 👋
                         </h1>
                         <p className="text-white/75 text-sm">
                             {now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
@@ -214,6 +234,15 @@ export default function CaregiverDashboard({
                     onClick={() => navigate('/assessments')}
                 />
             </div>
+
+            {/* ── Resident Quick-Access Strip ── */}
+            {residentList.length > 0 && (
+                <ResidentStrip
+                    residents={residentList}
+                    medReminderIds={medReminderResidentIds}
+                    navigate={navigate}
+                />
+            )}
 
             {/* ── Tabbed Alerts Widget ── */}
             {actionableItems.length > 0 && (
@@ -399,6 +428,103 @@ export default function CaregiverDashboard({
                 </div>
             </div>
         </div>
+    );
+}
+
+// ── Resident Quick-Access Strip ───────────────────────────────────────────────
+
+function ResidentStrip({ residents, medReminderIds, navigate }) {
+    const stripRef = React.useRef(null);
+
+    React.useEffect(() => {
+        if (stripRef.current && shouldAnimate()) {
+            slideInUp(stripRef.current, { duration: 280, delay: 60 });
+        }
+    }, []);
+
+    return (
+        <section
+            ref={stripRef}
+            aria-label="My residents quick access"
+            className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden"
+        >
+            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+                <div className="flex items-center gap-2">
+                    <Users className="w-4 h-4 text-[var(--theme-primary)]" aria-hidden="true" />
+                    <h2 className="text-sm font-bold text-gray-900">My Residents</h2>
+                    <span className="text-[10px] font-semibold uppercase tracking-widest text-gray-400">
+                        {residents.length} active
+                    </span>
+                </div>
+                <button
+                    type="button"
+                    onClick={() => navigate('/my-residents')}
+                    className="text-xs font-semibold text-[var(--theme-primary)] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--theme-primary)] rounded"
+                >
+                    View All →
+                </button>
+            </div>
+
+            {/* Horizontal scroll */}
+            <div
+                className="flex gap-3 overflow-x-auto px-4 py-3 scroll-smooth"
+                style={{ scrollbarWidth: 'thin' }}
+                role="list"
+            >
+                {residents.map(resident => {
+                    const initials = [resident.first_name?.[0], resident.last_name?.[0]].filter(Boolean).join('').toUpperCase();
+                    const room = resident.room_number || resident.room;
+                    const hasMedPending = medReminderIds.has(String(resident.id));
+                    const fullName = [resident.first_name, resident.last_name].filter(Boolean).join(' ');
+
+                    return (
+                        <button
+                            key={resident.id}
+                            type="button"
+                            role="listitem"
+                            onClick={() => navigate(`/residents/${resident.id}`)}
+                            className="flex flex-col items-center gap-1.5 flex-shrink-0 w-[72px] p-2 rounded-xl hover:bg-gray-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--theme-primary)] group"
+                            aria-label={`${fullName}${room ? `, room ${room}` : ''}${hasMedPending ? ', has pending medications' : ''}`}
+                        >
+                            {/* Avatar */}
+                            <div className="relative">
+                                <div className="w-11 h-11 rounded-full bg-[var(--theme-primary-bg)] text-[var(--theme-primary)] flex items-center justify-center text-sm font-bold group-hover:ring-2 group-hover:ring-[var(--theme-primary)]/30 transition-all">
+                                    {initials || <User className="w-5 h-5" aria-hidden="true" />}
+                                </div>
+                                {/* Medication pending dot */}
+                                {hasMedPending && (
+                                    <span
+                                        className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-amber-400 border-2 border-white"
+                                        aria-hidden="true"
+                                        title="Medication pending"
+                                    />
+                                )}
+                            </div>
+
+                            {/* Name */}
+                            <span className="text-[10px] font-semibold text-gray-700 text-center leading-tight w-full truncate group-hover:text-[var(--theme-primary)] transition-colors">
+                                {resident.first_name || fullName}
+                            </span>
+
+                            {/* Room badge */}
+                            {room ? (
+                                <span className="text-[9px] text-gray-400 font-medium">Rm {room}</span>
+                            ) : (
+                                <span className="text-[9px] text-gray-300">—</span>
+                            )}
+                        </button>
+                    );
+                })}
+            </div>
+
+            {/* Legend */}
+            {medReminderIds.size > 0 && (
+                <div className="flex items-center gap-1.5 px-4 py-2 border-t border-gray-50 bg-gray-50/50">
+                    <span className="w-2.5 h-2.5 rounded-full bg-amber-400 flex-shrink-0" aria-hidden="true" />
+                    <span className="text-[10px] text-gray-500">Amber dot = pending medication reminder</span>
+                </div>
+            )}
+        </section>
     );
 }
 
