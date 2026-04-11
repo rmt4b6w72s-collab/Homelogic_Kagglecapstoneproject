@@ -1,7 +1,7 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import api from '../services/api';
-import { Calendar, ClipboardList, Pill, User, ChevronLeft, ChevronRight, FileText, Download } from 'lucide-react';
+import { Calendar, ClipboardList, Pill, User, ChevronLeft, ChevronRight, FileText, Download, AlertTriangle, CheckCircle2, XCircle, Ban } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import { formatPacificDate as formatDate, formatPacificTime as formatTime } from '../utils/pacificTime';
 import EmptyState from '../components/ui/EmptyState';
@@ -18,9 +18,24 @@ const statusOptions = [
 const statusStyles = {
     completed: 'bg-green-100 text-green-800',
     missed: 'bg-red-100 text-red-800',
-    refused: 'bg-yellow-100 text-yellow-800',
+    refused: 'bg-amber-100 text-amber-800',
     hospital_admission: 'bg-blue-100 text-blue-800',
     pharmacy_administration_confirm: 'bg-purple-100 text-purple-800',
+};
+
+const statusRowBorder = {
+    completed: 'border-l-4 border-l-green-400',
+    missed: 'border-l-4 border-l-red-400',
+    refused: 'border-l-4 border-l-amber-400',
+    hospital_admission: 'border-l-4 border-l-blue-400',
+    pharmacy_administration_confirm: 'border-l-4 border-l-purple-400',
+};
+
+const StatusIcon = ({ status, className = 'w-3.5 h-3.5' }) => {
+    if (status === 'completed') return <CheckCircle2 className={`${className} text-green-600`} aria-hidden="true" />;
+    if (status === 'missed') return <XCircle className={`${className} text-red-500`} aria-hidden="true" />;
+    if (status === 'refused') return <Ban className={`${className} text-amber-500`} aria-hidden="true" />;
+    return null;
 };
 
 export default function MedicationHistory() {
@@ -465,8 +480,11 @@ export default function MedicationHistory() {
                                             ? administration.notes.replace(lateNoteMarker, '').trim()
                                             : administration.notes;
 
+                                        const rowBorder = statusRowBorder[administration.status] || '';
+                                        const isAutoMissed = administration.status === 'missed' && administeredBy === 'System';
+
                                         return (
-                                            <tr key={administration.id} className="hover:bg-gray-50 transition-colors">
+                                            <tr key={administration.id} className={`hover:bg-gray-50 transition-colors ${rowBorder}`}>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                                     <div className="font-medium">
                                                         {resident?.first_name} {resident?.last_name}
@@ -486,19 +504,30 @@ export default function MedicationHistory() {
                                                     <div className="text-xs text-gray-500">{formatTime(administration.administered_at)}</div>
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm">
-                                                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusClass}`}>
-                                                        {getStatusLabel(administration.status)}
-                                                    </span>
-                                                    {isLateAdministration && (
-                                                        <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">
-                                                            Late
+                                                    <div className="flex items-center gap-1.5">
+                                                        <StatusIcon status={administration.status} />
+                                                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${statusClass}`}>
+                                                            {getStatusLabel(administration.status)}
                                                         </span>
-                                                    )}
+                                                    </div>
+                                                    <div className="flex flex-wrap gap-1 mt-1">
+                                                        {isLateAdministration && (
+                                                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">
+                                                                Late
+                                                            </span>
+                                                        )}
+                                                        {isAutoMissed && (
+                                                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-red-50 text-red-600 border border-red-200">
+                                                                <AlertTriangle className="w-3 h-3" aria-hidden="true" />
+                                                                Auto-missed
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                                     {administeredBy ? (
                                                         <div className="flex flex-col">
-                                                            <span className="font-medium">{administeredBy}</span>
+                                                            <span className={`font-medium ${isAutoMissed ? 'text-gray-400 italic' : ''}`}>{administeredBy}</span>
                                                             {administration.administered_by?.position && (
                                                                 <span className="text-xs text-gray-500">
                                                                     {administration.administered_by.position}
@@ -511,6 +540,12 @@ export default function MedicationHistory() {
                                                 </td>
                                                 <td className="px-6 py-4 text-sm text-gray-900">
                                                     <div>{administration.dosage_given || 'Dose not recorded'}</div>
+                                                    {isAutoMissed && (
+                                                        <div className="flex items-start gap-1 mt-1 text-xs text-red-500">
+                                                            <AlertTriangle className="w-3 h-3 mt-0.5 flex-shrink-0" aria-hidden="true" />
+                                                            Automatically recorded as missed — dose window closed without administration.
+                                                        </div>
+                                                    )}
                                                     {(cleanedNotes || isLateAdministration) && (
                                                         <div className="text-xs text-gray-500 mt-1 whitespace-pre-line">
                                                             {cleanedNotes || 'Late administration recorded outside scheduled window.'}

@@ -266,6 +266,32 @@ export default function ResidentMedicationsPage() {
         return Array.isArray(rows) ? rows : [];
     }, [todayResidentAdminsPage]);
 
+    // PRN history: 7-day past administrations (fetched only when on PRN tab)
+    const { data: prnHistoryData, isLoading: prnHistoryLoading } = useQuery({
+        queryKey: ['prn-history', residentId],
+        queryFn: async () => {
+            const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+            const today = getPacificISODate();
+            const response = await api.get('/medication-administrations', {
+                params: { resident_id: residentId, date_from: sevenDaysAgo, date_to: today, per_page: 50 },
+            });
+            return response.data;
+        },
+        enabled: !!residentId && activeTab === 'prn',
+        staleTime: 5 * 60 * 1000,
+    });
+
+    const prnHistoryList = React.useMemo(() => {
+        const rows = prnHistoryData?.data ?? prnHistoryData ?? [];
+        if (!Array.isArray(rows)) return [];
+        // Keep only PRN medication administrations (instructions contain prn/as needed)
+        return rows.filter(a =>
+            a.medication?.instructions
+                ? /prn|as needed/i.test(a.medication.instructions)
+                : false
+        );
+    }, [prnHistoryData]);
+
     const medicationsList = React.useMemo(() => data?.data ?? [], [data?.data]);
     const resident = residentData;
     const residentDisplayName = React.useMemo(() => {
@@ -419,6 +445,23 @@ export default function ResidentMedicationsPage() {
 
         return list.sort((a, b) => getSortWeight(a) - getSortWeight(b));
     }, [activeTab, scheduledMeds, amMeds, pmMeds, prnMeds]);
+
+    // Overdue counts — used to colour-code tab badges
+    const overdueTabCounts = React.useMemo(() => {
+        const now = getPacificNow();
+        const isSlotOverdue = (med) => {
+            if (!med.slotTime) return false;
+            const scheduled = toPacificDateFromTime(med.slotTime, { referenceDate: now });
+            if (!scheduled) return false;
+            return now.getTime() > scheduled.getTime() + 60 * 60 * 1000;
+        };
+        return {
+            scheduled: scheduledMeds.filter(isSlotOverdue).length,
+            am: amMeds.filter(isSlotOverdue).length,
+            pm: pmMeds.filter(isSlotOverdue).length,
+            prn: 0,
+        };
+    }, [scheduledMeds, amMeds, pmMeds]);
 
     const [bulkSelectTick, setBulkSelectTick] = useState(0);
     React.useEffect(() => {
@@ -921,8 +964,9 @@ export default function ResidentMedicationsPage() {
                 
                 <div className="flex items-center gap-3 shrink-0">
                     <div className="text-right hidden lg:block">
-                        <p className="text-[10px] text-gray-400 uppercase font-bold tracking-widest">Today's Date</p>
+                        <p className="text-[10px] text-gray-400 uppercase font-bold tracking-widest">Pacific Time (PT)</p>
                         <p className="text-sm font-semibold text-gray-700">{formatPacificDate(getPacificNow())}</p>
+                        <p className="text-xs text-gray-400">{formatPacificTime(getPacificNow())}</p>
                     </div>
                     <div className="h-10 w-px bg-gray-100 hidden lg:block mx-1"></div>
 
@@ -1003,36 +1047,60 @@ export default function ResidentMedicationsPage() {
 
             {/* Main Content with Tabs */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                {/* Pacific Time context banner */}
+                <div className="flex items-center gap-2 px-4 py-2 bg-blue-50/60 border-b border-blue-100/80 text-xs text-blue-600" role="note" aria-label="Timezone notice">
+                    <Clock className="w-3.5 h-3.5 flex-shrink-0" aria-hidden="true" />
+                    <span>All administration windows and timestamps are displayed in <strong>Pacific Time (PT)</strong>.</span>
+                </div>
+
                 {/* Tabs Header */}
                 <div className="px-4 pt-4 border-b border-gray-100 bg-gray-50/50">
                     <div className="max-w-full overflow-x-auto">
                         <div className="flex items-center gap-1 min-w-max pb-1">
                             {[
-                                { key: 'scheduled', label: 'Scheduled', count: scheduledMeds.length, color: 'bg-blue-500' },
-                                { key: 'am', label: 'AM', count: amMeds.length, color: 'bg-amber-500' },
-                                { key: 'pm', label: 'PM', count: pmMeds.length, color: 'bg-indigo-500' },
-                                { key: 'prn', label: 'PRN', count: prnMeds.length, color: 'bg-purple-500' },
-                            ].map(tab => (
-                                <button
-                                    key={tab.key}
-                                    onClick={() => { setActiveTab(tab.key); setExpandedRows(new Set()); setSelectedMeds(new Set()); }}
-                                    className={`relative flex items-center gap-2 px-6 py-3 text-sm font-bold rounded-t-xl transition-all ${
-                                        activeTab === tab.key
-                                            ? 'bg-white text-gray-900 border-x border-t border-gray-100 -mb-px shadow-[0_-2px_10px_rgba(0,0,0,0.02)]'
-                                            : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100/50'
-                                    }`}
-                                >
-                                    {tab.label}
-                                    <span className={`inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-[10px] font-black text-white ${
-                                        activeTab === tab.key ? tab.color : 'bg-gray-300'
-                                    }`}>
-                                        {tab.count}
-                                    </span>
-                                    {activeTab === tab.key && (
-                                        <div className={`absolute bottom-0 left-4 right-4 h-1 rounded-t-full ${tab.color.replace('bg-', 'bg-')}`}></div>
-                                    )}
-                                </button>
-                            ))}
+                                { key: 'scheduled', label: 'Scheduled', count: scheduledMeds.length, defaultColor: 'bg-blue-500' },
+                                { key: 'am', label: 'AM', count: amMeds.length, defaultColor: 'bg-amber-500' },
+                                { key: 'pm', label: 'PM', count: pmMeds.length, defaultColor: 'bg-indigo-500' },
+                                { key: 'prn', label: 'PRN', count: prnMeds.length, defaultColor: 'bg-purple-500' },
+                            ].map(tab => {
+                                const overdueCount = overdueTabCounts[tab.key] ?? 0;
+                                // Red if any overdue, green if all cleared, default color if pending
+                                const activeBadgeColor = tab.count === 0
+                                    ? 'bg-emerald-500'
+                                    : overdueCount > 0
+                                        ? 'bg-red-500'
+                                        : tab.defaultColor;
+                                const inactiveBadgeColor = tab.count === 0 ? 'bg-emerald-400' : overdueCount > 0 ? 'bg-red-400' : 'bg-gray-300';
+
+                                return (
+                                    <button
+                                        key={tab.key}
+                                        onClick={() => { setActiveTab(tab.key); setExpandedRows(new Set()); setSelectedMeds(new Set()); }}
+                                        aria-selected={activeTab === tab.key}
+                                        className={`relative flex items-center gap-2 px-6 py-3 text-sm font-bold rounded-t-xl transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--theme-primary)] ${
+                                            activeTab === tab.key
+                                                ? 'bg-white text-gray-900 border-x border-t border-gray-100 -mb-px shadow-[0_-2px_10px_rgba(0,0,0,0.02)]'
+                                                : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100/50'
+                                        }`}
+                                    >
+                                        {tab.label}
+                                        {overdueCount > 0 && activeTab !== tab.key && (
+                                            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-red-500 ring-2 ring-white" aria-label="Overdue items" />
+                                        )}
+                                        <span
+                                            className={`inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-[10px] font-black text-white transition-colors ${
+                                                activeTab === tab.key ? activeBadgeColor : inactiveBadgeColor
+                                            }`}
+                                            aria-label={`${tab.count} ${tab.label} medication${tab.count !== 1 ? 's' : ''}${overdueCount > 0 ? `, ${overdueCount} overdue` : ''}`}
+                                        >
+                                            {tab.count}
+                                        </span>
+                                        {activeTab === tab.key && (
+                                            <div className={`absolute bottom-0 left-4 right-4 h-1 rounded-t-full ${activeBadgeColor}`} aria-hidden="true" />
+                                        )}
+                                    </button>
+                                );
+                            })}
                         </div>
                     </div>
                 </div>
@@ -1063,6 +1131,14 @@ export default function ResidentMedicationsPage() {
                                 </button>
                             )}
                         </div>
+                    )}
+
+                    {/* PRN History — shown below PRN tab */}
+                    {activeTab === 'prn' && (
+                        <PrnHistoryPanel
+                            entries={prnHistoryList}
+                            isLoading={prnHistoryLoading}
+                        />
                     )}
                 </div>
             </div>
@@ -2102,9 +2178,94 @@ function MedicationWindowBadge({ medication, slotTime }) {
     return null;
 }
 
+// ─── PRN History Panel ────────────────────────────────────────────────────────
 
+function PrnHistoryPanel({ entries, isLoading }) {
+    const [collapsed, setCollapsed] = React.useState(false);
 
+    if (isLoading) {
+        return (
+            <div className="border-t border-gray-100 px-4 py-4">
+                <div className="h-4 w-48 animate-pulse rounded bg-gray-100 mb-3" />
+                {[1, 2, 3].map(i => <div key={i} className="h-12 animate-pulse rounded-lg bg-gray-50 mb-2" />)}
+            </div>
+        );
+    }
 
+    return (
+        <div className="border-t border-purple-100 bg-purple-50/30">
+            <button
+                type="button"
+                onClick={() => setCollapsed(c => !c)}
+                className="w-full flex items-center justify-between px-4 py-3 text-sm font-bold text-purple-800 hover:bg-purple-50/60 transition-colors"
+                aria-expanded={!collapsed}
+            >
+                <div className="flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-purple-600" aria-hidden="true" />
+                    PRN Dose History (last 7 days)
+                    {entries.length > 0 && (
+                        <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-[10px] font-black text-white bg-purple-500">
+                            {entries.length}
+                        </span>
+                    )}
+                </div>
+                {collapsed
+                    ? <ChevronRight className="w-4 h-4 text-purple-400" aria-hidden="true" />
+                    : <ChevronDown className="w-4 h-4 text-purple-400" aria-hidden="true" />
+                }
+            </button>
+
+            {!collapsed && (
+                entries.length === 0 ? (
+                    <div className="px-4 pb-4 text-sm text-purple-700/70">
+                        No PRN administrations recorded in the last 7 days.
+                    </div>
+                ) : (
+                    <div className="px-4 pb-4 space-y-2">
+                        {entries.map(entry => {
+                            const medName = (entry.medication?.name || 'Medication').toUpperCase();
+                            const dateStr = entry.administered_at
+                                ? new Date(entry.administered_at).toLocaleDateString('en-US', {
+                                    month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
+                                    timeZone: 'America/Los_Angeles',
+                                })
+                                : '—';
+                            const administeredBy = entry.administered_by?.name
+                                || entry.administered_by_name
+                                || 'Staff';
+                            const statusColor = entry.status === 'completed'
+                                ? 'text-emerald-700 bg-emerald-50'
+                                : entry.status === 'refused'
+                                    ? 'text-amber-700 bg-amber-50'
+                                    : 'text-gray-600 bg-gray-100';
+
+                            return (
+                                <div
+                                    key={entry.id}
+                                    className="flex items-start gap-3 rounded-lg border border-purple-100 bg-white px-3 py-2.5 text-sm"
+                                >
+                                    <div className="flex-1 min-w-0">
+                                        <p className="font-semibold text-gray-900 truncate">{medName}</p>
+                                        <p className="text-xs text-gray-400">{dateStr} · {administeredBy}</p>
+                                        {entry.dosage_given && (
+                                            <p className="text-xs text-gray-500 mt-0.5">Dose: {entry.dosage_given}</p>
+                                        )}
+                                        {entry.notes && (
+                                            <p className="text-xs text-gray-400 mt-0.5 line-clamp-2">{entry.notes}</p>
+                                        )}
+                                    </div>
+                                    <span className={`flex-shrink-0 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold capitalize ${statusColor}`}>
+                                        {entry.status || 'recorded'}
+                                    </span>
+                                </div>
+                            );
+                        })}
+                    </div>
+                )
+            )}
+        </div>
+    );
+}
 
 
 
