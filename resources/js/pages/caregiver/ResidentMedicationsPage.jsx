@@ -43,6 +43,7 @@ import {
 import Select from '../../components/ui/radix/Select';
 import Tooltip from '../../components/ui/Tooltip';
 import ResidentSafetyStrip from '../../components/residents/ResidentSafetyStrip';
+import Breadcrumbs from '../../components/ui/Breadcrumbs';
 import logger from '../../utils/logger';
 import {
     parseAdminTimeToPacific,
@@ -869,6 +870,12 @@ export default function ResidentMedicationsPage() {
 
     return (
         <div className="space-y-6">
+            <Breadcrumbs items={[
+                { label: 'My Residents', path: '/my-residents' },
+                { label: residentDisplayName !== 'Resident' ? residentDisplayName : 'Resident', path: residentId ? `/my-residents/${residentId}` : '/my-residents' },
+                { label: 'Medications', path: '' },
+            ]} />
+
             {/* Header Section */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div className="flex items-center gap-4 min-w-0">

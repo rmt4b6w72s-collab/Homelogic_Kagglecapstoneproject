@@ -212,36 +212,42 @@ const superAdminNavigation = [
 ];
 
 const caregiverNavigation = [
-    { name: 'Dashboard', icon: LayoutDashboard, path: '/dashboard', children: null },
-    { name: 'My Residents', icon: Users, path: '/my-residents', children: null },
-    { name: 'Medication Log', icon: Pill, path: '/medications/residents', children: null },
-    { name: 'Medication History', icon: ClipboardList, path: '/medication-history', children: null },
-    { 
-        name: 'Vitals', 
-        icon: Heart, 
-        path: '/vitals', 
+    // HOME
+    { name: 'Dashboard', icon: LayoutDashboard, path: '/dashboard', children: null, section: 'Home' },
+    // CARE
+    { name: 'My Residents', icon: Users, path: '/my-residents', children: null, section: 'Care' },
+    { name: 'Progress Notes', icon: FileText, path: '/t-logs', children: null, section: 'Care' },
+    { name: 'Appointments', icon: Calendar, path: '/appointments', children: null, section: 'Care' },
+    { name: 'Behavior Charts', icon: BarChart3, path: '/charts', children: null, section: 'Care' },
+    // CLINICAL
+    { name: 'Medication Log', icon: Pill, path: '/medications/residents', children: null, section: 'Clinical' },
+    { name: 'Medication History', icon: ClipboardList, path: '/medication-history', children: null, section: 'Clinical' },
+    {
+        name: 'Vitals',
+        icon: Heart,
+        path: '/vitals',
+        section: 'Clinical',
         children: [
             { name: 'Vitals', path: '/vitals' },
             { name: 'View Vitals', path: '/view-vitals' },
         ]
     },
-    { 
-        name: 'Sleep', 
-        icon: Moon, 
-        path: '/sleep', 
+    {
+        name: 'Sleep',
+        icon: Moon,
+        path: '/sleep',
+        section: 'Clinical',
         children: [
             { name: 'Sleep Records', path: '/sleep' },
             { name: 'Sleep Pattern', path: '/sleep-patterns' },
         ]
     },
-    { name: 'Housekeeping', icon: Sparkles, path: '/housekeeping', children: null },
-    { name: 'Grocery Status', icon: ShoppingCart, path: '/grocery-status', children: null },
-    { name: 'Fire Drills', icon: Flame, path: '/fire-drills', children: null },
-    { name: 'Incidents', icon: AlertTriangle, path: '/incidents', children: null },
-    { name: 'Progress notes', icon: FileText, path: '/t-logs', children: null },
-    { name: 'Appointments', icon: Calendar, path: '/appointments', children: null },
-    { name: 'Behavior Charts', icon: BarChart3, path: '/charts', children: null },
-    { name: 'Leave Requests', icon: CalendarClock, path: '/leave-requests', children: null },
+    // OPERATIONS
+    { name: 'Housekeeping', icon: Sparkles, path: '/housekeeping', children: null, section: 'Operations' },
+    { name: 'Grocery Status', icon: ShoppingCart, path: '/grocery-status', children: null, section: 'Operations' },
+    { name: 'Fire Drills', icon: Flame, path: '/fire-drills', children: null, section: 'Operations' },
+    { name: 'Incidents', icon: AlertTriangle, path: '/incidents', children: null, section: 'Operations' },
+    { name: 'Leave Requests', icon: CalendarClock, path: '/leave-requests', children: null, section: 'Operations' },
 ];
 
 export default function Layout() {
@@ -412,20 +418,17 @@ export default function Layout() {
         });
     }, [currentUser]);
 
-    // Command palette keyboard shortcut (Cmd+K or Ctrl+K) - disabled for caregivers
+    // Command palette keyboard shortcut (Cmd+K or Ctrl+K) — available for all roles
     useEffect(() => {
-        if (isCaregiver) return; // Don't enable keyboard shortcut for caregivers
-        
         const handleKeyDown = (e) => {
             if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
                 e.preventDefault();
                 setCommandPaletteOpen(true);
             }
         };
-
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [isCaregiver]);
+    }, []);
 
     const isSuperAdmin = React.useMemo(() => {
         if (!currentUser) return false;
@@ -627,106 +630,39 @@ export default function Layout() {
                 </div>
 
                 {/* Navigation */}
-                <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+                <nav className="flex-1 p-3 overflow-y-auto" aria-label="Main navigation">
                     {isLoadingUser ? (
                         <div className="flex items-center justify-center py-8">
-                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--theme-text-on-primary)]"></div>
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--theme-text-on-primary)]" aria-label="Loading navigation" />
                         </div>
                     ) : navigationItems.length === 0 ? (
                         <div className="text-center py-8 text-[var(--theme-text-on-primary)] text-sm opacity-75">
                             No navigation items available
                         </div>
+                    ) : isCaregiver ? (
+                        // Caregiver: grouped nav with section labels
+                        <CaregiverNav
+                            items={navigationItems}
+                            location={location}
+                            expandedMenus={expandedMenus}
+                            setExpandedMenus={setExpandedMenus}
+                            onLinkClick={() => setMobileMenuOpen(false)}
+                        />
                     ) : (
-                        navigationItems.map((item) => {
-                        const Icon = item.icon;
-                        const hasChildren = item.children && item.children.length > 0;
-                        
-                        // For parent items with children, only mark active if a child is active
-                        // For items without children, check exact match or path starts with
-                        let isActive;
-                        if (hasChildren) {
-                            // Parent is active only if a child is active
-                            isActive = item.children.some(child => 
-                                location.pathname === child.path || 
-                                location.pathname.startsWith(child.path + '/')
-                            );
-                        } else {
-                            // For items without children, check exact match or starts with path + '/'
-                            // But exclude cases where a more specific path exists
-                            isActive = location.pathname === item.path || 
-                                location.pathname.startsWith(item.path + '/');
-                            
-                            // If this path is a prefix of another navigation item's path, don't mark active
-                            // unless we're on the exact path
-                            if (isActive && location.pathname !== item.path) {
-                                const hasMoreSpecificMatch = navigationItems.some(otherItem => 
-                                    otherItem.path !== item.path &&
-                                    otherItem.path.startsWith(item.path + '/') &&
-                                    location.pathname.startsWith(otherItem.path)
-                                );
-                                if (hasMoreSpecificMatch) {
-                                    isActive = false;
-                                }
-                            }
-                        }
-                        
-                        const isExpanded = expandedMenus[item.name] ?? (isActive && hasChildren);
-                        
-                        return (
-                            <div key={item.name}>
-                                {hasChildren ? (
-                                    <div>
-                                        <button
-                                            onClick={() => setExpandedMenus({...expandedMenus, [item.name]: !isExpanded})}
-                                            className={`w-full flex items-center justify-between space-x-3 px-4 py-3 rounded-lg transition-colors cursor-pointer ${
-                                                isActive ? 'bg-white shadow-md text-[var(--theme-text-on-white)]' : 'text-[var(--theme-text-on-primary)] hover:text-[var(--theme-text-on-primary)] hover:bg-[var(--theme-primary-light)]'
-                                            }`}
-                                        >
-                                            <div className="flex items-center space-x-3">
-                                                <Icon className="w-5 h-5" strokeWidth={2.5} />
-                                                <span>{item.name}</span>
-                                            </div>
-                                            {isExpanded ? (
-                                                <ChevronDown className="w-4 h-4" strokeWidth={2.5} />
-                                            ) : (
-                                                <ChevronRight className="w-4 h-4" strokeWidth={2.5} />
-                                            )}
-                                        </button>
-                                        {isExpanded && (
-                                            <div className="ml-8 mt-2 space-y-1">
-                                                {item.children.map((child) => {
-                                                    const isChildActive = location.pathname === child.path || location.pathname.startsWith(child.path + '/');
-                                                    return (
-                                                        <Link
-                                                            key={child.path}
-                                                            to={child.path}
-                                                            onClick={() => setMobileMenuOpen(false)}
-                                                                className={`block px-4 py-2 rounded-lg transition-colors text-sm cursor-pointer ${
-                                                                    isChildActive ? 'bg-white shadow-md text-[var(--theme-text-on-white)]' : 'text-[var(--theme-text-on-primary)] hover:text-[var(--theme-text-on-primary)] hover:bg-[var(--theme-primary-light)]'
-                                                                }`}
-                                                        >
-                                                            {child.name}
-                                                        </Link>
-                                                    );
-                                                })}
-                                            </div>
-                                        )}
-                                    </div>
-                                ) : (
-                                    <Link
-                                        to={item.path}
-                                        onClick={() => setMobileMenuOpen(false)}
-                                        className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors cursor-pointer ${
-                                            isActive ? 'bg-white shadow-md text-[var(--theme-text-on-white)]' : 'text-[var(--theme-text-on-primary)] hover:text-[var(--theme-text-on-primary)] hover:bg-[var(--theme-primary-light)]'
-                                        }`}
-                                    >
-                                        <Icon className="w-5 h-5" strokeWidth={2.5} />
-                                        <span>{item.name}</span>
-                                    </Link>
-                                )}
-                            </div>
-                        );
-                    })
+                        // Admin / super admin: flat list (unchanged behaviour)
+                        <div className="space-y-1">
+                        {navigationItems.map((item) => (
+                            <NavItem
+                                key={item.name}
+                                item={item}
+                                location={location}
+                                expandedMenus={expandedMenus}
+                                setExpandedMenus={setExpandedMenus}
+                                navigationItems={navigationItems}
+                                onLinkClick={() => setMobileMenuOpen(false)}
+                            />
+                        ))}
+                        </div>
                     )}
                 </nav>
             </aside>
@@ -735,40 +671,57 @@ export default function Layout() {
             <div className="flex-1 flex flex-col overflow-hidden md:ml-0">
                 {/* Top Bar */}
                 <header className="bg-white border-b border-gray-200 px-4 md:px-6 py-4 flex items-center justify-between shadow-sm">
-                    <div className="flex items-center space-x-3">
+                    <div className="flex items-center gap-2 sm:gap-3 min-w-0">
                         <button
+                            type="button"
                             onClick={() => setMobileMenuOpen(true)}
-                            className="md:hidden text-gray-700 hover:text-gray-900 cursor-pointer"
+                            className="md:hidden text-gray-700 hover:text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--theme-primary)] rounded"
+                            aria-label="Open menu"
                         >
-                            <Menu className="w-6 h-6" strokeWidth={2.5} />
+                            <Menu className="w-6 h-6" strokeWidth={2.5} aria-hidden="true" />
                         </button>
                         <PageBackButton />
-                        <div className="flex flex-col">
-                            <h1 className="text-lg md:text-xl font-semibold text-[var(--theme-primary)]">
-                                {facilityBranding.name}
-                            </h1>
-                            {/* Mobile time/date hidden per request */}
-                        </div>
+                        {/* Facility context indicator */}
+                        <Link
+                            to="/profile"
+                            className="group flex items-center gap-2 min-w-0 rounded-lg px-2 py-1 -mx-2 hover:bg-gray-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--theme-primary)]"
+                            aria-label={`Active facility: ${facilityBranding.name}. Go to profile settings.`}
+                        >
+                            <div className="flex-shrink-0 w-7 h-7 rounded-full overflow-hidden border border-gray-200 bg-[var(--theme-primary)] hidden sm:flex items-center justify-center">
+                                <img
+                                    src={facilityBranding.logo}
+                                    alt=""
+                                    className="w-full h-full object-cover"
+                                    onError={e => { e.target.style.display = 'none'; }}
+                                />
+                            </div>
+                            <div className="min-w-0">
+                                <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 leading-none hidden sm:block">
+                                    Active Facility
+                                </p>
+                                <h1 className="text-sm sm:text-base font-semibold text-[var(--theme-primary)] truncate max-w-[140px] sm:max-w-xs">
+                                    {facilityBranding.name}
+                                </h1>
+                            </div>
+                        </Link>
                     </div>
                     <div className="flex items-center space-x-2 md:space-x-4">
                         <LiveClock serverTime={currentUser?.app_current_time} timezoneOffset={currentUser?.app_timezone_offset} />
                         {/* Hide search, notifications, and calendar for super admin */}
                         {currentUser?.role !== 'super_admin' && (
                             <>
-                                {!isCaregiver && (
-                                    <Tooltip content="Open command palette (⌘K)" position="bottom">
-                                        <button
-                                            type="button"
-                                            onClick={() => setCommandPaletteOpen(true)}
-                                            className="hidden md:flex items-center space-x-2 px-3 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors border border-gray-300"
-                                            aria-label="Open command palette"
-                                        >
-                                            <Command className="w-4 h-4" />
-                                            <span className="hidden lg:inline">Search</span>
-                                            <kbd className="hidden lg:inline px-1.5 py-0.5 text-xs bg-gray-200 rounded">⌘K</kbd>
-                                        </button>
-                                    </Tooltip>
-                                )}
+                                <Tooltip content="Search (⌘K)" position="bottom">
+                                    <button
+                                        type="button"
+                                        onClick={() => setCommandPaletteOpen(true)}
+                                        className="hidden md:flex items-center space-x-2 px-3 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors border border-gray-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--theme-primary)]"
+                                        aria-label="Open search"
+                                    >
+                                        <Command className="w-4 h-4" aria-hidden="true" />
+                                        <span className="hidden lg:inline">Search</span>
+                                        <kbd className="hidden lg:inline px-1.5 py-0.5 text-xs bg-gray-100 rounded">⌘K</kbd>
+                                    </button>
+                                </Tooltip>
                                 <NotificationDropdown />
                                 <ReminderPanel />
                                 <Tooltip content="Progress notes" position="bottom">
@@ -839,7 +792,8 @@ export default function Layout() {
             </div>
             
             {/* Command Palette */}
-            <CommandPalette isOpen={commandPaletteOpen} onClose={() => setCommandPaletteOpen(false)} />
+            <CommandPalette isOpen={commandPaletteOpen} onClose={() => setCommandPaletteOpen(false)} isCaregiver={isCaregiver} />
+
             
             {/* PWA Install Prompt */}
             <PWAInstallPrompt />
@@ -853,5 +807,133 @@ export default function Layout() {
     );
 }
 
+// ─── Shared NavItem (used by both flat admin nav and caregiver grouped nav) ───
 
+function getItemActiveState(item, location, navigationItems) {
+    const hasChildren = item.children && item.children.length > 0;
+    if (hasChildren) {
+        return item.children.some(
+            child => location.pathname === child.path || location.pathname.startsWith(child.path + '/')
+        );
+    }
+    let isActive = location.pathname === item.path || location.pathname.startsWith(item.path + '/');
+    if (isActive && location.pathname !== item.path) {
+        const hasMoreSpecific = (navigationItems || []).some(
+            other => other.path !== item.path &&
+                other.path.startsWith(item.path + '/') &&
+                location.pathname.startsWith(other.path)
+        );
+        if (hasMoreSpecific) isActive = false;
+    }
+    return isActive;
+}
 
+function NavItem({ item, location, expandedMenus, setExpandedMenus, navigationItems, onLinkClick }) {
+    const Icon = item.icon;
+    const hasChildren = item.children && item.children.length > 0;
+    const isActive = getItemActiveState(item, location, navigationItems);
+    const isExpanded = expandedMenus[item.name] ?? (isActive && hasChildren);
+
+    const activeClass = 'bg-white shadow-sm text-[var(--theme-text-on-white)]';
+    const inactiveClass = 'text-[var(--theme-text-on-primary)] hover:bg-[var(--theme-primary-light)]';
+
+    if (hasChildren) {
+        return (
+            <div>
+                <button
+                    type="button"
+                    onClick={() => setExpandedMenus({ ...expandedMenus, [item.name]: !isExpanded })}
+                    aria-expanded={isExpanded}
+                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-colors text-sm ${isActive ? activeClass : inactiveClass}`}
+                >
+                    <div className="flex items-center gap-3">
+                        <Icon className="w-4 h-4 flex-shrink-0" strokeWidth={2.25} aria-hidden="true" />
+                        <span className="font-medium">{item.name}</span>
+                    </div>
+                    {isExpanded
+                        ? <ChevronDown className="w-3.5 h-3.5 opacity-70" strokeWidth={2.5} aria-hidden="true" />
+                        : <ChevronRight className="w-3.5 h-3.5 opacity-70" strokeWidth={2.5} aria-hidden="true" />
+                    }
+                </button>
+                {isExpanded && (
+                    <div className="ml-7 mt-1 space-y-0.5 border-l border-white/20 pl-3">
+                        {item.children.map(child => {
+                            const isChildActive = location.pathname === child.path || location.pathname.startsWith(child.path + '/');
+                            return (
+                                <Link
+                                    key={child.path}
+                                    to={child.path}
+                                    onClick={onLinkClick}
+                                    className={`block px-3 py-2 rounded-lg transition-colors text-sm ${isChildActive ? activeClass : inactiveClass}`}
+                                >
+                                    {child.name}
+                                </Link>
+                            );
+                        })}
+                    </div>
+                )}
+            </div>
+        );
+    }
+
+    return (
+        <Link
+            to={item.path}
+            onClick={onLinkClick}
+            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-sm ${isActive ? activeClass : inactiveClass}`}
+            aria-current={isActive ? 'page' : undefined}
+        >
+            <Icon className="w-4 h-4 flex-shrink-0" strokeWidth={2.25} aria-hidden="true" />
+            <span className="font-medium">{item.name}</span>
+        </Link>
+    );
+}
+
+// ─── Caregiver nav with section dividers ──────────────────────────────────────
+
+function CaregiverNav({ items, location, expandedMenus, setExpandedMenus, onLinkClick }) {
+    // Group items by section preserving order
+    const sections = React.useMemo(() => {
+        const result = [];
+        let current = null;
+        for (const item of items) {
+            const section = item.section || 'Other';
+            if (section !== current) {
+                current = section;
+                result.push({ section, items: [] });
+            }
+            result[result.length - 1].items.push(item);
+        }
+        return result;
+    }, [items]);
+
+    return (
+        <div className="space-y-4">
+            {sections.map(({ section, items: sectionItems }) => (
+                <div key={section}>
+                    {/* Section label — hidden for "Home" to keep it minimal */}
+                    {section !== 'Home' && (
+                        <div className="px-3 pb-1">
+                            <span className="text-[10px] font-bold uppercase tracking-widest text-white/40 select-none">
+                                {section}
+                            </span>
+                        </div>
+                    )}
+                    <div className="space-y-0.5">
+                        {sectionItems.map(item => (
+                            <NavItem
+                                key={item.name}
+                                item={item}
+                                location={location}
+                                expandedMenus={expandedMenus}
+                                setExpandedMenus={setExpandedMenus}
+                                navigationItems={items}
+                                onLinkClick={onLinkClick}
+                            />
+                        ))}
+                    </div>
+                </div>
+            ))}
+        </div>
+    );
+}
