@@ -12,48 +12,57 @@ import {
     User,
     ArrowLeft,
     MapPin,
+    ShieldAlert,
     AlertCircle,
+    Clock,
+    Utensils,
     Activity,
     Save,
     Edit,
     X,
+    Moon,
     Stethoscope,
     Phone,
+    Languages,
     Building2,
-    Moon,
+    Users,
+    CheckCircle,
+    TrendingUp,
 } from 'lucide-react';
 import api from '../../services/api';
 import {
     calculateAgeFromPacificBirthDate,
     formatPacificCalendarMedium,
+    getPacificNow,
 } from '../../utils/pacificTime';
 import Breadcrumbs from '../../components/ui/Breadcrumbs';
 import ResidentDocuments from '../../components/ResidentDocuments';
 import ResidentMedicationsPage from './ResidentMedicationsPage';
+import logger from '../../utils/logger';
 import { isCaregiverRole } from '../../utils/userRoles';
 
 // ─── Tab definitions ──────────────────────────────────────────────────────────
 
 const HUB_TABS = [
-    { id: 'overview',     label: 'Overview',     icon: LayoutDashboard },
-    { id: 'medications',  label: 'Medications',  icon: Pill            },
-    { id: 'notes',        label: 'Notes',        icon: FileText        },
-    { id: 'care',         label: 'Care Plan',    icon: ClipboardList   },
-    { id: 'documents',    label: 'Documents',    icon: FolderOpen      },
-    { id: 'vitals',       label: 'Vitals',       icon: Heart           },
-    { id: 'appointments', label: 'Appointments', icon: Calendar        },
-    { id: 'profile',      label: 'Profile',      icon: User            },
+    { id: 'overview',     label: 'Overview',      icon: LayoutDashboard },
+    { id: 'medications',  label: 'Medications',   icon: Pill            },
+    { id: 'notes',        label: 'Notes',         icon: FileText        },
+    { id: 'care',         label: 'Care Plan',     icon: ClipboardList   },
+    { id: 'documents',    label: 'Documents',     icon: FolderOpen      },
+    { id: 'vitals',       label: 'Vitals',        icon: Heart           },
+    { id: 'appointments', label: 'Appointments',  icon: Calendar        },
+    { id: 'profile',      label: 'Profile',       icon: User            },
 ];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function formatCalDate(value) {
-    if (!value) return null;
+    if (!value) return 'N/A';
     try { return formatPacificCalendarMedium(value); } catch { return value; }
 }
 
 function formatPhone(value) {
-    if (!value) return null;
+    if (!value) return 'N/A';
     const cleaned = String(value).replace(/[^\d+]/g, '');
     if (cleaned.length === 10) return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6)}`;
     return value;
@@ -75,136 +84,6 @@ const codeStatusColor = (status = '') => {
     if (s.includes('comfort')) return 'bg-blue-500';
     return 'bg-gray-400';
 };
-
-// ─── Left profile panel ───────────────────────────────────────────────────────
-
-function ResidentLeftPanel({ resident, residentId, navigate }) {
-    if (!resident) return null;
-
-    const fullName = [resident.first_name, resident.middle_names, resident.last_name]
-        .filter(Boolean).join(' ');
-    const initials = [resident.first_name?.[0], resident.last_name?.[0]]
-        .filter(Boolean).join('').toUpperCase();
-    const age = resident.date_of_birth
-        ? calculateAgeFromPacificBirthDate(resident.date_of_birth) : null;
-    const room = resident.room_number || resident.room;
-    const allergies = Array.isArray(resident.allergies)
-        ? resident.allergies.join(', ')
-        : (resident.allergies || null);
-
-    const isActive = resident.is_active !== false && resident.is_active !== 0;
-
-    return (
-        <aside
-            className="bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] rounded-xl overflow-hidden flex-shrink-0 w-full lg:w-52 xl:w-56 lg:sticky lg:top-4 self-start"
-            aria-label="Resident profile"
-        >
-            {/* Avatar section */}
-            <div className="flex flex-col items-center px-4 pt-6 pb-4 border-b border-white/10">
-                <div className="relative w-24 h-24 rounded-full overflow-hidden border-4 border-white/30 bg-white/10 mb-3">
-                    {resident.profile_image_url || resident.profile_image ? (
-                        <img
-                            src={resident.profile_image_url || `/storage/${resident.profile_image}`}
-                            alt={fullName}
-                            className="w-full h-full object-cover"
-                            onError={e => {
-                                e.target.style.display = 'none';
-                                e.target.nextElementSibling.style.display = 'flex';
-                            }}
-                        />
-                    ) : null}
-                    <div className={`absolute inset-0 ${resident.profile_image_url || resident.profile_image ? 'hidden' : 'flex'} items-center justify-center text-2xl font-bold text-[var(--theme-primary)] bg-white`}>
-                        {initials || <User className="w-10 h-10" />}
-                    </div>
-                </div>
-
-                {/* Status dot */}
-                <div className={`w-2.5 h-2.5 rounded-full mb-2 ${isActive ? 'bg-emerald-400' : 'bg-amber-400'}`} aria-label={isActive ? 'Active' : 'Inactive'} />
-
-                {/* Name */}
-                <h2 className="text-center font-bold text-white text-sm leading-snug">
-                    {fullName.toUpperCase()}
-                </h2>
-            </div>
-
-            {/* Clinical info rows */}
-            <dl className="px-4 py-3 space-y-3 text-[11px]">
-                {resident.date_of_birth && (
-                    <div>
-                        <dt className="text-white/50 font-bold uppercase tracking-widest">Date of Birth</dt>
-                        <dd className="text-white font-semibold mt-0.5">
-                            {formatCalDate(resident.date_of_birth)}
-                            {age !== null && <span className="text-white/70 ml-1">({age} y.o.)</span>}
-                        </dd>
-                    </div>
-                )}
-
-                <div className="grid grid-cols-2 gap-2">
-                    {resident.gender && (
-                        <div>
-                            <dt className="text-white/50 font-bold uppercase tracking-widest">Gender</dt>
-                            <dd className="text-white font-semibold mt-0.5">{resident.gender}</dd>
-                        </div>
-                    )}
-                    {room && (
-                        <div>
-                            <dt className="text-white/50 font-bold uppercase tracking-widest">Room #</dt>
-                            <dd className="text-white font-semibold mt-0.5">{room}</dd>
-                        </div>
-                    )}
-                </div>
-
-                {resident.code_status && (
-                    <div>
-                        <dt className="text-white/50 font-bold uppercase tracking-widest">Code Status</dt>
-                        <dd className="flex items-center gap-1.5 mt-0.5">
-                            <span className={`w-2 h-2 rounded-full shrink-0 ${codeStatusColor(resident.code_status)}`} aria-hidden="true" />
-                            <span className="text-white font-semibold">{resident.code_status}</span>
-                        </dd>
-                    </div>
-                )}
-
-                {allergies && (
-                    <div>
-                        <dt className="text-white/50 font-bold uppercase tracking-widest">Allergies</dt>
-                        <dd className="text-red-300 font-semibold mt-0.5 leading-relaxed">{allergies}</dd>
-                    </div>
-                )}
-
-                {(resident.diet || resident.dietary_restrictions) && (
-                    <div>
-                        <dt className="text-white/50 font-bold uppercase tracking-widest">Diet</dt>
-                        <dd className="text-white font-semibold mt-0.5">{resident.diet || resident.dietary_restrictions}</dd>
-                    </div>
-                )}
-
-                {(resident.about_me || resident.notes) && (
-                    <div>
-                        <dt className="text-white/50 font-bold uppercase tracking-widest">About Me</dt>
-                        <dd className="text-white/80 mt-0.5 leading-relaxed line-clamp-3">
-                            {resident.about_me || resident.notes || 'None'}
-                        </dd>
-                    </div>
-                )}
-
-                {!resident.about_me && !resident.notes && (
-                    <div>
-                        <dt className="text-white/50 font-bold uppercase tracking-widest">About Me</dt>
-                        <dd className="text-white/40 mt-0.5">None</dd>
-                    </div>
-                )}
-            </dl>
-
-            {/* Stay info footer */}
-            {computeLengthOfStay(resident.admission_date) && (
-                <div className="px-4 pb-4 border-t border-white/10 pt-3">
-                    <p className="text-white/50 text-[10px] font-bold uppercase tracking-widest">Length of Stay</p>
-                    <p className="text-white font-bold text-sm mt-0.5">{computeLengthOfStay(resident.admission_date)}</p>
-                </div>
-            )}
-        </aside>
-    );
-}
 
 // ─── Main hub page ────────────────────────────────────────────────────────────
 
@@ -233,16 +112,19 @@ export default function ResidentHubPage() {
     const fullName = resident
         ? [resident.first_name, resident.middle_names, resident.last_name].filter(Boolean).join(' ')
         : '';
+    const initials = resident
+        ? [resident.first_name?.[0], resident.last_name?.[0]].filter(Boolean).join('').toUpperCase()
+        : '';
+    const age = resident?.date_of_birth ? calculateAgeFromPacificBirthDate(resident.date_of_birth) : null;
+    const room = resident?.room_number || resident?.room;
 
-    const activeTabLabel = HUB_TABS.find(t => t.id === activeTab)?.label ?? 'Overview';
-
+    // ── Loading ──
     if (isLoading) {
         return (
             <div>
                 <Breadcrumbs items={[{ label: 'My Residents', path: '/my-residents' }, { label: 'Loading…', path: '' }]} />
-                <div className="flex gap-4 mt-4 animate-pulse">
-                    <div className="w-52 h-80 rounded-xl bg-gray-200 shrink-0" />
-                    <div className="flex-1 h-80 rounded-xl bg-gray-100" />
+                <div className="flex min-h-[60vh] items-center justify-center">
+                    <div className="h-10 w-10 animate-spin rounded-full border-2 border-[var(--theme-primary)]/30 border-t-[var(--theme-primary)]" />
                 </div>
             </div>
         );
@@ -255,6 +137,7 @@ export default function ResidentHubPage() {
                 <div className="flex flex-col items-center justify-center py-24 text-center">
                     <AlertCircle className="w-12 h-12 text-gray-300 mb-3" />
                     <h3 className="text-lg font-bold text-gray-900">Resident not found</h3>
+                    <p className="text-sm text-gray-500 mt-1">We couldn&apos;t load this resident&apos;s record.</p>
                     <button onClick={() => navigate('/my-residents')} className="mt-4 text-sm font-bold text-[var(--theme-primary)] hover:underline">
                         ← Back to My Residents
                     </button>
@@ -264,60 +147,112 @@ export default function ResidentHubPage() {
     }
 
     return (
-        <div className="space-y-3">
+        <div className="space-y-0 -mt-1">
             <Breadcrumbs items={[
                 { label: 'My Residents', path: '/my-residents' },
                 { label: fullName || 'Resident', path: '' },
             ]} />
 
-            {/* ── 2-column layout: left profile + right content ─────────────── */}
-            <div className="flex flex-col lg:flex-row gap-4 items-start">
+            {/* ── Resident header card ─────────────────────────────────────── */}
+            <div className="bg-white border border-gray-100 rounded-xl shadow-sm overflow-hidden mb-0">
+                {/* Top accent bar */}
+                <div className="h-1.5 bg-gradient-to-r from-[var(--theme-primary)] to-[var(--theme-primary-dark)]" aria-hidden="true" />
 
-                {/* ── LEFT: Resident profile panel (sticky on desktop) ── */}
-                <ResidentLeftPanel
-                    resident={resident}
-                    residentId={residentId}
-                    navigate={navigate}
-                />
+                <div className="px-4 py-4 flex flex-col md:flex-row md:items-center gap-4">
+                    {/* Back button */}
+                    <button
+                        type="button"
+                        onClick={() => navigate('/my-residents')}
+                        className="hidden md:flex items-center justify-center w-8 h-8 rounded-full hover:bg-gray-100 transition-colors shrink-0"
+                        aria-label="Back to residents"
+                    >
+                        <ArrowLeft className="w-4 h-4 text-gray-400" strokeWidth={2.25} />
+                    </button>
 
-                {/* ── RIGHT: Tabs + content ── */}
-                <div className="flex-1 min-w-0 space-y-0 bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-
-                    {/* Content title bar */}
-                    <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100">
-                        <div className="flex items-center gap-3">
-                            <button
-                                type="button"
-                                onClick={() => navigate('/my-residents')}
-                                className="p-1.5 hover:bg-gray-100 rounded-full transition-colors"
-                                aria-label="Back to residents"
-                            >
-                                <ArrowLeft className="w-4 h-4 text-gray-400" strokeWidth={2.25} />
-                            </button>
-                            <h1 className="text-base font-bold text-gray-900">{activeTabLabel}</h1>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <button
-                                type="button"
-                                onClick={() => setTab('medications')}
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] hover:opacity-90 transition-opacity"
-                            >
-                                <Pill className="w-3.5 h-3.5" aria-hidden="true" />
-                                Administer Meds
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => window.print()}
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
-                            >
-                                Print
-                            </button>
+                    {/* Avatar */}
+                    <div className="relative w-16 h-16 rounded-full overflow-hidden border-2 border-[var(--theme-primary)]/20 bg-[var(--theme-primary)]/10 shrink-0">
+                        {resident.profile_image_url || resident.profile_image ? (
+                            <img
+                                src={resident.profile_image_url || `/storage/${resident.profile_image}`}
+                                alt={fullName}
+                                className="w-full h-full object-cover"
+                                onError={e => { e.target.style.display = 'none'; e.target.nextElementSibling.style.display = 'flex'; }}
+                            />
+                        ) : null}
+                        <div className={`absolute inset-0 ${resident.profile_image_url || resident.profile_image ? 'hidden' : 'flex'} items-center justify-center text-[var(--theme-primary)] text-xl font-bold`}>
+                            {initials || <User className="w-7 h-7" />}
                         </div>
                     </div>
 
-                    {/* ── Tab bar (icon above label, scrollable) ── */}
+                    {/* Name + clinical pills */}
+                    <div className="flex-1 min-w-0">
+                        <div className="flex flex-wrap items-baseline gap-2">
+                            <h1 className="text-xl font-bold text-gray-900 tracking-tight">{fullName.toUpperCase()}</h1>
+                            {resident.is_active === false || resident.is_active === 0 ? (
+                                <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">Inactive</span>
+                            ) : (
+                                <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">Active</span>
+                            )}
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2 mt-1.5">
+                            {resident.date_of_birth && (
+                                <span className="text-xs text-gray-500">
+                                    DOB: {formatCalDate(resident.date_of_birth)}{age !== null ? ` (${age} y.o.)` : ''}
+                                </span>
+                            )}
+                            {resident.gender && (
+                                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 uppercase">{resident.gender}</span>
+                            )}
+                            {room && (
+                                <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[var(--theme-primary)]/10 text-[var(--theme-primary)]">
+                                    <MapPin className="w-3 h-3" aria-hidden="true" /> Rm {room}
+                                </span>
+                            )}
+                            {resident.code_status && (
+                                <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-gray-100 text-gray-700">
+                                    <span className={`w-2 h-2 rounded-full ${codeStatusColor(resident.code_status)}`} aria-hidden="true" />
+                                    {resident.code_status}
+                                </span>
+                            )}
+                            {resident.allergies && (
+                                <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-red-50 text-red-700 border border-red-100">
+                                    <AlertCircle className="w-3 h-3" aria-hidden="true" />
+                                    {Array.isArray(resident.allergies) ? resident.allergies.join(', ') : resident.allergies}
+                                </span>
+                            )}
+                            {computeLengthOfStay(resident.admission_date) && (
+                                <span className="text-[10px] text-gray-400 font-medium">
+                                    Stay: {computeLengthOfStay(resident.admission_date)}
+                                </span>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Action buttons */}
+                    <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                        <button
+                            type="button"
+                            onClick={() => setTab('medications')}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] hover:opacity-90 transition-opacity"
+                        >
+                            <Pill className="w-3.5 h-3.5" aria-hidden="true" />
+                            Administer Meds
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => navigate(`/medication-history?resident=${residentId}`)}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
+                        >
+                            <ClipboardList className="w-3.5 h-3.5" aria-hidden="true" />
+                            Med History
+                        </button>
+                    </div>
+                </div>
+
+                {/* ── Tab bar ── */}
+                <div className="border-t-2 border-gray-100 bg-white">
                     <div
-                        className="flex overflow-x-auto border-b border-gray-100 bg-gray-50/60"
+                        className="flex overflow-x-auto scroll-smooth"
                         style={{ scrollbarWidth: 'none' }}
                         role="tablist"
                         aria-label="Resident sections"
@@ -331,36 +266,43 @@ export default function ResidentHubPage() {
                                     role="tab"
                                     aria-selected={isActive}
                                     onClick={() => setTab(id)}
-                                    className={`relative flex flex-col items-center gap-1 px-4 py-3 min-w-[72px] whitespace-nowrap transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--theme-primary)] ${
+                                    className={`relative flex flex-col items-center gap-1 px-5 py-3 whitespace-nowrap transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--theme-primary)] min-w-[72px] ${
                                         isActive
-                                            ? 'bg-white text-[var(--theme-primary)]'
-                                            : 'text-gray-500 hover:text-gray-800 hover:bg-white/70'
+                                            ? 'text-[var(--theme-primary)]'
+                                            : 'text-gray-400 hover:text-gray-700 hover:bg-gray-50'
                                     }`}
                                 >
-                                    <Icon className={`w-5 h-5 shrink-0 ${isActive ? 'text-[var(--theme-primary)]' : 'text-gray-400'}`} aria-hidden="true" />
-                                    <span className={`text-[10px] font-bold tracking-wide ${isActive ? 'text-[var(--theme-primary)]' : 'text-gray-500'}`}>
+                                    <Icon
+                                        className={`w-5 h-5 shrink-0 transition-colors ${isActive ? 'text-[var(--theme-primary)]' : 'text-gray-400'}`}
+                                        aria-hidden="true"
+                                    />
+                                    <span className={`text-[11px] font-bold tracking-wide ${isActive ? 'text-[var(--theme-primary)]' : 'text-gray-500'}`}>
                                         {label}
                                     </span>
+                                    {/* Active underline indicator */}
                                     {isActive && (
-                                        <span className="absolute bottom-0 left-3 right-3 h-0.5 rounded-full bg-[var(--theme-primary)]" aria-hidden="true" />
+                                        <span
+                                            className="absolute bottom-0 left-3 right-3 h-0.5 rounded-full bg-[var(--theme-primary)]"
+                                            aria-hidden="true"
+                                        />
                                     )}
                                 </button>
                             );
                         })}
                     </div>
-
-                    {/* ── Tab content ── */}
-                    <div className="min-h-[500px]">
-                        {activeTab === 'overview'     && <OverviewTab resident={resident} residentId={residentId} navigate={navigate} setTab={setTab} />}
-                        {activeTab === 'medications'  && <ResidentMedicationsPage embedded={true} />}
-                        {activeTab === 'notes'        && <NotesTab residentId={residentId} />}
-                        {activeTab === 'care'         && <CarePlanTab resident={resident} residentId={residentId} currentUser={currentUser} />}
-                        {activeTab === 'documents'    && <ResidentDocuments residentId={residentId} />}
-                        {activeTab === 'vitals'       && <VitalsTab residentId={residentId} resident={resident} navigate={navigate} />}
-                        {activeTab === 'appointments' && <AppointmentsTab residentId={residentId} navigate={navigate} />}
-                        {activeTab === 'profile'      && <ProfileTab resident={resident} />}
-                    </div>
                 </div>
+            </div>
+
+            {/* ── Tab content ──────────────────────────────────────────────── */}
+            <div className="pt-4">
+                {activeTab === 'overview'     && <OverviewTab resident={resident} residentId={residentId} navigate={navigate} setTab={setTab} />}
+                {activeTab === 'medications'  && <ResidentMedicationsPage embedded={true} />}
+                {activeTab === 'notes'        && <NotesTab residentId={residentId} />}
+                {activeTab === 'care'         && <CarePlanTab resident={resident} residentId={residentId} currentUser={currentUser} />}
+                {activeTab === 'documents'    && <ResidentDocuments residentId={residentId} />}
+                {activeTab === 'vitals'       && <VitalsTab residentId={residentId} resident={resident} navigate={navigate} />}
+                {activeTab === 'appointments' && <AppointmentsTab residentId={residentId} resident={resident} navigate={navigate} />}
+                {activeTab === 'profile'      && <ProfileTab resident={resident} />}
             </div>
         </div>
     );
@@ -368,19 +310,17 @@ export default function ResidentHubPage() {
 
 // ─── Overview Tab ─────────────────────────────────────────────────────────────
 
-function StatCard({ icon: Icon, label, value, onClick }) {
+function StatCard({ icon: Icon, label, value, accent, onClick }) {
+    const base = 'rounded-xl border bg-white shadow-sm p-4 flex items-center gap-4';
+    const interactive = onClick ? 'cursor-pointer hover:shadow-md transition-shadow' : '';
     return (
-        <div
-            className={`rounded-xl border border-gray-100 bg-white p-4 flex items-center gap-3 ${onClick ? 'cursor-pointer hover:border-[var(--theme-primary)]/30 hover:shadow-sm transition-all' : ''}`}
-            onClick={onClick}
-            role={onClick ? 'button' : undefined}
-        >
-            <div className="w-9 h-9 rounded-lg bg-[var(--theme-primary)]/10 flex items-center justify-center shrink-0">
-                <Icon className="w-4.5 h-4.5 text-[var(--theme-primary)]" aria-hidden="true" />
+        <div className={`${base} ${interactive} ${accent ? 'border-l-4 ' + accent : 'border-gray-100'}`} onClick={onClick} role={onClick ? 'button' : undefined} tabIndex={onClick ? 0 : undefined}>
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${accent ? 'bg-opacity-10 bg-current' : 'bg-gray-50'}`}>
+                <Icon className="w-5 h-5 text-[var(--theme-primary)]" aria-hidden="true" />
             </div>
             <div>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">{label}</p>
-                <p className="text-lg font-bold text-gray-900 mt-0.5">{value}</p>
+                <p className="text-xs font-bold uppercase tracking-widest text-gray-400">{label}</p>
+                <p className="text-xl font-bold text-gray-900 mt-0.5">{value}</p>
             </div>
         </div>
     );
@@ -389,84 +329,92 @@ function StatCard({ icon: Icon, label, value, onClick }) {
 function OverviewTab({ resident, residentId, navigate, setTab }) {
     const { data: medsData } = useQuery({
         queryKey: ['overview-meds', residentId],
-        queryFn: async () => (await api.get('/medications', { params: { resident_id: residentId, active_only: 'true', per_page: 100 } })).data,
+        queryFn: async () => {
+            const res = await api.get('/medications', { params: { resident_id: residentId, active_only: 'true', per_page: 100 } });
+            return res.data;
+        },
         enabled: !!residentId,
     });
 
     const { data: notesData } = useQuery({
         queryKey: ['overview-notes', residentId],
-        queryFn: async () => (await api.get('/t-logs', { params: { resident_id: residentId, per_page: 3 } })).data,
+        queryFn: async () => {
+            const res = await api.get('/t-logs', { params: { resident_id: residentId, per_page: 3 } });
+            return res.data;
+        },
         enabled: !!residentId,
     });
 
     const { data: apptData } = useQuery({
         queryKey: ['overview-appts', residentId],
-        queryFn: async () => (await api.get('/appointments', { params: { resident_id: residentId, per_page: 5 } })).data,
+        queryFn: async () => {
+            const res = await api.get('/appointments', { params: { resident_id: residentId, per_page: 5 } });
+            return res.data;
+        },
         enabled: !!residentId,
     });
 
-    const medsCount  = (medsData?.data ?? medsData ?? []).length;
-    const recentNotes = notesData?.data ?? (Array.isArray(notesData) ? notesData : []);
-    const allAppts = apptData?.data ?? (Array.isArray(apptData) ? apptData : []);
-    const upcomingAppts = allAppts.filter(a => a.appointment_date && new Date(a.appointment_date) >= new Date());
+    const medsCount   = (medsData?.data ?? medsData ?? []).length ?? 0;
+    const recentNotes = notesData?.data ?? notesData ?? [];
+    const upcomingAppts = (apptData?.data ?? apptData ?? []).filter(a => a.appointment_date && new Date(a.appointment_date) >= new Date());
     const vitalSigns = resident?.vital_signs ?? resident?.vitalSigns ?? [];
     const latestVital = Array.isArray(vitalSigns) ? vitalSigns[0] : null;
 
     return (
-        <div className="p-5 space-y-5">
+        <div className="space-y-6">
             {/* Quick stats */}
-            <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
-                <StatCard icon={Pill}     label="Active Meds"    value={medsCount}    onClick={() => setTab('medications')} />
-                <StatCard icon={Calendar} label="Upcoming Appts" value={upcomingAppts.length} onClick={() => setTab('appointments')} />
-                <StatCard icon={FileText} label="Recent Notes"   value={recentNotes.length} onClick={() => setTab('notes')} />
-                <StatCard icon={Heart}    label="Vitals on File" value={Array.isArray(vitalSigns) ? vitalSigns.length : 0} onClick={() => setTab('vitals')} />
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <StatCard icon={Pill}     label="Active Meds"      value={medsCount}               onClick={() => setTab('medications')} />
+                <StatCard icon={Calendar} label="Upcoming Appts"   value={upcomingAppts.length}    onClick={() => setTab('appointments')} />
+                <StatCard icon={FileText} label="Recent Notes"     value={Array.isArray(recentNotes) ? recentNotes.length : 0} onClick={() => setTab('notes')} />
+                <StatCard icon={Heart}    label="Vitals on File"   value={Array.isArray(vitalSigns) ? vitalSigns.length : 0} onClick={() => setTab('vitals')} />
             </div>
 
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Latest vitals */}
-                <section className="rounded-xl border border-gray-100 overflow-hidden">
-                    <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-100 bg-gray-50/50">
+                <section className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                    <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
                         <div className="flex items-center gap-2">
-                            <Activity className="w-3.5 h-3.5 text-[var(--theme-primary)]" aria-hidden="true" />
-                            <span className="text-xs font-bold text-gray-900">Latest Vitals</span>
+                            <Activity className="w-4 h-4 text-[var(--theme-primary)]" aria-hidden="true" />
+                            <h3 className="text-sm font-bold text-gray-900">Latest Vitals</h3>
                         </div>
-                        <button onClick={() => setTab('vitals')} className="text-[10px] font-bold text-[var(--theme-primary)] hover:underline">View All →</button>
+                        <button onClick={() => setTab('vitals')} className="text-xs font-semibold text-[var(--theme-primary)] hover:underline">View All →</button>
                     </div>
                     {latestVital ? (
-                        <div className="grid grid-cols-3 gap-2 p-4">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-4">
                             {[
                                 { label: 'BP', value: latestVital.systolic ? `${latestVital.systolic}/${latestVital.diastolic}` : null },
                                 { label: 'Pulse', value: latestVital.pulse ? `${latestVital.pulse} bpm` : null },
-                                { label: 'Temp', value: latestVital.temperature ? `${parseFloat(latestVital.temperature).toFixed(1)}°F` : null },
+                                { label: 'Temp', value: latestVital.temperature ? `${parseFloat(latestVital.temperature).toFixed(1)} °F` : null },
                                 { label: 'SpO₂', value: latestVital.oxygen_saturation ? `${latestVital.oxygen_saturation}%` : null },
-                                { label: 'Pain', value: latestVital.pain_level != null ? `${latestVital.pain_level}/10` : null },
+                                { label: 'Pain', value: latestVital.pain_level !== null && latestVital.pain_level !== undefined ? `${latestVital.pain_level}/10` : null },
                                 { label: 'Weight', value: latestVital.weight ? `${latestVital.weight} lbs` : null },
                             ].filter(v => v.value).map(({ label, value }) => (
-                                <div key={label} className="bg-gray-50 rounded-lg p-2.5">
-                                    <p className="text-[9px] font-bold uppercase tracking-widest text-gray-400">{label}</p>
-                                    <p className="text-sm font-bold text-gray-900 mt-0.5">{value}</p>
+                                <div key={label} className="bg-gray-50 rounded-lg p-3">
+                                    <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">{label}</p>
+                                    <p className="text-base font-bold text-gray-900 mt-0.5">{value}</p>
                                 </div>
                             ))}
                         </div>
                     ) : (
-                        <div className="flex items-center justify-center py-8 text-gray-400 text-xs">No vitals recorded</div>
+                        <div className="flex items-center justify-center py-10 text-gray-400 text-sm">No vitals recorded</div>
                     )}
                 </section>
 
                 {/* Recent notes */}
-                <section className="rounded-xl border border-gray-100 overflow-hidden">
-                    <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-100 bg-gray-50/50">
+                <section className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                    <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
                         <div className="flex items-center gap-2">
-                            <FileText className="w-3.5 h-3.5 text-[var(--theme-primary)]" aria-hidden="true" />
-                            <span className="text-xs font-bold text-gray-900">Recent Notes</span>
+                            <FileText className="w-4 h-4 text-[var(--theme-primary)]" aria-hidden="true" />
+                            <h3 className="text-sm font-bold text-gray-900">Recent Notes</h3>
                         </div>
-                        <button onClick={() => setTab('notes')} className="text-[10px] font-bold text-[var(--theme-primary)] hover:underline">View All →</button>
+                        <button onClick={() => setTab('notes')} className="text-xs font-semibold text-[var(--theme-primary)] hover:underline">View All →</button>
                     </div>
-                    {recentNotes.length > 0 ? (
+                    {Array.isArray(recentNotes) && recentNotes.length > 0 ? (
                         <ul className="divide-y divide-gray-50">
                             {recentNotes.slice(0, 3).map(note => (
                                 <li key={note.id} className="px-4 py-3">
-                                    <p className="text-xs text-gray-800 line-clamp-2">{note.notes || note.content || '—'}</p>
+                                    <p className="text-sm text-gray-800 line-clamp-2">{note.notes || note.content || note.message || '—'}</p>
                                     <p className="text-[10px] text-gray-400 mt-1">
                                         {note.created_at ? new Date(note.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'America/Los_Angeles' }) : ''}
                                         {note.user?.name ? ` · ${note.user.name}` : ''}
@@ -475,26 +423,29 @@ function OverviewTab({ resident, residentId, navigate, setTab }) {
                             ))}
                         </ul>
                     ) : (
-                        <div className="flex items-center justify-center py-8 text-gray-400 text-xs">No notes recorded</div>
+                        <div className="flex items-center justify-center py-10 text-gray-400 text-sm">No notes recorded</div>
                     )}
                 </section>
             </div>
 
             {/* Clinical snapshot */}
-            <section className="rounded-xl border border-gray-100 overflow-hidden">
-                <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-gray-50/50">
-                    <Stethoscope className="w-3.5 h-3.5 text-[var(--theme-primary)]" aria-hidden="true" />
-                    <span className="text-xs font-bold text-gray-900">Clinical Snapshot</span>
+            <section className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-2">
+                    <Stethoscope className="w-4 h-4 text-[var(--theme-primary)]" aria-hidden="true" />
+                    <h3 className="text-sm font-bold text-gray-900">Clinical Snapshot</h3>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-gray-100">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-0 divide-y sm:divide-y-0 sm:divide-x divide-gray-100">
                     {[
-                        { label: 'Diagnosis', value: resident.diagnosis },
+                        { label: 'Code Status', value: resident.code_status },
+                        { label: 'Primary Language', value: resident.primary_language || resident.language },
+                        { label: 'Diet', value: resident.diet || resident.dietary_restrictions },
                         { label: 'Pharmacy', value: resident.pharmacy?.name || resident.pharmacy_name },
-                        { label: 'Med Instructions', value: resident.general_medication_instructions },
+                        { label: 'Diagnosis', value: resident.diagnosis },
+                        { label: 'General Medication Instructions', value: resident.general_medication_instructions },
                     ].map(({ label, value }) => (
                         <div key={label} className="px-4 py-3">
                             <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">{label}</p>
-                            <p className="text-xs font-medium text-gray-800 mt-1 line-clamp-2">{value || <span className="text-gray-400 italic">Not recorded</span>}</p>
+                            <p className="text-sm font-medium text-gray-800 mt-1 line-clamp-2">{value || <span className="text-gray-400 italic">Not recorded</span>}</p>
                         </div>
                     ))}
                 </div>
@@ -510,7 +461,10 @@ function NotesTab({ residentId }) {
 
     const { data, isLoading } = useQuery({
         queryKey: ['hub-notes', residentId, page],
-        queryFn: async () => (await api.get('/t-logs', { params: { resident_id: residentId, per_page: 10, page } })).data,
+        queryFn: async () => {
+            const res = await api.get('/t-logs', { params: { resident_id: residentId, per_page: 10, page } });
+            return res.data;
+        },
         enabled: !!residentId,
         keepPreviousData: true,
     });
@@ -518,39 +472,66 @@ function NotesTab({ residentId }) {
     const notes = data?.data ?? (Array.isArray(data) ? data : []);
     const totalPages = data?.last_page ?? 1;
 
-    if (isLoading) return <TabSkeleton />;
+    if (isLoading) return <TabSkeleton rows={5} />;
 
     return (
-        <div>
-            <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100 bg-gray-50/40">
-                <span className="text-xs font-bold text-gray-500">Progress Notes / T-Logs</span>
-                <Link to={`/t-logs?resident_id=${residentId}`} className="text-xs font-semibold text-[var(--theme-primary)] hover:underline">Open Full View →</Link>
+        <div className="space-y-4">
+            <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+                    <div className="flex items-center gap-2">
+                        <FileText className="w-4 h-4 text-[var(--theme-primary)]" aria-hidden="true" />
+                        <h3 className="text-sm font-bold text-gray-900">Progress Notes / T-Logs</h3>
+                    </div>
+                    <Link
+                        to={`/t-logs?resident_id=${residentId}`}
+                        className="text-xs font-semibold text-[var(--theme-primary)] hover:underline"
+                    >
+                        Open Full View →
+                    </Link>
+                </div>
+
+                {notes.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-16 text-center">
+                        <FileText className="w-10 h-10 text-gray-200 mb-3" aria-hidden="true" />
+                        <p className="text-sm font-semibold text-gray-900">No notes recorded</p>
+                        <p className="text-xs text-gray-400 mt-1">Progress notes for this resident will appear here.</p>
+                    </div>
+                ) : (
+                    <ul className="divide-y divide-gray-50">
+                        {notes.map(note => (
+                            <li key={note.id} className="px-4 py-4">
+                                <div className="flex items-start justify-between gap-3">
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-sm text-gray-800 leading-relaxed">{note.notes || note.content || note.message || '—'}</p>
+                                        {note.category && (
+                                            <span className="mt-1.5 inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide bg-gray-100 text-gray-600">
+                                                {note.category}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <div className="text-right text-[11px] text-gray-400 shrink-0">
+                                        <p className="font-medium text-gray-600">{note.user?.name || note.caregiver_name || 'Staff'}</p>
+                                        <p>{note.created_at ? new Date(note.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'America/Los_Angeles' }) : ''}</p>
+                                        <p>{note.created_at ? new Date(note.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Los_Angeles' }) : ''}</p>
+                                    </div>
+                                </div>
+                            </li>
+                        ))}
+                    </ul>
+                )}
+
+                {totalPages > 1 && (
+                    <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 bg-gray-50/50">
+                        <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="text-xs font-bold text-gray-500 disabled:opacity-40 hover:text-gray-800 transition-colors">
+                            ← Prev
+                        </button>
+                        <span className="text-xs text-gray-400">Page {page} of {totalPages}</span>
+                        <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="text-xs font-bold text-gray-500 disabled:opacity-40 hover:text-gray-800 transition-colors">
+                            Next →
+                        </button>
+                    </div>
+                )}
             </div>
-            {notes.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-16">
-                    <FileText className="w-10 h-10 text-gray-200 mb-2" />
-                    <p className="text-sm text-gray-400">No notes recorded yet.</p>
-                </div>
-            ) : (
-                <ul className="divide-y divide-gray-50">
-                    {notes.map(note => (
-                        <li key={note.id} className="flex items-start justify-between gap-4 px-5 py-4">
-                            <p className="text-sm text-gray-800 leading-relaxed flex-1">{note.notes || note.content || '—'}</p>
-                            <div className="text-right text-[11px] text-gray-400 shrink-0">
-                                <p className="font-medium text-gray-600">{note.user?.name || 'Staff'}</p>
-                                <p>{note.created_at ? new Date(note.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'America/Los_Angeles' }) : ''}</p>
-                            </div>
-                        </li>
-                    ))}
-                </ul>
-            )}
-            {totalPages > 1 && (
-                <div className="flex items-center justify-between px-5 py-3 border-t border-gray-100 bg-gray-50/50">
-                    <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="text-xs font-bold text-gray-500 disabled:opacity-40">← Prev</button>
-                    <span className="text-xs text-gray-400">Page {page} of {totalPages}</span>
-                    <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="text-xs font-bold text-gray-500 disabled:opacity-40">Next →</button>
-                </div>
-            )}
         </div>
     );
 }
@@ -561,53 +542,86 @@ function CarePlanTab({ resident, residentId, currentUser }) {
     const queryClient = useQueryClient();
     const canEdit = !isCaregiverRole(currentUser?.role);
     const [editing, setEditing] = React.useState(false);
-    const [form, setForm] = React.useState({ care_plan: '', special_instructions: '', notes: '' });
+    const [form, setForm] = React.useState({
+        care_plan: resident?.care_plan || '',
+        special_instructions: resident?.special_instructions || '',
+        notes: resident?.notes || '',
+    });
 
     React.useEffect(() => {
-        if (resident) setForm({ care_plan: resident.care_plan || '', special_instructions: resident.special_instructions || '', notes: resident.notes || '' });
+        if (resident) {
+            setForm({
+                care_plan: resident.care_plan || '',
+                special_instructions: resident.special_instructions || '',
+                notes: resident.notes || '',
+            });
+        }
     }, [resident]);
 
     const mutation = useMutation({
         mutationFn: (data) => api.put(`/residents/${residentId}`, data),
-        onSuccess: () => { queryClient.invalidateQueries(['resident-hub', residentId]); setEditing(false); },
-        onError: (err) => alert(err?.response?.data?.message || 'Failed to save.'),
+        onSuccess: () => {
+            queryClient.invalidateQueries(['resident-hub', residentId]);
+            setEditing(false);
+        },
+        onError: (err) => {
+            alert(err?.response?.data?.message || 'Failed to save care plan.');
+        },
     });
 
+    const fields = [
+        { key: 'care_plan', label: 'Care Plan', rows: 6 },
+        { key: 'special_instructions', label: 'Special Instructions', rows: 4 },
+        { key: 'notes', label: 'Additional Notes', rows: 3 },
+    ];
+
     return (
-        <div className="p-5 space-y-4">
-            <div className="flex items-center justify-between">
-                <span className="text-xs font-bold uppercase tracking-widest text-gray-400">Care Plan</span>
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+                <div className="flex items-center gap-2">
+                    <ClipboardList className="w-4 h-4 text-[var(--theme-primary)]" aria-hidden="true" />
+                    <h3 className="text-sm font-bold text-gray-900">Care Plan</h3>
+                </div>
                 {canEdit && !editing && (
                     <button type="button" onClick={() => setEditing(true)} className="inline-flex items-center gap-1.5 text-xs font-bold text-[var(--theme-primary)] hover:underline">
                         <Edit className="w-3.5 h-3.5" /> Edit
                     </button>
                 )}
             </div>
-            {[{ key: 'care_plan', label: 'Care Plan', rows: 5 }, { key: 'special_instructions', label: 'Special Instructions', rows: 3 }, { key: 'notes', label: 'Additional Notes', rows: 2 }].map(({ key, label, rows }) => (
-                <div key={key}>
-                    <label className="block text-xs font-bold uppercase tracking-widest text-gray-400 mb-1.5">{label}</label>
-                    {editing ? (
-                        <textarea rows={rows} value={form[key]} onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
-                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent resize-y" />
-                    ) : (
-                        <div className="bg-gray-50 rounded-lg px-3 py-2.5 text-sm text-gray-800 whitespace-pre-wrap min-h-[52px]">
-                            {form[key] || <span className="text-gray-400 italic">Not recorded</span>}
-                        </div>
-                    )}
-                </div>
-            ))}
-            {editing && (
-                <div className="flex gap-2 pt-1">
-                    <button type="button" onClick={() => mutation.mutate(form)} disabled={mutation.isPending}
-                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-bold bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] hover:opacity-90 disabled:opacity-50">
-                        <Save className="w-3.5 h-3.5" /> {mutation.isPending ? 'Saving…' : 'Save'}
-                    </button>
-                    <button type="button" onClick={() => setEditing(false)}
-                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold border border-gray-200 text-gray-600 hover:bg-gray-50">
-                        <X className="w-3.5 h-3.5" /> Cancel
-                    </button>
-                </div>
-            )}
+            <div className="p-4 space-y-4">
+                {fields.map(({ key, label, rows }) => (
+                    <div key={key}>
+                        <label className="block text-xs font-bold uppercase tracking-widest text-gray-400 mb-1.5">{label}</label>
+                        {editing ? (
+                            <textarea
+                                rows={rows}
+                                value={form[key]}
+                                onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
+                                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent resize-y"
+                            />
+                        ) : (
+                            <div className="bg-gray-50 rounded-lg px-3 py-2.5 text-sm text-gray-800 whitespace-pre-wrap min-h-[60px]">
+                                {form[key] || <span className="text-gray-400 italic">Not recorded</span>}
+                            </div>
+                        )}
+                    </div>
+                ))}
+                {editing && (
+                    <div className="flex items-center gap-3 pt-2">
+                        <button
+                            type="button"
+                            onClick={() => mutation.mutate(form)}
+                            disabled={mutation.isPending}
+                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-bold bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] hover:opacity-90 disabled:opacity-50"
+                        >
+                            <Save className="w-3.5 h-3.5" /> {mutation.isPending ? 'Saving…' : 'Save Changes'}
+                        </button>
+                        <button type="button" onClick={() => setEditing(false)} className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold border border-gray-200 text-gray-600 hover:bg-gray-50">
+                            <X className="w-3.5 h-3.5" /> Cancel
+                        </button>
+                    </div>
+                )}
+            </div>
         </div>
     );
 }
@@ -618,49 +632,73 @@ function VitalsTab({ residentId, resident, navigate }) {
     const vitalSigns = resident?.vital_signs ?? resident?.vitalSigns ?? [];
 
     return (
-        <div>
-            <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100 bg-gray-50/40">
-                <span className="text-xs font-bold text-gray-500">Vital Signs</span>
-                <div className="flex items-center gap-3">
-                    <button onClick={() => navigate(`/vitals?resident=${residentId}`)} className="text-xs font-bold bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] px-3 py-1.5 rounded-lg hover:opacity-90">+ Record</button>
-                    <button onClick={() => navigate(`/view-vitals?resident=${residentId}`)} className="text-xs font-semibold text-[var(--theme-primary)] hover:underline">Full History →</button>
+        <div className="space-y-4">
+            <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+                    <div className="flex items-center gap-2">
+                        <Heart className="w-4 h-4 text-[var(--theme-primary)]" aria-hidden="true" />
+                        <h3 className="text-sm font-bold text-gray-900">Vital Signs</h3>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <button
+                            type="button"
+                            onClick={() => navigate(`/vitals?resident=${residentId}`)}
+                            className="text-xs font-bold bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] px-3 py-1.5 rounded-lg hover:opacity-90 transition-opacity"
+                        >
+                            + Record Vitals
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => navigate(`/view-vitals?resident=${residentId}`)}
+                            className="text-xs font-semibold text-[var(--theme-primary)] hover:underline"
+                        >
+                            Full History →
+                        </button>
+                    </div>
                 </div>
-            </div>
-            {Array.isArray(vitalSigns) && vitalSigns.length > 0 ? (
-                <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                        <thead className="bg-gray-50 text-[10px] font-bold uppercase tracking-widest text-gray-400">
-                            <tr>{['Date', 'BP', 'Pulse', 'Temp', 'SpO₂', 'Weight', 'Pain'].map(h => <th key={h} className="px-4 py-2.5 text-left">{h}</th>)}</tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-50">
-                            {vitalSigns.slice(0, 10).map(v => (
-                                <tr key={v.id} className="hover:bg-gray-50/60">
-                                    <td className="px-4 py-2.5 text-xs text-gray-500">{v.recorded_at || v.created_at ? new Date(v.recorded_at || v.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'America/Los_Angeles' }) : '—'}</td>
-                                    <td className="px-4 py-2.5 font-medium">{v.systolic && v.diastolic ? `${v.systolic}/${v.diastolic}` : '—'}</td>
-                                    <td className="px-4 py-2.5">{v.pulse ?? '—'}</td>
-                                    <td className="px-4 py-2.5">{v.temperature ? `${parseFloat(v.temperature).toFixed(1)}°` : '—'}</td>
-                                    <td className="px-4 py-2.5">{v.oxygen_saturation ? `${v.oxygen_saturation}%` : '—'}</td>
-                                    <td className="px-4 py-2.5">{v.weight ?? '—'}</td>
-                                    <td className="px-4 py-2.5">{v.pain_level ?? '—'}</td>
+
+                {Array.isArray(vitalSigns) && vitalSigns.length > 0 ? (
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                            <thead className="bg-gray-50/80 text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                                <tr>
+                                    {['Date', 'BP', 'Pulse', 'Temp', 'SpO₂', 'Weight', 'Pain'].map(h => (
+                                        <th key={h} className="px-4 py-2.5 text-left">{h}</th>
+                                    ))}
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            ) : (
-                <div className="flex flex-col items-center justify-center py-16">
-                    <Heart className="w-10 h-10 text-gray-200 mb-2" />
-                    <p className="text-sm text-gray-400">No vitals recorded.</p>
-                    <button onClick={() => navigate(`/vitals?resident=${residentId}`)} className="mt-3 text-xs font-bold text-[var(--theme-primary)] hover:underline">Record first vital →</button>
-                </div>
-            )}
+                            </thead>
+                            <tbody className="divide-y divide-gray-50">
+                                {vitalSigns.slice(0, 10).map(v => (
+                                    <tr key={v.id} className="hover:bg-gray-50/60 transition-colors">
+                                        <td className="px-4 py-2.5 text-xs text-gray-500">{v.recorded_at || v.created_at ? new Date(v.recorded_at || v.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'America/Los_Angeles' }) : '—'}</td>
+                                        <td className="px-4 py-2.5 font-medium">{v.systolic && v.diastolic ? `${v.systolic}/${v.diastolic}` : '—'}</td>
+                                        <td className="px-4 py-2.5">{v.pulse ?? '—'}</td>
+                                        <td className="px-4 py-2.5">{v.temperature ? `${parseFloat(v.temperature).toFixed(1)}°` : '—'}</td>
+                                        <td className="px-4 py-2.5">{v.oxygen_saturation ? `${v.oxygen_saturation}%` : '—'}</td>
+                                        <td className="px-4 py-2.5">{v.weight ?? '—'}</td>
+                                        <td className="px-4 py-2.5">{v.pain_level ?? '—'}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                ) : (
+                    <div className="flex flex-col items-center justify-center py-16 text-center">
+                        <Heart className="w-10 h-10 text-gray-200 mb-3" aria-hidden="true" />
+                        <p className="text-sm font-semibold text-gray-900">No vitals recorded</p>
+                        <button onClick={() => navigate(`/vitals?resident=${residentId}`)} className="mt-3 text-xs font-bold text-[var(--theme-primary)] hover:underline">
+                            Record first vital →
+                        </button>
+                    </div>
+                )}
+            </div>
         </div>
     );
 }
 
 // ─── Appointments Tab ─────────────────────────────────────────────────────────
 
-function AppointmentsTab({ residentId, navigate }) {
+function AppointmentsTab({ residentId, resident, navigate }) {
     const { data, isLoading } = useQuery({
         queryKey: ['hub-appointments', residentId],
         queryFn: async () => (await api.get('/appointments', { params: { resident_id: residentId, per_page: 20 } })).data,
@@ -670,39 +708,72 @@ function AppointmentsTab({ residentId, navigate }) {
     const appointments = data?.data ?? (Array.isArray(data) ? data : []);
     const now = new Date();
     const upcoming = appointments.filter(a => a.appointment_date && new Date(a.appointment_date) >= now);
-    const past = appointments.filter(a => a.appointment_date && new Date(a.appointment_date) < now);
+    const past     = appointments.filter(a => a.appointment_date && new Date(a.appointment_date) < now);
 
-    if (isLoading) return <TabSkeleton />;
+    if (isLoading) return <TabSkeleton rows={4} />;
 
     const renderAppt = (appt) => (
-        <li key={appt.id} className="flex items-start gap-3 px-5 py-3 hover:bg-gray-50/60">
-            <div className="w-8 h-8 rounded-lg bg-[var(--theme-primary)]/10 flex items-center justify-center shrink-0 mt-0.5">
-                <Calendar className="w-3.5 h-3.5 text-[var(--theme-primary)]" />
+        <li key={appt.id} className="flex items-start gap-3 px-4 py-3 hover:bg-gray-50/60 transition-colors">
+            <div className="w-9 h-9 rounded-xl bg-[var(--theme-primary)]/10 flex items-center justify-center shrink-0">
+                <Calendar className="w-4 h-4 text-[var(--theme-primary)]" aria-hidden="true" />
             </div>
             <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-gray-900 truncate">{appt.title || appt.appointment_type || 'Appointment'}</p>
-                <p className="text-xs text-gray-500 mt-0.5">{appt.appointment_date ? new Date(appt.appointment_date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'America/Los_Angeles' }) : '—'}</p>
+                <p className="text-xs text-gray-500 mt-0.5">
+                    {appt.appointment_date ? new Date(appt.appointment_date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'America/Los_Angeles' }) : '—'}
+                    {appt.appointment_time ? ` · ${appt.appointment_time}` : ''}
+                </p>
+                {appt.notes && <p className="text-xs text-gray-400 mt-0.5 line-clamp-1">{appt.notes}</p>}
             </div>
             {appt.status && (
-                <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${appt.status === 'completed' ? 'bg-green-100 text-green-700' : appt.status === 'cancelled' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'}`}>{appt.status}</span>
+                <span className={`text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full shrink-0 ${
+                    appt.status === 'completed' ? 'bg-green-100 text-green-700' :
+                    appt.status === 'cancelled' ? 'bg-red-100 text-red-700' :
+                    'bg-blue-100 text-blue-700'
+                }`}>{appt.status}</span>
             )}
         </li>
     );
 
     return (
-        <div>
-            <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100 bg-gray-50/40">
-                <span className="text-xs font-bold text-gray-500">Appointments</span>
-                <button onClick={() => navigate(`/appointments/create/${residentId}`)} className="text-xs font-bold bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] px-3 py-1.5 rounded-lg hover:opacity-90">+ Schedule</button>
-            </div>
-            {upcoming.length > 0 && <><p className="px-5 pt-3 pb-1 text-[10px] font-bold uppercase tracking-widest text-gray-400">Upcoming</p><ul className="divide-y divide-gray-50">{upcoming.map(renderAppt)}</ul></>}
-            {past.length > 0 && <><div className="border-t border-gray-100 mt-2" /><p className="px-5 pt-3 pb-1 text-[10px] font-bold uppercase tracking-widest text-gray-400">Past</p><ul className="divide-y divide-gray-50">{past.slice(0, 5).map(renderAppt)}</ul></>}
-            {appointments.length === 0 && (
-                <div className="flex flex-col items-center justify-center py-16">
-                    <Calendar className="w-10 h-10 text-gray-200 mb-2" />
-                    <p className="text-sm text-gray-400">No appointments scheduled.</p>
+        <div className="space-y-4">
+            <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+                    <div className="flex items-center gap-2">
+                        <Calendar className="w-4 h-4 text-[var(--theme-primary)]" aria-hidden="true" />
+                        <h3 className="text-sm font-bold text-gray-900">Appointments</h3>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={() => navigate(`/appointments/create/${residentId}`)}
+                        className="text-xs font-bold bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] px-3 py-1.5 rounded-lg hover:opacity-90 transition-opacity"
+                    >
+                        + Schedule
+                    </button>
                 </div>
-            )}
+
+                {upcoming.length > 0 && (
+                    <div>
+                        <p className="px-4 pt-3 pb-1 text-[10px] font-bold uppercase tracking-widest text-gray-400">Upcoming</p>
+                        <ul className="divide-y divide-gray-50">{upcoming.map(renderAppt)}</ul>
+                    </div>
+                )}
+                {past.length > 0 && (
+                    <div className="border-t border-gray-100">
+                        <p className="px-4 pt-3 pb-1 text-[10px] font-bold uppercase tracking-widest text-gray-400">Past</p>
+                        <ul className="divide-y divide-gray-50">{past.slice(0, 5).map(renderAppt)}</ul>
+                    </div>
+                )}
+                {appointments.length === 0 && (
+                    <div className="flex flex-col items-center justify-center py-16 text-center">
+                        <Calendar className="w-10 h-10 text-gray-200 mb-3" aria-hidden="true" />
+                        <p className="text-sm font-semibold text-gray-900">No appointments</p>
+                        <button onClick={() => navigate(`/appointments/create/${residentId}`)} className="mt-3 text-xs font-bold text-[var(--theme-primary)] hover:underline">
+                            Schedule first appointment →
+                        </button>
+                    </div>
+                )}
+            </div>
         </div>
     );
 }
@@ -711,46 +782,64 @@ function AppointmentsTab({ residentId, navigate }) {
 
 function ProfileTab({ resident }) {
     if (!resident) return null;
-    const fullName = [resident.first_name, resident.middle_names, resident.last_name].filter(Boolean).join(' ');
-    const age = resident.date_of_birth ? calculateAgeFromPacificBirthDate(resident.date_of_birth) : null;
 
     const sections = [
-        { title: 'Personal', icon: User, fields: [
-            { label: 'Full Name', value: fullName },
-            { label: 'Date of Birth', value: formatCalDate(resident.date_of_birth) + (age != null ? ` (${age} y.o.)` : '') },
-            { label: 'Gender', value: resident.gender },
-            { label: 'Phone', value: formatPhone(resident.phone) },
-            { label: 'Email', value: resident.email },
-        ]},
-        { title: 'Residence', icon: Building2, fields: [
-            { label: 'Room', value: resident.room_number || resident.room },
-            { label: 'Admission Date', value: formatCalDate(resident.admission_date) },
-            { label: 'Branch', value: resident.branch?.name },
-        ]},
-        { title: 'Clinical', icon: Stethoscope, fields: [
-            { label: 'Code Status', value: resident.code_status },
-            { label: 'Allergies', value: Array.isArray(resident.allergies) ? resident.allergies.join(', ') : resident.allergies },
-            { label: 'Diet', value: resident.diet || resident.dietary_restrictions },
-            { label: 'Diagnosis', value: resident.diagnosis },
-            { label: 'Pharmacy', value: resident.pharmacy?.name || resident.pharmacy_name },
-        ]},
-        { title: 'Emergency Contact', icon: Phone, fields: [
-            { label: 'Name', value: resident.emergency_contact_name },
-            { label: 'Phone', value: formatPhone(resident.emergency_contact_phone) },
-            { label: 'Relationship', value: resident.emergency_contact_relationship },
-        ]},
+        {
+            title: 'Personal Information',
+            icon: User,
+            fields: [
+                { label: 'Full Name', value: [resident.first_name, resident.middle_names, resident.last_name].filter(Boolean).join(' ') },
+                { label: 'Date of Birth', value: formatCalDate(resident.date_of_birth) + (calculateAgeFromPacificBirthDate(resident.date_of_birth) !== null ? ` (${calculateAgeFromPacificBirthDate(resident.date_of_birth)} y.o.)` : '') },
+                { label: 'Gender', value: resident.gender },
+                { label: 'Primary Language', value: resident.primary_language || resident.language },
+                { label: 'Phone', value: formatPhone(resident.phone) },
+                { label: 'Email', value: resident.email },
+                { label: 'Social Security #', value: resident.social_security ? '###-##-####' : null },
+            ],
+        },
+        {
+            title: 'Residence',
+            icon: Building2,
+            fields: [
+                { label: 'Room', value: resident.room_number || resident.room },
+                { label: 'Admission Date', value: formatCalDate(resident.admission_date) },
+                { label: 'Branch', value: resident.branch?.name },
+                { label: 'Length of Stay', value: computeLengthOfStay(resident.admission_date) },
+            ],
+        },
+        {
+            title: 'Clinical',
+            icon: Stethoscope,
+            fields: [
+                { label: 'Code Status', value: resident.code_status },
+                { label: 'Allergies', value: Array.isArray(resident.allergies) ? resident.allergies.join(', ') : resident.allergies },
+                { label: 'Diet', value: resident.diet || resident.dietary_restrictions },
+                { label: 'Diagnosis', value: resident.diagnosis },
+                { label: 'Pharmacy', value: resident.pharmacy?.name || resident.pharmacy_name },
+                { label: 'General Medication Instructions', value: resident.general_medication_instructions },
+            ],
+        },
+        {
+            title: 'Emergency Contact',
+            icon: Phone,
+            fields: [
+                { label: 'Contact Name', value: resident.emergency_contact_name },
+                { label: 'Contact Phone', value: formatPhone(resident.emergency_contact_phone) },
+                { label: 'Relationship', value: resident.emergency_contact_relationship },
+            ],
+        },
     ];
 
     return (
-        <div className="p-5 space-y-5">
+        <div className="space-y-4">
             {sections.map(({ title, icon: Icon, fields }) => {
                 const filled = fields.filter(f => f.value);
-                if (!filled.length) return null;
+                if (filled.length === 0) return null;
                 return (
-                    <section key={title} className="rounded-xl border border-gray-100 overflow-hidden">
-                        <div className="flex items-center gap-2 px-4 py-2.5 bg-gray-50/60 border-b border-gray-100">
-                            <Icon className="w-3.5 h-3.5 text-[var(--theme-primary)]" aria-hidden="true" />
-                            <span className="text-xs font-bold text-gray-900">{title}</span>
+                    <section key={title} className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                        <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-100">
+                            <Icon className="w-4 h-4 text-[var(--theme-primary)]" aria-hidden="true" />
+                            <h3 className="text-sm font-bold text-gray-900">{title}</h3>
                         </div>
                         <dl className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px bg-gray-100">
                             {filled.map(({ label, value }) => (
@@ -767,12 +856,14 @@ function ProfileTab({ resident }) {
     );
 }
 
-// ─── Skeleton ─────────────────────────────────────────────────────────────────
+// ─── Shared skeleton ──────────────────────────────────────────────────────────
 
-function TabSkeleton() {
+function TabSkeleton({ rows = 4 }) {
     return (
-        <div className="p-5 space-y-3" aria-busy="true">
-            {[1, 2, 3, 4].map(i => <div key={i} className="h-14 rounded-lg bg-gray-50 animate-pulse" />)}
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 space-y-3" aria-busy="true" aria-label="Loading…">
+            {Array.from({ length: rows }).map((_, i) => (
+                <div key={i} className="h-12 rounded-lg bg-gray-50 animate-pulse" />
+            ))}
         </div>
     );
 }

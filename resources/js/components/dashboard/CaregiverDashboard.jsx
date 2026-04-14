@@ -280,7 +280,7 @@ export default function CaregiverDashboard({
                                             <div className={`absolute left-0 top-1.5 w-6 h-6 rounded-full border-2 flex items-center justify-center z-10 bg-white
                                                 ${status === 'overdue' ? 'border-red-400 bg-red-50' :
                                                   status === 'current' ? 'border-[var(--theme-primary)] shadow-[0_0_0_4px_rgba(var(--theme-primary-rgb),0.2)]' :
-                                                  status === 'past' ? 'border-gray-300 bg-gray-50' : 'border-[var(--theme-primary)]'}`}
+                                                    status === 'past' ? 'border-gray-300 bg-gray-50' : 'border-[var(--theme-primary)]'}`}
                                                 aria-hidden="true"
                                             >
                                                 {status === 'past' ? (
@@ -296,7 +296,7 @@ export default function CaregiverDashboard({
                                                 className={`relative p-4 rounded-xl border transition-all duration-200 hover:shadow-md cursor-pointer
                                                     ${status === 'overdue' ? 'bg-red-50 border-red-200' :
                                                       status === 'current' ? 'bg-[var(--theme-primary-bg-light)] border-[var(--theme-primary)]/20' :
-                                                      status === 'past' ? 'bg-gray-50 border-gray-200 opacity-75' : 'bg-white border-gray-200 hover:border-[var(--theme-primary)]/30'}`}
+                                                    status === 'past' ? 'bg-gray-50 border-gray-200 opacity-75' : 'bg-white border-gray-200 hover:border-[var(--theme-primary)]/30'}`}
                                                 onClick={() => item.link && navigate(item.link)}
                                                 role="button"
                                                 tabIndex={item.link ? 0 : -1}

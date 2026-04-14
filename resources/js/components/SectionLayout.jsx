@@ -60,7 +60,8 @@ export default function SectionLayout({ title, subtitle, tabs = [] }) {
                                     className={`
                                         relative flex flex-col items-center gap-1
                                         px-5 py-3 min-w-[80px] whitespace-nowrap
-                                        transition-all focus-visible:outline-none
+                                        motion-safe:transition-colors
+                                        focus-visible:outline-none
                                         focus-visible:ring-2 focus-visible:ring-inset
                                         focus-visible:ring-[var(--theme-primary)]
                                         ${isActive
@@ -70,7 +71,7 @@ export default function SectionLayout({ title, subtitle, tabs = [] }) {
                                     `}
                                 >
                                     <Icon
-                                        className={`w-5 h-5 transition-colors ${isActive ? 'text-[var(--theme-primary)]' : 'text-gray-400'}`}
+                                        className={`w-5 h-5 motion-safe:transition-colors ${isActive ? 'text-[var(--theme-primary)]' : 'text-gray-400'}`}
                                         aria-hidden="true"
                                     />
                                     <span className={`text-[11px] font-bold tracking-wide leading-tight text-center ${isActive ? 'text-[var(--theme-primary)]' : 'text-gray-500'}`}>
