@@ -14,26 +14,17 @@ import {
     Maximize2,
     User,
     LogOut,
-    Heart,
     Pill,
-    Moon,
     ClipboardList,
     Settings,
     ChevronDown,
     ChevronRight,
     Menu,
     X,
-    CalendarClock,
-    Sparkles,
     Command,
-    ShoppingCart,
-    Truck,
-    Flame,
-    ShieldCheck,
     Clock,
     Shield,
     DollarSign,
-    AlertTriangle,
     UserCheck,
     ArrowRightFromLine,
     ArrowLeftToLine,
@@ -88,123 +79,6 @@ function LiveClock({ serverTime, timezoneOffset }) {
     return <span className="text-sm font-semibold text-gray-800">{time}</span>;
 }
 
-const navigation = [
-    { name: 'Dashboard', icon: LayoutDashboard, path: '/dashboard', children: null },
-    { name: 'My Residents', icon: Users, path: '/my-residents', children: null },
-    { name: 'Assessments', icon: ClipboardList, path: '/assessments', children: null },
-    { name: 'Appointment', icon: Calendar, path: '/appointments/dashboard', children: null },
-    { 
-        name: 'Vitals', 
-        icon: Heart, 
-        path: '/vitals', 
-        children: [
-            { name: 'Vitals', path: '/vitals' },
-            { name: 'View Vitals', path: '/view-vitals' },
-        ]
-    },
-    { 
-        name: 'Medication', 
-        icon: Pill, 
-        path: '/medications', 
-        children: [
-            { name: 'Dashboard', path: '/medications/dashboard' },
-            { name: 'Medications', path: '/medications' },
-            { name: 'Medication Deliveries', path: '/medication-deliveries' },
-            { name: 'Medication Report', path: '/medications/report' },
-        ]
-    },
-    { 
-        name: 'Sleep', 
-        icon: Moon, 
-        path: '/sleep', 
-        children: [
-            { name: 'Sleep Records', path: '/sleep' },
-            { name: 'Sleep Pattern', path: '/sleep-patterns' },
-        ]
-    },
-    { 
-        name: 'Housekeeping', 
-        icon: Sparkles, 
-        path: '/housekeeping', 
-        children: [
-            { name: 'Dashboard', path: '/housekeeping/dashboard' },
-            { name: 'Checklist', path: '/housekeeping' },
-            { name: 'Schedule Builder', path: '/housekeeping/schedule' },
-        ]
-    },
-    { name: 'Grocery Status', icon: ShoppingCart, path: '/grocery-status', children: null },
-    { name: 'Fire Drills', icon: Flame, path: '/fire-drills', children: null },
-    { name: 'Incidents', icon: AlertTriangle, path: '/incidents', children: null },
-    { name: 'Progress notes', icon: FileText, path: '/t-logs', children: null },
-    { 
-        name: 'Check-In/Out', 
-        icon: UserCheck, 
-        path: '/check-in-dashboard', 
-        children: [
-            { name: 'Dashboard', path: '/check-in-dashboard' },
-            { name: 'Staff Clock-In/Out', path: '/staff/clock' },
-            { name: 'View All Clock-Ins', path: '/staff/clock-ins' },
-            { name: 'Resident Sign-Outs', path: '/residents/sign-out' },
-            { name: 'Visitors', path: '/visitors' },
-        ]
-    },
-    { 
-        name: 'Staff Scheduling', 
-        icon: Clock, 
-        path: '/staff/schedule', 
-        children: [
-            { name: 'Schedule', path: '/staff/schedule' },
-            { name: 'Availability', path: '/staff/availability' },
-            { name: 'Attendance', path: '/staff/attendance' },
-        ]
-    },
-    { 
-        name: 'Pharmacy', 
-        icon: Building2, 
-        path: '/pharmacy/dashboard', 
-        children: [
-            { name: 'Dashboard', path: '/pharmacy/dashboard' },
-            { name: 'Suppliers', path: '/pharmacy/suppliers' },
-            { name: 'Inventory', path: '/pharmacy/inventory' },
-            { name: 'Orders', path: '/pharmacy/orders' },
-        ]
-    },
-    { 
-        name: 'Billing', 
-        icon: DollarSign, 
-        path: '/billing/expense-categories', 
-        children: [
-            { name: 'Expense Categories', path: '/billing/expense-categories' },
-            { name: 'Expenses', path: '/billing/expenses' },
-            { name: 'Invoices', path: '/billing/invoices' },
-            { name: 'Reports', path: '/billing/reports' },
-        ]
-    },
-    { name: 'Reports', icon: FileText, path: '/reports', children: null },
-    { name: 'Charts', icon: ClipboardList, path: '/administration/behavior-charts', children: null },
-    { 
-        name: 'Administration', 
-        icon: Settings, 
-        path: '/administration', 
-        children: [
-            { name: 'Residents', path: '/administration/residents' },
-            { name: 'Family Portal (Contacts)', path: '/administration/resident-contacts' },
-            // Facilities removed - only super admins can access
-            { name: 'Branches', path: '/administration/branches' },
-            { name: 'Email Notifications', path: '/administration/email-settings' },
-            { name: 'Vital Ranges', path: '/administration/vital-ranges' },
-            { name: 'Leave Requests', path: '/administration/leave-requests' },
-            { name: 'Roles & Permissions', path: '/administration/roles' },
-            { name: 'Users', path: '/administration/users' },
-            { name: 'Drugs', path: '/administration/drugs' },
-            { name: 'Behavior Category Charts', path: '/administration/chart-data' },
-            { name: 'Inactive Records', path: '/administration/deactivated' },
-            { name: 'Employee Documents', path: '/administration/employee-documents' },
-            { name: 'Activity Logs', path: '/administration/activity-logs' },
-        ]
-    },
-];
-
 const superAdminNavigation = [
     { name: 'Dashboard', icon: LayoutDashboard, path: '/super-admin/dashboard', children: null },
     { name: 'Facility Registrations', icon: Clock, path: '/super-admin/facility-registrations', children: null },
@@ -224,6 +98,114 @@ const caregiverNavigation = [
     { name: 'Clinical',        icon: Stethoscope,     path: '/clinical',     children: null, section: 'Clinical' },
     // OPERATIONS — single hub link; all sub-features are on /operations
     { name: 'Operations',      icon: Wrench,          path: '/operations',   children: null, section: 'Operations' },
+];
+
+/**
+ * Facility admins and other non-caregiver staff: same hub-based Clinical / Operations
+ * entry points as caregivers, plus medication, scheduling, pharmacy, billing, and administration.
+ * (Caregivers keep the slimmer sidebar above.)
+ */
+const facilityStaffHubNavigation = [
+    { name: 'Dashboard', icon: LayoutDashboard, path: '/dashboard',  children: null, section: 'Home' },
+    { name: 'My Residents',    icon: Users,           path: '/my-residents', children: null, section: 'Residents' },
+    { name: 'Assessments',     icon: ClipboardList,   path: '/assessments', children: null, section: 'Residents' },
+    {
+        name: 'Appointments',
+        icon: Calendar,
+        path: '/appointments/dashboard',
+        section: 'Residents',
+        children: [
+            { name: 'Dashboard', path: '/appointments/dashboard' },
+            { name: 'All appointments', path: '/appointments' },
+        ],
+    },
+    { name: 'Behavior Charts', icon: BarChart3,       path: '/charts',       children: null, section: 'Residents' },
+    { name: 'Clinical',        icon: Stethoscope,     path: '/clinical',     children: null, section: 'Clinical' },
+    {
+        name: 'Medication',
+        icon: Pill,
+        path: '/medications/dashboard',
+        section: 'Clinical',
+        children: [
+            { name: 'Dashboard', path: '/medications/dashboard' },
+            { name: 'Medications', path: '/medications' },
+            { name: 'Medication Deliveries', path: '/medication-deliveries' },
+            { name: 'Medication Report', path: '/medications/report' },
+        ],
+    },
+    { name: 'Operations',      icon: Wrench,          path: '/operations',   children: null, section: 'Operations' },
+    { name: 'Progress notes',  icon: FileText,        path: '/t-logs',       children: null, section: 'Work' },
+    {
+        name: 'Check-In/Out',
+        icon: UserCheck,
+        path: '/check-in-dashboard',
+        section: 'Work',
+        children: [
+            { name: 'Dashboard', path: '/check-in-dashboard' },
+            { name: 'Staff Clock-In/Out', path: '/staff/clock' },
+            { name: 'View All Clock-Ins', path: '/staff/clock-ins' },
+            { name: 'Resident Sign-Outs', path: '/residents/sign-out' },
+            { name: 'Visitors', path: '/visitors' },
+        ],
+    },
+    {
+        name: 'Staff Scheduling',
+        icon: Clock,
+        path: '/staff/schedule',
+        section: 'Work',
+        children: [
+            { name: 'Schedule', path: '/staff/schedule' },
+            { name: 'Availability', path: '/staff/availability' },
+            { name: 'Attendance', path: '/staff/attendance' },
+        ],
+    },
+    {
+        name: 'Pharmacy',
+        icon: Building2,
+        path: '/pharmacy/dashboard',
+        section: 'Management',
+        children: [
+            { name: 'Dashboard', path: '/pharmacy/dashboard' },
+            { name: 'Suppliers', path: '/pharmacy/suppliers' },
+            { name: 'Inventory', path: '/pharmacy/inventory' },
+            { name: 'Orders', path: '/pharmacy/orders' },
+        ],
+    },
+    {
+        name: 'Billing',
+        icon: DollarSign,
+        path: '/billing/expense-categories',
+        section: 'Management',
+        children: [
+            { name: 'Expense Categories', path: '/billing/expense-categories' },
+            { name: 'Expenses', path: '/billing/expenses' },
+            { name: 'Invoices', path: '/billing/invoices' },
+            { name: 'Reports', path: '/billing/reports' },
+        ],
+    },
+    { name: 'Reports', icon: FileText,        path: '/reports',      children: null, section: 'Management' },
+    { name: 'Charts',          icon: ClipboardList,   path: '/administration/behavior-charts', children: null, section: 'Management' },
+    {
+        name: 'Administration',
+        icon: Settings,
+        path: '/administration',
+        section: 'Management',
+        children: [
+            { name: 'Residents', path: '/administration/residents' },
+            { name: 'Family Portal (Contacts)', path: '/administration/resident-contacts' },
+            { name: 'Branches', path: '/administration/branches' },
+            { name: 'Email Notifications', path: '/administration/email-settings' },
+            { name: 'Vital Ranges', path: '/administration/vital-ranges' },
+            { name: 'Leave Requests', path: '/administration/leave-requests' },
+            { name: 'Roles & Permissions', path: '/administration/roles' },
+            { name: 'Users', path: '/administration/users' },
+            { name: 'Drugs', path: '/administration/drugs' },
+            { name: 'Behavior Category Charts', path: '/administration/chart-data' },
+            { name: 'Inactive Records', path: '/administration/deactivated' },
+            { name: 'Employee Documents', path: '/administration/employee-documents' },
+            { name: 'Activity Logs', path: '/administration/activity-logs' },
+        ],
+    },
 ];
 
 export default function Layout() {
@@ -454,7 +436,7 @@ export default function Layout() {
         } else if (isCaregiver) {
             items = [...caregiverNavigation];
         } else {
-            items = [...navigation];
+            items = [...facilityStaffHubNavigation];
         }
 
         // Filter navigation items based on module access and permissions (except for super admins)
@@ -491,7 +473,7 @@ export default function Layout() {
         if (!items || items.length === 0) {
             if (isSuperAdmin) return superAdminNavigation;
             if (isCaregiver) return caregiverNavigation;
-            return navigation;
+            return facilityStaffHubNavigation;
         }
         return items;
     }, [isCaregiver, isSuperAdmin, currentUser, currentUser?.enabled_modules, currentUser?.permissions]);
@@ -626,7 +608,7 @@ export default function Layout() {
                         <div className={`text-center py-8 text-[var(--theme-text-on-primary)] text-sm opacity-75 ${sidebarCollapsed ? 'hidden' : ''}`}>
                             No navigation items available
                         </div>
-                    ) : isCaregiver ? (
+                    ) : !isSuperAdmin ? (
                         <CaregiverNav
                             items={navigationItems}
                             location={location}
