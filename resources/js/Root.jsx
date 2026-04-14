@@ -127,6 +127,8 @@ const ResidentDetailPage = lazyWithRetry(() => import('./pages/caregiver/Residen
 const ResidentHubPage = lazyWithRetry(() => import('./pages/caregiver/ResidentHubPage'));
 const ClinicalHubPage = lazyWithRetry(() => import('./pages/caregiver/ClinicalHubPage'));
 const OperationsHubPage = lazyWithRetry(() => import('./pages/caregiver/OperationsHubPage'));
+const ClinicalSectionLayout = lazyWithRetry(() => import('./pages/caregiver/ClinicalSectionLayout'));
+const OperationsSectionLayout = lazyWithRetry(() => import('./pages/caregiver/OperationsSectionLayout'));
 const Appointments = lazyWithRetry(() => import('./pages/Appointments'));
 const AppointmentsDashboard = lazyWithRetry(() => import('./pages/AppointmentsDashboard'));
 const AppointmentDetail = lazyWithRetry(() => import('./pages/AppointmentDetail'));
@@ -311,8 +313,17 @@ function App() {
                 <Route path="appointments/dashboard" element={<Suspense fallback={<PageLoader />}><AppointmentsDashboard /></Suspense>} />
                 <Route path="appointments/:id" element={<Suspense fallback={<PageLoader />}><AppointmentDetail /></Suspense>} />
                 <Route path="appointments/create/:residentId" element={<Suspense fallback={<PageLoader />}><CreateAppointment /></Suspense>} />
-                <Route path="vitals" element={<Suspense fallback={<PageLoader />}><Vitals /></Suspense>} />
-                <Route path="view-vitals" element={<Suspense fallback={<PageLoader />}><ViewVitals /></Suspense>} />
+                {/* ── Clinical section (persistent tab bar) ─────────────────── */}
+                <Route element={<Suspense fallback={<PageLoader />}><ClinicalSectionLayout /></Suspense>}>
+                    <Route path="clinical"            element={<Suspense fallback={<PageLoader />}><ClinicalHubPage /></Suspense>} />
+                    <Route path="vitals"              element={<Suspense fallback={<PageLoader />}><Vitals /></Suspense>} />
+                    <Route path="view-vitals"         element={<Suspense fallback={<PageLoader />}><ViewVitals /></Suspense>} />
+                    <Route path="medication-history"  element={<Suspense fallback={<PageLoader />}><MedicationHistory /></Suspense>} />
+                    <Route path="sleep"               element={<Suspense fallback={<PageLoader />}><Sleep /></Suspense>} />
+                    <Route path="sleep-pattern"       element={<Navigate to="/sleep-patterns" replace />} />
+                    <Route path="sleep-patterns"      element={<Suspense fallback={<PageLoader />}><SleepPatterns /></Suspense>} />
+                </Route>
+
                 <Route path="medications/dashboard" element={<Suspense fallback={<PageLoader />}><MedicationDashboard /></Suspense>} />
                 <Route path="medications" element={<Suspense fallback={<PageLoader />}><Medications /></Suspense>} />
                 <Route path="medications/report" element={<Suspense fallback={<PageLoader />}><MedicationsReport /></Suspense>} />
@@ -320,11 +331,20 @@ function App() {
                 {/* Deep-link into the hub's medications tab */}
                 <Route path="medications/residents/:residentId" element={<MedResidentRedirect />} />
                 <Route path="reminders" element={<Suspense fallback={<PageLoader />}><Reminders /></Suspense>} />
-                <Route path="medication-history" element={<Suspense fallback={<PageLoader />}><MedicationHistory /></Suspense>} />
                 <Route path="medication-deliveries" element={<Suspense fallback={<PageLoader />}><MedicationDeliveries /></Suspense>} />
-                <Route path="grocery-status" element={<Suspense fallback={<PageLoader />}><GroceryStatus /></Suspense>} />
-                <Route path="fire-drills" element={<Suspense fallback={<PageLoader />}><FireDrills /></Suspense>} />
-                <Route path="incidents" element={<Suspense fallback={<PageLoader />}><ModuleProtectedRoute module="incidents"><Incidents /></ModuleProtectedRoute></Suspense>} />
+
+                {/* ── Operations section (persistent tab bar) ──────────────── */}
+                <Route element={<Suspense fallback={<PageLoader />}><OperationsSectionLayout /></Suspense>}>
+                    <Route path="operations"              element={<Suspense fallback={<PageLoader />}><OperationsHubPage /></Suspense>} />
+                    <Route path="housekeeping"            element={<Suspense fallback={<PageLoader />}><Housekeeping /></Suspense>} />
+                    <Route path="housekeeping/dashboard"  element={<Suspense fallback={<PageLoader />}><HousekeepingDashboard /></Suspense>} />
+                    <Route path="housekeeping/schedule"   element={<Suspense fallback={<PageLoader />}><HousekeepingSchedule /></Suspense>} />
+                    <Route path="grocery-status"          element={<Suspense fallback={<PageLoader />}><GroceryStatus /></Suspense>} />
+                    <Route path="fire-drills"             element={<Suspense fallback={<PageLoader />}><FireDrills /></Suspense>} />
+                    <Route path="incidents"               element={<Suspense fallback={<PageLoader />}><ModuleProtectedRoute module="incidents"><Incidents /></ModuleProtectedRoute></Suspense>} />
+                    <Route path="leave-requests"          element={<Suspense fallback={<PageLoader />}><LeaveRequests /></Suspense>} />
+                </Route>
+
                 <Route path="t-logs" element={<Suspense fallback={<PageLoader />}><TLogs /></Suspense>} />
                 <Route path="pharmacy/dashboard" element={<Suspense fallback={<PageLoader />}><PharmacyDashboard /></Suspense>} />
                 <Route path="pharmacy/suppliers" element={<Suspense fallback={<PageLoader />}><PharmacySuppliers /></Suspense>} />
@@ -334,13 +354,6 @@ function App() {
                 <Route path="billing/expenses" element={<Suspense fallback={<PageLoader />}><Expenses /></Suspense>} />
                 <Route path="billing/invoices" element={<Suspense fallback={<PageLoader />}><BillingInvoices /></Suspense>} />
                 <Route path="billing/reports" element={<Suspense fallback={<PageLoader />}><ExpenseReports /></Suspense>} />
-                <Route path="housekeeping" element={<Suspense fallback={<PageLoader />}><Housekeeping /></Suspense>} />
-                <Route path="housekeeping/dashboard" element={<Suspense fallback={<PageLoader />}><HousekeepingDashboard /></Suspense>} />
-                <Route path="housekeeping/schedule" element={<Suspense fallback={<PageLoader />}><HousekeepingSchedule /></Suspense>} />
-                <Route path="sleep" element={<Suspense fallback={<PageLoader />}><Sleep /></Suspense>} />
-                <Route path="sleep-pattern" element={<Navigate to="/sleep-patterns" replace />} />
-                <Route path="sleep-patterns" element={<Suspense fallback={<PageLoader />}><SleepPatterns /></Suspense>} />
-                <Route path="leave-requests" element={<Suspense fallback={<PageLoader />}><LeaveRequests /></Suspense>} />
                 <Route path="check-in-dashboard" element={<Suspense fallback={<PageLoader />}><CheckInDashboard /></Suspense>} />
                 <Route path="staff/clock" element={<Suspense fallback={<PageLoader />}><StaffClock /></Suspense>} />
                 <Route path="staff/clock-ins" element={<Suspense fallback={<PageLoader />}><StaffClockInsView /></Suspense>} />
@@ -351,10 +364,6 @@ function App() {
                 <Route path="residents/sign-outs/view-all" element={<Suspense fallback={<PageLoader />}><ResidentSignOutsView /></Suspense>} />
                 <Route path="visitors" element={<Suspense fallback={<PageLoader />}><Visitors /></Suspense>} />
                 <Route path="visitors/view-all" element={<Suspense fallback={<PageLoader />}><VisitorsView /></Suspense>} />
-                {/* Section hub pages */}
-                <Route path="clinical"    element={<Suspense fallback={<PageLoader />}><ClinicalHubPage /></Suspense>} />
-                <Route path="operations"  element={<Suspense fallback={<PageLoader />}><OperationsHubPage /></Suspense>} />
-
                 <Route path="my-residents" element={<Suspense fallback={<PageLoader />}><MyResidentsPage /></Suspense>} />
                 <Route path="my-residents/:residentId" element={<Suspense fallback={<PageLoader />}><ResidentHubPage /></Suspense>} />
                 {/* Legacy resident detail — redirect to hub */}

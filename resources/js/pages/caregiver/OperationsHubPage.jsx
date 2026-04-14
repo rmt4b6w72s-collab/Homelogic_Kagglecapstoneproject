@@ -1,73 +1,86 @@
 import React from 'react';
-import {
-    Sparkles,
-    ShoppingCart,
-    Flame,
-    AlertTriangle,
-    CalendarClock,
-    CheckSquare,
-} from 'lucide-react';
-import SectionHub from '../../components/SectionHub';
+import { Link } from 'react-router-dom';
+import { Sparkles, ShoppingCart, Flame, AlertTriangle, CalendarClock, ArrowRight } from 'lucide-react';
 
-const FEATURES = [
+const TILES = [
     {
         id: 'housekeeping',
         title: 'Housekeeping',
-        description: 'Manage cleaning assignments, schedules, and task completion.',
+        description: 'Manage cleaning schedules, assign tasks, and track room completion across the facility.',
         icon: Sparkles,
-        accent: 'bg-teal-50 text-teal-600 border-teal-100',
-        iconBg: 'bg-teal-100',
         path: '/housekeeping',
-        subLinks: [
-            { label: 'Tasks', path: '/housekeeping' },
-            { label: 'Schedule', path: '/housekeeping/schedule' },
-            { label: 'Dashboard', path: '/housekeeping/dashboard' },
-        ],
+        accent: 'text-cyan-600',
+        bg: 'bg-cyan-50',
     },
     {
-        id: 'grocery-status',
+        id: 'grocery',
         title: 'Grocery Status',
-        description: 'Track grocery orders, inventory levels, and delivery status.',
+        description: 'Track weekly grocery orders, completion rates and supply levels for each branch.',
         icon: ShoppingCart,
-        accent: 'bg-amber-50 text-amber-600 border-amber-100',
-        iconBg: 'bg-amber-100',
         path: '/grocery-status',
+        accent: 'text-emerald-600',
+        bg: 'bg-emerald-50',
     },
     {
         id: 'fire-drills',
         title: 'Fire Drills',
-        description: 'Schedule, conduct, and record mandatory fire evacuation drills.',
+        description: 'Schedule and log mandatory fire and emergency evacuation drills for compliance.',
         icon: Flame,
-        accent: 'bg-orange-50 text-orange-600 border-orange-100',
-        iconBg: 'bg-orange-100',
         path: '/fire-drills',
+        accent: 'text-orange-500',
+        bg: 'bg-orange-50',
     },
     {
         id: 'incidents',
         title: 'Incident Reports',
-        description: 'Document and track resident and facility incidents for compliance.',
+        description: 'Document, review and track resident or staff incidents for regulatory reporting.',
         icon: AlertTriangle,
-        accent: 'bg-red-50 text-red-600 border-red-100',
-        iconBg: 'bg-red-100',
         path: '/incidents',
+        accent: 'text-red-500',
+        bg: 'bg-red-50',
     },
     {
-        id: 'leave-requests',
+        id: 'leave',
         title: 'Leave Requests',
-        description: 'Submit and manage staff time-off and leave of absence requests.',
+        description: 'Submit and manage staff leave requests, approvals and scheduling coverage.',
         icon: CalendarClock,
-        accent: 'bg-purple-50 text-purple-600 border-purple-100',
-        iconBg: 'bg-purple-100',
         path: '/leave-requests',
+        accent: 'text-violet-600',
+        bg: 'bg-violet-50',
     },
 ];
 
 export default function OperationsHubPage() {
     return (
-        <SectionHub
-            title="Operations"
-            subtitle="Facility management, compliance, and staff operations"
-            features={FEATURES}
-        />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {TILES.map(tile => {
+                const Icon = tile.icon;
+                return (
+                    <Link
+                        key={tile.id}
+                        to={tile.path}
+                        className="group bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex flex-col gap-3 hover:shadow-md hover:border-gray-200 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--theme-primary)]"
+                    >
+                        <div className="flex items-start justify-between">
+                            <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${tile.bg}`}>
+                                <Icon className={`w-5 h-5 ${tile.accent}`} aria-hidden="true" />
+                            </div>
+                            <ArrowRight
+                                className="w-4 h-4 text-gray-300 group-hover:text-[var(--theme-primary)] group-hover:translate-x-0.5 transition-all mt-1"
+                                aria-hidden="true"
+                            />
+                        </div>
+                        <div>
+                            <h2 className="text-base font-bold text-gray-900 group-hover:text-[var(--theme-primary)] transition-colors leading-tight">
+                                {tile.title}
+                            </h2>
+                            <p className="mt-1 text-sm text-gray-500 leading-snug">
+                                {tile.description}
+                            </p>
+                        </div>
+                    </Link>
+                );
+            })}
+        </div>
     );
 }
