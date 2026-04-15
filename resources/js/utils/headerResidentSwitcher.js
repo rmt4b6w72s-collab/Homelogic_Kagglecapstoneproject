@@ -98,18 +98,24 @@ export function clearResidentFromSearch(currentSearch) {
 }
 
 /**
- * Residents hub: stay on current screen shape; set scope via `residentId` (no jump to /my-residents/:id).
+ * Residents hub: stay on the current screen shape. On `/my-residents/:id`, switch via path (preserve e.g. `tab`);
+ * on list/overview routes, scope with `residentId` in the query string.
  * @returns {{ pathname: string, search: string }}
  */
 export function buildResidentsSectionResidentNavigateTo(pathname, search, newResidentId) {
     const id = String(newResidentId);
     const sp = new URLSearchParams(search?.startsWith('?') ? search.slice(1) : search || '');
+
+    // Resident hub profile: stay on /my-residents/:id (preserve tab= etc.), not the card grid with ?residentId=
+    if (pathname.match(RE_MY_RESIDENTS)) {
+        sp.delete(RESIDENT_CONTEXT_QUERY_KEY);
+        sp.delete('resident_id');
+        const hubSearch = sp.toString() ? `?${sp.toString()}` : '';
+        return { pathname: `/my-residents/${id}`, search: hubSearch };
+    }
+
     sp.set(RESIDENT_CONTEXT_QUERY_KEY, id);
     const searchStr = sp.toString() ? `?${sp.toString()}` : '';
-
-    if (pathname.match(RE_MY_RESIDENTS)) {
-        return { pathname: '/my-residents', search: searchStr };
-    }
     if (pathname.match(RE_CHARTS_RESIDENT)) {
         return { pathname: `/charts/resident/${id}`, search: searchStr };
     }
