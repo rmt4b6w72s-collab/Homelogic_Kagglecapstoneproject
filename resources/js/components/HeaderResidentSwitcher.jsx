@@ -88,10 +88,10 @@ export default function HeaderResidentSwitcher({ currentUser, userLoading }) {
                                 to={to}
                                 aria-label={`Show ${name} in this view`}
                                 aria-current={isActive ? 'page' : undefined}
-                                className={`shrink-0 rounded-full p-0.5 motion-safe:transition-shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--theme-primary)] focus-visible:ring-offset-1 ${
+                                className={`shrink-0 inline-flex rounded-full motion-safe:transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--theme-primary)] focus-visible:ring-offset-2 ${
                                     isActive
-                                        ? 'ring-2 ring-[var(--theme-primary)] ring-offset-1 ring-offset-white'
-                                        : 'opacity-90 hover:opacity-100'
+                                        ? 'border-2 border-[var(--theme-primary)] shadow-sm'
+                                        : 'border-2 border-transparent opacity-90 hover:border-gray-200 hover:opacity-100'
                                 }`}
                             >
                                 <ResidentAvatarInline resident={resident} className="h-7 w-7 text-[10px]" />
