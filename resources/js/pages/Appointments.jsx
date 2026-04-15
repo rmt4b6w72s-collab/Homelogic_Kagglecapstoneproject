@@ -241,6 +241,12 @@ export default function Appointments() {
         retry: 1,
     });
 
+    const caregiverResidentsList = React.useMemo(() => {
+        const list = allResidentsData?.data || [];
+        if (!headerResidentId) return list;
+        return list.filter((r) => String(r.id) === headerResidentId);
+    }, [allResidentsData, headerResidentId]);
+
     // Read URL parameters on mount and set filters
     useEffect(() => {
         if (urlParamsProcessed.current) return;
@@ -457,7 +463,7 @@ export default function Appointments() {
         setFormData(prev => ({
             ...prev,
             resident_id: residentId,
-            branch_id: branchId ? String(branchId) : (resident?.branch_id || ''),
+            branch_id: selectedBranchId ? String(selectedBranchId) : (resident?.branch_id || ''),
         }));
         setIsPreFilled(true); // Mark as pre-filled
         setShowForm(true);
@@ -466,7 +472,7 @@ export default function Appointments() {
     // Handle opening form manually (not from resident card)
     const handleOpenFormManually = () => {
         setFormData({
-            branch_id: branchId ? String(branchId) : '',
+            branch_id: selectedBranchId ? String(selectedBranchId) : '',
             resident_id: '',
             appointment_date: new Date().toISOString().split('T')[0],
             appointment_time: '',
@@ -484,7 +490,7 @@ export default function Appointments() {
         setShowForm(false);
         setIsPreFilled(false);
         setFormData({
-            branch_id: branchId ? String(branchId) : '',
+            branch_id: selectedBranchId ? String(selectedBranchId) : '',
             resident_id: '',
             appointment_date: new Date().toISOString().split('T')[0],
             appointment_time: '',
@@ -508,12 +514,6 @@ export default function Appointments() {
             </div>
         );
     }
-
-    const caregiverResidentsList = React.useMemo(() => {
-        const list = allResidentsData?.data || [];
-        if (!headerResidentId) return list;
-        return list.filter((r) => String(r.id) === headerResidentId);
-    }, [allResidentsData, headerResidentId]);
 
     return (
         <div className="space-y-6">
@@ -1079,7 +1079,7 @@ export default function Appointments() {
                     currentUser={currentUser}
                     isFacilityAdmin={isFacilityAdmin}
                     isBranchAdmin={isBranchAdmin}
-                    selectedBranchId={branchId}
+                    selectedBranchId={selectedBranchId}
                 />
             )}
 
