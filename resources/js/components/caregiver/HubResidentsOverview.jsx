@@ -24,10 +24,9 @@ const initialStats = [
 ];
 
 /**
- * Resident card grid for Clinical / Residents hub overview routes.
- * Selection uses `residentId` query (same as My Residents directory).
+ * @param {'record' | 'medicationHub'} [primaryResidentPath='record'] — Card click target: full resident record or Medication Hub overview.
  */
-export default function HubResidentsOverview() {
+export default function HubResidentsOverview({ primaryResidentPath = 'record' }) {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const queryClient = useQueryClient();
@@ -102,6 +101,14 @@ export default function HubResidentsOverview() {
         }));
     }, [allResidents]);
 
+    const primaryPathForResident = React.useCallback(
+        (id) =>
+            primaryResidentPath === 'medicationHub'
+                ? `/my-residents/${id}/medications/overview`
+                : `/my-residents/${id}`,
+        [primaryResidentPath],
+    );
+
     const renderResidentCard = (resident) => {
         const isActive = resident?.is_active === true || resident?.is_active === 1 || resident?.is_active === '1';
         const fullName = [resident.first_name, resident.middle_names, resident.last_name].filter(Boolean).join(' ');
@@ -109,15 +116,19 @@ export default function HubResidentsOverview() {
         const ageYears = calculateAgeFromPacificBirthDate(resident.date_of_birth);
         const room = resident.room_number || resident.room;
         const profilePath = `/my-residents/${resident.id}`;
+        const cardAria =
+            primaryResidentPath === 'medicationHub'
+                ? `Open medication hub for ${fullName || 'resident'}`
+                : `Open resident record for ${fullName || 'resident'}`;
 
         return (
             <EntityCardShell
                 key={resident.id}
                 className="cursor-pointer"
-                aria-label={`Open resident record for ${fullName || 'resident'}`}
+                aria-label={cardAria}
                 onClick={(e) => {
                     if (e.target.closest('button')) return;
-                    navigate(`/my-residents/${resident.id}`);
+                    navigate(primaryPathForResident(resident.id));
                 }}
             >
                 <EntityCardHeader

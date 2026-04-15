@@ -778,6 +778,17 @@ export default function Dashboard() {
         refetchInterval: 300000,
     });
 
+    const showFireDrills =
+        Array.isArray(upcomingFireDrills?.data) && upcomingFireDrills.data.length > 0;
+    const trendsChartHasData =
+        Boolean(
+            trendsData &&
+                Array.isArray(trendsData.labels) &&
+                trendsData.labels.length > 0,
+        );
+    const showTrendsBesideUpcoming = trendsChartHasData && !showFireDrills;
+    const adminMiddleRowTwoCols = showFireDrills || showTrendsBesideUpcoming;
+
     // Mobile view
     if (isMobile && !isLoading) {
         return (
@@ -882,7 +893,7 @@ export default function Dashboard() {
                                 }
                             >
                                 {actionableItems.length > 0 && (
-                                    <div className="lg:col-span-5 min-w-0 order-1">
+                                    <div className="lg:col-span-6 min-w-0 order-1">
                                         <ActionableItemsSection
                                             items={actionableItems}
                                             onItemClick={(item) => item.link && navigate(item.link)}
@@ -893,7 +904,7 @@ export default function Dashboard() {
                                 <div
                                     className={
                                         actionableItems.length > 0
-                                            ? 'lg:col-span-7 min-w-0 order-2 lg:order-2'
+                                            ? 'lg:col-span-6 min-w-0 order-2'
                                             : ''
                                     }
                                 >
@@ -916,10 +927,14 @@ export default function Dashboard() {
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
-                                <UpcomingEventsWidget limit={4} dense />
-                                {upcomingFireDrills?.data && upcomingFireDrills.data.length > 0 && (
-                                <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+                            <div
+                                className={`grid grid-cols-1 gap-3 ${adminMiddleRowTwoCols ? 'xl:grid-cols-2' : ''}`}
+                            >
+                                <div className="min-w-0">
+                                    <UpcomingEventsWidget limit={4} dense />
+                                </div>
+                                {showFireDrills && (
+                                <div className="min-w-0 bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
                                     <div className="px-4 py-2.5 border-b border-gray-200">
                                         <div className="flex items-center justify-between gap-2">
                                             <div className="flex items-center gap-2 min-w-0">
@@ -1013,10 +1028,15 @@ export default function Dashboard() {
                                     </div>
                                 </div>
                                 )}
+                                {showTrendsBesideUpcoming && (
+                                    <div className="min-w-0">
+                                        <TrendsChartWidget data={trendsData} dense />
+                                    </div>
+                                )}
                             </div>
 
-                            {/* Trends Chart for Admins - Analytics Section */}
-                            {!isCaregiver && trendsData && (
+                            {/* Trends chart full width when fire drills use the right column */}
+                            {!isCaregiver && trendsChartHasData && showFireDrills && (
                                 <TrendsChartWidget data={trendsData} dense />
                             )}
 
