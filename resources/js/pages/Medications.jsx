@@ -57,6 +57,7 @@ import {
     getMedicationAdministrations,
 } from '../utils/medicationSchedule';
 import { RESIDENT_CONTEXT_QUERY_KEY } from '../utils/headerResidentSwitcher';
+import ResidentMedicationsPage from './caregiver/ResidentMedicationsPage';
 
 const INSTRUCTION_DISPLAY_MAP = {
     'q.i.d': 'Four times a day',
@@ -284,12 +285,15 @@ export default function Medications() {
         return role === 'admin';
     }, [currentUser]);
 
-    // Redirect caregivers to the residents page
+    const clinicalScopedResidentId =
+        searchParams.get(RESIDENT_CONTEXT_QUERY_KEY) || searchParams.get('resident_id') || '';
+
+    // Redirect caregivers to the resident picker unless Clinical hub already scoped a resident (?residentId=)
     React.useEffect(() => {
-        if (isCaregiver && currentUser) {
+        if (isCaregiver && currentUser && !clinicalScopedResidentId) {
             navigate('/medications/residents', { replace: true });
         }
-    }, [isCaregiver, currentUser, navigate]);
+    }, [isCaregiver, currentUser, navigate, clinicalScopedResidentId]);
 
     const { data, isLoading } = useQuery({
         queryKey: ['medications', activeOnly, search, residentFilter, branchFilter, currentPage],
@@ -1072,8 +1076,11 @@ export default function Medications() {
 
     const formatTime = (timeValue) => formatPacificTimeValue(timeValue);
 
-    // Don't render for caregivers (they'll be redirected)
+    // Caregivers: Clinical hub /medications?residentId= shows the per-resident MAR here; otherwise redirect to picker
     if (isCaregiver) {
+        if (clinicalScopedResidentId) {
+            return <ResidentMedicationsPage embedded />;
+        }
         return (
             <div className="text-center py-12">
                 <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--theme-primary)]"></div>

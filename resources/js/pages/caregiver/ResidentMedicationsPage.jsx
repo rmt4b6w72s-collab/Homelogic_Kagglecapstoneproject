@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useNavigate, useParams, Link } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams, Link } from 'react-router-dom';
 import api from '../../services/api';
 import { offlinePost } from '../../services/offlineApi';
 import { useResidentUpdates } from '../../hooks/useRealtimeUpdates';
@@ -48,6 +48,7 @@ import {
 
 import Select from '../../components/ui/radix/Select';
 import Tooltip from '../../components/ui/Tooltip';
+import { RESIDENT_CONTEXT_QUERY_KEY } from '../../utils/headerResidentSwitcher';
 import ResidentSafetyStrip from '../../components/residents/ResidentSafetyStrip';
 import Breadcrumbs from '../../components/ui/Breadcrumbs';
 import logger from '../../utils/logger';
@@ -158,7 +159,13 @@ const isMedicationPeriodActiveNow = (medication, referenceDate = getPacificNow()
 export default function ResidentMedicationsPage({ embedded = false }) {
     const queryClient = useQueryClient();
     const navigate = useNavigate();
-    const { residentId } = useParams();
+    const params = useParams();
+    const [searchParams] = useSearchParams();
+    const residentId =
+        params.residentId ||
+        searchParams.get(RESIDENT_CONTEXT_QUERY_KEY) ||
+        searchParams.get('resident_id') ||
+        undefined;
     const [currentUser, setCurrentUser] = useState(null);
     const [activeTab, setActiveTab] = useState('scheduled'); // 'scheduled', 'am', 'pm', 'prn'
     const [expandedRows, setExpandedRows] = useState(new Set());
