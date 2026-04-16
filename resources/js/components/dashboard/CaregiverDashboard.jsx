@@ -441,7 +441,7 @@ function ResidentStrip({ residents, medReminderIds, navigate }) {
         >
             <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
                 <div className="flex items-center gap-2">
-                    <Users className="w-4 h-4 text-[var(--theme-primary)]" aria-hidden="true" />
+                    <Users className="w-4 h-4 text-slate-600" aria-hidden="true" />
                     <h2 className="text-sm font-bold text-gray-900">My Residents</h2>
                     <span className="text-[10px] font-semibold uppercase tracking-widest text-gray-400">
                         {residents.length} active
@@ -450,7 +450,7 @@ function ResidentStrip({ residents, medReminderIds, navigate }) {
                 <button
                     type="button"
                     onClick={() => navigate('/my-residents')}
-                    className="text-xs font-semibold text-[var(--theme-primary)] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--theme-primary)] rounded"
+                    className="text-xs font-semibold text-slate-800 underline-offset-2 hover:underline hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 rounded"
                 >
                     View All →
                 </button>
@@ -474,12 +474,12 @@ function ResidentStrip({ residents, medReminderIds, navigate }) {
                             type="button"
                             role="listitem"
                             onClick={() => navigate(`/residents/${resident.id}`)}
-                            className="flex flex-col items-center gap-1.5 flex-shrink-0 w-[72px] p-2 rounded-xl hover:bg-gray-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--theme-primary)] group"
+                            className="flex flex-col items-center gap-1.5 flex-shrink-0 w-[72px] p-2 rounded-xl hover:bg-slate-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 group"
                             aria-label={`${fullName}${room ? `, room ${room}` : ''}${hasMedPending ? ', has pending medications' : ''}`}
                         >
                             {/* Avatar */}
                             <div className="relative">
-                                <div className="w-11 h-11 rounded-full bg-[var(--theme-primary-bg)] text-[var(--theme-primary-dark)] flex items-center justify-center text-sm font-bold ring-1 ring-black/5 group-hover:ring-2 group-hover:ring-[var(--theme-primary)]/40 transition-all [&_svg]:text-[var(--theme-primary-dark)]">
+                                <div className="w-11 h-11 rounded-full bg-slate-100 text-slate-900 flex items-center justify-center text-sm font-bold border border-slate-300 shadow-sm group-hover:border-slate-400 group-hover:bg-white transition-colors [&_svg]:text-slate-700">
                                     {initials || <User className="w-5 h-5" aria-hidden="true" />}
                                 </div>
                                 {/* Medication pending dot */}
@@ -493,15 +493,15 @@ function ResidentStrip({ residents, medReminderIds, navigate }) {
                             </div>
 
                             {/* Name — use high-contrast grays; avoid theme primary for small text (light brand colors) */}
-                            <span className="text-[10px] font-semibold text-gray-900 text-center leading-tight w-full truncate group-hover:text-[var(--theme-primary-dark)] transition-colors">
+                            <span className="text-[10px] font-bold text-slate-950 text-center leading-tight w-full truncate group-hover:text-slate-900 transition-colors">
                                 {resident.first_name || fullName}
                             </span>
 
                             {/* Room badge */}
                             {room ? (
-                                <span className="text-[9px] text-gray-600 font-medium">Rm {room}</span>
+                                <span className="text-[9px] text-slate-600 font-semibold">Rm {room}</span>
                             ) : (
-                                <span className="text-[9px] text-gray-400">—</span>
+                                <span className="text-[9px] text-slate-400">—</span>
                             )}
                         </button>
                     );
@@ -746,7 +746,7 @@ function BirthdaysWidget({ birthdays, navigate }) {
                                 {/* Avatar */}
                                 <div
                                     className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0
-                                        ${isToday ? 'bg-pink-500 text-white ring-2 ring-pink-300' : 'bg-[var(--theme-primary-bg)] text-[var(--theme-primary)]'}`}
+                                        ${isToday ? 'bg-pink-500 text-white ring-2 ring-pink-300' : 'bg-slate-100 text-slate-900 border border-slate-200'}`}
                                     aria-hidden="true"
                                 >
                                     {initials || <User className="w-4 h-4" />}
@@ -784,18 +784,18 @@ function StatCard({ title, value, icon: Icon, onClick, urgent }) {
             {urgent && <div className="absolute top-0 left-0 right-0 h-0.5 bg-red-500" aria-hidden="true" />}
             <div className="flex items-center justify-between mb-3">
                 <div className={`p-2.5 rounded-lg group-hover:scale-110 transition-transform duration-200
-                    ${urgent ? 'bg-red-50 text-red-600' : 'bg-[var(--theme-primary-bg)] text-[var(--theme-primary-dark)]'}`}
+                    ${urgent ? 'bg-red-50 text-red-600' : 'bg-slate-100 text-slate-800 border border-slate-200/80'}`}
                     aria-hidden="true"
                 >
                     <Icon className="w-5 h-5" />
                 </div>
-                <ChevronRight className={`w-4 h-4 transition-colors ${urgent ? 'text-red-300 group-hover:text-red-500' : 'text-gray-300 group-hover:text-[var(--theme-primary)]'}`} aria-hidden="true" />
+                <ChevronRight className={`w-4 h-4 transition-colors ${urgent ? 'text-red-300 group-hover:text-red-500' : 'text-gray-300 group-hover:text-slate-600'}`} aria-hidden="true" />
             </div>
             <div>
                 <p className="text-sm font-medium text-gray-500">{title}</p>
                 <p className={`text-2xl font-bold mt-1 ${urgent && value > 0 ? 'text-red-600' : 'text-gray-900'}`}>{value}</p>
             </div>
-            <p className="text-xs text-[var(--theme-primary)] font-medium opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 transition-opacity mt-1.5" aria-hidden="true">
+            <p className="text-xs text-slate-600 font-medium opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 transition-opacity mt-1.5" aria-hidden="true">
                 View details →
             </p>
         </button>
