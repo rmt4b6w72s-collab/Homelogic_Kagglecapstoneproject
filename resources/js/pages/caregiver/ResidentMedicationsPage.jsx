@@ -29,12 +29,9 @@ import {
     CheckCircle,
     XCircle,
     AlertCircle,
-    ArrowLeft,
     User,
     ChevronDown,
     ChevronRight,
-    Search,
-    Filter,
     RefreshCw,
     X,
     BellRing,
@@ -935,65 +932,6 @@ export default function ResidentMedicationsPage({ embedded = false }) {
 
                 {/* ── CENTRE: Medication content ── */}
                 <div className="space-y-4 min-w-0">
-
-                    {/* Compact action header */}
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 px-4 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                        <div className="flex items-center gap-2 min-w-0">
-                            {!embedded && (
-                                <Tooltip content="Back to residents" position="bottom">
-                                    <button
-                                        type="button"
-                                        onClick={() => navigate('/medications/residents')}
-                                        className="p-1.5 hover:bg-gray-100 rounded-full transition-colors group shrink-0"
-                                        aria-label="Back to residents"
-                                    >
-                                        <ArrowLeft className="w-4 h-4 text-gray-400 group-hover:text-[var(--theme-primary)]" strokeWidth={2.25} />
-                                    </button>
-                                </Tooltip>
-                            )}
-                            <div>
-                                <h2 className="text-base font-bold text-gray-900">Resident Medication</h2>
-                                <p className="text-[10px] text-gray-400 uppercase font-bold tracking-widest hidden sm:block">
-                                    Pacific Time (PT) · {formatPacificDate(getPacificNow())}
-                                </p>
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-2 shrink-0 flex-wrap">
-                            <div className="relative">
-                                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" aria-hidden="true" />
-                                <input
-                                    type="text"
-                                    placeholder="Search..."
-                                    value={search}
-                                    onChange={(e) => setSearch(e.target.value)}
-                                    className="pl-8 pr-3 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent w-32 sm:w-40 transition-all"
-                                    aria-label="Search medications"
-                                />
-                            </div>
-                            <button
-                                onClick={() => setActiveOnly(!activeOnly)}
-                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                                    activeOnly ? 'bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] shadow-sm' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                }`}
-                            >
-                                <Filter className="w-3.5 h-3.5" aria-hidden="true" />
-                                {activeOnly ? 'Active' : 'All'}
-                            </button>
-                            <button
-                                onClick={() => { setSearch(''); setActiveOnly(true); setSelectedMeds(new Set()); }}
-                                className="px-2 py-1.5 text-xs font-semibold text-gray-400 hover:text-gray-600 transition-colors"
-                            >
-                                Reset
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => navigate(`/medication-history?resident=${residentId}`)}
-                                className="px-3 py-1.5 bg-[var(--theme-primary)]/10 text-[var(--theme-primary)] rounded-lg text-xs font-bold hover:bg-[var(--theme-primary)]/20 transition-all"
-                            >
-                                History
-                            </button>
-                        </div>
-                    </div>
 
                     {/* Bulk actions — only rendered when items are selected */}
                     {selectedMeds.size > 0 && (
