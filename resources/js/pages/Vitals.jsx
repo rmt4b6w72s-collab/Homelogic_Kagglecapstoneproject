@@ -201,54 +201,58 @@ export default function Vitals() {
             />
         <div className="space-y-6">
             <BranchSelector currentUser={currentUser} />
-            <div className="bg-white rounded-lg shadow p-6 mb-6">
-                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
-                        <div>
-                            <h2 className="text-xl font-semibold text-gray-900 mb-2">Vital Signs Management</h2>
-                            <p className="text-gray-600">View and track resident vital signs.</p>
+            <div className="bg-white rounded-lg shadow-sm border border-gray-100 px-4 py-3 mb-4">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+                        <div className="min-w-0">
+                            <h2 className="text-base font-semibold text-gray-900 leading-snug">Vital Signs Management</h2>
+                            <p className="text-xs text-gray-500 mt-0.5">View and track resident vital signs.</p>
                         </div>
                         <button
+                            type="button"
                             onClick={() => {
                                 setEditing(null);
                                 setShowForm(true);
                             }}
-                            className="w-full sm:w-auto px-4 py-2 bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] rounded-lg hover:bg-[var(--theme-primary-hover)] transition-colors flex items-center justify-center space-x-2 text-sm md:text-base"
+                            className="w-full sm:w-auto shrink-0 px-3 py-1.5 bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] rounded-lg hover:bg-[var(--theme-primary-hover)] transition-colors flex items-center justify-center gap-1.5 text-sm font-medium"
                         >
-                            <Plus className="w-4 h-4" />
+                            <Plus className="w-4 h-4 shrink-0" aria-hidden="true" />
                             <span>Add Vitals</span>
                         </button>
                     </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Date Range:</label>
-                        <div className="flex flex-wrap gap-2">
+
+                    <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end sm:gap-4">
+                    <div className="min-w-0 sm:flex-1">
+                        <label className="block text-xs font-medium text-gray-600 mb-1">Date range</label>
+                        <div className="flex flex-wrap gap-1.5">
                             <button
+                                type="button"
                                 onClick={() => setDateFilter('today')}
-                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                                className={`px-2.5 py-1.5 rounded-md text-xs font-semibold transition-colors ${
                                     dateFilter === 'today'
                                         ? 'bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)]'
-                                        : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                                        : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
                                 }`}
                             >
                                 Today
                             </button>
                             <button
+                                type="button"
                                 onClick={() => setDateFilter('week')}
-                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                                className={`px-2.5 py-1.5 rounded-md text-xs font-semibold transition-colors ${
                                     dateFilter === 'week'
                                         ? 'bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)]'
-                                        : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                                        : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
                                 }`}
                             >
                                 This Week
                             </button>
                             <button
+                                type="button"
                                 onClick={() => setDateFilter('all')}
-                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                                className={`px-2.5 py-1.5 rounded-md text-xs font-semibold transition-colors ${
                                     dateFilter === 'all'
                                         ? 'bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)]'
-                                        : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                                        : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
                                 }`}
                             >
                                 All
@@ -256,12 +260,12 @@ export default function Vitals() {
                         </div>
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Resident:</label>
+                    <div className="w-full sm:w-auto sm:min-w-[220px] sm:max-w-md">
+                        <label className="block text-xs font-medium text-gray-600 mb-1">Resident</label>
                         <select
                             value={residentFilter}
                             onChange={(e) => setResidentFilter(e.target.value)}
-                            className="w-full px-4 py-2 rounded-lg text-sm border border-gray-300 focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+                            className="w-full px-3 py-1.5 rounded-lg text-sm border border-gray-200 focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
                         >
                             <option value="">All Residents</option>
                             {residentsData?.data?.map(r => (
