@@ -51,7 +51,7 @@ const TILES = [
         title: 'Administration',
         description: 'Users, roles, branches, drugs, logs, and facility settings.',
         icon: Settings,
-        path: '/administration/residents',
+        path: '/administration',
         accent: 'text-gray-700',
         bg: 'bg-gray-100',
     },

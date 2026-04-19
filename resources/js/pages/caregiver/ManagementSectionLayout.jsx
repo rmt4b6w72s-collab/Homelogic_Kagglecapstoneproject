@@ -24,7 +24,6 @@ const TABS = [
         label: 'Administration',
         icon: Settings,
         path: '/administration',
-        linkTo: '/administration/residents',
     },
     {
         id: 'staff-site',
