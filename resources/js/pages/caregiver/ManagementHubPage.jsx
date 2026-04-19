@@ -19,17 +19,7 @@ import { isCaregiverRole } from '../../utils/userRoles';
 
 // Tiles that require admin-level access (administrator or admin).
 // Caregivers do NOT see these — they manage care tasks, not facility operations.
-const ADMIN_ONLY_IDS = new Set([
-    'pharmacy', 
-    'billing', 
-    'charts', 
-    'administration', 
-    'residents-admin', 
-    'branches', 
-    'drugs', 
-    'audit-log',
-    'users'
-]);
+const ADMIN_ONLY_IDS = new Set(['pharmacy', 'billing']);
 
 const TILES = [
     {
@@ -49,69 +39,6 @@ const TILES = [
         path: '/billing/expense-categories',
         accent: 'text-emerald-600',
         bg: 'bg-emerald-50',
-    },
-    {
-        id: 'residents-admin',
-        title: 'Residents',
-        description: 'Manage facility residents, admissions, and personal details.',
-        icon: Users,
-        path: '/administration/residents',
-        accent: 'text-blue-600',
-        bg: 'bg-blue-50',
-    },
-    {
-        id: 'users',
-        title: 'Users',
-        description: 'Manage staff accounts, profiles, and assignments.',
-        icon: Settings, // Or Contact/Users icon
-        path: '/administration/users',
-        accent: 'text-indigo-600',
-        bg: 'bg-indigo-50',
-    },
-    {
-        id: 'branches',
-        title: 'Branches',
-        description: 'Configure facility branches, buildings, and rooms.',
-        icon: Building2,
-        path: '/administration/branches',
-        accent: 'text-emerald-700',
-        bg: 'bg-emerald-100',
-    },
-    {
-        id: 'drugs',
-        title: 'Drugs',
-        description: 'Manage the master list of medications and drug information.',
-        icon: Pill,
-        path: '/administration/drugs',
-        accent: 'text-teal-600',
-        bg: 'bg-teal-50',
-    },
-    {
-        id: 'audit-log',
-        title: 'Audit Log',
-        description: 'Track all system activities, changes, and user actions.',
-        icon: History,
-        path: '/administration/activity-logs',
-        accent: 'text-amber-600',
-        bg: 'bg-amber-50',
-    },
-    {
-        id: 'charts',
-        title: 'Behavior charts (admin)',
-        description: 'Facility-wide behavior chart configuration and review.',
-        icon: ClipboardList,
-        path: '/administration/behavior-charts',
-        accent: 'text-indigo-600',
-        bg: 'bg-indigo-50',
-    },
-    {
-        id: 'administration',
-        title: 'Admin Panel',
-        description: 'Roles, permissions, and other system settings.',
-        icon: Settings,
-        path: '/administration',
-        accent: 'text-gray-700',
-        bg: 'bg-gray-100',
     },
     {
         id: 'check-in',

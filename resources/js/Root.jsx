@@ -134,6 +134,7 @@ const ResidentsHubPage = lazyWithRetry(() => import('./pages/caregiver/Residents
 const ManagementSectionLayout = lazyWithRetry(() => import('./pages/caregiver/ManagementSectionLayout'));
 const ManagementHubPage = lazyWithRetry(() => import('./pages/caregiver/ManagementHubPage'));
 const AdministrationHubPage = lazyWithRetry(() => import('./pages/administration/AdministrationHubPage'));
+const AdministrationSectionLayout = lazyWithRetry(() => import('./pages/administration/AdministrationSectionLayout'));
 const ReportsSectionLayout = lazyWithRetry(() => import('./pages/caregiver/ReportsSectionLayout'));
 const Appointments = lazyWithRetry(() => import('./pages/Appointments'));
 const AppointmentsDashboard = lazyWithRetry(() => import('./pages/AppointmentsDashboard'));
@@ -445,6 +446,10 @@ function App() {
                     <Route path="residents/sign-outs/view-all" element={<Suspense fallback={<PageLoader />}><ResidentSignOutsView /></Suspense>} />
                     <Route path="visitors" element={<Suspense fallback={<PageLoader />}><Visitors /></Suspense>} />
                     <Route path="visitors/view-all" element={<Suspense fallback={<PageLoader />}><VisitorsView /></Suspense>} />
+                </Route>
+                
+                {/* ── Administration section (persistent tab bar) ─────────── */}
+                <Route element={<Suspense fallback={<PageLoader />}><AdministrationSectionLayout /></Suspense>}>
                     <Route path="administration" element={<Suspense fallback={<PageLoader />}><AdministrationHubPage /></Suspense>} />
                     <Route path="administration/residents" element={<Suspense fallback={<PageLoader />}><Residents /></Suspense>} />
                     <Route path="administration/resident-contacts" element={<Suspense fallback={<PageLoader />}><ResidentContacts /></Suspense>} />

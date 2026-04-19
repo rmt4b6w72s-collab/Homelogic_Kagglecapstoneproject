@@ -38,6 +38,7 @@ export default function Reports() {
     });
 
     const handleDownload = async (type, residentId, residentName) => {
+        console.log(`Starting ${type} download for resident: ${residentId}`);
         setIsExporting(true);
         try {
             const endpoint = type === 'mar' 
@@ -52,21 +53,35 @@ export default function Reports() {
                 } : {}
             });
 
-            const url = window.URL.createObjectURL(new Blob([res.data]));
+            if (!res.data || res.data.size === 0) {
+                throw new Error('Retrieved an empty file.');
+            }
+
+            // Create blob from response data
+            const blob = new Blob([res.data], { type: 'application/pdf' });
+            const url = window.URL.createObjectURL(blob);
+            
             const link = document.createElement('a');
             link.href = url;
             const filename = type === 'mar' 
                 ? `MAR_${residentName.replace(/\s+/g, '_')}.pdf`
                 : `Vitals_Log_${residentName.replace(/\s+/g, '_')}.pdf`;
+            
             link.setAttribute('download', filename);
             document.body.appendChild(link);
             link.click();
-            link.remove();
+            
+            // Cleanup
+            setTimeout(() => {
+                window.URL.revokeObjectURL(url);
+                link.remove();
+            }, 100);
             
             toast.show('success', 'Report generated successfully');
         } catch (error) {
             console.error('Download error:', error);
-            toast.show('error', 'Failed to generate report. Please try again.');
+            const message = error.response?.data?.message || error.message || 'Failed to generate report.';
+            toast.show('error', message);
         } finally {
             setIsExporting(false);
         }
@@ -173,6 +188,7 @@ export default function Reports() {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <button
+                            type="button"
                             onClick={() => handleDownload('mar', selectedResident.id, selectedResident.name)}
                             disabled={isExporting}
                             className="flex flex-col items-center justify-center p-8 bg-teal-50 hover:bg-teal-100 rounded-2xl border border-teal-100 transition-all group relative"
@@ -190,6 +206,7 @@ export default function Reports() {
                         </button>
 
                         <button
+                            type="button"
                             onClick={() => handleDownload('vitals', selectedResident.id, selectedResident.name)}
                             disabled={isExporting}
                             className="flex flex-col items-center justify-center p-8 bg-blue-50 hover:bg-blue-100 rounded-2xl border border-blue-100 transition-all group relative"

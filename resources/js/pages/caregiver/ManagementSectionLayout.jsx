@@ -14,18 +14,6 @@ const TABS = [
     { id: 'pharmacy',       label: 'Pharmacy',       icon: Building2,       path: '/pharmacy' },
     { id: 'billing',        label: 'Billing',        icon: DollarSign,      path: '/billing' },
     {
-        id: 'charts',
-        label: 'Charts',
-        icon: ClipboardList,
-        path: '/administration/behavior-charts',
-    },
-    {
-        id: 'administration',
-        label: 'Administration',
-        icon: Settings,
-        path: '/administration',
-    },
-    {
         id: 'staff-site',
         label: 'Staff & site',
         icon: UserCheck,
