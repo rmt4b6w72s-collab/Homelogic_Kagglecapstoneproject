@@ -155,6 +155,7 @@ const MedicationHubOrdersTab = lazyWithRetry(() => import('./pages/caregiver/med
 const MedicationHubProfileSliceTab = lazyWithRetry(() => import('./pages/caregiver/medication-hub/MedicationHubProfileSliceTab'));
 const MedicationHubMedLogTab = lazyWithRetry(() => import('./pages/caregiver/medication-hub/MedicationHubMedLogTab'));
 const MedicationHubMarTab = lazyWithRetry(() => import('./pages/caregiver/medication-hub/MedicationHubMarTab'));
+const MedicationHubPrnTab = lazyWithRetry(() => import('./pages/caregiver/medication-hub/MedicationHubPrnTab'));
 const Reports = lazyWithRetry(() => import('./pages/Reports'));
 const Assessments = lazyWithRetry(() => import('./pages/Assessments'));
 const AssessmentDetail = lazyWithRetry(() => import('./pages/AssessmentDetail'));
@@ -349,10 +350,7 @@ function App() {
                             path="prn"
                             element={
                                 <Suspense fallback={<PageLoader />}>
-                                    <MedicationHubPlaceholderTab
-                                        title="PRN medications"
-                                        description="A dedicated PRN view is planned. PRN doses can be managed from the Medications tab today."
-                                    />
+                                    <MedicationHubPrnTab />
                                 </Suspense>
                             }
                         />

@@ -167,7 +167,7 @@ export default function ResidentMedicationsPage({ embedded = false, variant = 'l
         searchParams.get('resident_id') ||
         undefined;
     const [currentUser, setCurrentUser] = useState(null);
-    const [activeTab, setActiveTab] = useState('scheduled'); // 'scheduled', 'am', 'pm', 'prn'
+    const [activeTab, setActiveTab] = useState(() => (variant === 'prn' ? 'prn' : 'scheduled')); // 'scheduled', 'am', 'pm', 'prn'
     const [expandedRows, setExpandedRows] = useState(new Set());
     const [search, setSearch] = useState('');
     const [activeOnly, setActiveOnly] = useState(true);
@@ -176,7 +176,14 @@ export default function ResidentMedicationsPage({ embedded = false, variant = 'l
     const [prnFollowupCompletingId, setPrnFollowupCompletingId] = useState(null);
 
     const isMar = variant === 'mar';
+    const isPrnHub = variant === 'prn';
     const resolvedMarDate = isMar ? (marDate || getPacificISODate()) : null;
+
+    React.useEffect(() => {
+        if (isPrnHub) {
+            setActiveTab('prn');
+        }
+    }, [isPrnHub]);
     const medsQueryKey = isMar
         ? ['resident-medications', residentId, activeOnly, 'mar', resolvedMarDate]
         : ['resident-medications', residentId, activeOnly];
@@ -1022,53 +1029,77 @@ export default function ResidentMedicationsPage({ embedded = false, variant = 'l
                             <span>All administration windows and timestamps are in <strong>Pacific Time (PT)</strong>.</span>
                         </div>
 
-                        {/* Tabs */}
-                        <div className="px-4 pt-4 border-b border-gray-100 bg-gray-50/50">
-                            <div className="max-w-full overflow-x-auto">
-                                <div className="flex items-center gap-1 min-w-max pb-1">
-                                    {[
-                                        { key: 'scheduled', label: 'Scheduled', count: scheduledMeds.length, defaultColor: 'bg-blue-500' },
-                                        { key: 'am', label: 'AM', count: amMeds.length, defaultColor: 'bg-amber-500' },
-                                        { key: 'pm', label: 'PM', count: pmMeds.length, defaultColor: 'bg-indigo-500' },
-                                        { key: 'prn', label: 'PRN', count: prnMeds.length, defaultColor: 'bg-purple-500' },
-                                    ].map(tab => {
-                                        const overdueCount = overdueTabCounts[tab.key] ?? 0;
-                                        const activeBadgeColor = tab.count === 0
-                                            ? 'bg-emerald-500'
-                                            : overdueCount > 0 ? 'bg-red-500' : tab.defaultColor;
-                                        const inactiveBadgeColor = tab.count === 0 ? 'bg-emerald-400' : overdueCount > 0 ? 'bg-red-400' : 'bg-gray-300';
-                                        return (
-                                            <button
-                                                key={tab.key}
-                                                onClick={() => { setActiveTab(tab.key); setExpandedRows(new Set()); setSelectedMeds(new Set()); }}
-                                                aria-selected={activeTab === tab.key}
-                                                className={`relative flex items-center gap-2 px-6 py-3 text-sm font-bold rounded-t-xl transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--theme-primary)] ${
-                                                    activeTab === tab.key
-                                                        ? 'bg-white text-gray-900 border-x border-t border-gray-100 -mb-px shadow-[0_-2px_10px_rgba(0,0,0,0.02)]'
-                                                        : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100/50'
-                                                }`}
-                                            >
-                                                {tab.label}
-                                                {overdueCount > 0 && activeTab !== tab.key && (
-                                                    <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-red-500 ring-2 ring-white" aria-label="Overdue items" />
-                                                )}
-                                                <span
-                                                    className={`inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-[10px] font-black text-white transition-colors ${
-                                                        activeTab === tab.key ? activeBadgeColor : inactiveBadgeColor
-                                                    }`}
-                                                    aria-label={`${tab.count} ${tab.label} medication${tab.count !== 1 ? 's' : ''}${overdueCount > 0 ? `, ${overdueCount} overdue` : ''}`}
-                                                >
-                                                    {tab.count}
-                                                </span>
-                                                {activeTab === tab.key && (
-                                                    <div className={`absolute bottom-0 left-4 right-4 h-1 rounded-t-full ${activeBadgeColor}`} aria-hidden="true" />
-                                                )}
-                                            </button>
-                                        );
-                                    })}
+                        {/* Tabs — hidden on dedicated PRN hub; list stays PRN-only */}
+                        {isPrnHub ? (
+                            <div className="px-4 pt-4 pb-3 border-b border-gray-100 bg-gradient-to-r from-purple-50/90 to-white">
+                                <div className="flex flex-wrap items-start justify-between gap-3">
+                                    <div className="min-w-0">
+                                        <h2 className="text-sm font-bold text-gray-900">PRN (as needed)</h2>
+                                        <p className="text-xs text-gray-500 mt-1 max-w-xl">
+                                            {prnMeds.length === 0
+                                                ? 'No PRN orders on file for this resident. Scheduled medications are on the Medications tab.'
+                                                : `${prnMeds.length} PRN item${prnMeds.length !== 1 ? 's' : ''} (orders and follow-ups). Expand a row to record a dose or schedule a follow-up.`}
+                                        </p>
+                                    </div>
+                                    {residentId ? (
+                                        <Link
+                                            to={`/my-residents/${residentId}/medications/list`}
+                                            className="text-xs font-bold text-[var(--theme-primary)] hover:underline shrink-0"
+                                        >
+                                            Open all medications →
+                                        </Link>
+                                    ) : null}
                                 </div>
                             </div>
-                        </div>
+                        ) : (
+                            <div className="px-4 pt-4 border-b border-gray-100 bg-gray-50/50">
+                                <div className="max-w-full overflow-x-auto">
+                                    <div className="flex items-center gap-1 min-w-max pb-1">
+                                        {[
+                                            { key: 'scheduled', label: 'Scheduled', count: scheduledMeds.length, defaultColor: 'bg-blue-500' },
+                                            { key: 'am', label: 'AM', count: amMeds.length, defaultColor: 'bg-amber-500' },
+                                            { key: 'pm', label: 'PM', count: pmMeds.length, defaultColor: 'bg-indigo-500' },
+                                            { key: 'prn', label: 'PRN', count: prnMeds.length, defaultColor: 'bg-purple-500' },
+                                        ].map(tab => {
+                                            const overdueCount = overdueTabCounts[tab.key] ?? 0;
+                                            const activeBadgeColor = tab.count === 0
+                                                ? 'bg-emerald-500'
+                                                : overdueCount > 0 ? 'bg-red-500' : tab.defaultColor;
+                                            const inactiveBadgeColor = tab.count === 0 ? 'bg-emerald-400' : overdueCount > 0 ? 'bg-red-400' : 'bg-gray-300';
+                                            return (
+                                                <button
+                                                    key={tab.key}
+                                                    type="button"
+                                                    onClick={() => { setActiveTab(tab.key); setExpandedRows(new Set()); setSelectedMeds(new Set()); }}
+                                                    aria-selected={activeTab === tab.key}
+                                                    className={`relative flex items-center gap-2 px-6 py-3 text-sm font-bold rounded-t-xl transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--theme-primary)] ${
+                                                        activeTab === tab.key
+                                                            ? 'bg-white text-gray-900 border-x border-t border-gray-100 -mb-px shadow-[0_-2px_10px_rgba(0,0,0,0.02)]'
+                                                            : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100/50'
+                                                    }`}
+                                                >
+                                                    {tab.label}
+                                                    {overdueCount > 0 && activeTab !== tab.key && (
+                                                        <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-red-500 ring-2 ring-white" aria-label="Overdue items" />
+                                                    )}
+                                                    <span
+                                                        className={`inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-[10px] font-black text-white transition-colors ${
+                                                            activeTab === tab.key ? activeBadgeColor : inactiveBadgeColor
+                                                        }`}
+                                                        aria-label={`${tab.count} ${tab.label} medication${tab.count !== 1 ? 's' : ''}${overdueCount > 0 ? `, ${overdueCount} overdue` : ''}`}
+                                                    >
+                                                        {tab.count}
+                                                    </span>
+                                                    {activeTab === tab.key && (
+                                                        <div className={`absolute bottom-0 left-4 right-4 h-1 rounded-t-full ${activeBadgeColor}`} aria-hidden="true" />
+                                                    )}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
 
                         {/* Medication list */}
                         <div className="min-h-[400px]">
@@ -1085,7 +1116,9 @@ export default function ResidentMedicationsPage({ embedded = false, variant = 'l
                                     <p className="text-sm text-gray-500 max-w-xs mx-auto">
                                         {search
                                             ? `No medications matching "${search}" were found.`
-                                            : `There are currently no medications in the ${activeTab} category.`}
+                                            : isPrnHub
+                                                ? 'No PRN medications found. Add or update orders on the Medications tab if PRN is documented in instructions (PRN / as needed).'
+                                                : `There are currently no medications in the ${activeTab} category.`}
                                     </p>
                                     {search && (
                                         <button
@@ -1101,19 +1134,21 @@ export default function ResidentMedicationsPage({ embedded = false, variant = 'l
                     </div>
 
                     {/* Footer legend */}
-                    <div className="flex flex-wrap items-center justify-center gap-5 px-4 text-[10px] text-gray-400 uppercase font-black tracking-widest">
-                        {[
-                            { color: 'bg-blue-500', label: 'Scheduled' },
-                            { color: 'bg-amber-500', label: 'AM Only' },
-                            { color: 'bg-indigo-500', label: 'PM Only' },
-                            { color: 'bg-purple-500', label: 'PRN' },
-                        ].map(({ color, label }) => (
-                            <div key={label} className="flex items-center gap-1.5">
-                                <div className={`w-2 h-2 rounded-full ${color}`} aria-hidden="true" />
-                                {label}
-                            </div>
-                        ))}
-                    </div>
+                    {!isPrnHub ? (
+                        <div className="flex flex-wrap items-center justify-center gap-5 px-4 text-[10px] text-gray-400 uppercase font-black tracking-widest">
+                            {[
+                                { color: 'bg-blue-500', label: 'Scheduled' },
+                                { color: 'bg-amber-500', label: 'AM Only' },
+                                { color: 'bg-indigo-500', label: 'PM Only' },
+                                { color: 'bg-purple-500', label: 'PRN' },
+                            ].map(({ color, label }) => (
+                                <div key={label} className="flex items-center gap-1.5">
+                                    <div className={`w-2 h-2 rounded-full ${color}`} aria-hidden="true" />
+                                    {label}
+                                </div>
+                            ))}
+                        </div>
+                    ) : null}
                 </div>
 
                 {/* ── RIGHT: Orders + PRN history ── */}
