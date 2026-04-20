@@ -106,6 +106,8 @@ Route::prefix('v1')->middleware([\App\Http\Middleware\SetFacilityContext::class]
     // Residents
     Route::get('/residents/{resident}/reports/medication-log', MedicationLogReportController::class)->middleware('auth:sanctum');
     Route::get('/residents/{resident}/reports/vitals-log', VitalsLogReportController::class)->middleware('auth:sanctum');
+    Route::get('/residents/{resident}/reports/sleep-log', SleepLogReportController::class)->middleware('auth:sanctum');
+    Route::get('/residents/{resident}/reports/appointments', AppointmentReportController::class)->middleware('auth:sanctum');
     Route::apiResource('residents', ResidentController::class)->middleware('auth:sanctum');
     Route::get('/residents/{id}/appointments', [ResidentController::class, 'appointments'])->middleware('auth:sanctum');
     Route::get('/residents/{id}/vitals', [ResidentController::class, 'vitals'])->middleware('auth:sanctum');

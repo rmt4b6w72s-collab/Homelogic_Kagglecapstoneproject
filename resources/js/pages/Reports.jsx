@@ -224,6 +224,32 @@ export default function Reports() {
                         </button>
 
                         <button
+                            type="button"
+                            onClick={() => handleDownload('sleep', selectedResident.id, selectedResident.name)}
+                            disabled={isExporting}
+                            className="flex flex-col items-center justify-center p-8 bg-indigo-50 hover:bg-indigo-100 rounded-2xl border border-indigo-100 transition-all group relative"
+                        >
+                            <div className="h-12 w-12 bg-white rounded-xl shadow-sm text-indigo-600 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                                <FileText className="h-6 w-6" />
+                            </div>
+                            <span className="font-bold text-indigo-900">Sleep Log</span>
+                            <span className="text-xs text-indigo-600 mt-1">Historical sleep tracking</span>
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={() => handleDownload('appointments', selectedResident.id, selectedResident.name)}
+                            disabled={isExporting}
+                            className="flex flex-col items-center justify-center p-8 bg-orange-50 hover:bg-orange-100 rounded-2xl border border-orange-100 transition-all group relative"
+                        >
+                            <div className="h-12 w-12 bg-white rounded-xl shadow-sm text-orange-600 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                                <Calendar className="h-6 w-6" />
+                            </div>
+                            <span className="font-bold text-orange-900">Appointments</span>
+                            <span className="text-xs text-orange-600 mt-1">Scheduled visit history</span>
+                        </button>
+
+                        <button
                             disabled
                             className="flex flex-col items-center justify-center p-8 bg-amber-50 opacity-60 rounded-2xl border border-amber-100 relative cursor-not-allowed"
                         >
@@ -236,13 +262,13 @@ export default function Reports() {
 
                         <button
                             disabled
-                            className="flex flex-col items-center justify-center p-8 bg-indigo-50 opacity-60 rounded-2xl border border-indigo-100 relative cursor-not-allowed"
+                            className="flex flex-col items-center justify-center p-8 bg-purple-50 opacity-60 rounded-2xl border border-purple-100 relative cursor-not-allowed"
                         >
-                            <div className="h-12 w-12 bg-white rounded-xl shadow-sm text-indigo-600 flex items-center justify-center mb-3">
+                            <div className="h-12 w-12 bg-white rounded-xl shadow-sm text-purple-600 flex items-center justify-center mb-3">
                                 <FileText className="h-6 w-6" />
                             </div>
-                            <span className="font-bold text-indigo-900">Assessments</span>
-                            <span className="text-xs text-indigo-600 mt-1">Coming soon</span>
+                            <span className="font-bold text-purple-900">Assessments</span>
+                            <span className="text-xs text-purple-600 mt-1">Coming soon</span>
                         </button>
                     </div>
 
