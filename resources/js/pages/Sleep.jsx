@@ -6,6 +6,7 @@ import { Moon, Plus, Search, Calendar, Clock, User, Edit, Trash2, Filter, Chevro
 import { getLocalDateString } from '../utils/pacificTime';
 import CalendarComponent from '../components/ui/Calendar';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
+import Modal from '../components/ui/Modal';
 import Tooltip from '../components/ui/Tooltip';
 import EntityCardShell, { EntityCardHeader } from '../components/ui/EntityCardShell';
 import CardIconButton from '../components/ui/CardIconButton';
@@ -397,30 +398,39 @@ export default function Sleep() {
                 variant="danger"
                 isPending={deleteMutation.isPending}
             />
-            {showForm ? (
-                <div>
-                    <SleepRecordForm
-                        record={editingRecord}
-                        residents={residentOptions}
-                        isCaregiver={isCaregiver}
-                        caregiverBranchId={caregiverBranchId}
-                        caregiverBranchName={caregiverBranchName}
-                        currentUser={currentUser}
-                        isFacilityAdmin={isFacilityAdmin}
-                        isBranchAdmin={isBranchAdmin}
-                        onClose={() => {
-                            setShowForm(false);
-                            setEditingRecord(null);
-                        }}
-                        onSuccess={() => {
-                            setShowForm(false);
-                            setEditingRecord(null);
-                            queryClient.invalidateQueries(['sleep-records']);
-                            queryClient.invalidateQueries(['sleep-records-calendar']);
-                        }}
-                    />
-                </div>
-            ) : (
+            <Modal
+                isOpen={showForm}
+                onClose={() => {
+                    setShowForm(false);
+                    setEditingRecord(null);
+                }}
+                title={editingRecord ? 'Edit Sleep Record' : 'Add Sleep Record'}
+                size="xl"
+            >
+                <SleepRecordForm
+                    key={editingRecord?.id ?? 'new'}
+                    record={editingRecord}
+                    residents={residentOptions}
+                    isCaregiver={isCaregiver}
+                    caregiverBranchId={caregiverBranchId}
+                    caregiverBranchName={caregiverBranchName}
+                    currentUser={currentUser}
+                    isFacilityAdmin={isFacilityAdmin}
+                    isBranchAdmin={isBranchAdmin}
+                    inModal
+                    defaultResidentId={editingRecord ? '' : residentFilter}
+                    onClose={() => {
+                        setShowForm(false);
+                        setEditingRecord(null);
+                    }}
+                    onSuccess={() => {
+                        setShowForm(false);
+                        setEditingRecord(null);
+                        queryClient.invalidateQueries(['sleep-records']);
+                        queryClient.invalidateQueries(['sleep-records-calendar']);
+                    }}
+                />
+            </Modal>
         <div>
             {/* Filters */}
             <div className="bg-white rounded-lg shadow p-6 mb-6">
@@ -626,16 +636,40 @@ export default function Sleep() {
                 </div>
             )}
         </div>
-            )}
         </>
     );
 }
 
 // Sleep Record Form Component
-function SleepRecordForm({ record, residents, isCaregiver, caregiverBranchId, caregiverBranchName, onClose, onSuccess, currentUser, isFacilityAdmin, isBranchAdmin }) {
+function SleepRecordForm({
+    record,
+    residents,
+    isCaregiver,
+    caregiverBranchId,
+    caregiverBranchName,
+    onClose,
+    onSuccess,
+    currentUser,
+    isFacilityAdmin,
+    isBranchAdmin,
+    inModal = false,
+    defaultResidentId = '',
+}) {
+    const initialResidentId = record?.resident_id
+        ? String(record.resident_id)
+        : defaultResidentId
+          ? String(defaultResidentId)
+          : '';
     const [formData, setFormData] = useState({
-        resident_id: record?.resident_id || '',
-        branch_id: record?.branch_id || caregiverBranchId || (isBranchAdmin && currentUser?.assigned_branch_id ? currentUser.assigned_branch_id : ''),
+        resident_id: initialResidentId,
+        branch_id:
+            record?.branch_id != null && record.branch_id !== ''
+                ? String(record.branch_id)
+                : caregiverBranchId
+                  ? String(caregiverBranchId)
+                  : isBranchAdmin && currentUser?.assigned_branch_id
+                    ? String(currentUser.assigned_branch_id)
+                    : '',
         sleep_date: record?.sleep_date || getLocalDateString(),
         sleep_time: record?.sleep_time || '',
         wake_time: record?.wake_time || '',
@@ -644,11 +678,23 @@ function SleepRecordForm({ record, residents, isCaregiver, caregiverBranchId, ca
         restlessness_episodes: record?.restlessness_episodes || 0,
         notes: record?.notes || '',
     });
+
+    React.useEffect(() => {
+        if (record || !defaultResidentId || residents.length === 0) return;
+        const rid = String(defaultResidentId);
+        const resident = residents.find((r) => String(r.id) === rid);
+        if (!resident) return;
+        setFormData((prev) => ({
+            ...prev,
+            resident_id: rid,
+            branch_id: prev.branch_id || String(resident.branch_id || ''),
+        }));
+    }, [record, defaultResidentId, residents]);
     
     // Auto-fill branch for admin users on mount
     React.useEffect(() => {
         if (isBranchAdmin && currentUser?.assigned_branch_id && !record && !formData.branch_id) {
-            setFormData(prev => ({ ...prev, branch_id: currentUser.assigned_branch_id }));
+            setFormData(prev => ({ ...prev, branch_id: String(currentUser.assigned_branch_id) }));
         }
     }, [isBranchAdmin, currentUser, record]);
 
@@ -734,18 +780,21 @@ function SleepRecordForm({ record, residents, isCaregiver, caregiverBranchId, ca
     };
 
     return (
-        <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-gray-900">
-                    {record ? 'Edit Sleep Record' : 'Add Sleep Record'}
-                </h2>
-                <button
-                    onClick={onClose}
-                    className="text-gray-400 hover:text-gray-600"
-                >
-                    <X className="w-6 h-6" />
-                </button>
-            </div>
+        <div className={inModal ? '' : 'bg-white rounded-lg shadow p-6'}>
+            {!inModal && (
+                <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-xl font-semibold text-gray-900">
+                        {record ? 'Edit Sleep Record' : 'Add Sleep Record'}
+                    </h2>
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="text-gray-400 hover:text-gray-600"
+                    >
+                        <X className="w-6 h-6" />
+                    </button>
+                </div>
+            )}
 
             {errors.general && (
                         <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">

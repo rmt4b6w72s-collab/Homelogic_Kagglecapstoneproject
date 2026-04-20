@@ -8,6 +8,7 @@ import SectionCard from '../components/SectionCard';
 import Card from '../components/Card';
 import CalendarComponent from '../components/ui/Calendar';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
+import Modal from '../components/ui/Modal';
 import Tooltip from '../components/ui/Tooltip';
 import { hasModuleAccess } from '../utils/moduleAccess';
 import { RESIDENT_CONTEXT_QUERY_KEY } from '../utils/headerResidentSwitcher';
@@ -316,28 +317,37 @@ export default function Assessments({ embedded = false, embeddedResidentId = nul
                 variant="danger"
                 isPending={deleteMutation.isPending}
             />
-            {showForm ? (
-                <div>
-                    <AssessmentForm
-                        record={editing}
-                        residents={residentsData?.data || []}
-                        branches={branchesData?.data || []}
-                        currentUser={currentUser}
-                        isFacilityAdmin={isFacilityAdmin}
-                        isBranchAdmin={isBranchAdmin}
-                        onClose={() => {
-                            setShowForm(false);
-                            setEditing(null);
-                        }}
-                        onSuccess={() => {
-                            setShowForm(false);
-                            setEditing(null);
-                            queryClient.invalidateQueries(['assessments']);
-                            queryClient.invalidateQueries(['assessments-calendar']);
-                        }}
-                    />
-                </div>
-            ) : (
+            <Modal
+                isOpen={showForm}
+                onClose={() => {
+                    setShowForm(false);
+                    setEditing(null);
+                }}
+                title={editing ? 'Edit Assessment' : 'Add Assessment'}
+                size="xl"
+            >
+                <AssessmentForm
+                    key={editing?.id ?? 'new'}
+                    record={editing}
+                    residents={residentsData?.data || []}
+                    branches={branchesData?.data || []}
+                    currentUser={currentUser}
+                    isFacilityAdmin={isFacilityAdmin}
+                    isBranchAdmin={isBranchAdmin}
+                    inModal
+                    defaultResidentId={editing ? '' : headerResidentScope}
+                    onClose={() => {
+                        setShowForm(false);
+                        setEditing(null);
+                    }}
+                    onSuccess={() => {
+                        setShowForm(false);
+                        setEditing(null);
+                        queryClient.invalidateQueries(['assessments']);
+                        queryClient.invalidateQueries(['assessments-calendar']);
+                    }}
+                />
+            </Modal>
         <div>
             <SectionCard>
                 <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
@@ -578,28 +588,54 @@ export default function Assessments({ embedded = false, embeddedResidentId = nul
                 </div>
             )}
         </div>
-            )}
         </>
     );
 }
 
 // Assessment Form Component
-function AssessmentForm({ record, residents, branches, onClose, onSuccess, currentUser, isFacilityAdmin, isBranchAdmin }) {
+function AssessmentForm({
+    record,
+    residents,
+    branches,
+    onClose,
+    onSuccess,
+    currentUser,
+    isFacilityAdmin,
+    isBranchAdmin,
+    inModal = false,
+    defaultResidentId = '',
+}) {
+    const initialResidentId = record?.resident_id
+        ? String(record.resident_id)
+        : (defaultResidentId ? String(defaultResidentId) : '');
     const [formData, setFormData] = useState({
-        resident_id: record?.resident_id || '',
-        branch_id: record?.branch_id || (isBranchAdmin && currentUser?.assigned_branch_id ? currentUser.assigned_branch_id : ''),
+        resident_id: initialResidentId,
+        branch_id: record?.branch_id || (isBranchAdmin && currentUser?.assigned_branch_id ? String(currentUser.assigned_branch_id) : ''),
         assessment_type: record?.assessment_type || '',
         assessment_date: record?.assessment_date || new Date().toISOString().split('T')[0],
         status: record?.status || 'draft',
         notes: record?.notes || '',
     });
+
+    // When URL/default resident loads after residents fetch, set resident + branch
+    React.useEffect(() => {
+        if (record || !defaultResidentId || residents.length === 0) return;
+        const rid = String(defaultResidentId);
+        const resident = residents.find((r) => String(r.id) === rid);
+        if (!resident) return;
+        setFormData((prev) => ({
+            ...prev,
+            resident_id: rid,
+            branch_id: prev.branch_id || String(resident.branch_id || ''),
+        }));
+    }, [record, defaultResidentId, residents]);
     
     // Auto-fill branch for admin users on mount
     React.useEffect(() => {
         if (isBranchAdmin && currentUser?.assigned_branch_id && !record && !formData.branch_id) {
-            setFormData(prev => ({ ...prev, branch_id: currentUser.assigned_branch_id }));
+            setFormData(prev => ({ ...prev, branch_id: String(currentUser.assigned_branch_id) }));
         }
-    }, [isBranchAdmin, currentUser, record]);
+    }, [isBranchAdmin, currentUser, record, formData.branch_id]);
 
     const [errors, setErrors] = useState({});
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -620,9 +656,9 @@ function AssessmentForm({ record, residents, branches, onClose, onSuccess, curre
     // Auto-select branch when resident is selected
     React.useEffect(() => {
         if (formData.resident_id && !formData.branch_id) {
-            const resident = residents.find(r => r.id == formData.resident_id);
+            const resident = residents.find(r => String(r.id) === String(formData.resident_id));
             if (resident?.branch_id) {
-                setFormData(prev => ({...prev, branch_id: resident.branch_id}));
+                setFormData(prev => ({...prev, branch_id: String(resident.branch_id)}));
             }
         }
     }, [formData.resident_id, residents, formData.branch_id]);
@@ -657,18 +693,21 @@ function AssessmentForm({ record, residents, branches, onClose, onSuccess, curre
     };
 
     return (
-        <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-gray-900">
-                    {record ? 'Edit Assessment' : 'Add Assessment'}
-                </h2>
-                <button
-                    onClick={onClose}
-                    className="text-gray-400 hover:text-gray-600"
-                >
-                    <X className="w-6 h-6" />
-                </button>
-            </div>
+        <div className={inModal ? '' : 'bg-white rounded-lg shadow p-6'}>
+            {!inModal && (
+                <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-xl font-semibold text-gray-900">
+                        {record ? 'Edit Assessment' : 'Add Assessment'}
+                    </h2>
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="text-gray-400 hover:text-gray-600"
+                    >
+                        <X className="w-6 h-6" />
+                    </button>
+                </div>
+            )}
 
             {errors.general && (
                 <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
@@ -684,7 +723,7 @@ function AssessmentForm({ record, residents, branches, onClose, onSuccess, curre
                                 </label>
                                 <select
                                     value={formData.branch_id}
-                                    onChange={(e) => setFormData({...formData, branch_id: e.target.value, resident_id: ''})}
+                                    onChange={(e) => setFormData({ ...formData, branch_id: e.target.value, resident_id: '' })}
                                     required
                                     disabled={!isFacilityAdmin && isBranchAdmin && currentUser?.assigned_branch_id}
                                     className={`w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent ${!isFacilityAdmin && isBranchAdmin && currentUser?.assigned_branch_id ? 'bg-gray-100 cursor-not-allowed opacity-75' : ''}`}
@@ -703,7 +742,7 @@ function AssessmentForm({ record, residents, branches, onClose, onSuccess, curre
                                 </label>
                                 <select
                                     value={formData.resident_id}
-                                    onChange={(e) => setFormData({...formData, resident_id: e.target.value})}
+                                    onChange={(e) => setFormData({ ...formData, resident_id: e.target.value })}
                                     required
                                     disabled={!formData.branch_id}
                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent disabled:bg-gray-100"

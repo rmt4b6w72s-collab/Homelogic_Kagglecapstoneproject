@@ -1,4 +1,5 @@
 import React from 'react';
+import { useLocation } from 'react-router-dom';
 import {
     LayoutDashboard,
     Users,
@@ -24,7 +25,11 @@ const TABS = [
 ];
 
 export default function AdministrationSectionLayout() {
+    const { pathname } = useLocation();
+    // Hub index uses the card grid for navigation; hide the duplicate icon tab strip there only.
+    const showTabBar = pathname !== '/administration';
+
     return (
-        <SectionLayout title="Administration" tabs={TABS} />
+        <SectionLayout title="Administration" tabs={TABS} showTabBar={showTabBar} />
     );
 }

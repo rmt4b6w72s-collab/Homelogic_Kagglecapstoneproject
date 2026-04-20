@@ -9,6 +9,7 @@ import { getLocalDateString } from '../utils/pacificTime';
 import { TableSkeleton, ListSkeleton } from '../components/ui/SkeletonLoader';
 import EmptyState from '../components/ui/EmptyState';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
+import Modal from '../components/ui/Modal';
 import Tooltip from '../components/ui/Tooltip';
 import EntityCardShell, { EntityCardHeader } from '../components/ui/EntityCardShell';
 import CardIconButton from '../components/ui/CardIconButton';
@@ -147,31 +148,6 @@ export default function Vitals() {
         }
     );
 
-    if (showForm) {
-        return (
-            <div>
-                <VitalSignForm
-                    record={editing}
-                    residents={residentsData?.data || []}
-                    branches={branchesData?.data || []}
-                    isFacilityAdmin={isFacilityAdmin}
-                    isBranchAdmin={isBranchAdmin}
-                    currentUser={currentUser}
-                    selectedBranchId={selectedBranchId}
-                    onClose={() => {
-                        setShowForm(false);
-                        setEditing(null);
-                    }}
-                    onSuccess={() => {
-                        setShowForm(false);
-                        setEditing(null);
-                        queryClient.invalidateQueries(['vitals']);
-                    }}
-                />
-            </div>
-        );
-    }
-
     // Show branch selector if no branch is selected
     if (!selectedBranchId) {
         return (
@@ -199,6 +175,37 @@ export default function Vitals() {
                 variant="danger"
                 isPending={deleteMutation.isPending}
             />
+            <Modal
+                isOpen={showForm}
+                onClose={() => {
+                    setShowForm(false);
+                    setEditing(null);
+                }}
+                title={editing ? 'Edit Vital Sign' : 'Add Vital Sign'}
+                size="xl"
+            >
+                <VitalSignForm
+                    key={editing?.id ?? 'new'}
+                    record={editing}
+                    residents={residentsData?.data || []}
+                    branches={branchesData?.data || []}
+                    isFacilityAdmin={isFacilityAdmin}
+                    isBranchAdmin={isBranchAdmin}
+                    currentUser={currentUser}
+                    selectedBranchId={selectedBranchId}
+                    inModal
+                    initialResidentId={editing ? '' : residentFilter}
+                    onClose={() => {
+                        setShowForm(false);
+                        setEditing(null);
+                    }}
+                    onSuccess={() => {
+                        setShowForm(false);
+                        setEditing(null);
+                        queryClient.invalidateQueries(['vitals']);
+                    }}
+                />
+            </Modal>
         <div className="space-y-6">
             <BranchSelector currentUser={currentUser} />
             <div className="bg-white rounded-lg shadow-sm border border-gray-100 px-4 py-3 mb-4">
@@ -438,12 +445,29 @@ export default function Vitals() {
     );
 }
 
-function VitalSignForm({ record, residents, branches = [], isFacilityAdmin = false, isBranchAdmin = false, currentUser = null, selectedBranchId: propSelectedBranchId, onClose, onSuccess }) {
+function VitalSignForm({
+    record,
+    residents,
+    branches = [],
+    isFacilityAdmin = false,
+    isBranchAdmin = false,
+    currentUser = null,
+    selectedBranchId: propSelectedBranchId,
+    onClose,
+    onSuccess,
+    inModal = false,
+    initialResidentId = '',
+}) {
     const toast = useToastContext();
     // Always use branch from URL/props - no branch selection in form
     const selectedBranchId = propSelectedBranchId || '';
+    const seededResidentId = record?.resident_id
+        ? String(record.resident_id)
+        : initialResidentId
+          ? String(initialResidentId)
+          : '';
     const [formData, setFormData] = useState({
-        resident_id: record?.resident_id || '',
+        resident_id: seededResidentId,
         measurement_date: record?.measurement_date 
             ? (typeof record.measurement_date === 'string' 
                 ? record.measurement_date.split('T')[0]
@@ -478,6 +502,13 @@ function VitalSignForm({ record, residents, branches = [], isFacilityAdmin = fal
         if (!selectedBranchId) return residents;
         return residents.filter(r => r.branch_id == selectedBranchId);
     }, [residents, selectedBranchId]);
+
+    React.useEffect(() => {
+        if (record || !initialResidentId || filteredResidents.length === 0) return;
+        const rid = String(initialResidentId);
+        if (!filteredResidents.some((r) => String(r.id) === rid)) return;
+        setFormData((prev) => (String(prev.resident_id) === rid ? prev : { ...prev, resident_id: rid }));
+    }, [record, initialResidentId, filteredResidents]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -530,18 +561,21 @@ function VitalSignForm({ record, residents, branches = [], isFacilityAdmin = fal
     };
 
     return (
-        <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-gray-900">
-                    {record ? 'Edit Vital Sign' : 'Add Vital Sign'}
-                </h2>
-                <button
-                    onClick={onClose}
-                    className="text-gray-400 hover:text-gray-600"
-                >
-                    <X className="w-6 h-6" />
-                </button>
-            </div>
+        <div className={inModal ? '' : 'bg-white rounded-lg shadow p-6'}>
+            {!inModal && (
+                <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-xl font-semibold text-gray-900">
+                        {record ? 'Edit Vital Sign' : 'Add Vital Sign'}
+                    </h2>
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="text-gray-400 hover:text-gray-600"
+                    >
+                        <X className="w-6 h-6" />
+                    </button>
+                </div>
+            )}
 
                     {errors.general && (
                 <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
