@@ -41,16 +41,33 @@ export default function Reports() {
         console.log(`Starting ${type} download for resident: ${residentId}`);
         setIsExporting(true);
         try {
-            const endpoint = type === 'mar' 
-                ? `/residents/${residentId}/reports/medication-log`
-                : `/residents/${residentId}/reports/vitals-log`;
+            let endpoint = '';
+            let params = {};
+
+            switch(type) {
+                case 'mar':
+                    endpoint = `/residents/${residentId}/reports/medication-log`;
+                    params = {
+                        date_from: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],
+                        date_to: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).toISOString().split('T')[0]
+                    };
+                    break;
+                case 'vitals':
+                    endpoint = `/residents/${residentId}/reports/vitals-log`;
+                    break;
+                case 'sleep':
+                    endpoint = `/residents/${residentId}/reports/sleep-log`;
+                    break;
+                case 'appointments':
+                    endpoint = `/residents/${residentId}/reports/appointments`;
+                    break;
+                default:
+                    throw new Error('Invalid report type');
+            }
             
             const res = await api.get(endpoint, {
                 responseType: 'blob',
-                params: type === 'mar' ? {
-                    date_from: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],
-                    date_to: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).toISOString().split('T')[0]
-                } : {}
+                params: params
             });
 
             if (!res.data || res.data.size === 0) {
@@ -63,9 +80,7 @@ export default function Reports() {
             
             const link = document.createElement('a');
             link.href = url;
-            const filename = type === 'mar' 
-                ? `MAR_${residentName.replace(/\s+/g, '_')}.pdf`
-                : `Vitals_Log_${residentName.replace(/\s+/g, '_')}.pdf`;
+            const filename = `${type.toUpperCase()}_Log_${residentName.replace(/\s+/g, '_')}.pdf`;
             
             link.setAttribute('download', filename);
             document.body.appendChild(link);
