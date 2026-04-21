@@ -4,7 +4,7 @@ import logger from '../utils/logger';
 import { X } from 'lucide-react';
 import { formatPhoneNumber } from '../utils/phoneFormatter';
 
-export default function ResidentForm({ record, branches, onClose, onSuccess, selectedBranchId }) {
+export default function ResidentForm({ record, branches, onClose, onSuccess, selectedBranchId, inModal = false }) {
     const [formData, setFormData] = useState({
         first_name: record?.first_name || '',
         middle_names: record?.middle_names || '',
@@ -306,18 +306,21 @@ export default function ResidentForm({ record, branches, onClose, onSuccess, sel
     };
 
     return (
-        <div className="bg-white rounded-lg shadow p-6 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-6 sticky top-0 bg-white z-10 pb-2 border-b">
-                <h2 className="text-xl font-semibold text-gray-900">
-                    {record ? 'Edit Resident' : 'Add Resident'}
-                </h2>
-                <button
-                    onClick={onClose}
-                    className="text-gray-400 hover:text-gray-600 p-1"
-                >
-                    <X className="w-6 h-6" />
-                </button>
-            </div>
+        <div className={inModal ? '' : 'bg-white rounded-lg shadow p-6 max-h-[90vh] overflow-y-auto'}>
+            {!inModal && (
+                <div className="flex items-center justify-between mb-6 sticky top-0 bg-white z-10 pb-2 border-b">
+                    <h2 className="text-xl font-semibold text-gray-900">
+                        {record ? 'Edit Resident' : 'Add Resident'}
+                    </h2>
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="text-gray-400 hover:text-gray-600 p-1"
+                    >
+                        <X className="w-6 h-6" />
+                    </button>
+                </div>
+            )}
 
             {successMessage && (
                 <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">

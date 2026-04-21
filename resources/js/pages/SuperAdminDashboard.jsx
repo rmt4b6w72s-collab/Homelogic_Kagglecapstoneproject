@@ -314,7 +314,7 @@ export default function SuperAdminDashboard() {
                     </td>
                     <td className="py-4 px-6 text-right">
                       <button
-                        onClick={() => navigate(`/super-admin/facilities?edit=${facility.id}`)}
+                        onClick={() => navigate(`/super-admin/facilities?editFacilityId=${facility.id}`)}
                         className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-semibold text-[var(--theme-primary)] hover:bg-[var(--theme-primary-bg-light)] rounded-lg transition-all duration-200 hover:scale-105 cursor-pointer"
                       >
                         <Eye className="w-4 h-4" strokeWidth={2.5} />

@@ -29,6 +29,7 @@ import { formatPhoneNumber } from '../utils/phoneFormatter';
 import BranchSelector from '../components/BranchSelector';
 import ResidentForm from '../components/ResidentForm';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
+import Modal from '../components/ui/Modal';
 import EntityCardShell, { EntityCardHeader } from '../components/ui/EntityCardShell';
 import CardIconButton from '../components/ui/CardIconButton';
 import DataPill from '../components/ui/DataPill';
@@ -271,27 +272,6 @@ export default function Residents() {
         );
     };
 
-    if (showForm) {
-        return (
-            <div>
-                <ResidentForm
-                    record={editing}
-                    branches={branchesData?.data || []}
-                    selectedBranchId={branchId}
-                    onClose={() => {
-                        setShowForm(false);
-                        setEditing(null);
-                    }}
-                    onSuccess={() => {
-                        setShowForm(false);
-                        setEditing(null);
-                        queryClient.invalidateQueries(['residents']);
-                    }}
-                />
-            </div>
-        );
-    }
-
     // Show branch selector and wait for branch selection
     if (!selectedBranchId) {
         return (
@@ -308,6 +288,32 @@ export default function Residents() {
 
     return (
         <>
+            <Modal
+                isOpen={showForm}
+                onClose={() => {
+                    setShowForm(false);
+                    setEditing(null);
+                }}
+                title={editing ? 'Edit Resident' : 'Add Resident'}
+                size="xl"
+            >
+                <ResidentForm
+                    key={editing?.id ?? 'new'}
+                    record={editing}
+                    branches={branchesData?.data || []}
+                    selectedBranchId={branchId}
+                    inModal
+                    onClose={() => {
+                        setShowForm(false);
+                        setEditing(null);
+                    }}
+                    onSuccess={() => {
+                        setShowForm(false);
+                        setEditing(null);
+                        queryClient.invalidateQueries(['residents']);
+                    }}
+                />
+            </Modal>
             <ConfirmDialog
                 isOpen={residentStatusConfirm != null}
                 onClose={() => !toggleActiveMutation.isPending && setResidentStatusConfirm(null)}
@@ -438,27 +444,6 @@ export default function Residents() {
                         </div>
                     )}
                 </>
-            )}
-
-            {showForm && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-md p-4 animate-in fade-in duration-300">
-                    <div className="w-full max-w-4xl bg-white rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
-                        <ResidentForm
-                            record={editing}
-                            branches={branchesData?.data || []}
-                            selectedBranchId={selectedBranchId}
-                            onClose={() => {
-                                setShowForm(false);
-                                setEditing(null);
-                            }}
-                            onSuccess={() => {
-                                setShowForm(false);
-                                setEditing(null);
-                                queryClient.invalidateQueries(['residents']);
-                            }}
-                        />
-                    </div>
-                </div>
             )}
         </div>
         </>

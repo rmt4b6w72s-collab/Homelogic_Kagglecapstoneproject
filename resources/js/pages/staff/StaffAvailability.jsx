@@ -6,6 +6,7 @@ import { Calendar, Plus, Edit, Trash2, Clock, User } from 'lucide-react';
 import SectionCard from '../../components/SectionCard';
 import EmptyState from '../../components/ui/EmptyState';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
+import Modal from '../../components/ui/Modal';
 import logger from '../../utils/logger';
 
 const DAYS = [
@@ -282,11 +283,12 @@ export default function StaffAvailability() {
         )}
       </SectionCard>
 
-      {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">{editing ? 'Edit availability' : 'Add availability'}</h2>
+      <Modal
+        isOpen={showModal}
+        onClose={() => { setShowModal(false); setEditing(null); }}
+        title={editing ? 'Edit availability' : 'Add availability'}
+        size="md"
+      >
               <form onSubmit={handleSubmit} className="space-y-4">
                 {canManageOthers && (
                   <div>
@@ -373,10 +375,7 @@ export default function StaffAvailability() {
                   </button>
                 </div>
               </form>
-            </div>
-          </div>
-        </div>
-      )}
+      </Modal>
     </div>
     </>
   );

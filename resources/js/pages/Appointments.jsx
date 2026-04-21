@@ -10,6 +10,7 @@ import EntityCardShell, { EntityCardHeader } from '../components/ui/EntityCardSh
 import ResidentAvatarInline from '../components/ui/ResidentAvatarInline';
 import DataPill, { DataPillSection } from '../components/ui/DataPill';
 import Tooltip from '../components/ui/Tooltip';
+import Modal from '../components/ui/Modal';
 import logger from '../utils/logger';
 import { toast } from 'sonner';
 
@@ -278,6 +279,28 @@ export default function Appointments() {
         }
     }, []); // Only run once on mount
 
+    // Deep link: /appointments?openCreate=1&residentId=… (from legacy /appointments/create/:id)
+    React.useEffect(() => {
+        if (searchParams.get('openCreate') !== '1') return;
+        if (!isCaregiver && !selectedBranchId) return;
+
+        const rid = searchParams.get('residentId');
+        if (rid && !allResidentsData?.data) return;
+
+        const next = new URLSearchParams(searchParams);
+        next.delete('openCreate');
+        setSearchParams(next, { replace: true });
+
+        if (rid) {
+            const id = parseInt(rid, 10);
+            if (!Number.isNaN(id)) {
+                handleOpenAppointmentModal(id);
+            }
+        } else {
+            handleOpenFormManually();
+        }
+    }, [searchParams, isCaregiver, selectedBranchId, allResidentsData]);
+
     // Scroll to and highlight appointment when data is loaded
     useEffect(() => {
         if (!highlightedAppointmentId.current || !data || !data.data || data.data.length === 0) {
@@ -453,7 +476,10 @@ export default function Appointments() {
 
     // Handle opening appointment view for a specific resident
     const handleOpenAppointmentView = (residentId) => {
-        window.location.href = `/appointments/create/${residentId}`;
+        const qs = new URLSearchParams();
+        qs.set('residentId', String(residentId));
+        qs.set('openCreate', '1');
+        navigate(`/appointments?${qs.toString()}`, { replace: false });
     };
 
 
@@ -499,6 +525,9 @@ export default function Appointments() {
             description: '',
             status: 'scheduled',
         });
+        const next = new URLSearchParams(searchParams);
+        next.delete('openCreate');
+        setSearchParams(next, { replace: true });
     };
 
     // Show branch selector and wait for branch selection (for non-caregivers)
@@ -1064,8 +1093,14 @@ export default function Appointments() {
                 )
             )}
 
-            {showForm && (
+            <Modal
+                isOpen={showForm}
+                onClose={handleCloseForm}
+                title="Add Appointment"
+                size="xl"
+            >
                 <AddAppointmentModal
+                    inModal
                     branches={branchesData?.data || branchesData || []}
                     residents={residentsData?.data || residentsData || []}
                     formData={formData}
@@ -1081,16 +1116,19 @@ export default function Appointments() {
                     isBranchAdmin={isBranchAdmin}
                     selectedBranchId={selectedBranchId}
                 />
-            )}
+            </Modal>
 
-            {/* Completion Notes Modal */}
-            {completingAppointment && (
-                <div className="fixed inset-0 backdrop-blur-md bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-                    <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-                        <div className="p-6 border-b">
-                            <h3 className="text-xl font-semibold text-gray-900">Complete Appointment</h3>
-                        </div>
-                        <div className="p-6 space-y-6">
+            <Modal
+                isOpen={completingAppointment != null}
+                onClose={() => {
+                    setCompletingAppointment(null);
+                    setCompletionNotes('');
+                    setCompletionDocuments([]);
+                }}
+                title="Complete appointment"
+                size="xl"
+            >
+                <div className="space-y-6">
                             <div>
                                 <label className="block text-sm font-bold text-gray-900 mb-1">
                                     Appointment Outcome / Notes (Optional)
@@ -1220,9 +1258,10 @@ export default function Appointments() {
                                     </div>
                                 )}
                             </div>
-                        </div>
-                        <div className="p-6 border-t flex items-center justify-end space-x-3">
+                </div>
+                <div className="flex items-center justify-end space-x-3 border-t border-gray-200 pt-4 mt-6">
                             <button
+                                type="button"
                                 onClick={() => {
                                     setCompletingAppointment(null);
                                     setCompletionNotes('');
@@ -1233,6 +1272,7 @@ export default function Appointments() {
                                 Cancel
                             </button>
                             <button
+                                type="button"
                                 onClick={() => {
                                     // Validate documents
                                     const validDocuments = completionDocuments.filter(doc =>
@@ -1249,19 +1289,20 @@ export default function Appointments() {
                                 Mark as Completed
                             </button>
                         </div>
-                    </div>
-                </div>
-            )}
+            </Modal>
 
-            {/* Cancellation/Status Update Modal */}
-            {cancellingAppointment && (
-                <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50 p-4" style={{ backgroundColor: 'rgba(0, 0, 0, 0.1)' }}>
-                    <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-                        <div className="p-6 border-b">
-                            <h3 className="text-xl font-semibold text-gray-900">Update Appointment Status</h3>
-                            <p className="text-sm text-gray-600 mt-1">Select the appointment status and add any comments</p>
-                        </div>
-                        <div className="p-6 space-y-6">
+            <Modal
+                isOpen={cancellingAppointment != null}
+                onClose={() => {
+                    setCancellingAppointment(null);
+                    setCancellationStatus('cancelled');
+                    setCancellationNotes('');
+                }}
+                title="Update appointment status"
+                size="xl"
+            >
+                <p className="text-sm text-gray-600 mb-4">Select the appointment status and add any comments.</p>
+                <div className="space-y-6">
                             {/* Status Dropdown */}
                             <div>
                                 <label className="block text-base font-semibold text-gray-900 mb-2" style={{ color: '#111827', fontWeight: 700 }}>
@@ -1315,8 +1356,9 @@ export default function Appointments() {
                                 </div>
                             )}
                         </div>
-                        <div className="p-6 border-t flex items-center justify-end space-x-3">
+                <div className="flex items-center justify-end space-x-3 border-t border-gray-200 pt-4 mt-6">
                             <button
+                                type="button"
                                 onClick={() => {
                                     setCancellingAppointment(null);
                                     setCancellationStatus('cancelled');
@@ -1327,6 +1369,7 @@ export default function Appointments() {
                                 Cancel
                             </button>
                             <button
+                                type="button"
                                 onClick={() => {
                                     if (!cancellationStatus) {
                                         alert('Please select an appointment status');
@@ -1342,14 +1385,12 @@ export default function Appointments() {
                                 Update Status
                             </button>
                         </div>
-                    </div>
-                </div>
-            )}
+            </Modal>
         </div>
     );
 }
 
-function AddAppointmentModal({ branches, residents, formData, setFormData, onClose, onSubmit, isSubmitting, mutation, isPreFilled = false, appointmentTypes = [], currentUser, isFacilityAdmin, isBranchAdmin, selectedBranchId }) {
+function AddAppointmentModal({ branches, residents, formData, setFormData, onClose, onSubmit, isSubmitting, mutation, isPreFilled = false, appointmentTypes = [], currentUser, isFacilityAdmin, isBranchAdmin, selectedBranchId, inModal = false }) {
     const [errors, setErrors] = React.useState({});
     
     // Ensure branch_id is set from selectedBranchId if provided
@@ -1376,15 +1417,9 @@ function AddAppointmentModal({ branches, residents, formData, setFormData, onClo
         onSubmit();
     };
 
-    return (
-        <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50 p-4" style={{ backgroundColor: 'rgba(0, 0, 0, 0.1)' }}>
-            <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
-                <div className="p-6 border-b flex items-center justify-between">
-                    <h3 className="text-xl font-semibold text-gray-900">Add Appointment</h3>
-                    <button onClick={onClose} className="text-gray-500 hover:text-gray-700 text-2xl">×</button>
-                </div>
+    const formInner = (
                 <form onSubmit={handleSubmit}>
-                    <div className="p-6 space-y-6">
+                    <div className={`${inModal ? 'space-y-6' : 'p-6 space-y-6'}`}>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {/* Branch Selection - Only show if branch not already selected from URL */}
                             {!selectedBranchId ? (
@@ -1542,7 +1577,7 @@ function AddAppointmentModal({ branches, residents, formData, setFormData, onClo
                             </div>
                         )}
                     </div>
-                    <div className="p-6 border-t flex items-center justify-end space-x-3">
+                    <div className={`${inModal ? 'pt-4 mt-4 border-t border-gray-200' : 'p-6 border-t'} flex items-center justify-end space-x-3`}>
                         <button
                             type="button"
                             onClick={onClose}
@@ -1559,9 +1594,9 @@ function AddAppointmentModal({ branches, residents, formData, setFormData, onClo
                         </button>
                     </div>
                 </form>
-            </div>
-        </div>
     );
+
+    return formInner;
 }
 
 

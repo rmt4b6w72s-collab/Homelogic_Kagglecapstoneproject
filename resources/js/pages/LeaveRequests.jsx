@@ -5,6 +5,7 @@ import logger from '../utils/logger';
 import { Calendar, Plus, Edit, Trash2, CheckCircle, XCircle } from 'lucide-react';
 import SectionCard from '../components/SectionCard';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
+import Modal from '../components/ui/Modal';
 import Tooltip from '../components/ui/Tooltip';
 import EntityCardShell, { EntityCardHeader } from '../components/ui/EntityCardShell';
 import CardIconButton from '../components/ui/CardIconButton';
@@ -137,20 +138,6 @@ export default function LeaveRequests() {
         variant="danger"
         isPending={deleteMutation.isPending}
       />
-      {showForm ? (
-      <div>
-        <LeaveForm
-          record={editing}
-          currentUser={currentUser}
-          isCaregiver={isCaregiver}
-          onClose={handleCloseForm}
-          onSuccess={() => {
-            handleCloseForm();
-            queryClient.invalidateQueries(['leave-requests']);
-          }}
-        />
-      </div>
-      ) : (
     <div>
       <div className="bg-white rounded-lg shadow p-6 mb-6">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
@@ -288,12 +275,31 @@ export default function LeaveRequests() {
         </div>
       )}
     </div>
-      )}
+
+      <Modal
+        isOpen={showForm}
+        onClose={handleCloseForm}
+        title={editing ? 'Edit Leave Request' : 'New Leave Request'}
+        size="xl"
+      >
+        <LeaveForm
+          key={editing?.id ?? 'new'}
+          inModal
+          record={editing}
+          currentUser={currentUser}
+          isCaregiver={isCaregiver}
+          onClose={handleCloseForm}
+          onSuccess={() => {
+            handleCloseForm();
+            queryClient.invalidateQueries(['leave-requests']);
+          }}
+        />
+      </Modal>
     </>
   );
 }
 
-function LeaveForm({ record, currentUser, isCaregiver, onClose, onSuccess }) {
+function LeaveForm({ record, currentUser, isCaregiver, onClose, onSuccess, inModal = false }) {
   // Format date helper function
   const formatDateForInput = (dateString) => {
     if (!dateString) return '';
@@ -367,20 +373,8 @@ function LeaveForm({ record, currentUser, isCaregiver, onClose, onSuccess }) {
     }
   };
 
-  return (
-    <div>
-      <SectionCard>
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-semibold text-gray-900">
-            {record ? 'Edit Leave Request' : 'New Leave Request'}
-          </h2>
-          <button
-            onClick={onClose}
-            className="text-gray-500 hover:text-gray-700"
-          >
-            ✕
-          </button>
-        </div>
+  const body = (
+    <>
           {errors.general && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
               <p className="text-sm text-red-800 font-medium">{errors.general}</p>
@@ -455,7 +449,7 @@ function LeaveForm({ record, currentUser, isCaregiver, onClose, onSuccess }) {
             )}
           </form>
 
-        <div className="flex justify-end space-x-3 mt-6">
+        <div className={`flex justify-end space-x-3 ${inModal ? 'mt-6 pt-4 border-t border-gray-200' : 'mt-6'}`}>
           <button
             type="button"
             onClick={onClose}
@@ -472,6 +466,29 @@ function LeaveForm({ record, currentUser, isCaregiver, onClose, onSuccess }) {
             {submitting ? 'Saving...' : (record ? 'Update' : 'Create')}
           </button>
         </div>
+    </>
+  );
+
+  if (inModal) {
+    return <div className="space-y-2">{body}</div>;
+  }
+
+  return (
+    <div>
+      <SectionCard>
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-semibold text-gray-900">
+            {record ? 'Edit Leave Request' : 'New Leave Request'}
+          </h2>
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700"
+          >
+            ✕
+          </button>
+        </div>
+        {body}
       </SectionCard>
     </div>
   );

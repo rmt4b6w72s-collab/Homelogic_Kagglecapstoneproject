@@ -3,6 +3,13 @@ import { X } from 'lucide-react';
 import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { fadeIn, fadeOut, scaleFadeIn, scaleFadeOut, shouldAnimate } from '../../utils/animationPresets';
 
+/**
+ * Hub create/edit pattern (keep list/filters mounted; never `if (showForm) return <Form />`):
+ * - Parent: <Modal isOpen={showForm} onClose={...} title={addOrEditTitle} size="xl">…</Modal> alongside main UI.
+ * - Child form: pass `inModal` and skip duplicate page title + close button; use `className={inModal ? '' : 'bg-white …'}` on the form shell.
+ * - Reset local state when switching add vs edit: `key={editing?.id ?? 'new'}` on the form inside Modal.
+ */
+
 export default function Modal({
     isOpen,
     onClose,

@@ -4,6 +4,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Users, Search, MapPin, Calendar, Phone, Activity, Edit, Eye, LayoutGrid, List, DoorOpen, Pill } from 'lucide-react';
 import api from '../../services/api';
 import ResidentForm from '../../components/ResidentForm';
+import Modal from '../../components/ui/Modal';
 import Tooltip from '../../components/ui/Tooltip';
 import EntityCardShell, { EntityCardHeader } from '../../components/ui/EntityCardShell';
 import CardIconButton from '../../components/ui/CardIconButton';
@@ -414,25 +415,33 @@ export default function MyResidentsPage() {
                 </section>
             )}
 
-            {canEditResidents && showForm && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-md p-4 animate-in fade-in duration-300">
-                    <div className="w-full max-w-4xl bg-white rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
-                        <ResidentForm
-                            record={editing}
-                            branches={branchesData?.data || []}
-                            selectedBranchId={currentUser?.assigned_branch_id}
-                            onClose={() => {
-                                setShowForm(false);
-                                setEditing(null);
-                            }}
-                            onSuccess={() => {
-                                setShowForm(false);
-                                setEditing(null);
-                                queryClient.invalidateQueries(['my-residents']);
-                            }}
-                        />
-                    </div>
-                </div>
+            {canEditResidents && (
+                <Modal
+                    isOpen={showForm}
+                    onClose={() => {
+                        setShowForm(false);
+                        setEditing(null);
+                    }}
+                    title={editing ? 'Edit Resident' : 'Add Resident'}
+                    size="xl"
+                >
+                    <ResidentForm
+                        key={editing?.id ?? 'new'}
+                        record={editing}
+                        branches={branchesData?.data || []}
+                        selectedBranchId={currentUser?.assigned_branch_id}
+                        inModal
+                        onClose={() => {
+                            setShowForm(false);
+                            setEditing(null);
+                        }}
+                        onSuccess={() => {
+                            setShowForm(false);
+                            setEditing(null);
+                            queryClient.invalidateQueries(['my-residents']);
+                        }}
+                    />
+                </Modal>
             )}
         </div>
     );

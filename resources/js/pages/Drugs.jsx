@@ -12,6 +12,7 @@ import FormCheckbox from '../components/forms/FormCheckbox';
 import { useToastContext } from '../contexts/ToastContext';
 import EmptyState from '../components/ui/EmptyState';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
+import Modal from '../components/ui/Modal';
 import Tooltip from '../components/ui/Tooltip';
 import CardIconButton from '../components/ui/CardIconButton';
 
@@ -76,15 +77,6 @@ export default function Drugs() {
         variant="danger"
         isPending={deleteMutation.isPending}
       />
-      {showForm ? (
-      <div>
-        <DrugForm
-          record={editing}
-          onClose={handleCloseForm}
-          onSuccess={() => { handleCloseForm(); queryClient.invalidateQueries(['drugs']); }}
-        />
-      </div>
-      ) : (
     <div>
       <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
@@ -205,7 +197,21 @@ export default function Drugs() {
         </div>
       )}
     </div>
-      )}
+
+      <Modal
+        isOpen={showForm}
+        onClose={handleCloseForm}
+        title={editing ? 'Edit Drug' : 'Add Drug'}
+        size="xl"
+      >
+        <DrugForm
+          key={editing?.id ?? 'new'}
+          inModal
+          record={editing}
+          onClose={handleCloseForm}
+          onSuccess={() => { handleCloseForm(); queryClient.invalidateQueries(['drugs']); }}
+        />
+      </Modal>
     </>
   );
 }
@@ -224,7 +230,7 @@ const drugSchema = z.object({
   is_active: z.boolean().default(true),
 });
 
-function DrugForm({ record, onClose, onSuccess }) {
+function DrugForm({ record, onClose, onSuccess, inModal = false }) {
   const toast = useToastContext();
   const [submitting, setSubmitting] = useState(false);
 
@@ -275,20 +281,22 @@ function DrugForm({ record, onClose, onSuccess }) {
     }
   };
 
-  return (
-    <div>
-      <SectionCard>
+  const formInner = (
+    <>
+        {!inModal && (
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-semibold text-gray-900">
             {record ? 'Edit Drug' : 'Add Drug'}
           </h2>
           <button
+            type="button"
             onClick={onClose}
             className="text-gray-500 hover:text-gray-700"
           >
             ✕
           </button>
         </div>
+        )}
 
         <FormProvider {...methods}>
           <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-6" id="drug-form">
@@ -371,7 +379,7 @@ function DrugForm({ record, onClose, onSuccess }) {
           </form>
         </FormProvider>
 
-        <div className="flex justify-end space-x-3 mt-6">
+        <div className={`flex justify-end space-x-3 ${inModal ? 'mt-6 pt-4 border-t border-gray-200' : 'mt-6'}`}>
           <button
             type="button"
             onClick={onClose}
@@ -388,7 +396,16 @@ function DrugForm({ record, onClose, onSuccess }) {
             {submitting ? 'Saving...' : (record ? 'Update' : 'Create')}
           </button>
         </div>
-      </SectionCard>
+    </>
+  );
+
+  if (inModal) {
+    return <div className="space-y-2">{formInner}</div>;
+  }
+
+  return (
+    <div>
+      <SectionCard>{formInner}</SectionCard>
     </div>
   );
 }

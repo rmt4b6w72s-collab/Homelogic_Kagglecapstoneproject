@@ -5,6 +5,7 @@ import { Package, Plus, Search, Edit, Trash2, AlertTriangle, CheckCircle, Trendi
 import SectionCard from '../components/SectionCard';
 import Card from '../components/Card';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
+import Modal from '../components/ui/Modal';
 import Tooltip from '../components/ui/Tooltip';
 import CardIconButton from '../components/ui/CardIconButton';
 
@@ -214,21 +215,12 @@ export default function PharmacyInventory() {
                 variant="danger"
                 isPending={deleteMutation.isPending}
             />
-            {showForm ? (
-            <div>
-                <SectionCard>
-                    <div className="flex items-center justify-between mb-6">
-                        <h2 className="text-xl font-semibold text-gray-900">
-                            {editing ? 'Edit Inventory Item' : 'Add Inventory Item'}
-                        </h2>
-                        <button
-                            onClick={handleCloseForm}
-                            className="text-gray-500 hover:text-gray-700"
-                        >
-                            ✕
-                        </button>
-                    </div>
-
+            <Modal
+                isOpen={showForm}
+                onClose={handleCloseForm}
+                title={editing ? 'Edit Inventory Item' : 'Add Inventory Item'}
+                size="xl"
+            >
                     {errorMessage && (
                         <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
                             <p className="text-sm text-red-800">{errorMessage}</p>
@@ -401,9 +393,7 @@ export default function PharmacyInventory() {
                             </button>
                         </div>
                     </form>
-                </SectionCard>
-            </div>
-            ) : (
+            </Modal>
         <div>
             <SectionCard>
                 <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
@@ -543,7 +533,6 @@ export default function PharmacyInventory() {
                 )}
             </SectionCard>
         </div>
-            )}
         </>
     );
 }

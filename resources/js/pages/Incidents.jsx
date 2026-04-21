@@ -660,67 +660,44 @@ export default function Incidents() {
                         handleOpenForm(selectedIncident);
                     }}
                 />
-            ) : showForm ? (
-                <IncidentForm
-                    record={selectedIncident}
-                    branches={availableBranches}
-                    residents={residents}
-                    users={users}
-                    attachments={attachments}
-                    setAttachments={setAttachments}
-                    currentUser={currentUser}
-                    isCaregiver={isCaregiver}
-                    onClose={handleCloseForm}
-                    onSuccess={() => {
-                        handleCloseForm();
-                        queryClient.invalidateQueries(['incidents']);
-                    }}
-                    onRequestResolveConfirm={(payload) => setResolveFormPayload(payload)}
-                    createMutation={createMutation}
-                    updateMutation={updateMutation}
-                    methods={methods}
-                    branchId={branchId}
-                />
             ) : (
-        <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-50/80 p-4 sm:p-6 lg:p-8 space-y-8">
-            {/* Hero header */}
-            <div className="relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_8px_30px_rgb(0,0,0,0.06)]">
-                <div
-                    className="absolute inset-0 opacity-[0.35]"
-                    style={{
-                        background:
-                            'radial-gradient(900px 280px at 10% -20%, var(--theme-primary-bg), transparent 55%), radial-gradient(600px 200px at 90% 0%, rgba(15, 23, 42, 0.06), transparent 50%)',
-                    }}
-                />
-                <div className="relative flex flex-col gap-6 p-6 sm:p-8 lg:flex-row lg:items-center lg:justify-between">
-                    <div className="flex items-start gap-4">
-                        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[var(--theme-primary)] to-[var(--theme-primary-hover)] text-[var(--theme-text-on-primary)] shadow-lg shadow-[var(--theme-primary)]/25">
-                            <ShieldAlert className="h-7 w-7" strokeWidth={1.75} />
-                        </div>
-                        <div>
-                            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Safety & compliance</p>
-                            <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Incidents</h1>
-                            <p className="mt-1 max-w-xl text-sm leading-relaxed text-slate-600">
-                                Manage and track facility incidents with a clear, auditable record.
-                            </p>
-                            {totalIncidents > 0 && (
-                                <p className="mt-3 text-xs font-medium text-slate-500">
-                                    {totalIncidents} record{totalIncidents !== 1 ? 's' : ''}
-                                    {data?.last_page > 1 ? ` · Page ${currentPage} of ${lastPage}` : ''}
+        <div className="space-y-6">
+            <EntityCardShell>
+                <EntityCardHeader
+                    left={
+                        <div className="flex items-start gap-3">
+                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-red-50">
+                                <ShieldAlert className="h-5 w-5 text-red-600" strokeWidth={2} aria-hidden="true" />
+                            </div>
+                            <div className="min-w-0">
+                                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                                    {'Safety & compliance'}
                                 </p>
-                            )}
+                                <h1 className="mt-1 text-xl font-bold leading-snug text-slate-900 sm:text-2xl">Incidents</h1>
+                            </div>
                         </div>
-                    </div>
-                    <button
-                        type="button"
-                        onClick={() => handleOpenForm()}
-                        className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-[var(--theme-primary)] px-5 py-3 text-sm font-semibold text-[var(--theme-text-on-primary)] shadow-md shadow-[var(--theme-primary)]/25 transition hover:bg-[var(--theme-primary-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--theme-primary)]"
-                    >
-                        <Plus className="h-5 w-5" />
-                        New Incident
-                    </button>
-                </div>
-            </div>
+                    }
+                    right={
+                        <button
+                            type="button"
+                            onClick={() => handleOpenForm()}
+                            className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg bg-[var(--theme-primary)] px-4 py-2 text-sm font-bold text-[var(--theme-text-on-primary)] transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--theme-primary)] focus-visible:ring-offset-2"
+                        >
+                            <Plus className="h-4 w-4 shrink-0" aria-hidden="true" />
+                            New Incident
+                        </button>
+                    }
+                />
+                <p className="text-sm leading-snug text-slate-600">
+                    Manage and track facility incidents with a clear, auditable record.
+                </p>
+                {totalIncidents > 0 && (
+                    <p className="mt-2 text-xs font-medium text-slate-500">
+                        {totalIncidents} record{totalIncidents !== 1 ? 's' : ''}
+                        {data?.last_page > 1 ? ` · Page ${currentPage} of ${lastPage}` : ''}
+                    </p>
+                )}
+            </EntityCardShell>
 
             {/* Incidents grid */}
             {isLoading ? (
@@ -927,12 +904,42 @@ export default function Incidents() {
             )}
         </div>
             )}
+
+            <Modal
+                isOpen={showForm}
+                onClose={handleCloseForm}
+                title={selectedIncident ? 'Edit Incident' : 'Add Incident'}
+                size="xl"
+            >
+                <IncidentForm
+                    key={selectedIncident?.id ?? 'new'}
+                    inModal
+                    record={selectedIncident}
+                    branches={availableBranches}
+                    residents={residents}
+                    users={users}
+                    attachments={attachments}
+                    setAttachments={setAttachments}
+                    currentUser={currentUser}
+                    isCaregiver={isCaregiver}
+                    onClose={handleCloseForm}
+                    onSuccess={() => {
+                        handleCloseForm();
+                        queryClient.invalidateQueries(['incidents']);
+                    }}
+                    onRequestResolveConfirm={(payload) => setResolveFormPayload(payload)}
+                    createMutation={createMutation}
+                    updateMutation={updateMutation}
+                    methods={methods}
+                    branchId={branchId}
+                />
+            </Modal>
         </>
     );
 }
 
 // Incident Form Component (Full Page Form like Expenses)
-function IncidentForm({ record, branches, residents, users, attachments, setAttachments, currentUser, isCaregiver, onClose, onSuccess, onRequestResolveConfirm, createMutation, updateMutation, methods, branchId }) {
+function IncidentForm({ record, branches, residents, users, attachments, setAttachments, currentUser, isCaregiver, onClose, onSuccess, onRequestResolveConfirm, createMutation, updateMutation, methods, branchId, inModal = false }) {
     const handleSubmit = (data) => {
         if (record) {
             if (
@@ -997,18 +1004,21 @@ function IncidentForm({ record, branches, residents, users, attachments, setAtta
     };
 
     return (
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className={inModal ? '' : 'bg-white rounded-lg shadow p-6'}>
+            {!inModal && (
             <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-semibold text-gray-900">
                     {record ? 'Edit Incident' : 'Add Incident'}
                 </h2>
                 <button
+                    type="button"
                     onClick={onClose}
                     className="text-gray-400 hover:text-gray-600"
                 >
                     <X className="w-6 h-6" />
                 </button>
             </div>
+            )}
 
             <FormProvider {...methods}>
                 <form onSubmit={methods.handleSubmit(handleSubmit)} className="space-y-4">

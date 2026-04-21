@@ -12,6 +12,7 @@ import FormInput from '../components/forms/FormInput';
 import FormTextarea from '../components/forms/FormTextarea';
 import FormSelect from '../components/forms/FormSelect';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
+import Modal from '../components/ui/Modal';
 import Tooltip from '../components/ui/Tooltip';
 import CardIconButton from '../components/ui/CardIconButton';
 
@@ -87,15 +88,6 @@ function BillingInvoices() {
         variant="danger"
         isPending={deleteMutation.isPending}
       />
-      {showForm ? (
-      <div>
-        <InvoiceForm
-          record={editing}
-          onClose={handleCloseForm}
-          onSuccess={() => { handleCloseForm(); queryClient.invalidateQueries(['billing-invoices']); }}
-        />
-      </div>
-      ) : (
     <div>
       <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
@@ -258,7 +250,21 @@ function BillingInvoices() {
         </div>
       )}
     </div>
-      )}
+
+      <Modal
+        isOpen={showForm}
+        onClose={handleCloseForm}
+        title={editing ? 'Edit Invoice' : 'Create Invoice'}
+        size="xl"
+      >
+        <InvoiceForm
+          key={editing?.id ?? 'new'}
+          inModal
+          record={editing}
+          onClose={handleCloseForm}
+          onSuccess={() => { handleCloseForm(); queryClient.invalidateQueries(['billing-invoices']); }}
+        />
+      </Modal>
     </>
   );
 }
@@ -285,7 +291,7 @@ const invoiceSchema = z.object({
   path: ['due_date'],
 });
 
-function InvoiceForm({ record, onClose, onSuccess }) {
+function InvoiceForm({ record, onClose, onSuccess, inModal = false }) {
   const toast = useToastContext();
   const [submitting, setSubmitting] = useState(false);
 
@@ -406,18 +412,21 @@ function InvoiceForm({ record, onClose, onSuccess }) {
   const categories = categoriesData?.data || [];
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
+    <div className={inModal ? '' : 'bg-white rounded-lg shadow p-6'}>
+      {!inModal && (
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-semibold text-gray-900">
           {record ? 'Edit Invoice' : 'Create Invoice'}
         </h2>
         <button
+          type="button"
           onClick={onClose}
           className="text-gray-400 hover:text-gray-600"
         >
           <X className="w-6 h-6" />
         </button>
       </div>
+      )}
 
       <FormProvider {...methods}>
         <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-6">

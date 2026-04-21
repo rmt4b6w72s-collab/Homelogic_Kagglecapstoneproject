@@ -23,6 +23,7 @@ import {
 import { formatPacificDate } from '../../utils/pacificTime';
 import logger from '../../utils/logger';
 import Tooltip from '../../components/ui/Tooltip';
+import Modal from '../../components/ui/Modal';
 
 export default function BehaviorChartsView() {
     const navigate = useNavigate();
@@ -498,31 +499,23 @@ export default function BehaviorChartsView() {
                 </div>
             )}
 
-            {/* Chart Detail Modal */}
-            {selectedChart && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm overflow-y-auto">
-                    <div className="bg-white w-full max-w-6xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] border border-gray-200">
-                        {/* Header */}
-                        <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
-                            <div>
-                                <h2 className="text-xl font-bold !text-black flex items-center gap-3">
-                                    <ClipboardList className="w-6 h-6 text-[var(--theme-primary)]" />
-                                    Behavior Chart Details
-                                </h2>
-                                <p className="text-sm !text-black mt-1">
-                                    {selectedChart.resident?.first_name} {selectedChart.resident?.last_name} - {formatPacificDate(selectedChart.chart_date)}
-                                </p>
-                            </div>
-                            <button
-                                onClick={handleCloseModal}
-                                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
-                            >
-                                <X className="w-6 h-6" />
-                            </button>
-                        </div>
-
-                        {/* Content */}
-                        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+            <Modal
+                isOpen={selectedChart != null}
+                onClose={handleCloseModal}
+                title={
+                    selectedChart
+                        ? `Behavior chart — ${[selectedChart.resident?.first_name, selectedChart.resident?.last_name].filter(Boolean).join(' ')}`
+                        : 'Behavior chart'
+                }
+                size="full"
+            >
+                {selectedChart ? (
+                    <>
+                    <p className="text-sm text-gray-600 mb-4 flex items-center gap-2">
+                        <ClipboardList className="w-4 h-4 text-[var(--theme-primary)] shrink-0" />
+                        {formatPacificDate(selectedChart.chart_date)}
+                    </p>
+                <div className="space-y-6">
                             {/* Chart Info */}
                             <div className="bg-gray-50 rounded-xl p-4">
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -677,18 +670,18 @@ export default function BehaviorChartsView() {
                             )}
                         </div>
 
-                        {/* Footer */}
-                        <div className="p-6 border-t border-gray-100 bg-gray-50/50 flex justify-end">
+                <div className="border-t border-gray-200 pt-4 mt-6 flex justify-end">
                             <button
+                                type="button"
                                 onClick={handleCloseModal}
                                 className="px-6 py-2.5 bg-[var(--theme-primary)] text-white rounded-lg font-semibold hover:bg-[var(--theme-primary-hover)] transition-colors"
                             >
                                 Close
                             </button>
                         </div>
-                    </div>
-                </div>
-            )}
+                    </>
+                ) : null}
+            </Modal>
             {/* Edit Chart Modal */}
             {editingChart && (
                 <ResidentChartModal
@@ -702,88 +695,74 @@ export default function BehaviorChartsView() {
                 />
             )}
 
-            {/* Review Chart Modal */}
-            {/* Review Chart Modal */}
-            {reviewChart && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-                    <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden border border-gray-200">
-                        {/* Header */}
-                        <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
-                            <h2 className="text-xl font-bold !text-black flex items-center gap-3">
-                                <CheckCircle className="w-6 h-6 text-[var(--theme-primary)]" />
-                                Review Chart
-                            </h2>
-                            <button
-                                onClick={handleCloseReviewModal}
-                                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
-                            >
-                                <X className="w-6 h-6" />
-                            </button>
+            <Modal
+                isOpen={reviewChart != null}
+                onClose={() => !isSubmittingReview && handleCloseReviewModal()}
+                title="Review chart"
+                size="md"
+            >
+                <p className="text-sm text-gray-600 mb-4 flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-[var(--theme-primary)] shrink-0" />
+                    Update review status for this chart.
+                </p>
+                <div className="space-y-4">
+                    <div className="space-y-3">
+                        <div>
+                            <label className="block text-sm font-semibold !text-black mb-1">Resident</label>
+                            <p className="text-sm font-medium !text-gray-900">
+                                {reviewChart?.resident?.first_name} {reviewChart?.resident?.last_name}
+                            </p>
                         </div>
-
-                        {/* Content */}
-                        <div className="p-6 space-y-4">
-                            {/* Chart Info */}
-                            <div className="space-y-3">
-                                <div>
-                                    <label className="block text-sm font-semibold !text-black mb-1">Resident</label>
-                                    <p className="text-sm font-medium !text-gray-900">
-                                        {reviewChart.resident?.first_name} {reviewChart.resident?.last_name}
-                                    </p>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-semibold !text-black mb-1">Caregiver</label>
-                                    <p className="text-sm font-medium !text-gray-900">
-                                        {reviewChart.caregiver?.name || 'N/A'}
-                                    </p>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-semibold !text-black mb-1">Branch</label>
-                                    <p className="text-sm font-medium !text-gray-900">
-                                        {reviewChart.resident?.branch?.name || 'N/A'}
-                                    </p>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-semibold !text-black mb-1">Status</label>
-                                    <div>{getStatusBadge(reviewChart.status)}</div>
-                                </div>
-                            </div>
-
-                            {/* Status Selection */}
-                            <div>
-                                <label className="block text-sm font-semibold !text-black mb-2">Select Status:</label>
-                                <select
-                                    value={reviewStatus}
-                                    onChange={(e) => setReviewStatus(e.target.value)}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent !text-black bg-white"
-                                >
-                                    <option value="" className="!text-black bg-white">Select</option>
-                                    <option value="approved" className="!text-black bg-white">Approved</option>
-                                    <option value="declined" className="!text-black bg-white">Declined</option>
-                                    <option value="pending" className="!text-black bg-white">Pending</option>
-                                </select>
-                            </div>
+                        <div>
+                            <label className="block text-sm font-semibold !text-black mb-1">Caregiver</label>
+                            <p className="text-sm font-medium !text-gray-900">
+                                {reviewChart?.caregiver?.name || 'N/A'}
+                            </p>
                         </div>
-
-                        {/* Footer */}
-                        <div className="p-6 border-t border-gray-100 bg-gray-50/50 flex justify-end gap-3">
-                            <button
-                                onClick={handleCloseReviewModal}
-                                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={handleSubmitReview}
-                                disabled={!reviewStatus || isSubmittingReview}
-                                className="px-6 py-2 bg-[var(--theme-primary)] text-white rounded-lg font-semibold hover:bg-[var(--theme-primary-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                {isSubmittingReview ? 'Saving...' : 'Save Status'}
-                            </button>
+                        <div>
+                            <label className="block text-sm font-semibold !text-black mb-1">Branch</label>
+                            <p className="text-sm font-medium !text-gray-900">
+                                {reviewChart?.resident?.branch?.name || 'N/A'}
+                            </p>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-semibold !text-black mb-1">Status</label>
+                            <div>{reviewChart ? getStatusBadge(reviewChart.status) : null}</div>
                         </div>
                     </div>
+                    <div>
+                        <label className="block text-sm font-semibold !text-black mb-2">Select Status:</label>
+                        <select
+                            value={reviewStatus}
+                            onChange={(e) => setReviewStatus(e.target.value)}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent !text-black bg-white"
+                        >
+                            <option value="" className="!text-black bg-white">Select</option>
+                            <option value="approved" className="!text-black bg-white">Approved</option>
+                            <option value="declined" className="!text-black bg-white">Declined</option>
+                            <option value="pending" className="!text-black bg-white">Pending</option>
+                        </select>
+                    </div>
                 </div>
-            )}
+                <div className="border-t border-gray-200 pt-4 mt-6 flex justify-end gap-3">
+                    <button
+                        type="button"
+                        onClick={handleCloseReviewModal}
+                        disabled={isSubmittingReview}
+                        className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors disabled:opacity-50"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        type="button"
+                        onClick={handleSubmitReview}
+                        disabled={!reviewStatus || isSubmittingReview}
+                        className="px-6 py-2 bg-[var(--theme-primary)] text-white rounded-lg font-semibold hover:bg-[var(--theme-primary-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        {isSubmittingReview ? 'Saving...' : 'Save Status'}
+                    </button>
+                </div>
+            </Modal>
         </div>
     );
 }

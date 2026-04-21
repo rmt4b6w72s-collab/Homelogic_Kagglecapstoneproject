@@ -5,6 +5,7 @@ import { Plus, Edit, Trash2, Eye, X, FileText, Calendar, User, Search, Filter, A
 import api from '../services/api';
 import Card from '../components/Card';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
+import Modal from '../components/ui/Modal';
 import Tooltip from '../components/ui/Tooltip';
 import { toast } from 'sonner';
 import TLogForm from './TLogForm';
@@ -275,20 +276,6 @@ export default function TLogs() {
         );
     }
 
-    // If form is open, show form as full page (like Expenses/Incidents form)
-    if (showForm) {
-        return (
-            <TLogForm
-                tLog={selectedTLog}
-                onClose={handleCloseForm}
-                onSuccess={() => {
-                    queryClient.invalidateQueries(['t-logs']);
-                    handleCloseForm();
-                }}
-            />
-        );
-    }
-
     return (
         <>
             <ConfirmDialog
@@ -302,6 +289,23 @@ export default function TLogs() {
                 variant="danger"
                 isPending={deleteMutation.isPending}
             />
+            <Modal
+                isOpen={showForm}
+                onClose={handleCloseForm}
+                title={selectedTLog ? 'Edit progress note' : 'New progress note'}
+                size="xl"
+            >
+                <TLogForm
+                    key={selectedTLog?.id ?? 'new'}
+                    tLog={selectedTLog}
+                    inModal
+                    onClose={handleCloseForm}
+                    onSuccess={() => {
+                        queryClient.invalidateQueries(['t-logs']);
+                        handleCloseForm();
+                    }}
+                />
+            </Modal>
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <h1 className="text-2xl font-bold text-gray-900">Progress notes</h1>

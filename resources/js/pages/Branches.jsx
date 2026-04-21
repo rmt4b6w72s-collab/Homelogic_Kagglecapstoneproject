@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../services/api';
-import { Building2, Plus, Search, Edit, Trash2, MapPin, Phone, Mail, Building, Navigation } from 'lucide-react';
+import { Building2, Plus, Search, Edit, Trash2, MapPin, Phone, Mail, Building, Navigation, Users } from 'lucide-react';
 import SectionCard from '../components/SectionCard';
 import { getUserLocation } from '../utils/location';
 import { formatPhoneNumber, unformatPhoneNumber } from '../utils/phoneFormatter';
 import { useToastContext } from '../contexts/ToastContext';
 import logger from '../utils/logger';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
+import Modal from '../components/ui/Modal';
 import Tooltip from '../components/ui/Tooltip';
 import EntityCardShell, { EntityCardHeader } from '../components/ui/EntityCardShell';
 import CardIconButton from '../components/ui/CardIconButton';
@@ -99,9 +100,15 @@ export default function Branches() {
         variant="danger"
         isPending={deleteMutation.isPending}
       />
-      {showForm ? (
-      <div>
+      <Modal
+        isOpen={showForm}
+        onClose={handleCloseForm}
+        title={editing ? 'Edit Branch' : 'Add Branch'}
+        size="xl"
+      >
         <BranchForm
+          key={editing?.id ?? 'new'}
+          inModal
           record={editing}
           facilities={facilities?.data || []}
           currentUser={currentUser}
@@ -114,8 +121,7 @@ export default function Branches() {
             queryClient.refetchQueries({ queryKey: ['branches'] });
           }}
         />
-      </div>
-      ) : (
+      </Modal>
     <div>
       <div className="bg-white rounded-lg shadow p-6 mb-6">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
@@ -210,6 +216,26 @@ export default function Branches() {
                   </p>
                 )}
 
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  {b.is_active === false && (
+                    <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-800">
+                      Inactive
+                    </span>
+                  )}
+                  <DataPill icon={Building2} className="!inline-flex w-auto max-w-full shrink-0 py-1.5 text-xs">
+                    <span className="font-normal">
+                      <span className="font-semibold text-slate-800">{Number(b.residents_count) || 0}</span>
+                      {' '}residents
+                    </span>
+                  </DataPill>
+                  <DataPill icon={Users} className="!inline-flex w-auto max-w-full shrink-0 py-1.5 text-xs">
+                    <span className="font-normal">
+                      <span className="font-semibold text-slate-800">{Number(b.caregivers_count) || 0}</span>
+                      {' '}staff
+                    </span>
+                  </DataPill>
+                </div>
+
                 <div className="mt-4 grid grid-cols-1 gap-2.5">
                   {b.address && (
                     <DataPill icon={MapPin}>
@@ -226,6 +252,22 @@ export default function Branches() {
                       <span className="truncate font-normal text-slate-600">{b.email}</span>
                     </DataPill>
                   )}
+                  {b.latitude != null && b.latitude !== '' && b.longitude != null && b.longitude !== '' && (
+                    <DataPill icon={Navigation}>
+                      <span className="font-normal text-slate-600">
+                        Geofence coordinates{' '}
+                        <span className="tabular-nums text-slate-500">
+                          ({Number(b.latitude).toFixed(4)}, {Number(b.longitude).toFixed(4)})
+                        </span>
+                      </span>
+                    </DataPill>
+                  )}
+                  {!b.address && !b.phone && !b.email
+                    && (b.latitude == null || b.latitude === '' || b.longitude == null || b.longitude === '') && (
+                    <p className="rounded-lg border border-dashed border-slate-200 bg-slate-50/50 px-3 py-2.5 text-xs leading-snug text-slate-500">
+                      No address, phone, or email on file. Use <span className="font-semibold text-slate-600">Edit</span> to add branch details.
+                    </p>
+                  )}
                 </div>
               </EntityCardShell>
             ))
@@ -238,12 +280,11 @@ export default function Branches() {
         </div>
       )}
     </div>
-      )}
     </>
   );
 }
 
-function BranchForm({ record, facilities, currentUser, isSuperAdmin, isFacilityAdmin, onClose, onSuccess }) {
+function BranchForm({ record, facilities, currentUser, isSuperAdmin, isFacilityAdmin, onClose, onSuccess, inModal = false }) {
   // For facility admins, automatically use their facility_id
   const initialFacilityId = React.useMemo(() => {
     if (record?.facility_id) return record.facility_id;
@@ -357,21 +398,8 @@ function BranchForm({ record, facilities, currentUser, isSuperAdmin, isFacilityA
     }
   };
 
-  return (
-    <div>
-      <SectionCard>
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-semibold text-gray-900">
-            {record ? 'Edit Branch' : 'Add Branch'}
-          </h2>
-          <button
-            onClick={onClose}
-            className="text-gray-500 hover:text-gray-700"
-          >
-            ✕
-          </button>
-        </div>
-
+  const formInner = (
+        <>
         {errors.general && (
           <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
             <p className="text-sm text-red-800">{errors.general}</p>
@@ -578,6 +606,25 @@ function BranchForm({ record, facilities, currentUser, isSuperAdmin, isFacilityA
             {submitting ? 'Saving...' : (record ? 'Update' : 'Create')}
           </button>
         </div>
+        </>
+  );
+
+  if (inModal) {
+    return <div className="space-y-4">{formInner}</div>;
+  }
+
+  return (
+    <div>
+      <SectionCard>
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-semibold text-gray-900">
+            {record ? 'Edit Branch' : 'Add Branch'}
+          </h2>
+          <button type="button" onClick={onClose} className="text-gray-500 hover:text-gray-700">
+            ✕
+          </button>
+        </div>
+        {formInner}
       </SectionCard>
     </div>
   );

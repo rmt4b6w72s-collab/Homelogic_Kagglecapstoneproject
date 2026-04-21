@@ -2,10 +2,11 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../services/api';
 import logger from '../utils/logger';
-import { ShoppingCart, Plus, Search, Edit, Trash2, Calendar, Package, CheckCircle, Clock, XCircle, Truck, X } from 'lucide-react';
+import { ShoppingCart, Plus, Search, Edit, Trash2, Calendar, Package, CheckCircle, Clock, XCircle, Truck } from 'lucide-react';
 import SectionCard from '../components/SectionCard';
 import Card from '../components/Card';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
+import Modal from '../components/ui/Modal';
 
 export default function PharmacyOrders() {
     const queryClient = useQueryClient();
@@ -259,6 +260,22 @@ export default function PharmacyOrders() {
         createMutation.mutate(formData);
     };
 
+    const resetOrderFormData = () => ({
+        branch_id: '',
+        supplier_id: '',
+        status: 'draft',
+        order_date: new Date().toISOString().split('T')[0],
+        expected_delivery_date: '',
+        notes: '',
+        internal_notes: '',
+        items: [],
+    });
+    const closeOrderForm = () => {
+        setShowForm(false);
+        setEditing(null);
+        setFormData(resetOrderFormData());
+    };
+
     const getStatusBadge = (status) => {
         const styles = {
             draft: 'bg-gray-100 text-gray-800',
@@ -296,35 +313,7 @@ export default function PharmacyOrders() {
         }
     };
 
-    if (showForm) {
-        return (
-            <div>
-                <SectionCard>
-                    <div className="flex items-center justify-between mb-6">
-                        <h2 className="text-xl font-semibold text-gray-900">
-                            {editing ? 'Edit Order' : 'Create Order'}
-                        </h2>
-                        <button
-                            onClick={() => {
-                                setShowForm(false);
-                                setEditing(null);
-                                setFormData({
-                                    branch_id: '',
-                                    supplier_id: '',
-                                    status: 'draft',
-                                    order_date: new Date().toISOString().split('T')[0],
-                                    expected_delivery_date: '',
-                                    notes: '',
-                                    internal_notes: '',
-                                    items: [],
-                                });
-                            }}
-                            className="text-gray-500 hover:text-gray-700"
-                        >
-                            <X className="w-5 h-5" />
-                        </button>
-                    </div>
-
+    const pharmacyOrderForm = (
                     <form onSubmit={handleSubmit} className="space-y-6">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
@@ -506,20 +495,7 @@ export default function PharmacyOrders() {
                         <div className="flex justify-end space-x-3 border-t pt-6">
                             <button
                                 type="button"
-                                onClick={() => {
-                                    setShowForm(false);
-                                    setEditing(null);
-                                    setFormData({
-                                        branch_id: '',
-                                        supplier_id: '',
-                                        status: 'draft',
-                                        order_date: new Date().toISOString().split('T')[0],
-                                        expected_delivery_date: '',
-                                        notes: '',
-                                        internal_notes: '',
-                                        items: [],
-                                    });
-                                }}
+                                onClick={closeOrderForm}
                                 className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
                             >
                                 Cancel
@@ -533,10 +509,7 @@ export default function PharmacyOrders() {
                             </button>
                         </div>
                     </form>
-                </SectionCard>
-            </div>
-        );
-    }
+    );
 
     if (showItems && selectedOrder) {
         return (
@@ -686,6 +659,14 @@ export default function PharmacyOrders() {
                 variant="danger"
                 isPending={deleteMutation.isPending}
             />
+            <Modal
+                isOpen={showForm}
+                onClose={closeOrderForm}
+                title={editing ? 'Edit Order' : 'Create Order'}
+                size="xl"
+            >
+                {pharmacyOrderForm}
+            </Modal>
         <div>
             <SectionCard>
                 <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">

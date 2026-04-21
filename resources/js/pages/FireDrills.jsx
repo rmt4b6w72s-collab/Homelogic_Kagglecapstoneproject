@@ -15,6 +15,7 @@ import FormInput from '../components/forms/FormInput';
 import FormTextarea from '../components/forms/FormTextarea';
 import FormSelect from '../components/forms/FormSelect';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
+import Modal from '../components/ui/Modal';
 import Tooltip from '../components/ui/Tooltip';
 
 export default function FireDrills() {
@@ -247,22 +248,6 @@ export default function FireDrills() {
                 variant={fireConfirmCopy.variant}
                 isPending={fireConfirmPending}
             />
-            {showForm ? (
-                <div>
-                    <FireDrillForm
-                        record={editing}
-                        branches={branches}
-                        isCaregiver={isCaregiver}
-                        caregiverBranchId={currentUser?.assigned_branch_id}
-                        onClose={handleCloseForm}
-                        onSuccess={() => {
-                            handleCloseForm();
-                            queryClient.invalidateQueries(['fire-drills']);
-                            queryClient.invalidateQueries(['reminders', 'upcoming']);
-                        }}
-                    />
-                </div>
-            ) : (
         <div>
             <SectionCard>
                 <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
@@ -552,12 +537,33 @@ export default function FireDrills() {
                 )}
             </SectionCard>
         </div>
-            )}
+
+            <Modal
+                isOpen={showForm}
+                onClose={handleCloseForm}
+                title={editing ? 'Edit Fire Drill' : 'Schedule Fire Drill'}
+                size="xl"
+            >
+                <FireDrillForm
+                    key={editing?.id ?? 'new'}
+                    inModal
+                    record={editing}
+                    branches={branches}
+                    isCaregiver={isCaregiver}
+                    caregiverBranchId={currentUser?.assigned_branch_id}
+                    onClose={handleCloseForm}
+                    onSuccess={() => {
+                        handleCloseForm();
+                        queryClient.invalidateQueries(['fire-drills']);
+                        queryClient.invalidateQueries(['reminders', 'upcoming']);
+                    }}
+                />
+            </Modal>
         </>
     );
 }
 
-function FireDrillForm({ record, branches, isCaregiver, caregiverBranchId, onClose, onSuccess }) {
+function FireDrillForm({ record, branches, isCaregiver, caregiverBranchId, onClose, onSuccess, inModal = false }) {
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const methods = useForm({
@@ -602,6 +608,7 @@ function FireDrillForm({ record, branches, isCaregiver, caregiverBranchId, onClo
 
     return (
         <div className="space-y-6">
+            {!inModal && (
             <div className="flex items-center gap-3">
                 <button
                     type="button"
@@ -615,8 +622,10 @@ function FireDrillForm({ record, branches, isCaregiver, caregiverBranchId, onClo
                     {record ? 'Edit Fire Drill' : 'Schedule Fire Drill'}
                 </p>
             </div>
+            )}
 
-            <div className="rounded-3xl bg-white shadow-lg ring-1 ring-gray-100">
+            <div className={inModal ? '' : 'rounded-3xl bg-white shadow-lg ring-1 ring-gray-100'}>
+                {!inModal && (
                 <div className="border-b border-gray-100 px-6 py-4 sm:px-8 sm:py-5">
                     <h2 className="text-xl font-semibold text-gray-900">
                         {record ? 'Edit Fire Drill' : 'Schedule New Fire Drill'}
@@ -625,8 +634,9 @@ function FireDrillForm({ record, branches, isCaregiver, caregiverBranchId, onClo
                         {record ? 'Update fire drill details below.' : 'Fill in the details to schedule a new fire drill.'}
                     </p>
                 </div>
+                )}
 
-                <div className="px-6 py-6 sm:px-8 sm:py-8">
+                <div className={inModal ? '' : 'px-6 py-6 sm:px-8 sm:py-8'}>
                     <FormProvider {...methods}>
                         <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

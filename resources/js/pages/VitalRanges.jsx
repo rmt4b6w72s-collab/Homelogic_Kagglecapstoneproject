@@ -10,6 +10,7 @@ import FormSelect from '../components/forms/FormSelect';
 import FormTextarea from '../components/forms/FormTextarea';
 import { useToastContext } from '../contexts/ToastContext';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
+import Modal from '../components/ui/Modal';
 import Tooltip from '../components/ui/Tooltip';
 import CardIconButton from '../components/ui/CardIconButton';
 
@@ -70,15 +71,20 @@ export default function VitalRanges() {
         variant="danger"
         isPending={deleteMutation.isPending}
       />
-      {showForm ? (
-      <div>
+      <Modal
+        isOpen={showForm}
+        onClose={handleCloseForm}
+        title={editing ? 'Edit Range' : 'Add Range'}
+        size="lg"
+      >
         <RangeForm
+          key={editing?.id ?? 'new'}
+          inModal
           record={editing}
           onClose={handleCloseForm}
           onSuccess={() => { handleCloseForm(); queryClient.invalidateQueries(['vital-ranges']); }}
         />
-      </div>
-      ) : (
+      </Modal>
     <div>
       <div className="bg-white rounded-lg shadow p-6 mb-6">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
@@ -159,7 +165,6 @@ export default function VitalRanges() {
         </div>
       )}
     </div>
-      )}
     </>
   );
 }
@@ -179,7 +184,7 @@ const vitalRangeSchema = z.object({
   description: z.string().optional(),
 });
 
-function RangeForm({ record, onClose, onSuccess }) {
+function RangeForm({ record, onClose, onSuccess, inModal = false }) {
   const toast = useToastContext();
   const [submitting, setSubmitting] = useState(false);
 
@@ -246,18 +251,21 @@ function RangeForm({ record, onClose, onSuccess }) {
   ];
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-semibold text-gray-900">
-          {record ? 'Edit Range' : 'Add Range'}
-        </h2>
-        <button
-          onClick={onClose}
-          className="text-gray-400 hover:text-gray-600"
-        >
-          <X className="w-6 h-6" />
-        </button>
-      </div>
+    <div className={inModal ? '' : 'bg-white rounded-lg shadow p-6'}>
+      {!inModal && (
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-semibold text-gray-900">
+            {record ? 'Edit Range' : 'Add Range'}
+          </h2>
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600"
+          >
+            <X className="w-6 h-6" />
+          </button>
+        </div>
+      )}
 
       <FormProvider {...methods}>
         <form id="vital-range-form" onSubmit={methods.handleSubmit(onSubmit)} className="space-y-6">

@@ -5,6 +5,7 @@ import api from '../services/api';
 import { User, MapPin, Clock, AlertTriangle, CheckCircle, History } from 'lucide-react';
 import SectionCard from '../components/SectionCard';
 import EmptyState from '../components/ui/EmptyState';
+import Modal from '../components/ui/Modal';
 import { toast } from 'sonner';
 
 export default function ResidentSignOut() {
@@ -119,26 +120,33 @@ export default function ResidentSignOut() {
         },
     });
 
-    if (showForm) {
-        return (
-            <ResidentSignOutForm
-                residents={residentsData || []}
-                selectedResident={selectedResident}
-                currentUser={currentUser}
-                isFacilityAdmin={isFacilityAdmin}
-                isBranchAdmin={isBranchAdmin}
-                branches={branchesData?.data || []}
+    return (
+        <>
+            <Modal
+                isOpen={showForm}
                 onClose={() => {
                     setShowForm(false);
                     setSelectedResident(null);
                 }}
-                onSubmit={(data) => signOutMutation.mutate(data)}
-                isSubmitting={signOutMutation.isPending}
-            />
-        );
-    }
-
-    return (
+                title="Sign Out Resident"
+                size="lg"
+            >
+                <ResidentSignOutForm
+                    inModal
+                    residents={residentsData || []}
+                    selectedResident={selectedResident}
+                    currentUser={currentUser}
+                    isFacilityAdmin={isFacilityAdmin}
+                    isBranchAdmin={isBranchAdmin}
+                    branches={branchesData?.data || []}
+                    onClose={() => {
+                        setShowForm(false);
+                        setSelectedResident(null);
+                    }}
+                    onSubmit={(data) => signOutMutation.mutate(data)}
+                    isSubmitting={signOutMutation.isPending}
+                />
+            </Modal>
         <div className="space-y-6">
             <SectionCard>
                 <div className="flex items-center justify-between mb-6">
@@ -263,10 +271,11 @@ export default function ResidentSignOut() {
                 )}
             </SectionCard>
         </div>
+        </>
     );
 }
 
-function ResidentSignOutForm({ residents, selectedResident, currentUser, isFacilityAdmin, isBranchAdmin, branches, onClose, onSubmit, isSubmitting }) {
+function ResidentSignOutForm({ residents, selectedResident, currentUser, isFacilityAdmin, isBranchAdmin, branches, onClose, onSubmit, isSubmitting, inModal = false }) {
     const [form, setForm] = useState({
         branch_id: isBranchAdmin && currentUser?.assigned_branch_id ? String(currentUser.assigned_branch_id) : '',
         resident_id: selectedResident?.id || '',
@@ -316,18 +325,7 @@ function ResidentSignOutForm({ residents, selectedResident, currentUser, isFacil
         onSubmit(form);
     };
 
-    return (
-        <SectionCard>
-            <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-gray-900">Sign Out Resident</h2>
-                <button
-                    onClick={onClose}
-                    className="text-gray-500 hover:text-gray-700"
-                >
-                    ✕
-                </button>
-            </div>
-
+    const formEl = (
             <form onSubmit={handleSubmit} className="space-y-4">
                 {/* Branch selection for administrators */}
                 {(isFacilityAdmin || isBranchAdmin) && (
@@ -464,6 +462,21 @@ function ResidentSignOutForm({ residents, selectedResident, currentUser, isFacil
                     </button>
                 </div>
             </form>
+    );
+
+    if (inModal) {
+        return formEl;
+    }
+
+    return (
+        <SectionCard>
+            <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-semibold text-gray-900">Sign Out Resident</h2>
+                <button type="button" onClick={onClose} className="text-gray-500 hover:text-gray-700">
+                    ✕
+                </button>
+            </div>
+            {formEl}
         </SectionCard>
     );
 }

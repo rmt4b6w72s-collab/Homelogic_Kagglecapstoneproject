@@ -27,6 +27,7 @@ import SectionCard from '../components/SectionCard';
 import BranchSelector from '../components/BranchSelector';
 import logger from '../utils/logger';
 import Tooltip from '../components/ui/Tooltip';
+import Modal from '../components/ui/Modal';
 
 const tabs = [
     { id: 'today', label: 'Today', icon: Calendar },
@@ -1097,30 +1098,31 @@ export default function AppointmentsDashboard() {
             </SectionCard>
 
             {/* Add Appointment Modal */}
-            {showForm && (
-                <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50 p-4" style={{ backgroundColor: 'rgba(0, 0, 0, 0.1)' }}>
-                    <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
-                        <div className="p-6 border-b flex items-center justify-between">
-                            <h3 className="text-xl font-semibold text-gray-900">Add Appointment</h3>
-                            <button onClick={() => setShowForm(false)} className="text-gray-500 hover:text-gray-700 text-2xl">×</button>
-                        </div>
-                        <form onSubmit={async (e) => {
-                            e.preventDefault();
-                            if (!formData.resident_id) {
-                                alert('Please select a resident');
-                                return;
-                            }
-                            if (!formData.appointment_date) {
-                                alert('Please select a date');
-                                return;
-                            }
-                            if (!formData.appointment_time) {
-                                alert('Please select a time');
-                                return;
-                            }
-                            await createMutation.mutateAsync(formData);
-                        }}>
-                            <div className="p-6 space-y-6">
+            <Modal
+                isOpen={showForm}
+                onClose={() => setShowForm(false)}
+                title="Add Appointment"
+                size="xl"
+            >
+                <form
+                    onSubmit={async (e) => {
+                        e.preventDefault();
+                        if (!formData.resident_id) {
+                            alert('Please select a resident');
+                            return;
+                        }
+                        if (!formData.appointment_date) {
+                            alert('Please select a date');
+                            return;
+                        }
+                        if (!formData.appointment_time) {
+                            alert('Please select a time');
+                            return;
+                        }
+                        await createMutation.mutateAsync(formData);
+                    }}
+                >
+                    <div className="space-y-6">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     {/* Branch Selection - Only show if branch not already selected from URL */}
                                     {!selectedBranchId ? (
@@ -1225,7 +1227,7 @@ export default function AppointmentsDashboard() {
                                     </div>
                                 </div>
                             </div>
-                            <div className="p-6 border-t flex items-center justify-end space-x-3">
+                    <div className="flex items-center justify-end space-x-3 border-t border-gray-200 pt-4 mt-6">
                                 <button
                                     type="button"
                                     onClick={() => setShowForm(false)}
@@ -1241,29 +1243,21 @@ export default function AppointmentsDashboard() {
                                     {createMutation.isPending ? 'Creating...' : 'Create Appointment'}
                                 </button>
                             </div>
-                        </form>
-                    </div>
-                </div>
-            )}
+                </form>
+            </Modal>
 
             {/* Reschedule Appointment Modal */}
-            {reschedulingAppointment && (
-                <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50 p-4" style={{ backgroundColor: 'rgba(0, 0, 0, 0.1)' }}>
-                    <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
-                        <div className="p-6 border-b flex items-center justify-between">
-                            <h3 className="text-xl font-semibold text-gray-900">Reschedule Appointment</h3>
-                            <button 
-                                onClick={() => {
-                                    setReschedulingAppointment(null);
-                                    setRescheduleFormData({ appointment_date: '', appointment_time: '', reschedule_reason: '' });
-                                }} 
-                                className="text-gray-500 hover:text-gray-700 text-2xl"
-                            >
-                                ×
-                            </button>
-                        </div>
-                        <form onSubmit={handleRescheduleSubmit}>
-                            <div className="p-6 space-y-4">
+            <Modal
+                isOpen={reschedulingAppointment != null}
+                onClose={() => {
+                    setReschedulingAppointment(null);
+                    setRescheduleFormData({ appointment_date: '', appointment_time: '', reschedule_reason: '' });
+                }}
+                title="Reschedule Appointment"
+                size="md"
+            >
+                <form onSubmit={handleRescheduleSubmit}>
+                    <div className="space-y-4">
                                 <div>
                                     <label className="block text-sm font-bold text-gray-900 mb-1">Date *</label>
                                     <input
@@ -1302,7 +1296,7 @@ export default function AppointmentsDashboard() {
                                     </div>
                                 )}
                             </div>
-                            <div className="p-6 border-t flex items-center justify-end space-x-3">
+                    <div className="flex items-center justify-end space-x-3 border-t border-gray-200 pt-4 mt-6">
                                 <button
                                     type="button"
                                     onClick={() => {
@@ -1321,20 +1315,24 @@ export default function AppointmentsDashboard() {
                                     {rescheduleMutation.isPending ? 'Rescheduling...' : 'Reschedule'}
                                 </button>
                             </div>
-                        </form>
-                    </div>
-                </div>
-            )}
+                </form>
+            </Modal>
 
             {/* Cancellation/Status Update Modal */}
-            {cancellingAppointment && (
-                <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50 p-4" style={{ backgroundColor: 'rgba(0, 0, 0, 0.1)' }}>
-                    <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-                        <div className="p-6 border-b">
-                            <h3 className="text-xl font-semibold text-gray-900">Update Appointment Status</h3>
-                            <p className="text-sm text-gray-600 mt-1">Select the appointment status and add any comments</p>
-                        </div>
-                        <div className="p-6 space-y-6">
+            <Modal
+                isOpen={cancellingAppointment != null}
+                onClose={() => {
+                    setCancellingAppointment(null);
+                    setCancellationStatus('scheduled');
+                    setCancellationNotes('');
+                    setUpdateAppointmentDate('');
+                    setUpdateAppointmentTime('');
+                }}
+                title="Update Appointment Status"
+                size="xl"
+            >
+                <p className="text-sm text-gray-600 mb-4">Select the appointment status and add any comments</p>
+                <div className="space-y-6">
                             {/* Status Dropdown */}
                             <div>
                                 <label className="block text-base font-semibold text-gray-900 mb-2" style={{ color: '#111827', fontWeight: 700 }}>
@@ -1414,8 +1412,9 @@ export default function AppointmentsDashboard() {
                                 </div>
                             )}
                         </div>
-                        <div className="p-6 border-t flex items-center justify-end space-x-3">
+                <div className="flex items-center justify-end space-x-3 border-t border-gray-200 pt-4 mt-6">
                             <button
+                                type="button"
                                 onClick={() => {
                                     setCancellingAppointment(null);
                                     setCancellationStatus('scheduled');
@@ -1428,6 +1427,7 @@ export default function AppointmentsDashboard() {
                                 Cancel
                             </button>
                             <button
+                                type="button"
                                 onClick={() => {
                                     // Check if date or time is being changed
                                     const currentDate = cancellingAppointment.appointment_date 
@@ -1472,9 +1472,7 @@ export default function AppointmentsDashboard() {
                                 {cancelMutation.isPending ? 'Updating...' : 'Update Appointment'}
                             </button>
                         </div>
-                    </div>
-                </div>
-            )}
+            </Modal>
 
         </div>
     );

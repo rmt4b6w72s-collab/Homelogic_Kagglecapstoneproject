@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Navigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../services/api';
 import {
@@ -23,9 +23,18 @@ const normalizeCoordinateInput = (value) => {
   return num.toFixed(COORDINATE_DECIMALS);
 };
 
-export default function FacilityEdit() {
-  const { id } = useParams();
+export function FacilityEditPage({ embeddedFacilityId, onRequestClose } = {}) {
+  const params = useParams();
+  const id = embeddedFacilityId ?? params.id;
   const navigate = useNavigate();
+
+  const leaveToFacilitiesHub = () => {
+    if (onRequestClose) {
+      onRequestClose();
+    } else {
+      navigate('/super-admin/facilities');
+    }
+  };
   const { showToast } = useToastContext();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState('overview');
@@ -85,7 +94,8 @@ export default function FacilityEdit() {
           <p>Failed to load facility. Please try again.</p>
         </div>
         <button
-          onClick={() => navigate('/super-admin/facilities')}
+          type="button"
+          onClick={() => leaveToFacilitiesHub()}
           className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300"
         >
           Go Back
@@ -110,7 +120,8 @@ export default function FacilityEdit() {
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-4">
             <button
-              onClick={() => navigate('/super-admin/facilities')}
+              type="button"
+              onClick={() => leaveToFacilitiesHub()}
               className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
             >
               <ArrowLeft className="w-5 h-5" />
@@ -155,6 +166,12 @@ export default function FacilityEdit() {
       </div>
     </div>
   );
+}
+
+/** Legacy `/super-admin/facilities/:id/edit` → hub opens edit in modal */
+export default function FacilityEdit() {
+  const { id } = useParams();
+  return <Navigate to={`/super-admin/facilities?editFacilityId=${encodeURIComponent(id)}`} replace />;
 }
 
 // Overview Tab
@@ -1043,7 +1060,8 @@ function AccountsTab({ facilityId }) {
           <p className="text-sm text-gray-600">Manage users associated with this facility.</p>
         </div>
         <button
-          onClick={() => navigate(`/administration/users/create?facility_id=${facilityId}`)}
+          type="button"
+          onClick={() => navigate(`/administration/users?create=1&facility_id=${facilityId}`)}
           className="px-4 py-2 bg-[var(--theme-primary)] text-white rounded-lg hover:bg-[var(--theme-primary-hover)] flex items-center gap-2"
         >
           <Plus className="w-4 h-4" />
@@ -1088,7 +1106,7 @@ function AccountsTab({ facilityId }) {
                   <Tooltip content="Edit user" position="top">
                     <button
                       type="button"
-                      onClick={() => navigate(`/administration/users/${user.id}/edit`)}
+                      onClick={() => navigate(`/administration/users?editUserId=${user.id}`)}
                       className="p-1.5 text-[var(--theme-primary)] hover:bg-gray-100 rounded"
                       aria-label="Edit user"
                     >
@@ -1145,7 +1163,7 @@ function AccountsTab({ facilityId }) {
           onClose={() => setViewingProfile(null)}
           onEdit={() => {
             setViewingProfile(null);
-            navigate(`/administration/users/${viewingProfile.id}/edit`);
+            navigate(`/administration/users?editUserId=${viewingProfile.id}`);
           }}
         />
       )}

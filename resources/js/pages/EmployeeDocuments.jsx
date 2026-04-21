@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../services/api';
 import { FileText, Plus, Edit, Trash2, Search, Filter, Download, Calendar, User as UserIcon, AlertCircle, X } from 'lucide-react';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
+import Modal from '../components/ui/Modal';
 import Tooltip from '../components/ui/Tooltip';
 import CardIconButton from '../components/ui/CardIconButton';
 
@@ -100,23 +101,6 @@ export default function EmployeeDocuments() {
                 variant="danger"
                 isPending={deleteMutation.isPending}
             />
-            {showForm ? (
-            <div>
-                <EmployeeDocumentForm
-                    record={editing}
-                    users={usersData?.data || []}
-                    onClose={() => {
-                        setShowForm(false);
-                        setEditing(null);
-                    }}
-                    onSuccess={() => {
-                        setShowForm(false);
-                        setEditing(null);
-                        queryClient.invalidateQueries(['employee-documents']);
-                    }}
-                />
-            </div>
-            ) : (
         <div>
             <div className="bg-white rounded-lg shadow p-6 mb-6">
                 <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
@@ -384,13 +368,38 @@ export default function EmployeeDocuments() {
                 </div>
             )}
         </div>
-            )}
+
+            <Modal
+                isOpen={showForm}
+                onClose={() => {
+                    setShowForm(false);
+                    setEditing(null);
+                }}
+                title={editing ? 'Edit Document' : 'Add Document'}
+                size="xl"
+            >
+                <EmployeeDocumentForm
+                    key={editing?.id ?? 'new'}
+                    inModal
+                    record={editing}
+                    users={usersData?.data || []}
+                    onClose={() => {
+                        setShowForm(false);
+                        setEditing(null);
+                    }}
+                    onSuccess={() => {
+                        setShowForm(false);
+                        setEditing(null);
+                        queryClient.invalidateQueries(['employee-documents']);
+                    }}
+                />
+            </Modal>
         </>
     );
 }
 
 // Employee Document Form Component
-function EmployeeDocumentForm({ record, users, onClose, onSuccess }) {
+function EmployeeDocumentForm({ record, users, onClose, onSuccess, inModal = false }) {
     const [formData, setFormData] = useState({
         user_id: record?.user_id || '',
         document_name: record?.document_name || '',
@@ -485,18 +494,21 @@ function EmployeeDocumentForm({ record, users, onClose, onSuccess }) {
     };
 
     return (
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className={inModal ? '' : 'bg-white rounded-lg shadow p-6'}>
+            {!inModal && (
             <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-semibold text-gray-900">
                     {record ? 'Edit Document' : 'Add Document'}
                 </h2>
                 <button
+                    type="button"
                     onClick={onClose}
                     className="text-gray-400 hover:text-gray-600"
                 >
                     <X className="w-6 h-6" />
                 </button>
             </div>
+            )}
 
                     {errors.general && (
                         <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">

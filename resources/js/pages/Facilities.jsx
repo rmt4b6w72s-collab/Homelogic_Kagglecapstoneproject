@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../services/api';
 import { useToastContext } from '../contexts/ToastContext';
@@ -7,10 +7,14 @@ import {
   FacilityList
 } from '../components/facility';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
+import Modal from '../components/ui/Modal';
+import { FacilityCreateForm } from './FacilityCreate';
+import { FacilityEditPage } from './FacilityEdit';
 
 export default function Facilities() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { showToast } = useToastContext();
 
   const [search, setSearch] = useState('');
@@ -77,13 +81,31 @@ export default function Facilities() {
     return null; // Will redirect via useEffect
   }
 
+  const createFacilityOpen = searchParams.get('createFacility') === '1';
+  const editFacilityIdRaw = searchParams.get('editFacilityId');
+  const editFacilityId = editFacilityIdRaw ? parseInt(editFacilityIdRaw, 10) : null;
+  const editFacilityOpen = editFacilityId != null && !Number.isNaN(editFacilityId);
+
+  const clearFacilityModalQuery = () => {
+    const next = new URLSearchParams(searchParams);
+    next.delete('createFacility');
+    next.delete('editFacilityId');
+    setSearchParams(next, { replace: true });
+  };
+
   // Event handlers
   const handleCreate = () => {
-    navigate('/super-admin/facilities/create');
+    const next = new URLSearchParams(searchParams);
+    next.set('createFacility', '1');
+    next.delete('editFacilityId');
+    setSearchParams(next, { replace: true });
   };
 
   const handleEdit = (facility) => {
-    navigate(`/super-admin/facilities/${facility.id}/edit`);
+    const next = new URLSearchParams(searchParams);
+    next.delete('createFacility');
+    next.set('editFacilityId', String(facility.id));
+    setSearchParams(next, { replace: true });
   };
 
   const handleView = (facility) => {
@@ -108,6 +130,26 @@ export default function Facilities() {
         variant="danger"
         isPending={deleteMutation.isPending}
       />
+      <Modal
+        isOpen={createFacilityOpen}
+        onClose={clearFacilityModalQuery}
+        title="Create facility"
+        size="full"
+      >
+        <FacilityCreateForm key="facility-create" onRequestClose={clearFacilityModalQuery} />
+      </Modal>
+      <Modal
+        isOpen={editFacilityOpen}
+        onClose={clearFacilityModalQuery}
+        title="Edit facility"
+        size="full"
+      >
+        <FacilityEditPage
+          key={editFacilityId}
+          embeddedFacilityId={editFacilityId}
+          onRequestClose={clearFacilityModalQuery}
+        />
+      </Modal>
       <FacilityList
         facilities={data?.data || []}
         isLoading={isLoading}

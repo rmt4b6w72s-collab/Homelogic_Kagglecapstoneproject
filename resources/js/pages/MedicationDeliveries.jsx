@@ -6,6 +6,7 @@ import { Truck, Plus, Search, Filter, Edit, Trash2, Calendar, Package, User, X, 
 import SectionCard from '../components/SectionCard';
 import Card from '../components/Card';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
+import Modal from '../components/ui/Modal';
 import Tooltip from '../components/ui/Tooltip';
 import EntityCardShell, { EntityCardHeader } from '../components/ui/EntityCardShell';
 import CardIconButton from '../components/ui/CardIconButton';
@@ -206,57 +207,14 @@ export default function MedicationDeliveries() {
         );
     };
 
-    if (showForm && formMode === 'bulk') {
-        return (
-            <div>
-                <BulkMedicationDeliveryForm
-                    branches={branches}
-                    residents={residents}
-                    medications={medications}
-                    pharmacySuppliers={pharmacySuppliers}
-                    pharmacyTemplates={pharmacyTemplates}
-                    onSaveTemplate={(payload) => createPharmacyTemplateMutation.mutateAsync(payload)}
-                    isCaregiver={isCaregiver}
-                    caregiverBranchId={currentUser?.assigned_branch_id}
-                    currentUser={currentUser}
-                    isFacilityAdmin={isFacilityAdmin}
-                    isBranchAdmin={isBranchAdmin}
-                    onClose={handleCloseForm}
-                    onSuccess={() => {
-                        queryClient.invalidateQueries(['medication-deliveries']);
-                        handleCloseForm();
-                    }}
-                />
-            </div>
-        );
-    }
-
-    if (showForm) {
-        return (
-            <div>
-                <MedicationDeliveryForm
-                    record={editing}
-                    branches={branches}
-                    residents={residents}
-                    medications={medications}
-                    pharmacySuppliers={pharmacySuppliers}
-                    pharmacyTemplates={pharmacyTemplates}
-                    onSaveTemplate={(payload) => createPharmacyTemplateMutation.mutateAsync(payload)}
-                    isCaregiver={isCaregiver}
-                    caregiverBranchId={currentUser?.assigned_branch_id}
-                    currentUser={currentUser}
-                    isFacilityAdmin={isFacilityAdmin}
-                    isBranchAdmin={isBranchAdmin}
-                    formMode={formMode}
-                    onClose={handleCloseForm}
-                    onSuccess={() => {
-                        queryClient.invalidateQueries(['medication-deliveries']);
-                        handleCloseForm();
-                    }}
-                />
-            </div>
-        );
-    }
+    const deliveryModalTitle =
+        formMode === 'bulk'
+            ? 'Bulk Medication Delivery Entry'
+            : editing
+              ? 'Edit Medication Delivery'
+              : formMode === 'quick'
+                ? 'Quick Entry'
+                : 'Add Medication Delivery';
 
     return (
         <>
@@ -274,6 +232,59 @@ export default function MedicationDeliveries() {
                 variant="danger"
                 isPending={deleteMutation.isPending}
             />
+            <Modal
+                isOpen={showForm}
+                onClose={handleCloseForm}
+                title={deliveryModalTitle}
+                size="xl"
+            >
+                {formMode === 'bulk' ? (
+                    <BulkMedicationDeliveryForm
+                        key="bulk"
+                        branches={branches}
+                        residents={residents}
+                        medications={medications}
+                        pharmacySuppliers={pharmacySuppliers}
+                        pharmacyTemplates={pharmacyTemplates}
+                        onSaveTemplate={(payload) => createPharmacyTemplateMutation.mutateAsync(payload)}
+                        isCaregiver={isCaregiver}
+                        caregiverBranchId={currentUser?.assigned_branch_id}
+                        currentUser={currentUser}
+                        isFacilityAdmin={isFacilityAdmin}
+                        isBranchAdmin={isBranchAdmin}
+                        inModal
+                        onClose={handleCloseForm}
+                        onSuccess={() => {
+                            queryClient.invalidateQueries(['medication-deliveries']);
+                            handleCloseForm();
+                        }}
+                    />
+                ) : (
+                    <MedicationDeliveryForm
+                        key={editing?.id ?? `new-${formMode}`}
+                        record={editing}
+                        branches={branches}
+                        residents={residents}
+                        medications={medications}
+                        pharmacySuppliers={pharmacySuppliers}
+                        pharmacySuppliersError={pharmacySuppliersError}
+                        pharmacyTemplates={pharmacyTemplates}
+                        onSaveTemplate={(payload) => createPharmacyTemplateMutation.mutateAsync(payload)}
+                        isCaregiver={isCaregiver}
+                        caregiverBranchId={currentUser?.assigned_branch_id}
+                        currentUser={currentUser}
+                        isFacilityAdmin={isFacilityAdmin}
+                        isBranchAdmin={isBranchAdmin}
+                        formMode={formMode}
+                        inModal
+                        onClose={handleCloseForm}
+                        onSuccess={() => {
+                            queryClient.invalidateQueries(['medication-deliveries']);
+                            handleCloseForm();
+                        }}
+                    />
+                )}
+            </Modal>
         <div>
             <SectionCard>
                 <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
@@ -597,7 +608,25 @@ export default function MedicationDeliveries() {
     );
 }
 
-function MedicationDeliveryForm({ record, branches, residents, medications, pharmacySuppliers = [], pharmacyTemplates: initialPharmacyTemplates = [], onSaveTemplate, isCaregiver, caregiverBranchId, formMode = 'full', onClose, onSuccess, currentUser, isFacilityAdmin, isBranchAdmin }) {
+function MedicationDeliveryForm({
+    record,
+    branches,
+    residents,
+    medications,
+    pharmacySuppliers = [],
+    pharmacySuppliersError = null,
+    pharmacyTemplates: initialPharmacyTemplates = [],
+    onSaveTemplate,
+    isCaregiver,
+    caregiverBranchId,
+    formMode = 'full',
+    onClose,
+    onSuccess,
+    currentUser,
+    isFacilityAdmin,
+    isBranchAdmin,
+    inModal = false,
+}) {
     const [formData, setFormData] = useState({
         branch_id: record?.branch_id || caregiverBranchId || (isBranchAdmin && currentUser?.assigned_branch_id ? currentUser.assigned_branch_id : ''),
         delivery_type: record?.delivery_type || (formMode === 'quick' ? 'batch' : 'individual'),
@@ -757,18 +786,21 @@ function MedicationDeliveryForm({ record, branches, residents, medications, phar
     };
 
     return (
-        <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-gray-900">
-                    {record ? 'Edit Medication Delivery' : formMode === 'quick' ? 'Quick Entry' : 'Add Medication Delivery'}
-                </h2>
-                <button
-                    onClick={onClose}
-                    className="text-gray-400 hover:text-gray-600"
-                >
-                    <X className="w-6 h-6" />
-                </button>
-            </div>
+        <div className={inModal ? '' : 'bg-white rounded-lg shadow p-6'}>
+            {!inModal && (
+                <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-xl font-semibold text-gray-900">
+                        {record ? 'Edit Medication Delivery' : formMode === 'quick' ? 'Quick Entry' : 'Add Medication Delivery'}
+                    </h2>
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="text-gray-400 hover:text-gray-600"
+                    >
+                        <X className="w-6 h-6" />
+                    </button>
+                </div>
+            )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
                         {errors.general && (
@@ -985,7 +1017,7 @@ function MedicationDeliveryForm({ record, branches, residents, medications, phar
     );
 }
 
-function BulkMedicationDeliveryForm({ branches, residents, medications, pharmacySuppliers = [], pharmacyTemplates = [], onSaveTemplate, isCaregiver, caregiverBranchId, onClose, onSuccess, currentUser, isFacilityAdmin, isBranchAdmin }) {
+function BulkMedicationDeliveryForm({ branches, residents, medications, pharmacySuppliers = [], pharmacyTemplates = [], onSaveTemplate, isCaregiver, caregiverBranchId, onClose, onSuccess, currentUser, isFacilityAdmin, isBranchAdmin, inModal = false }) {
     const [commonFields, setCommonFields] = useState({
         branch_id: caregiverBranchId || (isBranchAdmin && currentUser?.assigned_branch_id ? currentUser.assigned_branch_id : ''),
         pharmacy_name: '',
@@ -1138,16 +1170,19 @@ function BulkMedicationDeliveryForm({ branches, residents, medications, pharmacy
     };
 
     return (
-        <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-gray-900">Bulk Medication Delivery Entry</h2>
-                <button
-                    onClick={onClose}
-                    className="text-gray-400 hover:text-gray-600"
-                >
-                    <X className="w-6 h-6" />
-                </button>
-            </div>
+        <div className={inModal ? '' : 'bg-white rounded-lg shadow p-6'}>
+            {!inModal && (
+                <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-xl font-semibold text-gray-900">Bulk Medication Delivery Entry</h2>
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="text-gray-400 hover:text-gray-600"
+                    >
+                        <X className="w-6 h-6" />
+                    </button>
+                </div>
+            )}
 
                     <form onSubmit={handleSubmit}>
                         {/* Common Fields */}

@@ -7,6 +7,7 @@ import { Users, Plus, Mail, Edit, Trash2, Copy, Check, Building2, MessageSquare,
 import SectionCard from '../../components/SectionCard';
 import EmptyState from '../../components/ui/EmptyState';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
+import Modal from '../../components/ui/Modal';
 import Tooltip from '../../components/ui/Tooltip';
 import logger from '../../utils/logger';
 import { formatPhoneNumber, unformatPhoneNumber } from '../../utils/phoneFormatter';
@@ -319,8 +320,12 @@ export default function ResidentContacts() {
             </SectionCard>
           )}
 
-          {showForm && (
-            <SectionCard title={editing ? 'Edit contact' : 'Add contact'} className="mb-6">
+          <Modal
+            isOpen={showForm}
+            onClose={() => { setShowForm(false); setEditing(null); }}
+            title={editing ? 'Edit contact' : 'Add contact'}
+            size="md"
+          >
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
@@ -377,17 +382,14 @@ export default function ResidentContacts() {
                   </button>
                 </div>
               </form>
-            </SectionCard>
-          )}
+          </Modal>
 
           <SectionCard title="Contacts">
             <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-              {!showForm && (
                 <button type="button" onClick={openAdd} className="inline-flex items-center gap-2 px-4 py-2 bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] rounded-lg hover:opacity-90 transition-opacity">
                   <Plus className="w-4 h-4" />
                   Add contact
                 </button>
-              )}
             </div>
             {isLoading ? (
               <p className="text-gray-500 py-4">Loading contacts...</p>

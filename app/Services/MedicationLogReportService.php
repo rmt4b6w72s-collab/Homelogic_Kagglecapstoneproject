@@ -89,6 +89,11 @@ class MedicationLogReportService
             $cursor->addDay();
         }
 
+        $segmentSize = max(1, (int) config('reports.mar_pdf_days_per_segment', 15));
+        $dayChunks = count($days) > $segmentSize
+            ? array_chunk($days, $segmentSize)
+            : [$days];
+
         $scheduledSections = [];
         $prnSections = [];
 
@@ -152,6 +157,7 @@ class MedicationLogReportService
             'outcomeFilterLabel' => $outcomeFilterLabel,
             'exportedAt' => Carbon::now($tz)->format('M d, Y g:i A T'),
             'days' => $days,
+            'dayChunks' => $dayChunks,
             'scheduledSections' => $scheduledSections,
             'prnSections' => array_values(array_filter($prnSections)),
             'facilityLogoDataUri' => ReportBranding::imageToDataUri($facility?->logo),

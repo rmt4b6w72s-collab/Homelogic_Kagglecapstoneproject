@@ -50,10 +50,11 @@
         .grid-col:last-child { border-right: none; }
         
         /* Table */
-        .med-table { width: 100%; border-collapse: collapse; font-size: 10px; border: 1px solid #e2e8f0; margin-bottom: 25px; border-radius: 8px; overflow: hidden; }
-        .med-table th { background: #f8fafc; padding: 10px; color: #475569; border: 1px solid #e2e8f0; font-weight: 700; }
-        .med-table td { padding: 8px; border: 1px solid #e2e8f0; text-align: center; }
-        .med-table .time-label { background: #ffffff; text-align: left; font-weight: 700; width: 100px; color: {{ $primaryColor ?? '#1E3A5F' }}; }
+        .med-table { width: 100%; border-collapse: collapse; font-size: 10px; border: 1px solid #e2e8f0; margin-bottom: 18px; border-radius: 8px; overflow: hidden; table-layout: fixed; }
+        .med-table th { background: #f8fafc; padding: 6px 4px; color: #475569; border: 1px solid #e2e8f0; font-weight: 700; }
+        .med-table td { padding: 6px 4px; border: 1px solid #e2e8f0; text-align: center; }
+        .med-table .time-label { background: #ffffff; text-align: left; font-weight: 700; width: 72px; max-width: 72px; color: {{ $primaryColor ?? '#1E3A5F' }}; }
+        .mar-segment-label { font-size: 10px; font-weight: 600; color: #64748b; margin: 0 0 8px 0; }
 
         .cell-taken { background-color: #f0fdf4; color: #15803d; font-weight: 700; }
         .cell-not_taken { background-color: #fef2f2; color: #b91c1c; }
@@ -138,34 +139,44 @@
                     <div class="text-xs" style="color: #64748b; margin-top: 2px;">{{ $section['instructions'] }}</div>
                 </div>
                 
-                <table class="med-table">
-                    <thead>
-                        <tr>
-                            <th class="time-label">Time</th>
-                            @foreach($days as $day)
-                                <th>
-                                    <div>{{ $day['dom'] }}</div>
-                                    <div style="font-size: 8px;">{{ substr($day['short'], 0, 3) }}</div>
-                                </th>
-                            @endforeach
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($section['rows'] as $row)
+                @php
+                    $marDayChunks = $dayChunks ?? (isset($days) ? [$days] : []);
+                @endphp
+                @foreach($marDayChunks as $chunk)
+                    @if(count($marDayChunks) > 1)
+                        <p class="mar-segment-label">
+                            {{ $chunk[0]['short'] ?? '' }} — {{ $chunk[count($chunk) - 1]['short'] ?? '' }}
+                        </p>
+                    @endif
+                    <table class="med-table">
+                        <thead>
                             <tr>
-                                <td class="time-label">{{ $row['time_label'] }}</td>
-                                @foreach($days as $day)
-                                    @php
-                                        $cell = $row['cells'][$day['date']] ?? ['text' => '—', 'tone' => 'inactive'];
-                                    @endphp
-                                    <td class="cell-{{ $cell['tone'] }}">
-                                        {{ $cell['text'] }}
-                                    </td>
+                                <th class="time-label">Time</th>
+                                @foreach($chunk as $day)
+                                    <th>
+                                        <div>{{ $day['dom'] }}</div>
+                                        <div style="font-size: 7px;">{{ \Illuminate\Support\Str::beforeLast($day['short'] ?? '', ' ') ?: ($day['short'] ?? '') }}</div>
+                                    </th>
                                 @endforeach
                             </tr>
-                        @endforeach
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            @foreach($section['rows'] as $row)
+                                <tr>
+                                    <td class="time-label">{{ $row['time_label'] }}</td>
+                                    @foreach($chunk as $day)
+                                        @php
+                                            $cell = $row['cells'][$day['date']] ?? ['text' => '—', 'tone' => 'inactive'];
+                                        @endphp
+                                        <td class="cell-{{ $cell['tone'] }}">
+                                            {{ $cell['text'] }}
+                                        </td>
+                                    @endforeach
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                @endforeach
             </div>
         @empty
             <div style="padding: 20px; text-align: center; color: #94a3b8; font-style: italic;">No scheduled medications.</div>

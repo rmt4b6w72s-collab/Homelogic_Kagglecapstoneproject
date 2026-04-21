@@ -48,6 +48,7 @@ import {
 } from 'lucide-react';
 import CalendarView from '../components/CalendarView';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
+import Modal from '../components/ui/Modal';
 import {
     parseAdminTimeToPacific,
     isMedicationSlotCoveredToday,
@@ -1089,51 +1090,6 @@ export default function Medications() {
         );
     }
 
-    if (showForm) {
-        return (
-            <div>
-                <MedicationForm
-                    record={editing}
-                    residents={residentsData?.data || []}
-                    branches={branchesData?.data || []}
-                    currentUser={currentUser}
-                    isCaregiver={isCaregiver}
-                    isFacilityAdmin={isFacilityAdmin}
-                    isBranchAdmin={isBranchAdmin}
-                    onClose={() => {
-                        setShowForm(false);
-                        setEditing(null);
-                    }}
-                    onSuccess={() => {
-                        setShowForm(false);
-                        setEditing(null);
-                        queryClient.invalidateQueries(['medications']);
-                    }}
-                />
-            </div>
-        );
-    }
-
-    if (showAdminForm) {
-        return (
-            <div>
-                <MedicationAdministrationForm
-                    medication={data?.data?.find(m => m.id === selectedMedication)}
-                    onClose={() => {
-                        setShowAdminForm(false);
-                        setSelectedMedication(null);
-                    }}
-                    onSuccess={() => {
-                        setShowAdminForm(false);
-                        setSelectedMedication(null);
-                        queryClient.invalidateQueries(['medications']);
-                        queryClient.invalidateQueries(['medication-administrations']);
-                    }}
-                />
-            </div>
-        );
-    }
-
     return (
         <>
             <ConfirmDialog
@@ -1147,6 +1103,61 @@ export default function Medications() {
                 variant={medConfirmCopy.variant}
                 isPending={medActionPending}
             />
+            <Modal
+                isOpen={showForm}
+                onClose={() => {
+                    setShowForm(false);
+                    setEditing(null);
+                }}
+                title={editing ? 'Edit Medication' : 'Add Medication'}
+                size="xl"
+            >
+                <MedicationForm
+                    key={editing?.id ?? 'new'}
+                    record={editing}
+                    residents={residentsData?.data || []}
+                    branches={branchesData?.data || []}
+                    currentUser={currentUser}
+                    isCaregiver={isCaregiver}
+                    isFacilityAdmin={isFacilityAdmin}
+                    isBranchAdmin={isBranchAdmin}
+                    inModal
+                    onClose={() => {
+                        setShowForm(false);
+                        setEditing(null);
+                    }}
+                    onSuccess={() => {
+                        setShowForm(false);
+                        setEditing(null);
+                        queryClient.invalidateQueries(['medications']);
+                    }}
+                />
+            </Modal>
+            <Modal
+                isOpen={showAdminForm}
+                onClose={() => {
+                    setShowAdminForm(false);
+                    setSelectedMedication(null);
+                }}
+                title="Record Medication Administration"
+                size="lg"
+            >
+                <MedicationAdministrationForm
+                    key={selectedMedication ?? 'none'}
+                    medication={data?.data?.find((m) => m.id === selectedMedication)}
+                    inModal
+                    onClose={() => {
+                        setShowAdminForm(false);
+                        setSelectedMedication(null);
+                    }}
+                    onSuccess={() => {
+                        setShowAdminForm(false);
+                        setSelectedMedication(null);
+                        queryClient.invalidateQueries(['medications']);
+                        queryClient.invalidateQueries(['medication-administrations']);
+                    }}
+                />
+            </Modal>
         <div>
             <div className="bg-white rounded-lg shadow p-6 mb-6">
                 <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
@@ -1463,7 +1474,7 @@ export default function Medications() {
 }
 
 // Medication Administration Form Component
-function MedicationAdministrationForm({ medication, onClose, onSuccess }) {
+function MedicationAdministrationForm({ medication, onClose, onSuccess, inModal = false }) {
     const [formData, setFormData] = useState({
         medication_id: medication?.id || '',
         resident_id: medication?.resident_id || '',
@@ -1505,16 +1516,19 @@ function MedicationAdministrationForm({ medication, onClose, onSuccess }) {
     };
 
     return (
-        <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-gray-900">Record Medication Administration</h2>
-                <button
-                    onClick={onClose}
-                    className="text-gray-400 hover:text-gray-600"
-                >
-                    <X className="w-6 h-6" />
-                </button>
-            </div>
+        <div className={inModal ? '' : 'bg-white rounded-lg shadow p-6'}>
+            {!inModal && (
+                <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-xl font-semibold text-gray-900">Record Medication Administration</h2>
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="text-gray-400 hover:text-gray-600"
+                    >
+                        <X className="w-6 h-6" />
+                    </button>
+                </div>
+            )}
 
             {errors.general && (
                 <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
@@ -1642,7 +1656,7 @@ function MedicationAdministrationForm({ medication, onClose, onSuccess }) {
 }
 
 // Medication Create/Edit Form Component
-function MedicationForm({ record, residents, branches, currentUser, isCaregiver, isFacilityAdmin, isBranchAdmin, onClose, onSuccess }) {
+function MedicationForm({ record, residents, branches, currentUser, isCaregiver, isFacilityAdmin, isBranchAdmin, onClose, onSuccess, inModal = false }) {
     // Filter branches and residents for caregivers and branch admin users (facility admins see all)
     const filteredBranches = React.useMemo(() => {
         if (isFacilityAdmin) return branches; // Facility admins see all branches
@@ -1798,13 +1812,15 @@ function MedicationForm({ record, residents, branches, currentUser, isCaregiver,
     };
 
     return (
-        <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-gray-900">{record ? 'Edit Medication' : 'Add Medication'}</h2>
-                <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
-                    <X className="w-6 h-6" />
-                </button>
-            </div>
+        <div className={inModal ? '' : 'bg-white rounded-lg shadow p-6'}>
+            {!inModal && (
+                <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-xl font-semibold text-gray-900">{record ? 'Edit Medication' : 'Add Medication'}</h2>
+                    <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600">
+                        <X className="w-6 h-6" />
+                    </button>
+                </div>
+            )}
 
             {errors.general && (
                 <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">

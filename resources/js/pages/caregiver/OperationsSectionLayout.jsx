@@ -1,4 +1,5 @@
 import React from 'react';
+import { useLocation } from 'react-router-dom';
 import { LayoutDashboard, Sparkles, ShoppingCart, Flame, AlertTriangle, CalendarClock } from 'lucide-react';
 import SectionLayout from '../../components/SectionLayout';
 
@@ -12,7 +13,10 @@ const TABS = [
 ];
 
 export default function OperationsSectionLayout() {
+    const { pathname } = useLocation();
+    const showTabBar = pathname !== '/operations';
+
     return (
-        <SectionLayout title="Operations" tabs={TABS} />
+        <SectionLayout title="Operations" tabs={TABS} showTabBar={showTabBar} />
     );
 }

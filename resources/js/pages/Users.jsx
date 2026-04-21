@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../services/api';
 import logger from '../utils/logger';
 import { Users, Plus, Edit, Trash2, Search, Filter, Upload, X, Eye, Mail, Phone, Calendar, Briefcase, MapPin, Award, Shield, Clock, User as UserIcon, AlertCircle, Building2 } from 'lucide-react';
 import EmptyState from '../components/ui/EmptyState';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
+import Modal from '../components/ui/Modal';
 import Tooltip from '../components/ui/Tooltip';
 import EntityCardShell, { EntityCardHeader } from '../components/ui/EntityCardShell';
 import CardIconButton from '../components/ui/CardIconButton';
@@ -15,6 +16,7 @@ import { formatPhoneNumber } from '../utils/phoneFormatter';
 export default function UsersPage() {
     const queryClient = useQueryClient();
     const navigate = useNavigate();
+    const [searchParams, setSearchParams] = useSearchParams();
     const [search, setSearch] = useState('');
     const [branchFilter, setBranchFilter] = useState('');
     const [facilityFilter, setFacilityFilter] = useState('');
@@ -106,6 +108,66 @@ export default function UsersPage() {
         if (!deleteConfirmUser) return;
         deleteMutation.mutate(deleteConfirmUser.id, { onSuccess: () => setDeleteConfirmUser(null) });
     };
+
+    const clearUserFormQuery = () => {
+        const next = new URLSearchParams(searchParams);
+        next.delete('create');
+        next.delete('editUserId');
+        next.delete('facility_id');
+        setSearchParams(next, { replace: true });
+    };
+
+    const handleCloseUserForm = () => {
+        setShowForm(false);
+        setEditing(null);
+        clearUserFormQuery();
+    };
+
+    const openUserCreate = () => {
+        setEditing(null);
+        setShowForm(true);
+        const next = new URLSearchParams(searchParams);
+        next.set('create', '1');
+        next.delete('editUserId');
+        setSearchParams(next, { replace: true });
+    };
+
+    const openUserEdit = async (user) => {
+        await handleEditFromProfile(user);
+        const next = new URLSearchParams(searchParams);
+        next.delete('create');
+        next.set('editUserId', String(user.id));
+        setSearchParams(next, { replace: true });
+    };
+
+    React.useEffect(() => {
+        const create = searchParams.get('create');
+        const editIdRaw = searchParams.get('editUserId');
+        if (editIdRaw) {
+            const id = parseInt(editIdRaw, 10);
+            if (Number.isNaN(id)) return;
+            let cancelled = false;
+            (async () => {
+                try {
+                    const response = await api.get(`/users/${id}`);
+                    if (!cancelled) {
+                        setEditing(response.data);
+                        setShowForm(true);
+                    }
+                } catch (error) {
+                    logger.error('Error loading user for edit:', error);
+                    if (!cancelled) clearUserFormQuery();
+                }
+            })();
+            return () => {
+                cancelled = true;
+            };
+        }
+        if (create === '1') {
+            setEditing(null);
+            setShowForm(true);
+        }
+    }, [searchParams]);
 
     const handleEditFromProfile = async (user) => {
         try {
@@ -203,7 +265,7 @@ export default function UsersPage() {
                                         variant="edit"
                                         icon={Edit}
                                         aria-label="Edit user"
-                                        onClick={() => navigate(`/administration/users/${user.id}/edit`)}
+                                        onClick={() => void openUserEdit(user)}
                                     />
                                 </Tooltip>
                             )}
@@ -284,7 +346,8 @@ export default function UsersPage() {
                     </div>
                     {canCreate && (
                         <button
-                            onClick={() => navigate('/administration/users/create')}
+                            type="button"
+                            onClick={openUserCreate}
                             className="w-full sm:w-auto px-4 py-2 bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] rounded-lg hover:bg-[var(--theme-primary-hover)] transition-colors flex items-center justify-center space-x-2 text-sm md:text-base"
                         >
                             <Plus className="w-4 h-4" />
@@ -429,12 +492,35 @@ export default function UsersPage() {
                 </div>
             )}
         </div>
+
+            <Modal
+                isOpen={showForm}
+                onClose={handleCloseUserForm}
+                title={editing ? 'Edit User' : 'Add User'}
+                size="xl"
+            >
+                <UserForm
+                    key={editing?.id ?? 'new'}
+                    inModal
+                    prefillFacilityId={searchParams.get('facility_id') || undefined}
+                    record={editing}
+                    branches={branchesData?.data || []}
+                    roles={rolesData?.data || []}
+                    facilities={facilitiesData?.data || []}
+                    isSuperAdmin={isSuperAdmin}
+                    onClose={handleCloseUserForm}
+                    onSuccess={() => {
+                        handleCloseUserForm();
+                        queryClient.invalidateQueries({ queryKey: ['users'] });
+                    }}
+                />
+            </Modal>
         </>
     );
 }
 
 // User Form Component
-function UserForm({ record, branches, roles, facilities, isSuperAdmin, onClose, onSuccess }) {
+function UserForm({ record, branches, roles, facilities, isSuperAdmin, onClose, onSuccess, inModal = false, prefillFacilityId }) {
     const queryClient = useQueryClient();
 
     // Format date helper function
@@ -483,6 +569,12 @@ function UserForm({ record, branches, roles, facilities, isSuperAdmin, onClose, 
     const [imageRemoved, setImageRemoved] = useState(false);
     const [errors, setErrors] = useState({});
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    React.useEffect(() => {
+        if (!record && prefillFacilityId && isSuperAdmin) {
+            setFormData((prev) => ({ ...prev, facility_id: String(prefillFacilityId) }));
+        }
+    }, [record, prefillFacilityId, isSuperAdmin]);
 
     // Update form when record changes (for editing)
     React.useEffect(() => {
@@ -764,18 +856,21 @@ function UserForm({ record, branches, roles, facilities, isSuperAdmin, onClose, 
     };
 
     return (
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className={inModal ? '' : 'bg-white rounded-lg shadow p-6'}>
+            {!inModal && (
             <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-semibold text-gray-900">
                     {record ? 'Edit User' : 'Add User'}
                 </h2>
                 <button
+                    type="button"
                     onClick={onClose}
                     className="text-gray-400 hover:text-gray-600"
                 >
                     <X className="w-6 h-6" />
                 </button>
             </div>
+            )}
 
             {errors.general && (
                 <div className="mb-4 p-4 bg-red-50 border-2 border-red-300 rounded-lg">

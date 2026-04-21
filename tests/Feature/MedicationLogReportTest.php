@@ -332,10 +332,38 @@ class MedicationLogReportTest extends TestCase
         $from = Carbon::parse('2026-04-01', config('app.timezone'))->startOfDay();
         $to = Carbon::parse('2026-04-30', config('app.timezone'))->endOfDay();
         $data = app(MedicationLogReportService::class)->buildViewData($resident->fresh(), $from, $to, []);
+        $this->assertCount(30, $data['days'], 'Full April range should include 30 day columns.');
+        $this->assertCount(2, $data['dayChunks'], 'MAR PDF should split wide months into segments so columns are not clipped.');
+        $this->assertCount(15, $data['dayChunks'][0]);
+        $this->assertCount(15, $data['dayChunks'][1]);
         $this->assertCount(2, $data['scheduledSections']);
         $this->assertSame('ASPIRIN', $data['scheduledSections'][0]['title']);
         $this->assertSame('ATORVASTATIN', $data['scheduledSections'][1]['title']);
         $this->assertNotEmpty($data['scheduledSections'][0]['rows']);
+    }
+
+    public function test_medication_log_day_chunks_single_segment_for_short_ranges(): void
+    {
+        $user = $this->createAndActAs('administrator');
+
+        $resident = Resident::withoutGlobalScopes()->create([
+            'name' => 'Short Range',
+            'first_name' => 'Short',
+            'last_name' => 'Range',
+            'branch_id' => $this->branch->id,
+            'date_of_birth' => '1950-01-15',
+            'gender' => 'female',
+            'admission_date' => '2024-01-01',
+            'is_active' => true,
+            'status' => 'active',
+        ]);
+
+        $from = Carbon::parse('2026-04-01', config('app.timezone'))->startOfDay();
+        $to = Carbon::parse('2026-04-07', config('app.timezone'))->endOfDay();
+        $data = app(MedicationLogReportService::class)->buildViewData($resident->fresh(), $from, $to, []);
+
+        $this->assertCount(7, $data['days']);
+        $this->assertCount(1, $data['dayChunks']);
     }
 
     public function test_medication_log_accepts_boolean_flags_as_zero_and_one(): void

@@ -5,6 +5,7 @@ import { Shield, Plus, Edit, Trash2 } from 'lucide-react';
 import FacilityPermissions from './FacilityPermissions';
 import logger from '../utils/logger';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
+import Modal from '../components/ui/Modal';
 import Tooltip from '../components/ui/Tooltip';
 import EntityCardShell, { EntityCardHeader } from '../components/ui/EntityCardShell';
 import CardIconButton from '../components/ui/CardIconButton';
@@ -210,20 +211,27 @@ export default function Roles() {
         </div>
       )}
 
-      {showForm && (
+      <Modal
+        isOpen={showForm}
+        onClose={() => { setShowForm(false); setEditing(null); }}
+        title={editing ? 'Edit Role' : 'Add Role'}
+        size="xl"
+      >
         <RoleForm
+          key={editing?.id ?? 'new'}
+          inModal
           record={editing}
           permissions={permissions || []}
           onClose={() => { setShowForm(false); setEditing(null); }}
           onSuccess={() => { setShowForm(false); setEditing(null); queryClient.invalidateQueries(['roles']); }}
         />
-      )}
+      </Modal>
     </div>
     </>
   );
 }
 
-function RoleForm({ record, permissions, onClose, onSuccess }) {
+function RoleForm({ record, permissions, onClose, onSuccess, inModal = false }) {
   const [form, setForm] = useState({
     name: record?.name || '',
     permissions: record?.permissions?.map(p => p.name) || [],
@@ -258,78 +266,87 @@ function RoleForm({ record, permissions, onClose, onSuccess }) {
     }
   };
 
+  const formBlock = (
+    <>
+      {errors.general && <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg"><p className="text-sm text-red-800">{errors.general}</p></div>}
+      <form id="role-form" onSubmit={handleSubmit} className="space-y-6">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Role Name *
+          </label>
+          <input
+            value={form.name}
+            onChange={(e) => setForm({ ...form, name: e.target.value })}
+            required
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
+          />
+          {errors.name && <p className="text-xs text-red-600 mt-1">{errors.name[0]}</p>}
+        </div>
+        <div>
+          <p className="text-sm font-medium text-gray-700 mb-2">Permissions</p>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-72 overflow-y-auto p-2 border rounded">
+            {permissions.map((perm) => (
+              <label key={perm.id} className="flex items-center space-x-2 text-sm text-gray-700">
+                <input
+                  type="checkbox"
+                  checked={form.permissions.includes(perm.name)}
+                  onChange={() => togglePermission(perm.name)}
+                />
+                <span>{perm.name}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+      </form>
+    </>
+  );
+
+  const footer = (
+    <div className={`flex justify-end space-x-3 ${inModal ? 'pt-4 border-t border-gray-200 mt-4' : 'flex-shrink-0 p-6 border-t border-gray-200'}`}>
+      <button
+        type="button"
+        onClick={onClose}
+        className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+      >
+        Cancel
+      </button>
+      <button
+        type="submit"
+        form="role-form"
+        disabled={submitting}
+        className="px-4 py-2 bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] rounded-lg hover:bg-[var(--theme-primary-hover)] transition-colors disabled:opacity-50"
+      >
+        {submitting ? 'Saving...' : (record ? 'Update' : 'Create')}
+      </button>
+    </div>
+  );
+
+  if (inModal) {
+    return (
+      <div className="space-y-2">
+        {formBlock}
+        {footer}
+      </div>
+    );
+  }
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col">
-        {/* Header - Fixed */}
         <div className="flex-shrink-0 p-6 border-b border-gray-200">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-semibold text-gray-900">
               {record ? 'Edit Role' : 'Add Role'}
             </h2>
-            <button
-              onClick={onClose}
-              className="text-gray-500 hover:text-gray-700"
-            >
+            <button type="button" onClick={onClose} className="text-gray-500 hover:text-gray-700">
               ✕
             </button>
           </div>
         </div>
-        
-        {/* Scrollable Content */}
         <div className="flex-1 overflow-y-auto p-6">
-          {errors.general && <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg"><p className="text-sm text-red-800">{errors.general}</p></div>}
-          <form id="role-form" onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Role Name *
-              </label>
-              <input
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
-              />
-              {errors.name && <p className="text-xs text-red-600 mt-1">{errors.name[0]}</p>}
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-700 mb-2">Permissions</p>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-72 overflow-y-auto p-2 border rounded">
-                {permissions.map((perm) => (
-                  <label key={perm.id} className="flex items-center space-x-2 text-sm text-gray-700">
-                    <input
-                      type="checkbox"
-                      checked={form.permissions.includes(perm.name)}
-                      onChange={() => togglePermission(perm.name)}
-                    />
-                    <span>{perm.name}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-          </form>
+          {formBlock}
         </div>
-        
-        {/* Footer - Fixed */}
-        <div className="flex-shrink-0 p-6 border-t border-gray-200">
-          <div className="flex justify-end space-x-3">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              form="role-form"
-              disabled={submitting}
-              className="px-4 py-2 bg-[var(--theme-primary)] text-[var(--theme-text-on-primary)] rounded-lg hover:bg-[var(--theme-primary-hover)] transition-colors disabled:opacity-50"
-            >
-              {submitting ? 'Saving...' : (record ? 'Update' : 'Create')}
-            </button>
-          </div>
-        </div>
+        {footer}
       </div>
     </div>
   );

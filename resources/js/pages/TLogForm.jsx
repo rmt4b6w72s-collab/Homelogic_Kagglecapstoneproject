@@ -27,7 +27,7 @@ const NOTIFICATION_LEVELS = [
     { value: 'urgent', label: 'Urgent' },
 ];
 
-export default function TLogForm({ tLog, onClose, onSuccess }) {
+export default function TLogForm({ tLog, onClose, onSuccess, inModal = false }) {
     const queryClient = useQueryClient();
     const [attachments, setAttachments] = useState([]);
     const [existingAttachments, setExistingAttachments] = useState([]);
@@ -304,34 +304,36 @@ export default function TLogForm({ tLog, onClose, onSuccess }) {
                 variant="danger"
                 isPending={deleteAttachmentMutation.isPending}
             />
-        <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-4">
-                    <Tooltip content="Go back" position="bottom">
+        <div className={inModal ? '' : 'bg-white rounded-lg shadow p-6'}>
+            {!inModal && (
+                <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-4">
+                        <Tooltip content="Go back" position="bottom">
+                            <button
+                                type="button"
+                                onClick={onClose}
+                                className="text-gray-500 hover:text-gray-700"
+                                aria-label="Go back"
+                            >
+                                <ArrowLeft className="w-5 h-5" strokeWidth={2.25} />
+                            </button>
+                        </Tooltip>
+                        <h2 className="text-xl font-semibold text-gray-900">
+                            {tLog ? 'Edit progress note' : 'New progress note'}
+                        </h2>
+                    </div>
+                    <Tooltip content="Close" position="bottom">
                         <button
                             type="button"
                             onClick={onClose}
-                            className="text-gray-500 hover:text-gray-700"
-                            aria-label="Go back"
+                            className="text-gray-400 hover:text-gray-600"
+                            aria-label="Close"
                         >
-                            <ArrowLeft className="w-5 h-5" strokeWidth={2.25} />
+                            <X className="w-6 h-6" strokeWidth={2.25} />
                         </button>
                     </Tooltip>
-                    <h2 className="text-xl font-semibold text-gray-900">
-                        {tLog ? 'Edit progress note' : 'New progress note'}
-                    </h2>
                 </div>
-                <Tooltip content="Close" position="bottom">
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        className="text-gray-400 hover:text-gray-600"
-                        aria-label="Close"
-                    >
-                        <X className="w-6 h-6" strokeWidth={2.25} />
-                    </button>
-                </Tooltip>
-            </div>
+            )}
 
             <FormProvider {...methods}>
                 <form onSubmit={methods.handleSubmit(handleSubmit)} className="space-y-6">

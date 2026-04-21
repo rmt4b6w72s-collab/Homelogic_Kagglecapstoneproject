@@ -9,6 +9,7 @@ import Card from '../components/Card';
 import WeeklyCalendarView from '../components/WeeklyCalendarView';
 import Select from '../components/ui/radix/Select';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
+import Modal from '../components/ui/Modal';
 import Tooltip from '../components/ui/Tooltip';
 import { Doughnut } from 'react-chartjs-2';
 import {
@@ -297,27 +298,6 @@ export default function GroceryStatus() {
                 variant="primary"
                 isPending={updateStatusMutation.isPending}
             />
-            {showForm ? (
-                <div>
-                    <GroceryStatusForm
-                        record={editing}
-                        branches={branches}
-                        templates={templates}
-                        isCaregiver={isCaregiver}
-                        caregiverBranchId={currentUser?.assigned_branch_id}
-                        currentUser={currentUser}
-                        isFacilityAdmin={isFacilityAdmin}
-                        isBranchAdmin={isBranchAdmin}
-                        onClose={handleCloseForm}
-                        onSaveTemplate={(payload) => createTemplateMutation.mutateAsync(payload)}
-                        onSuccess={() => {
-                            queryClient.invalidateQueries(['grocery-status-updates']);
-                            queryClient.invalidateQueries(['grocery-item-templates']);
-                            handleCloseForm();
-                        }}
-                    />
-                </div>
-            ) : (
         <div>
             <SectionCard>
                 <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
@@ -818,12 +798,38 @@ export default function GroceryStatus() {
                 )}
             </SectionCard>
         </div>
-            )}
+
+            <Modal
+                isOpen={showForm}
+                onClose={handleCloseForm}
+                title={editing ? 'Edit Grocery Status Update' : 'Add Grocery Status Update'}
+                size="xl"
+            >
+                <GroceryStatusForm
+                    key={editing?.id ?? 'new'}
+                    inModal
+                    record={editing}
+                    branches={branches}
+                    templates={templates}
+                    isCaregiver={isCaregiver}
+                    caregiverBranchId={currentUser?.assigned_branch_id}
+                    currentUser={currentUser}
+                    isFacilityAdmin={isFacilityAdmin}
+                    isBranchAdmin={isBranchAdmin}
+                    onClose={handleCloseForm}
+                    onSaveTemplate={(payload) => createTemplateMutation.mutateAsync(payload)}
+                    onSuccess={() => {
+                        queryClient.invalidateQueries(['grocery-status-updates']);
+                        queryClient.invalidateQueries(['grocery-item-templates']);
+                        handleCloseForm();
+                    }}
+                />
+            </Modal>
         </>
     );
 }
 
-function GroceryStatusForm({ record, branches, templates = [], isCaregiver, caregiverBranchId, onClose, onSuccess, onSaveTemplate, currentUser, isFacilityAdmin, isBranchAdmin }) {
+function GroceryStatusForm({ record, branches, templates = [], isCaregiver, caregiverBranchId, onClose, onSuccess, onSaveTemplate, currentUser, isFacilityAdmin, isBranchAdmin, inModal = false }) {
     // Get current Monday
     const getCurrentMonday = () => {
         const today = new Date();
@@ -903,18 +909,21 @@ function GroceryStatusForm({ record, branches, templates = [], isCaregiver, care
                 variant="primary"
                 isPending={isSubmitting}
             />
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className={inModal ? '' : 'bg-white rounded-lg shadow p-6'}>
+            {!inModal && (
             <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-semibold text-gray-900">
                     {record ? 'Edit Grocery Status Update' : 'Add Grocery Status Update'}
                 </h2>
                 <button
+                    type="button"
                     onClick={onClose}
                     className="text-gray-400 hover:text-gray-600"
                 >
                     <X className="w-6 h-6" />
                 </button>
             </div>
+            )}
 
                     <form onSubmit={handleSubmit} className="space-y-4">
                         {errors.general && (

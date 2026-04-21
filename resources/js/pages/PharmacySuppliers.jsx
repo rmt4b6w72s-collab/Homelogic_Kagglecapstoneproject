@@ -6,6 +6,7 @@ import SectionCard from '../components/SectionCard';
 import Card from '../components/Card';
 import { formatPhoneNumber } from '../utils/phoneFormatter';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
+import Modal from '../components/ui/Modal';
 import Tooltip from '../components/ui/Tooltip';
 import { useToastContext } from '../contexts/ToastContext';
 
@@ -156,21 +157,12 @@ export default function PharmacySuppliers() {
                 variant="danger"
                 isPending={deleteMutation.isPending}
             />
-            {showForm ? (
-            <div>
-                <SectionCard>
-                    <div className="flex items-center justify-between mb-6">
-                        <h2 className="text-xl font-semibold text-gray-900">
-                            {editing ? 'Edit Supplier' : 'Add Supplier'}
-                        </h2>
-                        <button
-                            onClick={handleCloseForm}
-                            className="text-gray-500 hover:text-gray-700"
-                        >
-                            ✕
-                        </button>
-                    </div>
-
+            <Modal
+                isOpen={showForm}
+                onClose={handleCloseForm}
+                title={editing ? 'Edit Supplier' : 'Add Supplier'}
+                size="xl"
+            >
                     <form onSubmit={handleSubmit} className="space-y-6">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
@@ -282,9 +274,7 @@ export default function PharmacySuppliers() {
                             </button>
                         </div>
                     </form>
-                </SectionCard>
-            </div>
-            ) : (
+            </Modal>
         <div>
             <SectionCard>
                 <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
@@ -406,7 +396,6 @@ export default function PharmacySuppliers() {
                 )}
             </SectionCard>
         </div>
-            )}
         </>
     );
 }

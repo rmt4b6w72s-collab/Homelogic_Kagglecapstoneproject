@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Navigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '../services/api';
 import logger from '../utils/logger';
@@ -636,18 +636,27 @@ function OwnerAccountTab() {
     );
 }
 
-// Wrap the main component with FormProvider
-export default function FacilityCreateWrapper() {
+// Wrap the main component with FormProvider (use from Facilities hub modal or legacy redirect target)
+export function FacilityCreateForm({ onRequestClose }) {
     const navigate = useNavigate();
     const { showToast } = useToastContext();
     const queryClient = useQueryClient();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errors, setErrors] = useState({});
 
+    const exitToFacilitiesHub = () => {
+        if (onRequestClose) {
+            onRequestClose();
+        } else {
+            navigate('/super-admin/facilities');
+        }
+    };
+
     return (
         <FormProvider>
             <FacilityCreateContent
                 navigate={navigate}
+                onExitToList={exitToFacilitiesHub}
                 showToast={showToast}
                 queryClient={queryClient}
                 isSubmitting={isSubmitting}
@@ -659,7 +668,12 @@ export default function FacilityCreateWrapper() {
     );
 }
 
-function FacilityCreateContent({ navigate, showToast, queryClient, isSubmitting, setIsSubmitting, errors, setErrors }) {
+/** Legacy URL → hub opens create in modal */
+export default function FacilityCreate() {
+    return <Navigate to="/super-admin/facilities?createFacility=1" replace />;
+}
+
+function FacilityCreateContent({ navigate, onExitToList, showToast, queryClient, isSubmitting, setIsSubmitting, errors, setErrors }) {
     const { formData } = React.useContext(FormContext);
     const [activeTab, setActiveTab] = useState('overview');
 
@@ -720,7 +734,7 @@ function FacilityCreateContent({ navigate, showToast, queryClient, isSubmitting,
                 showToast('Facility created successfully!', 'success', { isFormSubmission: true });
             }
 
-            navigate('/super-admin/facilities');
+            onExitToList();
         } catch (error) {
             logger.error('Error creating facility:', error);
             const errorData = error.response?.data;
@@ -784,7 +798,8 @@ function FacilityCreateContent({ navigate, showToast, queryClient, isSubmitting,
                 <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-4">
                         <button
-                            onClick={() => navigate('/super-admin/facilities')}
+                            type="button"
+                            onClick={() => onExitToList()}
                             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
                         >
                             <ArrowLeft className="w-5 h-5" />

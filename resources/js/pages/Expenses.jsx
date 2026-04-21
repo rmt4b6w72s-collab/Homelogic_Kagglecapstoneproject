@@ -11,6 +11,7 @@ import FormInput from '../components/forms/FormInput';
 import FormTextarea from '../components/forms/FormTextarea';
 import FormSelect from '../components/forms/FormSelect';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
+import Modal from '../components/ui/Modal';
 import Tooltip from '../components/ui/Tooltip';
 import EntityCardShell, { EntityCardHeader } from '../components/ui/EntityCardShell';
 import CardIconButton from '../components/ui/CardIconButton';
@@ -85,15 +86,6 @@ function Expenses() {
         variant="danger"
         isPending={deleteMutation.isPending}
       />
-      {showForm ? (
-      <div>
-        <ExpenseForm
-          record={editing}
-          onClose={handleCloseForm}
-          onSuccess={() => { handleCloseForm(); queryClient.invalidateQueries(['expenses']); }}
-        />
-      </div>
-      ) : (
     <div>
       <div className="bg-white rounded-lg shadow p-6 mb-6">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
@@ -287,7 +279,21 @@ function Expenses() {
         </div>
       )}
     </div>
-      )}
+
+      <Modal
+        isOpen={showForm}
+        onClose={handleCloseForm}
+        title={editing ? 'Edit Expense' : 'Add Expense'}
+        size="xl"
+      >
+        <ExpenseForm
+          key={editing?.id ?? 'new'}
+          inModal
+          record={editing}
+          onClose={handleCloseForm}
+          onSuccess={() => { handleCloseForm(); queryClient.invalidateQueries(['expenses']); }}
+        />
+      </Modal>
     </>
   );
 }
@@ -401,7 +407,7 @@ const expenseSchema = z.object({
   notes: z.string().optional(),
 });
 
-function ExpenseForm({ record, onClose, onSuccess }) {
+function ExpenseForm({ record, onClose, onSuccess, inModal = false }) {
   const toast = useToastContext();
   const [submitting, setSubmitting] = useState(false);
 
@@ -481,18 +487,21 @@ function ExpenseForm({ record, onClose, onSuccess }) {
   const branches = branchesData?.data || [];
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
+    <div className={inModal ? '' : 'bg-white rounded-lg shadow p-6'}>
+      {!inModal && (
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-semibold text-gray-900">
           {record ? 'Edit Expense' : 'Add Expense'}
         </h2>
         <button
+          type="button"
           onClick={onClose}
           className="text-gray-400 hover:text-gray-600"
         >
           <X className="w-6 h-6" />
         </button>
       </div>
+      )}
 
       <FormProvider {...methods}>
         <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-4">

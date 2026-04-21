@@ -25,6 +25,7 @@ import FormCheckbox from '../components/forms/FormCheckbox';
 import FormSelect from '../components/forms/FormSelect';
 import BranchSelector from '../components/BranchSelector';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
+import Modal from '../components/ui/Modal';
 
 const frequencyOptions = [
     { value: 'daily', label: 'Daily' },
@@ -153,6 +154,12 @@ const caregivers = caregiversData?.data ?? [];
         staleTime: 30 * 1000, // Cache for 30 seconds
     });
 
+    const latestAssignmentTask = React.useMemo(() => {
+        if (!assignmentTask) return null;
+        const list = tasksData ?? [];
+        return list.find((t) => t.id === assignmentTask.id) || assignmentTask;
+    }, [assignmentTask, tasksData]);
+
     const createTask = useMutation({
         mutationFn: (payload) => api.post('/cleaning/tasks', payload),
         onSuccess: () => {
@@ -278,60 +285,63 @@ const closeAssignmentModal = () => {
         );
     }
 
-    // If task form is open, show the form instead of the main content
-    if (isModalOpen) {
-        return (
-            <TaskForm
-                onClose={closeModal}
-                onSubmit={handleSubmit}
-                initialValues={editingTask}
-                isSaving={createTask.isLoading || updateTask.isLoading}
-                currentUser={currentUser}
-                branches={branchesData?.data || []}
-                selectedBranchId={branchId}
-                selectedAreaId={selectedAreaId}
-            />
-        );
-    }
-
-    // If assignment form is open, show the form instead of the main content
-    if (isAssignmentModalOpen && assignmentTask) {
-        // Find the latest task data from the query to ensure we have up-to-date assignments
-        const latestTask = tasksData?.find(t => t.id === assignmentTask.id) || assignmentTask;
-        
-        return (
-            <AssignmentForm
-                task={latestTask}
-                date={assignmentDate}
-                caregivers={caregivers}
-                onAssign={async (userId) => {
-                    try {
-                        await assignCaregiver.mutateAsync({ taskId: assignmentTask.id, userId });
-                        await queryClient.invalidateQueries({ queryKey: ['cleaning-tasks'] });
-                    } catch (err) {
-                        const errorMessage = err?.response?.data?.message 
-                            || err?.response?.data?.error 
-                            || err?.message 
-                            || 'Failed to assign caregiver. Please try again.';
-                        window.alert(errorMessage);
-                    }
-                }}
-                onRemove={async (assignmentId) => {
-                    try {
-                        await removeAssignment.mutateAsync(assignmentId);
-                        await queryClient.invalidateQueries({ queryKey: ['cleaning-tasks'] });
-                    } catch (err) {
-                        window.alert(err?.response?.data?.message || err.message);
-                    }
-                }}
-                isSaving={assignCaregiver.isLoading || removeAssignment.isLoading}
-                onClose={closeAssignmentModal}
-            />
-        );
-    }
-
     return (
         <div className="space-y-6">
+            <Modal
+                isOpen={isModalOpen}
+                onClose={closeModal}
+                title={editingTask ? 'Edit Task' : 'New Task'}
+                size="xl"
+            >
+                <TaskForm
+                    inModal
+                    onClose={closeModal}
+                    onSubmit={handleSubmit}
+                    initialValues={editingTask}
+                    isSaving={createTask.isLoading || updateTask.isLoading}
+                    currentUser={currentUser}
+                    branches={branchesData?.data || []}
+                    selectedBranchId={branchId}
+                    selectedAreaId={selectedAreaId}
+                />
+            </Modal>
+            <Modal
+                isOpen={isAssignmentModalOpen && Boolean(assignmentTask) && Boolean(latestAssignmentTask)}
+                onClose={closeAssignmentModal}
+                title="Assign caregiver"
+                size="lg"
+            >
+                {latestAssignmentTask ? (
+                    <AssignmentForm
+                        inModal
+                        task={latestAssignmentTask}
+                        date={assignmentDate}
+                        caregivers={caregivers}
+                        onAssign={async (userId) => {
+                            try {
+                                await assignCaregiver.mutateAsync({ taskId: assignmentTask.id, userId });
+                                await queryClient.invalidateQueries({ queryKey: ['cleaning-tasks'] });
+                            } catch (err) {
+                                const errorMessage = err?.response?.data?.message
+                                    || err?.response?.data?.error
+                                    || err?.message
+                                    || 'Failed to assign caregiver. Please try again.';
+                                window.alert(errorMessage);
+                            }
+                        }}
+                        onRemove={async (assignmentId) => {
+                            try {
+                                await removeAssignment.mutateAsync(assignmentId);
+                                await queryClient.invalidateQueries({ queryKey: ['cleaning-tasks'] });
+                            } catch (err) {
+                                window.alert(err?.response?.data?.message || err.message);
+                            }
+                        }}
+                        isSaving={assignCaregiver.isLoading || removeAssignment.isLoading}
+                        onClose={closeAssignmentModal}
+                    />
+                ) : null}
+            </Modal>
             <BranchSelector currentUser={currentUser} />
             <header 
                 className="rounded-3xl p-6 text-white shadow-lg" 
@@ -604,8 +614,17 @@ const closeAssignmentModal = () => {
                 </section>
             </section>
 
-            {isAreaModalOpen ? (
+            <Modal
+                isOpen={isAreaModalOpen}
+                onClose={() => {
+                    setIsAreaModalOpen(false);
+                    setEditingArea(null);
+                }}
+                title={editingArea ? 'Edit Area' : 'New Area'}
+                size="xl"
+            >
                 <AreaForm
+                    inModal
                     onClose={() => {
                         setIsAreaModalOpen(false);
                         setEditingArea(null);
@@ -619,7 +638,7 @@ const closeAssignmentModal = () => {
                         setEditingArea(null);
                     }}
                 />
-            ) : null}
+            </Modal>
 
             <ConfirmDialog
                 isOpen={deleteAreaConfirm != null}
@@ -661,7 +680,7 @@ const closeAssignmentModal = () => {
     );
 }
 
-function TaskForm({ onClose, onSubmit, initialValues, isSaving, currentUser, branches, selectedBranchId: propSelectedBranchId, selectedAreaId }) {
+function TaskForm({ onClose, onSubmit, initialValues, isSaving, currentUser, branches, selectedBranchId: propSelectedBranchId, selectedAreaId, inModal = false }) {
     // Determine initial branch_id - use area's branch if editing, or selected branch from parent, or current user's branch
     const getInitialBranchId = React.useCallback(() => {
         if (initialValues?.area?.branch_id) {
@@ -832,20 +851,22 @@ function TaskForm({ onClose, onSubmit, initialValues, isSaving, currentUser, bra
     };
 
     return (
-        <div className="space-y-6">
-            <div className="flex items-center gap-3">
-                <button
-                    type="button"
-                    onClick={onClose}
-                    className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-100"
-                >
-                    <ArrowLeft className="h-4 w-4" />
-                    Back to schedule
-                </button>
-                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                    {initialValues ? 'Edit Task' : 'New Task'}
-                </p>
-            </div>
+        <div className={inModal ? '' : 'space-y-6'}>
+            {!inModal && (
+                <div className="flex items-center gap-3">
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-100"
+                    >
+                        <ArrowLeft className="h-4 w-4" />
+                        Back to schedule
+                    </button>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                        {initialValues ? 'Edit Task' : 'New Task'}
+                    </p>
+                </div>
+            )}
 
             <div className="rounded-3xl bg-white shadow-lg ring-1 ring-gray-100">
                 <div className="border-b border-gray-100 px-6 py-4 sm:px-8 sm:py-5">
@@ -1058,7 +1079,7 @@ function TaskForm({ onClose, onSubmit, initialValues, isSaving, currentUser, bra
     );
 }
 
-function AreaForm({ onClose, branchId, currentUser, initialValues, onSuccess }) {
+function AreaForm({ onClose, branchId, currentUser, initialValues, onSuccess, inModal = false }) {
     const queryClient = useQueryClient();
     const [isSubmitting, setIsSubmitting] = React.useState(false);
 
@@ -1132,23 +1153,26 @@ function AreaForm({ onClose, branchId, currentUser, initialValues, onSuccess }) 
     };
 
     return (
-        <div className="fixed inset-0 z-[70] overflow-y-auto bg-gray-50">
-            <div className="mx-auto flex min-h-screen max-w-4xl flex-col px-4 py-8 sm:px-6 lg:px-8">
-                <div className="flex items-center gap-3">
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-100"
-                    >
-                        <ArrowLeft className="h-4 w-4" />
-                        Back to schedule
-                    </button>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                        {initialValues ? 'Edit Area' : 'New Area'}
-                    </p>
-                </div>
+        <div className={inModal ? '' : 'fixed inset-0 z-[70] overflow-y-auto bg-gray-50'}>
+            <div className={inModal ? '' : 'mx-auto flex min-h-screen max-w-4xl flex-col px-4 py-8 sm:px-6 lg:px-8'}>
+                {!inModal && (
+                    <div className="flex items-center gap-3">
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-100"
+                        >
+                            <ArrowLeft className="h-4 w-4" />
+                            Back to schedule
+                        </button>
+                        <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                            {initialValues ? 'Edit Area' : 'New Area'}
+                        </p>
+                    </div>
+                )}
 
-                <div className="mt-4 rounded-3xl bg-white shadow-lg ring-1 ring-gray-100">
+                <div className={`rounded-3xl bg-white shadow-lg ring-1 ring-gray-100 ${inModal ? '' : 'mt-4'}`}>
+                    {!inModal && (
                     <div
                         className="rounded-t-3xl px-6 py-5 text-white"
                         style={{
@@ -1163,6 +1187,7 @@ function AreaForm({ onClose, branchId, currentUser, initialValues, onSuccess }) 
                             </p>
                         </div>
                     </div>
+                    )}
 
                     <div className="space-y-6 px-6 py-6 sm:px-8 sm:py-8">
                         <FormProvider {...methods}>
@@ -1273,7 +1298,7 @@ function AreaForm({ onClose, branchId, currentUser, initialValues, onSuccess }) 
     );
 }
 
-function AssignmentForm({ task, date, caregivers, onAssign, onRemove, isSaving, onClose }) {
+function AssignmentForm({ task, date, caregivers, onAssign, onRemove, isSaving, onClose, inModal = false }) {
     const [selectedCaregiver, setSelectedCaregiver] = React.useState('');
     const [removeConfirmId, setRemoveConfirmId] = React.useState(null);
     const assignments = task.assignments ?? [];
@@ -1307,19 +1332,21 @@ function AssignmentForm({ task, date, caregivers, onAssign, onRemove, isSaving, 
                 variant="danger"
                 isPending={isSaving}
             />
-            <div className="flex items-center gap-3">
-                <button
-                    type="button"
-                    onClick={onClose}
-                    className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-100"
-                >
-                    <ArrowLeft className="h-4 w-4" />
-                    Back to schedule
-                </button>
-                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                    Assign Caregiver
-                </p>
-            </div>
+            {!inModal && (
+                <div className="flex items-center gap-3">
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-100"
+                    >
+                        <ArrowLeft className="h-4 w-4" />
+                        Back to schedule
+                    </button>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                        Assign Caregiver
+                    </p>
+                </div>
+            )}
 
             <div className="rounded-3xl bg-white shadow-lg ring-1 ring-gray-100">
                 <div className="border-b border-gray-100 px-6 py-4 sm:px-8 sm:py-5">
