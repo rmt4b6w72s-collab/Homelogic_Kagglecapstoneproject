@@ -11,6 +11,10 @@ export const CURRENT_USER_STALE_MS = 3 * 60 * 1000;
  * Call after storing a new auth token. While on /login (or other public routes), GET /user
  * caches `null` with a fresh stale window; without clearing that, React Query will not refetch
  * after login and the sidebar shows "No navigation items available" until a full refresh.
+ *
+ * After login, use `queryClient.fetchQuery(currentUserQueryOptions)` — not `setQueryData` from
+ * the login JSON — so the next request always runs GET /user; otherwise React Query can skip
+ * the network (cache looks fresh) and facility branding / theme stay wrong until reload.
  */
 export function clearCachedCurrentUser(queryClient) {
     queryClient.removeQueries({ queryKey: CURRENT_USER_QUERY_KEY });

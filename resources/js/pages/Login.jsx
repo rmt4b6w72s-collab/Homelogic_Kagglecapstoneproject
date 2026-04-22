@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation, useSearchParams, Link } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
-import { Lock, Mail, Eye, EyeOff, ShieldCheck, ClipboardList, Clock, Home, Info, Building2 } from 'lucide-react';
+import { Lock, Mail, Eye, EyeOff, ShieldCheck, ClipboardList, Clock, Home } from 'lucide-react';
 import { toast } from 'sonner';
 import api, { storeAuthToken } from '../services/api';
-import { clearCachedCurrentUser, currentUserQueryOptions, CURRENT_USER_QUERY_KEY } from '../queries/currentUser';
+import { clearCachedCurrentUser, currentUserQueryOptions } from '../queries/currentUser';
 import { dashboardStatsQueryOptions } from '../queries/dashboardStats';
 import { useAnimateOnMount } from '../hooks/useAnimateOnMount';
 import { slideInLeft, slideInRight, fadeIn, shake, shouldAnimate } from '../utils/animationPresets';
@@ -176,19 +176,20 @@ export default function Login() {
             if (token) {
                 storeAuthToken(token);
                 clearCachedCurrentUser(queryClient);
-                if (response.data.user) {
-                    localStorage.setItem('user_name', response.data.user.name || response.data.user.email);
-                    localStorage.setItem('user_role', response.data.user.role || '');
-                    
-                    // Seed the current-user query cache immediately so ThemeWrapper hasn't got to fetch it
-                    queryClient.setQueryData(CURRENT_USER_QUERY_KEY, response.data.user);
+                // Must fetch GET /user here — do not setQueryData from the login payload alone.
+                // Seeding the cache makes prefetchQuery/fetchQuery skip the network request while
+                // data looks "fresh", so facility_branding / theme never updates until a full reload.
+                const user = await queryClient.fetchQuery(currentUserQueryOptions);
+                const effectiveUser = user ?? response.data.user;
+                if (effectiveUser) {
+                    localStorage.setItem('user_name', effectiveUser.name || effectiveUser.email);
+                    localStorage.setItem('user_role', effectiveUser.role || '');
                 }
-                const role = response.data.user?.role ?? '';
+                const role = effectiveUser?.role ?? '';
                 if (role === 'family') {
                     navigate('/portal');
                 } else {
                     try {
-                        await queryClient.prefetchQuery(currentUserQueryOptions);
                         await queryClient.prefetchQuery(dashboardStatsQueryOptions);
                     } catch (prefetchErr) {
                         logger.warn('Post-login dashboard prefetch failed:', prefetchErr);
@@ -220,8 +221,8 @@ export default function Login() {
     };
 
     return (
-        <div className="h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 via-blue-50 to-slate-100 overflow-hidden">
-            <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center">
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 via-blue-50 to-slate-100 py-8 sm:py-10 overflow-x-hidden overflow-y-auto">
+            <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 min-h-0 flex items-center">
                 <div className="w-full grid lg:grid-cols-2 gap-6 items-center">
                     {/* Brand / Welcome Panel - Compact with High Contrast */}
                     <div 
@@ -278,22 +279,13 @@ export default function Login() {
                     {/* Authentication Panel - Compact with High Contrast */}
                     <div className="flex items-center justify-center w-full">
                         <div ref={formRef} className="w-full max-w-md space-y-5">
-                            {/* Logo and Back to Home Link */}
-                            <div className="flex flex-col items-center mb-4">
+                            {/* Back to home */}
+                            <div className="flex justify-center mb-1">
                                 <a
                                     href="/"
-                                    className="flex items-center space-x-3 bg-white/90 backdrop-blur-sm px-4 py-3 rounded-xl shadow-lg border border-gray-200 mb-3 hover:shadow-xl hover:border-blue-300 transition-all group no-underline"
+                                    className="inline-flex items-center gap-2 text-sm font-semibold text-slate-800 hover:text-blue-800 underline-offset-2 hover:underline"
                                 >
-                                    <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center shadow-md group-hover:from-blue-700 group-hover:to-blue-800 transition-all">
-                                        <Building2 className="w-6 h-6 text-white" />
-                                    </div>
-                                    <span className="text-xl font-bold text-gray-900 group-hover:text-blue-700 transition-colors">HomeLogic360</span>
-                                </a>
-                                <a
-                                    href="/"
-                                    className="flex items-center space-x-2 text-sm text-blue-700 hover:text-blue-800 font-semibold hover:underline transition-colors no-underline"
-                                >
-                                    <Home className="w-4 h-4" />
+                                    <Home className="w-4 h-4 shrink-0 text-slate-700" aria-hidden="true" />
                                     <span>Back to Welcome Page</span>
                                 </a>
                             </div>
@@ -381,6 +373,15 @@ export default function Login() {
                                         </div>
                                     </div>
 
+                                    <div className="flex justify-end -mt-0.5">
+                                        <Link
+                                            to="/forgot-password"
+                                            className="text-sm font-semibold text-blue-700 hover:text-blue-800 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded"
+                                        >
+                                            Forgot your password?
+                                        </Link>
+                                    </div>
+
                                     <button
                                         type="submit"
                                         disabled={loading || locationLoading}
@@ -388,15 +389,6 @@ export default function Login() {
                                     >
                                         {loading ? 'Signing in...' : locationLoading ? 'Getting location...' : 'Sign In'}
                                     </button>
-
-                                    <div className="text-center">
-                                        <Link
-                                            to="/forgot-password"
-                                            className="text-sm font-semibold text-blue-700 hover:text-blue-800 hover:underline"
-                                        >
-                                            Forgot your password?
-                                        </Link>
-                                    </div>
                                 </form>
 
                                 <div className="pt-4 border-t-2 border-gray-300">
