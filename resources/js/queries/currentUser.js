@@ -4,6 +4,12 @@ import logger from '../utils/logger';
 /** Shared React Query key for GET /api/v1/user */
 export const CURRENT_USER_QUERY_KEY = ['current-user'];
 
+/**
+ * Last facility branding (session) — read synchronously in ThemeWrapper while GET /user is in flight
+ * so the first paint is not the default HomeLogic theme. Cleared on logout and before a new login.
+ */
+export const FACILITY_BRANDING_SESSION_KEY = 'hl360_facility_branding_v1';
+
 /** 3 minutes — balances freshness with fewer round-trips than staleTime: 0 */
 export const CURRENT_USER_STALE_MS = 3 * 60 * 1000;
 
@@ -18,6 +24,30 @@ export const CURRENT_USER_STALE_MS = 3 * 60 * 1000;
  */
 export function clearCachedCurrentUser(queryClient) {
     queryClient.removeQueries({ queryKey: CURRENT_USER_QUERY_KEY });
+    try {
+        sessionStorage.removeItem(FACILITY_BRANDING_SESSION_KEY);
+    } catch (e) {
+        /* ignore */
+    }
+}
+
+function persistFacilityBrandingFromUserPayload(data) {
+    if (!data) return;
+    if (data.role === 'super_admin') {
+        try {
+            sessionStorage.removeItem(FACILITY_BRANDING_SESSION_KEY);
+        } catch (e) {
+            /* ignore */
+        }
+        return;
+    }
+    if (data.facility_branding && typeof data.facility_branding === 'object') {
+        try {
+            sessionStorage.setItem(FACILITY_BRANDING_SESSION_KEY, JSON.stringify(data.facility_branding));
+        } catch (e) {
+            /* ignore */
+        }
+    }
 }
 
 function isPublicAppPath(pathname) {
@@ -43,7 +73,9 @@ function isPublicAppPath(pathname) {
 export async function fetchCurrentUserUnified() {
     try {
         const response = await api.get('/user');
-        return response.data;
+        const data = response.data;
+        persistFacilityBrandingFromUserPayload(data);
+        return data;
     } catch (err) {
         if (err?.response?.status === 401) {
             if (!isPublicAppPath(window.location.pathname)) {

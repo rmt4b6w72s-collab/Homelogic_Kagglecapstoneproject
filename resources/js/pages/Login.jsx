@@ -186,6 +186,9 @@ export default function Login() {
                     localStorage.setItem('user_role', effectiveUser.role || '');
                 }
                 const role = effectiveUser?.role ?? '';
+                // Defer navigation one macrotask so ThemeWrapper/ThemeProvider re-render with the cached user
+                // and useLayoutEffect applies facility CSS variables before the dashboard first paints.
+                await new Promise((resolve) => setTimeout(resolve, 0));
                 if (role === 'family') {
                     navigate('/portal');
                 } else {

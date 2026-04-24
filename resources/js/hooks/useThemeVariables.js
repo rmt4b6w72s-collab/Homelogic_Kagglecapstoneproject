@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useLayoutEffect } from 'react';
 import { lightenColor, darkenColor, addOpacity, getContrastColor, ensureContrast, getTextColorForWhite } from '../utils/colorUtils';
 
 /**
@@ -6,7 +6,8 @@ import { lightenColor, darkenColor, addOpacity, getContrastColor, ensureContrast
  * Updates when theme colors change
  */
 export function useThemeVariables(theme) {
-    useEffect(() => {
+    // useLayoutEffect: apply CSS variables before the browser paints so the first frame matches React theme state
+    useLayoutEffect(() => {
         if (!theme) return;
         
         const root = document.documentElement;
