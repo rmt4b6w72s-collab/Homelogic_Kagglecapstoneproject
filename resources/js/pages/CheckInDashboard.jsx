@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import api from '../services/api';
+import api, { clearStoredAuth } from '../services/api';
+import {
+    clearCachedCurrentUser,
+    CURRENT_USER_QUERY_KEY,
+    currentUserQueryOptions,
+} from '../queries/currentUser';
 import { 
     Clock, 
     User, 
@@ -73,6 +78,7 @@ const ProgressBar = ({ value, max, color = 'var(--theme-primary)', label }) => {
 export default function CheckInDashboard() {
     const queryClient = useQueryClient();
     const navigate = useNavigate();
+    useQuery(currentUserQueryOptions);
     const [refreshInterval, setRefreshInterval] = useState(30000); // 30 seconds
     
     // History filters
@@ -235,9 +241,27 @@ export default function CheckInDashboard() {
             // Use admin endpoint to clock out specific staff member
             return api.post(`/staff/clock-ins/${clockInId}/clock-out`, payload);
         },
-        onSuccess: () => {
+        onSuccess: async (_data, variables) => {
             queryClient.invalidateQueries(['staff-clock-ins-active']);
             queryClient.invalidateQueries(['staff-clock-ins']);
+            const me = queryClient.getQueryData(CURRENT_USER_QUERY_KEY);
+            const staffId = variables?.staffId;
+            if (
+                me?.id != null &&
+                staffId != null &&
+                Number(me.id) === Number(staffId)
+            ) {
+                try {
+                    await api.post('/logout');
+                } catch (err) {
+                    logger.error('Logout after clock-out failed:', err);
+                } finally {
+                    clearCachedCurrentUser(queryClient);
+                    clearStoredAuth();
+                    window.location.href = '/login';
+                }
+                return;
+            }
             alert('Successfully clocked out');
         },
         onError: (err) => {
@@ -287,7 +311,10 @@ export default function CheckInDashboard() {
         if (!dashboardConfirm) return;
         const done = () => setDashboardConfirm(null);
         if (dashboardConfirm.type === 'staffClockOut') {
-            staffClockOutMutation.mutate({ clockInId: dashboardConfirm.clockInId }, { onSuccess: done });
+            staffClockOutMutation.mutate(
+                { clockInId: dashboardConfirm.clockInId, staffId: dashboardConfirm.staffId },
+                { onSuccess: done }
+            );
         } else if (dashboardConfirm.type === 'residentSignIn') {
             residentSignInMutation.mutate({ residentId: dashboardConfirm.residentId }, { onSuccess: done });
         } else if (dashboardConfirm.type === 'visitorCheckOut') {
@@ -597,6 +624,7 @@ export default function CheckInDashboard() {
                                                 setDashboardConfirm({
                                                     type: 'staffClockOut',
                                                     clockInId: clockIn.id,
+                                                    staffId: clockIn.staff_id ?? clockIn.staff?.id ?? null,
                                                     name: clockIn.staff?.name || 'this staff member',
                                                 });
                                             }}
