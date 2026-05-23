@@ -75,9 +75,11 @@ Route::prefix('public')->group(function () {
     Route::post('/contact', [PublicContactController::class, 'submit'])->middleware('throttle:10,1');
 
     // Public staff clock-in endpoints
-    Route::post('/staff/verify-employee', [PublicStaffClockInController::class, 'verifyEmployee']);
-    Route::post('/staff/clock-in', [PublicStaffClockInController::class, 'clockIn']);
-    Route::post('/staff/clock-out', [PublicStaffClockInController::class, 'clockOut']);
+    Route::prefix('staff')->middleware('throttle:30,1')->group(function () {
+        Route::post('/verify-employee', [PublicStaffClockInController::class, 'verifyEmployee']);
+        Route::post('/clock-in', [PublicStaffClockInController::class, 'clockIn']);
+        Route::post('/clock-out', [PublicStaffClockInController::class, 'clockOut']);
+    });
 });
 
 Route::prefix('v1')->middleware([\App\Http\Middleware\SetFacilityContext::class])->group(function () {

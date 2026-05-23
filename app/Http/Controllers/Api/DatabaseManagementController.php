@@ -7,13 +7,13 @@ use App\Models\User;
 use App\Services\DatabaseBackupService;
 use App\Services\FacilitySqlExportService;
 use App\Services\FacilitySqlImportService;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Log;
-use Carbon\Carbon;
 
 class DatabaseManagementController extends Controller
 {
@@ -26,11 +26,7 @@ class DatabaseManagementController extends Controller
             return false;
         }
 
-        if (in_array($user->role, ['super_admin', 'administrator'], true)) {
-            return true;
-        }
-
-        return $user->hasRole('super_admin') || $user->hasRole('administrator');
+        return $user->isSuperAdmin();
     }
 
     /**
@@ -55,10 +51,10 @@ class DatabaseManagementController extends Controller
         try {
             // Get database size
             $dbSize = $this->getDatabaseSize();
-            
+
             // Get backup count
             $backupCount = $this->getBackupCount();
-            
+
             // Get storage used
             $storageUsed = $this->getStorageUsed();
 
@@ -312,7 +308,7 @@ class DatabaseManagementController extends Controller
             ]);
         } catch (\Exception $e) {
             return response()->json([
-                'message' => 'Failed to download backup: ' . $e->getMessage(),
+                'message' => 'Failed to download backup: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -399,7 +395,7 @@ class DatabaseManagementController extends Controller
             ]);
         } catch (\Exception $e) {
             return response()->json([
-                'message' => 'Failed to restore backup: ' . $e->getMessage(),
+                'message' => 'Failed to restore backup: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -482,7 +478,7 @@ class DatabaseManagementController extends Controller
             ]);
         } catch (\Exception $e) {
             return response()->json([
-                'message' => 'Failed to refresh data: ' . $e->getMessage(),
+                'message' => 'Failed to refresh data: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -633,18 +629,18 @@ class DatabaseManagementController extends Controller
             $config = config("database.connections.{$connection}");
 
             if ($config['driver'] === 'mysql') {
-                $result = DB::select("SELECT 
+                $result = DB::select('SELECT 
                     ROUND(SUM(data_length + index_length) / 1024 / 1024, 2) AS size_mb 
                     FROM information_schema.tables 
-                    WHERE table_schema = ?", [$config['database']]);
-                
-                if (!empty($result) && isset($result[0]->size_mb)) {
+                    WHERE table_schema = ?', [$config['database']]);
+
+                if (! empty($result) && isset($result[0]->size_mb)) {
                     return $this->formatBytes($result[0]->size_mb * 1024 * 1024);
                 }
             } elseif ($config['driver'] === 'sqlite') {
                 // Handle both absolute paths and relative paths
                 $dbPath = $config['database'];
-                if (!str_starts_with($dbPath, '/')) {
+                if (! str_starts_with($dbPath, '/')) {
                     $dbPath = database_path($dbPath);
                 }
                 if (file_exists($dbPath)) {
@@ -781,6 +777,7 @@ class DatabaseManagementController extends Controller
         try {
             $storagePath = storage_path('app');
             $size = $this->getDirectorySize($storagePath);
+
             return $this->formatBytes($size);
         } catch (\Exception $e) {
             return 'N/A';
@@ -800,6 +797,7 @@ class DatabaseManagementController extends Controller
                 }
             }
         }
+
         return $size;
     }
 
@@ -809,13 +807,11 @@ class DatabaseManagementController extends Controller
     private function formatBytes(int $bytes, int $precision = 2): string
     {
         $units = ['B', 'KB', 'MB', 'GB', 'TB'];
-        
+
         for ($i = 0; $bytes > 1024 && $i < count($units) - 1; $i++) {
             $bytes /= 1024;
         }
-        
-        return round($bytes, $precision) . ' ' . $units[$i];
+
+        return round($bytes, $precision).' '.$units[$i];
     }
-
 }
-

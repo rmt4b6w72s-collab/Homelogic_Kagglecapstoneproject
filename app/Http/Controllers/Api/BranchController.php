@@ -10,16 +10,32 @@ class BranchController extends BaseApiController
 {
     public function index(Request $request): JsonResponse
     {
+        $user = $request->user();
         $query = Branch::with('facility')
             ->withCount(['residents', 'caregivers']);
-        if ($request->has('facility_id')) {
+
+        if (! $this->isSuperAdmin($user)) {
+            if (! $user?->facility_id) {
+                return response()->json([
+                    'data' => [],
+                    'current_page' => 1,
+                    'last_page' => 1,
+                    'per_page' => $request->get('per_page', 15),
+                    'total' => 0,
+                ]);
+            }
+
+            $query->where('facility_id', $user->facility_id);
+        } elseif ($request->has('facility_id')) {
             $query->where('facility_id', $request->get('facility_id'));
         }
 
         if ($request->has('search')) {
             $search = $request->get('search');
-            $query->where('name', 'like', "%{$search}%")
-                ->orWhere('address', 'like', "%{$search}%");
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('address', 'like', "%{$search}%");
+            });
         }
 
         $branches = $query->orderBy('name')
@@ -54,6 +70,10 @@ class BranchController extends BaseApiController
             'longitude' => 'nullable|numeric|between:-180,180',
         ]);
 
+        if (! $isSuperAdmin && (int) $validated['facility_id'] !== (int) $user?->facility_id) {
+            return response()->json(['message' => 'You cannot create branches for another facility.'], 403);
+        }
+
         $branch = Branch::create($validated);
 
         return response()->json($branch->load('facility'), 201);
@@ -61,7 +81,12 @@ class BranchController extends BaseApiController
 
     public function show($id): JsonResponse
     {
-        return response()->json(Branch::with('facility')->findOrFail($id));
+        $branch = Branch::with('facility')->findOrFail($id);
+        if (! $this->canAccessBranch($branch, auth()->user())) {
+            return response()->json(['message' => 'Not found'], 404);
+        }
+
+        return response()->json($branch);
     }
 
     public function update(Request $request, $id): JsonResponse
@@ -80,6 +105,9 @@ class BranchController extends BaseApiController
         }
 
         $branch = Branch::findOrFail($id);
+        if (! $this->canAccessBranch($branch, $user)) {
+            return response()->json(['message' => 'Not found'], 404);
+        }
 
         // Ensure explicit clears from frontend are persisted as null values.
         foreach (['address', 'phone', 'email', 'latitude', 'longitude'] as $nullableField) {
@@ -98,6 +126,11 @@ class BranchController extends BaseApiController
             'latitude' => 'nullable|numeric|between:-90,90',
             'longitude' => 'nullable|numeric|between:-180,180',
         ]);
+        if (! $isSuperAdmin && array_key_exists('facility_id', $validated)) {
+            if ((int) $validated['facility_id'] !== (int) $user?->facility_id) {
+                return response()->json(['message' => 'You cannot move branches to another facility.'], 403);
+            }
+        }
         $branch->update($validated);
 
         return response()->json($branch->load('facility'));
@@ -119,6 +152,9 @@ class BranchController extends BaseApiController
         }
 
         $branch = Branch::findOrFail($id);
+        if (! $this->canAccessBranch($branch, $user)) {
+            return response()->json(['message' => 'Not found'], 404);
+        }
         $branch->delete();
 
         return response()->json(['message' => 'Branch deleted']);
@@ -197,5 +233,29 @@ class BranchController extends BaseApiController
             'message' => 'Residents transferred successfully',
             'transferred_count' => $residents->count(),
         ]);
+    }
+
+    private function isSuperAdmin(?object $user): bool
+    {
+        return $user instanceof \App\Models\User && $user->isSuperAdmin();
+    }
+
+    private function canAccessBranch(Branch $branch, ?object $user): bool
+    {
+        if ($this->isSuperAdmin($user)) {
+            return true;
+        }
+
+        if (! $user instanceof \App\Models\User || ! $user->facility_id) {
+            return false;
+        }
+
+        if ((int) $branch->facility_id !== (int) $user->facility_id) {
+            return false;
+        }
+
+        return ! $user->isBranchAdmin()
+            || ! $user->assigned_branch_id
+            || (int) $branch->id === (int) $user->assigned_branch_id;
     }
 }

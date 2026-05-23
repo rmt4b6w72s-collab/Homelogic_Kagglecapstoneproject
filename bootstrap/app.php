@@ -64,6 +64,14 @@ return Application::configure(basePath: dirname(__DIR__))
             }
         });
 
+        $exceptions->render(function (\Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException $e, $request) {
+            if ($request->is('api/*')) {
+                return response()->json([
+                    'message' => 'Too many requests. Please try again later.',
+                ], 429);
+            }
+        });
+
         // Log unexpected errors for API requests
         $exceptions->report(function (\Throwable $e) {
             if (! request()->is('api/*')) {
@@ -86,6 +94,7 @@ return Application::configure(basePath: dirname(__DIR__))
             if ($request->is('api/*') && ! ($e instanceof \Illuminate\Validation\ValidationException)
                 && ! ($e instanceof \Illuminate\Database\Eloquent\ModelNotFoundException)
                 && ! ($e instanceof \Symfony\Component\HttpKernel\Exception\NotFoundHttpException)
+                && ! ($e instanceof \Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException)
                 && ! ($e instanceof \Illuminate\Auth\Access\AuthorizationException)
                 && ! ($e instanceof \Illuminate\Auth\AuthenticationException)) {
                 $payload = ['message' => 'An error occurred'];
