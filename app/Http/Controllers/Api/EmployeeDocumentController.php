@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
 use App\Models\EmployeeDocument;
 use App\Services\ActivityLogService;
 use Illuminate\Http\JsonResponse;
@@ -21,7 +20,7 @@ class EmployeeDocumentController extends BaseApiController
         if ($user && $user->role !== 'super_admin') {
             // Filter documents by users in the same facility
             if ($user->facility_id) {
-                $query->whereHas('user', function($q) use ($user) {
+                $query->whereHas('user', function ($q) use ($user) {
                     $q->where('facility_id', $user->facility_id);
                 });
             } else {
@@ -31,7 +30,7 @@ class EmployeeDocumentController extends BaseApiController
                     'current_page' => 1,
                     'last_page' => 1,
                     'per_page' => $request->get('per_page', 20),
-                    'total' => 0
+                    'total' => 0,
                 ]);
             }
         }
@@ -51,9 +50,9 @@ class EmployeeDocumentController extends BaseApiController
             if ($request->get('is_expired') === 'true') {
                 $query->where('expiration_date', '<', now());
             } elseif ($request->get('is_expired') === 'false') {
-                $query->where(function($q) {
+                $query->where(function ($q) {
                     $q->where('expiration_date', '>=', now())
-                      ->orWhereNull('expiration_date');
+                        ->orWhereNull('expiration_date');
                 });
             }
         }
@@ -66,13 +65,13 @@ class EmployeeDocumentController extends BaseApiController
         // Search
         if ($request->has('search')) {
             $search = $request->get('search');
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('document_name', 'like', "%{$search}%")
-                  ->orWhere('file_name', 'like', "%{$search}%")
-                  ->orWhereHas('user', function($q) use ($search) {
-                      $q->where('name', 'like', "%{$search}%")
-                        ->orWhere('email', 'like', "%{$search}%");
-                  });
+                    ->orWhere('file_name', 'like', "%{$search}%")
+                    ->orWhereHas('user', function ($q) use ($search) {
+                        $q->where('name', 'like', "%{$search}%")
+                            ->orWhere('email', 'like', "%{$search}%");
+                    });
             });
         }
 
@@ -92,7 +91,7 @@ class EmployeeDocumentController extends BaseApiController
         if ($user && $user->role !== 'super_admin') {
             if ($user->facility_id) {
                 // Verify the document's user belongs to the same facility
-                if (!$document->user || $document->user->facility_id !== $user->facility_id) {
+                if (! $document->user || $document->user->facility_id !== $user->facility_id) {
                     return response()->json(['message' => 'Employee document not found'], 404);
                 }
             } else {
@@ -101,10 +100,7 @@ class EmployeeDocumentController extends BaseApiController
             }
         }
 
-        // Add file URL
-        $document->file_url = $document->file_path 
-            ? Storage::disk('public')->url($document->file_path)
-            : null;
+        $this->attachDownloadUrls($document);
 
         return response()->json($document);
     }
@@ -125,7 +121,7 @@ class EmployeeDocumentController extends BaseApiController
         // Check facility access for non-super admins
         if ($user && $user->role !== 'super_admin') {
             $targetUser = \App\Models\User::find($validated['user_id']);
-            if (!$targetUser) {
+            if (! $targetUser) {
                 return response()->json(['message' => 'User not found'], 404);
             }
             if ($user->facility_id) {
@@ -133,14 +129,14 @@ class EmployeeDocumentController extends BaseApiController
                 if ($targetUser->facility_id !== $user->facility_id) {
                     return response()->json([
                         'message' => 'You can only create documents for users in your facility.',
-                        'errors' => ['user_id' => ['You can only create documents for users in your facility.']]
+                        'errors' => ['user_id' => ['You can only create documents for users in your facility.']],
                     ], 403);
                 }
             } else {
                 // User has no facility assigned
                 return response()->json([
                     'message' => 'You can only create documents for users in your facility.',
-                    'errors' => ['user_id' => ['You can only create documents for users in your facility.']]
+                    'errors' => ['user_id' => ['You can only create documents for users in your facility.']],
                 ], 403);
             }
         }
@@ -148,9 +144,9 @@ class EmployeeDocumentController extends BaseApiController
         // Handle file upload
         if ($request->hasFile('file_path')) {
             $file = $request->file('file_path');
-            $fileName = time() . '_' . $file->getClientOriginalName();
-            $filePath = $file->storeAs('employee-documents', $fileName, 'public');
-            
+            $fileName = time().'_'.$file->getClientOriginalName();
+            $filePath = $file->storeAs('employee-documents', $fileName, $this->documentDisk());
+
             $validated['file_path'] = $filePath;
             $validated['file_name'] = $file->getClientOriginalName();
             $validated['file_size'] = $file->getSize();
@@ -164,7 +160,7 @@ class EmployeeDocumentController extends BaseApiController
             $validated['is_expired'] = false;
         }
 
-        if (!isset($validated['is_active'])) {
+        if (! isset($validated['is_active'])) {
             $validated['is_active'] = true;
         }
 
@@ -174,7 +170,7 @@ class EmployeeDocumentController extends BaseApiController
         try {
             $targetUser = \App\Models\User::find($validated['user_id']);
             $facility = $targetUser?->facility ?? auth()->user()?->facility;
-            
+
             if ($facility) {
                 $admins = \App\Models\User::where('facility_id', $facility->id)
                     ->whereIn('role', ['administrator', 'admin', 'manager', 'super_admin'])
@@ -182,7 +178,7 @@ class EmployeeDocumentController extends BaseApiController
                     ->get();
 
                 // Also notify the target user if they're not already in the list
-                if ($targetUser && !$admins->contains('id', $targetUser->id)) {
+                if ($targetUser && ! $admins->contains('id', $targetUser->id)) {
                     $admins->push($targetUser);
                 }
 
@@ -227,7 +223,7 @@ class EmployeeDocumentController extends BaseApiController
         try {
             ActivityLogService::activity(
                 event: 'created',
-                description: 'Created employee document: ' . ($document->document_name ?? 'Document'),
+                description: 'Created employee document: '.($document->document_name ?? 'Document'),
                 subject: $document,
                 properties: [
                     'document_type' => $document->document_type,
@@ -255,7 +251,7 @@ class EmployeeDocumentController extends BaseApiController
         if ($user && $user->role !== 'super_admin') {
             if ($user->facility_id) {
                 // Verify the document's user belongs to the same facility
-                if (!$document->user || $document->user->facility_id !== $user->facility_id) {
+                if (! $document->user || $document->user->facility_id !== $user->facility_id) {
                     return response()->json(['message' => 'You do not have access to this employee document.'], 403);
                 }
             } else {
@@ -278,7 +274,7 @@ class EmployeeDocumentController extends BaseApiController
         if (isset($validated['user_id']) && $validated['user_id'] != $document->user_id) {
             if ($user && $user->role !== 'super_admin') {
                 $targetUser = \App\Models\User::find($validated['user_id']);
-                if (!$targetUser) {
+                if (! $targetUser) {
                     return response()->json(['message' => 'User not found'], 404);
                 }
                 if ($user->facility_id) {
@@ -286,13 +282,13 @@ class EmployeeDocumentController extends BaseApiController
                     if ($targetUser->facility_id !== $user->facility_id) {
                         return response()->json([
                             'message' => 'You can only assign documents to users in your facility.',
-                            'errors' => ['user_id' => ['You can only assign documents to users in your facility.']]
+                            'errors' => ['user_id' => ['You can only assign documents to users in your facility.']],
                         ], 403);
                     }
                 } else {
                     return response()->json([
                         'message' => 'You can only assign documents to users in your facility.',
-                        'errors' => ['user_id' => ['You can only assign documents to users in your facility.']]
+                        'errors' => ['user_id' => ['You can only assign documents to users in your facility.']],
                     ], 403);
                 }
             }
@@ -301,14 +297,14 @@ class EmployeeDocumentController extends BaseApiController
         // Handle file upload if new file is provided
         if ($request->hasFile('file_path')) {
             // Delete old file
-            if ($document->file_path && Storage::disk('public')->exists($document->file_path)) {
-                Storage::disk('public')->delete($document->file_path);
+            if ($document->file_path && Storage::disk($this->documentDisk())->exists($document->file_path)) {
+                Storage::disk($this->documentDisk())->delete($document->file_path);
             }
 
             $file = $request->file('file_path');
-            $fileName = time() . '_' . $file->getClientOriginalName();
-            $filePath = $file->storeAs('employee-documents', $fileName, 'public');
-            
+            $fileName = time().'_'.$file->getClientOriginalName();
+            $filePath = $file->storeAs('employee-documents', $fileName, $this->documentDisk());
+
             $validated['file_path'] = $filePath;
             $validated['file_name'] = $file->getClientOriginalName();
             $validated['file_size'] = $file->getSize();
@@ -336,7 +332,7 @@ class EmployeeDocumentController extends BaseApiController
         if ($user && $user->role !== 'super_admin') {
             if ($user->facility_id) {
                 // Verify the document's user belongs to the same facility
-                if (!$document->user || $document->user->facility_id !== $user->facility_id) {
+                if (! $document->user || $document->user->facility_id !== $user->facility_id) {
                     return response()->json(['message' => 'You do not have access to this employee document.'], 403);
                 }
             } else {
@@ -346,13 +342,58 @@ class EmployeeDocumentController extends BaseApiController
         }
 
         // Delete file from storage
-        if ($document->file_path && Storage::disk('public')->exists($document->file_path)) {
-            Storage::disk('public')->delete($document->file_path);
+        if ($document->file_path && Storage::disk($this->documentDisk())->exists($document->file_path)) {
+            Storage::disk($this->documentDisk())->delete($document->file_path);
         }
 
         $document->delete();
 
         return response()->json(['message' => 'Employee document deleted successfully']);
     }
-}
 
+    public function download($id)
+    {
+        $user = auth()->user();
+        $document = EmployeeDocument::with('user')->findOrFail($id);
+
+        if (! $this->canAccessDocument($document, $user)) {
+            return response()->json(['message' => 'Employee document not found'], 404);
+        }
+
+        if (! $document->file_path || ! Storage::disk($this->documentDisk())->exists($document->file_path)) {
+            return response()->json(['message' => 'File not found'], 404);
+        }
+
+        return Storage::disk($this->documentDisk())->download(
+            $document->file_path,
+            $document->file_name ?? basename($document->file_path)
+        );
+    }
+
+    private function canAccessDocument(EmployeeDocument $document, ?object $user): bool
+    {
+        if (! $user) {
+            return false;
+        }
+
+        if (method_exists($user, 'isSuperAdmin') && $user->isSuperAdmin()) {
+            return true;
+        }
+
+        return $user->facility_id
+            && $document->user
+            && (int) $document->user->facility_id === (int) $user->facility_id;
+    }
+
+    private function attachDownloadUrls(EmployeeDocument $document): void
+    {
+        $downloadUrl = "/api/v1/employee-documents/{$document->id}/download";
+        $document->file_url = $downloadUrl;
+        $document->download_url = $downloadUrl;
+    }
+
+    private function documentDisk(): string
+    {
+        return config('filesystems.employee_documents_disk', 'local');
+    }
+}

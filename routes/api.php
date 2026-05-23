@@ -173,6 +173,7 @@ Route::prefix('v1')->middleware([\App\Http\Middleware\SetFacilityContext::class]
 
     // Incidents
     Route::get('/incidents/export', [\App\Http\Controllers\Api\IncidentController::class, 'export'])->middleware('auth:sanctum');
+    Route::get('/incidents/{id}/attachments/{attachmentId}/download', [\App\Http\Controllers\Api\IncidentController::class, 'downloadAttachment'])->middleware('auth:sanctum');
     Route::apiResource('incidents', \App\Http\Controllers\Api\IncidentController::class)->middleware('auth:sanctum');
     Route::post('/incidents/{id}/mark-resolved', [\App\Http\Controllers\Api\IncidentController::class, 'markResolved'])->middleware('auth:sanctum');
     Route::post('/incidents/{id}/mark-closed', [\App\Http\Controllers\Api\IncidentController::class, 'markClosed'])->middleware('auth:sanctum');
@@ -315,6 +316,7 @@ Route::prefix('v1')->middleware([\App\Http\Middleware\SetFacilityContext::class]
     });
 
     // Employee Documents
+    Route::get('/employee-documents/{id}/download', [EmployeeDocumentController::class, 'download'])->middleware('auth:sanctum');
     Route::apiResource('employee-documents', EmployeeDocumentController::class)->middleware('auth:sanctum');
 
     // Resident Documents

@@ -291,7 +291,7 @@ export default function EmployeeDocuments() {
                                                     {document.file_path && (
                                                         <Tooltip content="Download">
                                                             <a
-                                                                href={`/storage/${document.file_path}`}
+                                                                href={document.download_url || `/api/v1/employee-documents/${document.id}/download`}
                                                                 target="_blank"
                                                                 rel="noopener noreferrer"
                                                                 className="inline-flex rounded-lg border border-emerald-300 bg-emerald-50 p-2 shadow-sm transition hover:border-emerald-400 hover:bg-emerald-100 [&_svg]:!text-emerald-600"

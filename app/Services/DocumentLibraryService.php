@@ -112,6 +112,7 @@ class DocumentLibraryService
             return [
                 DocumentFolder::query()
                     ->whereNull('parent_id')
+                    ->where('facility_id', $facilityId)
                     ->whereIn('resident_id', $residentIds)
                     ->orderBy('sort_order')
                     ->orderBy('name')
@@ -124,6 +125,7 @@ class DocumentLibraryService
         return [
             DocumentFolder::query()
                 ->whereNull('parent_id')
+                ->where('facility_id', $facilityId)
                 ->orderBy('sort_order')
                 ->orderBy('name')
                 ->withCount(['children', 'files'])
