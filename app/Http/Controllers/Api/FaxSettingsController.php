@@ -6,6 +6,7 @@ use App\Constants\Modules;
 use App\Models\FaxSetting;
 use App\Services\Fax\FaxManager;
 use App\Services\Fax\ProviderRegistry;
+use App\Services\Fax\Providers\IFaxFaxProvider;
 use App\Services\Fax\Support\CredentialField;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -204,12 +205,23 @@ class FaxSettingsController extends BaseApiController
         $settings = $this->resolveOrCreateSettings((int) $facility->id, $request->user()?->id);
 
         $provider = $settings->provider ?: 'telnyx';
+
+        if ($provider === IFaxFaxProvider::key()) {
+            return $this->success([
+                'url' => IFaxFaxProvider::sharedWebhookUrl(),
+                'provider' => $provider,
+                'secret_present' => IFaxFaxProvider::sharedWebhookUrl() !== null,
+                'shared_across_facilities' => true,
+            ]);
+        }
+
         $secret = $settings->getRawOriginal('webhook_secret') ?? $settings->webhook_secret;
 
         return $this->success([
-            'url' => url('/api/v1/webhooks/fax/'.$provider.'/'.$secret),
+            'url' => url('/api/webhooks/fax/'.$provider.'/'.$secret),
             'provider' => $provider,
             'secret_present' => ! empty($secret),
+            'shared_across_facilities' => false,
         ]);
     }
 
@@ -230,11 +242,18 @@ class FaxSettingsController extends BaseApiController
 
         $settings = $this->resolveOrCreateSettings((int) $facility->id, $request->user()?->id);
 
-        $newSecret = $settings->rotateWebhookSecret();
         $provider = $settings->provider ?: 'telnyx';
+        if ($provider === IFaxFaxProvider::key()) {
+            return $this->error(
+                'iFax uses one shared webhook URL for all facilities. Update FAX_IFAX_WEBHOOK_SECRET in the server environment instead.',
+                422,
+            );
+        }
+
+        $newSecret = $settings->rotateWebhookSecret();
 
         return $this->success([
-            'url' => url('/api/v1/webhooks/fax/'.$provider.'/'.$newSecret),
+            'url' => url('/api/webhooks/fax/'.$provider.'/'.$newSecret),
             'provider' => $provider,
             'secret_present' => true,
         ], 'Webhook secret rotated.');
@@ -352,9 +371,11 @@ class FaxSettingsController extends BaseApiController
         }
 
         $secret = $settings->getRawOriginal('webhook_secret');
-        $webhookUrl = ($canonicalProvider && $secret)
-            ? url('/api/v1/webhooks/fax/'.$canonicalProvider.'/'.$secret)
-            : null;
+        $webhookUrl = $canonicalProvider === IFaxFaxProvider::key()
+            ? IFaxFaxProvider::sharedWebhookUrl()
+            : (($canonicalProvider && $secret)
+                ? url('/api/webhooks/fax/'.$canonicalProvider.'/'.$secret)
+                : null);
 
         return [
             'id' => $settings->id,
@@ -373,7 +394,10 @@ class FaxSettingsController extends BaseApiController
             'last_test_message' => $settings->last_test_message,
             'credentials_status' => $credentialsStatus,
             'webhook_url' => $webhookUrl,
-            'secret_present' => ! empty($secret),
+            'webhook_shared_across_facilities' => $canonicalProvider === IFaxFaxProvider::key(),
+            'secret_present' => $canonicalProvider === IFaxFaxProvider::key()
+                ? IFaxFaxProvider::sharedWebhookUrl() !== null
+                : ! empty($secret),
             'created_at' => optional($settings->created_at)->toIso8601String(),
             'updated_at' => optional($settings->updated_at)->toIso8601String(),
         ];

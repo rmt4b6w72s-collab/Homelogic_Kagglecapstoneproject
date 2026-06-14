@@ -581,8 +581,10 @@ export default function FaxSettingsPage() {
                 </header>
                 <div className="p-5 space-y-4">
                     <div>
-                        <FieldLabel help="Point your provider\u2019s inbound and status webhooks at this URL.">
-                            Per-facility webhook URL
+                        <FieldLabel help={settings?.webhook_shared_across_facilities
+                            ? 'iFax uses one webhook URL for your entire account. Paste this same URL in the iFax Developer API dashboard for all facilities.'
+                            : 'Point your provider\u2019s inbound and status webhooks at this URL.'}>
+                            {settings?.webhook_shared_across_facilities ? 'Shared iFax webhook URL' : 'Per-facility webhook URL'}
                         </FieldLabel>
                         <div className="flex gap-2">
                             <input

@@ -595,7 +595,7 @@ class FacilityResource extends Resource
 
                             $provider = $get('fax_provider') ?: $setting->provider ?: '{provider}';
 
-                            return url('/api/v1/webhooks/fax/'.$provider.'/'.$setting->webhook_secret);
+                            return url('/api/webhooks/fax/'.$provider.'/'.$setting->webhook_secret);
                         })
                         ->columnSpanFull(),
 
@@ -677,7 +677,7 @@ class FacilityResource extends Resource
                                 }
 
                                 $newSecret = $setting->rotateWebhookSecret();
-                                $newUrl = url('/api/v1/webhooks/fax/'.$setting->provider.'/'.$newSecret);
+                                $newUrl = url('/api/webhooks/fax/'.$setting->provider.'/'.$newSecret);
 
                                 Notification::make()
                                     ->title('Webhook secret rotated')

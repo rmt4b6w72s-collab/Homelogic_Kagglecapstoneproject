@@ -15,6 +15,7 @@ return [
     |
     */
     'providers' => [
+        \App\Services\Fax\Providers\IFaxFaxProvider::class,
         \App\Services\Fax\Providers\TelnyxFaxProvider::class,
         \App\Services\Fax\Providers\DocumoFaxProvider::class,
         \App\Services\Fax\Providers\FakeFaxProvider::class,
@@ -63,6 +64,20 @@ return [
     |
     */
     'webhook_timestamp_tolerance' => 300,
+
+    /*
+    |--------------------------------------------------------------------------
+    | iFax (account-wide webhook)
+    |--------------------------------------------------------------------------
+    |
+    | iFax uses one callback URL for the entire account. Set this secret in
+    | production and paste the resulting URL into the iFax Developer API
+    | webhook settings. The same URL applies to every Evergreen facility.
+    |
+    */
+    'ifax' => [
+        'webhook_secret' => env('FAX_IFAX_WEBHOOK_SECRET'),
+    ],
 
     /*
     |--------------------------------------------------------------------------
