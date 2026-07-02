@@ -14,7 +14,11 @@ class NotificationObserver
     public function created(Notification $notification): void
     {
         // Broadcast real-time notification (in-app when tab is open)
-        event(new NotificationCreated($notification));
+        try {
+            event(new NotificationCreated($notification));
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('[NotificationObserver] Broadcast failed: ' . $e->getMessage());
+        }
 
         // Send PWA push notification (device notification when app is in background/closed)
         try {
