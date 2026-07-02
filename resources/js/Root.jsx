@@ -175,6 +175,7 @@ const MedicationHubMarTab = lazyWithRetry(() => import('./pages/caregiver/medica
 const MedicationHubPrnTab = lazyWithRetry(() => import('./pages/caregiver/medication-hub/MedicationHubPrnTab'));
 const MedicationHubPharmacyTab = lazyWithRetry(() => import('./pages/caregiver/medication-hub/MedicationHubPharmacyTab'));
 const Reports = lazyWithRetry(() => import('./pages/Reports'));
+const ChartAssistantTestPage = lazyWithRetry(() => import('./pages/ChartAssistantTestPage'));
 const Assessments = lazyWithRetry(() => import('./pages/Assessments'));
 const AssessmentDetail = lazyWithRetry(() => import('./pages/AssessmentDetail'));
 const AssessmentReview = lazyWithRetry(() => import('./pages/AssessmentReview'));
@@ -350,6 +351,7 @@ function App() {
                 {/* Main Pages */}
                 <Route path="profile" element={<Suspense fallback={<PageLoader />}><Profile /></Suspense>} />
                 <Route path="dashboard" element={<Suspense fallback={<PageLoader />}><DashboardDispatcher /></Suspense>} />
+                <Route path="chart-assistant-test" element={<Suspense fallback={<PageLoader />}><ChartAssistantTestPage /></Suspense>} />
 
                 {/* ── Residents section (persistent tab bar) ───────────────── */}
                 <Route element={<Suspense fallback={<PageLoader />}><ResidentsSectionLayout /></Suspense>}>

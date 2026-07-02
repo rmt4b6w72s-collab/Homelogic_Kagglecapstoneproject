@@ -10,7 +10,7 @@ import ThemeWrapper from './components/ThemeWrapper';
 // Import CSS - Vite will handle it properly
 import '../css/app.css';
 // Register service worker for PWA
-import { registerServiceWorker } from './services/serviceWorker';
+import { registerServiceWorker, unregisterServiceWorker } from './services/serviceWorker';
 
 // Suppress Cloudflare cookie warnings - after imports
 // This prevents these harmless errors from cluttering the console
@@ -162,11 +162,20 @@ console.log('app.jsx file loaded, readyState:', document.readyState);
 
 // Register service worker for PWA and initialize Echo
 if (typeof window !== 'undefined') {
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
+    if (isLocalhost) {
+        // Avoid stale cached assets while developing locally.
+        unregisterServiceWorker().catch(() => {});
+    }
+
     // Register after a short delay to not block app initialization
     setTimeout(() => {
-        registerServiceWorker().catch((error) => {
-            console.warn('Service worker registration failed:', error);
-        });
+        if (!isLocalhost) {
+            registerServiceWorker().catch((error) => {
+                console.warn('Service worker registration failed:', error);
+            });
+        }
         
         // Initialize background sync
         import('./services/backgroundSync').then(({ registerBackgroundSync, setupOnlineSync }) => {

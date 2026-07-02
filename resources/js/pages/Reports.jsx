@@ -614,8 +614,10 @@ export default function Reports() {
                             </button>
                         </div>
                     ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <button
+                    <>
+                        <div className="space-y-6">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <button
                             type="button"
                             onClick={openMarReportStep}
                             disabled={isExporting}
@@ -707,7 +709,9 @@ export default function Reports() {
                                 </div>
                             )}
                         </button>
-                    </div>
+                            </div>
+                        </div>
+                    </>
                     )}
 
                     <div className="mt-8 pt-6 border-t border-gray-100 flex items-center justify-center gap-2 text-gray-400 text-xs italic">

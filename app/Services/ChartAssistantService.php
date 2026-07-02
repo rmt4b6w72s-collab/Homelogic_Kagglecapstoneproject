@@ -9,6 +9,7 @@ class ChartAssistantService
 {
     public function analyze(array $payload, ?string $prompt = null): array
     {
+        $resolvedPrompt = $prompt ?? 'Summarize the chart trends and recommend next actions.';
         $heuristicResult = $this->buildHeuristicResult($payload, $prompt);
 
         $apiKey = env('ANTHROPIC_API_KEY');
@@ -21,6 +22,7 @@ class ChartAssistantService
         }
         if (empty($apiKey)) {
             return array_merge($heuristicResult, [
+                'prompt' => $resolvedPrompt,
                 'mode' => 'heuristic',
                 'model' => 'heuristic',
             ]);
@@ -54,10 +56,17 @@ class ChartAssistantService
 
             $decoded = json_decode($content, true);
             if (is_array($decoded)) {
+                $decodedSummary = (string) ($decoded['summary'] ?? $heuristicResult['summary']);
+                if ($this->isFollowUpMonitorPrompt($resolvedPrompt) || $this->isFollowUpListPrompt($resolvedPrompt)) {
+                    // Keep prompt-aligned response structure for follow-up vs monitor prompts.
+                    $decodedSummary = (string) ($heuristicResult['summary'] ?? $decodedSummary);
+                }
+
                 return array_merge($heuristicResult, [
+                    'prompt' => $resolvedPrompt,
                     'mode' => 'anthropic',
                     'model' => 'claude-3-5-sonnet-20241022',
-                    'summary' => $decoded['summary'] ?? $heuristicResult['summary'],
+                    'summary' => $decodedSummary,
                     'insights' => $this->normalizeList($decoded['insights'] ?? $heuristicResult['insights']),
                     'recommendations' => $this->normalizeList($decoded['recommendations'] ?? $heuristicResult['recommendations']),
                 ]);
@@ -69,6 +78,7 @@ class ChartAssistantService
         }
 
         return array_merge($heuristicResult, [
+            'prompt' => $resolvedPrompt,
             'mode' => 'heuristic',
             'model' => 'heuristic',
         ]);
@@ -94,6 +104,8 @@ class ChartAssistantService
             'resident' => $payload['resident']['name'] ?? 'the selected resident',
             'window' => $payload['window'] ?? 'the selected period',
             'vitals' => $payload['vitals'] ?? [],
+            'comparison' => $payload['comparison'] ?? [],
+            'facility_follow_up_candidates' => $payload['facility_follow_up_candidates'] ?? [],
             'sleep' => $payload['sleep'] ?? [],
             'behavior_charts' => $payload['behavior_charts'] ?? [],
             'appointments' => $payload['appointments'] ?? [],
@@ -103,11 +115,195 @@ class ChartAssistantService
         ]);
     }
 
+    private function isComparisonPrompt(?string $prompt): bool
+    {
+        $normalized = strtolower(trim((string) $prompt));
+
+        if ($normalized === '') {
+            return false;
+        }
+
+        return str_contains($normalized, 'compare')
+            || str_contains($normalized, 'prior week')
+            || str_contains($normalized, 'previous week')
+            || str_contains($normalized, 'what changed')
+            || str_contains($normalized, 'week to week')
+            || str_contains($normalized, 'versus')
+            || str_contains($normalized, 'vs');
+    }
+
+    private function isFollowUpMonitorPrompt(?string $prompt): bool
+    {
+        $normalized = strtolower(trim((string) $prompt));
+
+        if ($normalized === '') {
+            return false;
+        }
+
+        $mentionsFollowUp = str_contains($normalized, 'follow-up')
+            || str_contains($normalized, 'follow up')
+            || str_contains($normalized, 'immediate')
+            || str_contains($normalized, 'urgent');
+
+        $mentionsMonitor = str_contains($normalized, 'monitor')
+            || str_contains($normalized, 'watch')
+            || str_contains($normalized, 'observe');
+
+        return $mentionsFollowUp && $mentionsMonitor;
+    }
+
+    private function isFollowUpListPrompt(?string $prompt): bool
+    {
+        $normalized = strtolower(trim((string) $prompt));
+
+        if ($normalized === '') {
+            return false;
+        }
+
+        $mentionsList = str_contains($normalized, 'list') || str_contains($normalized, 'show') || str_contains($normalized, 'who');
+        $mentionsResidents = str_contains($normalized, 'resident') || str_contains($normalized, 'residents');
+        $mentionsFollowUp = str_contains($normalized, 'follow-up') || str_contains($normalized, 'follow up');
+        $mentionsWhy = str_contains($normalized, 'why') || str_contains($normalized, 'reason');
+
+        return $mentionsFollowUp && ($mentionsList || $mentionsResidents) && $mentionsWhy;
+    }
+
+    private function buildFollowUpListSummary(
+        string $residentName,
+        int $criticalCount,
+        int $warningCount,
+        int $missedMedicationCount,
+        int $providerNotifiedCount,
+        int $upcomingAppointments,
+        int $behaviorCount,
+        int $faxCount
+    ): string {
+        $reasons = [];
+
+        if ($criticalCount > 0) {
+            $reasons[] = "{$criticalCount} critical vital reading(s) require immediate review";
+        }
+        if ($warningCount > 0) {
+            $reasons[] = "{$warningCount} warning vital reading(s) need closer monitoring";
+        }
+        if ($missedMedicationCount > 0) {
+            $reasons[] = "{$missedMedicationCount} missed/refused medication administration(s) need reconciliation";
+        }
+        if ($providerNotifiedCount > 0) {
+            $reasons[] = "{$providerNotifiedCount} behavior event(s) were escalated to a provider";
+        }
+        if ($upcomingAppointments > 0) {
+            $reasons[] = "{$upcomingAppointments} upcoming appointment(s) need preparation/follow-through";
+        }
+        if ($behaviorCount > 0) {
+            $reasons[] = "{$behaviorCount} behavior chart event(s) suggest ongoing pattern tracking";
+        }
+        if ($faxCount > 0) {
+            $reasons[] = "{$faxCount} recent fax communication(s) may include care updates";
+        }
+
+        if (empty($reasons)) {
+            return "Follow-up list: {$residentName} can remain on routine monitoring with no urgent follow-up flags in the current review window.";
+        }
+
+        return "Follow-up list: {$residentName} may need follow-up because ".implode('; ', $reasons).'.';
+    }
+
+    private function buildFacilityFollowUpListSummary(array $candidates): string
+    {
+        $list = array_slice(array_values(array_filter($candidates, fn ($item) => is_array($item))), 0, 5);
+
+        if (empty($list)) {
+            return 'Follow-up list: no residents are currently flagged for urgent follow-up in this review window.';
+        }
+
+        $parts = array_map(function (array $item): string {
+            $name = (string) ($item['name'] ?? 'Resident');
+            $reasons = is_array($item['reasons'] ?? null) ? $item['reasons'] : [];
+            $reasonText = ! empty($reasons)
+                ? implode('; ', array_slice($reasons, 0, 3))
+                : 'general trend review recommended';
+
+            return "{$name} ({$reasonText})";
+        }, $list);
+
+        return 'Follow-up list: '.implode(' | ', $parts).'.';
+    }
+
+    private function buildFollowUpMonitorSummary(
+        int $criticalCount,
+        int $warningCount,
+        ?string $latestStatus,
+        int $missedMedicationCount,
+        int $providerNotifiedCount,
+        int $upcomingAppointments,
+        int $behaviorCount,
+        int $avgSleepHoursRoundedUp
+    ): string {
+        $immediate = [];
+        $monitor = [];
+
+        if ($criticalCount > 0) {
+            $immediate[] = "escalate {$criticalCount} critical vital reading(s) now";
+        }
+        if ($warningCount > 0) {
+            $immediate[] = "review {$warningCount} warning vital reading(s) for same-shift follow-up";
+        }
+        if ($latestStatus && $latestStatus !== 'approved') {
+            $immediate[] = "resolve latest vitals status ({$latestStatus})";
+        }
+        if ($missedMedicationCount > 0) {
+            $immediate[] = "reconcile {$missedMedicationCount} missed/refused medication administration(s)";
+        }
+        if ($providerNotifiedCount > 0) {
+            $immediate[] = "confirm provider-notified behavior events ({$providerNotifiedCount}) are documented";
+        }
+        if ($upcomingAppointments > 0) {
+            $immediate[] = "confirm {$upcomingAppointments} upcoming appointment(s) and prep notes/transport";
+        }
+
+        if (empty($immediate)) {
+            $immediate[] = 'no urgent follow-up items were flagged in this review window';
+        }
+
+        if ($criticalCount === 0 && $warningCount === 0) {
+            $monitor[] = 'continue routine vitals monitoring; no urgent deviations detected';
+        }
+        if ($avgSleepHoursRoundedUp > 0) {
+            $monitor[] = "track sleep trend (current average {$avgSleepHoursRoundedUp} hours)";
+        }
+        if ($behaviorCount > 0) {
+            $monitor[] = "monitor behavior pattern frequency ({$behaviorCount} charted event(s))";
+        }
+        if ($missedMedicationCount === 0) {
+            $monitor[] = 'maintain medication adherence checks each pass';
+        }
+        if (empty($monitor)) {
+            $monitor[] = 'continue routine documentation and reassess next shift';
+        }
+
+        return 'Immediate follow-up: '.implode('; ', $immediate).'. Monitor: '.implode('; ', $monitor).'.';
+    }
+
+    private function formatSleepHours(float $hours): string
+    {
+        return (string) ceil($hours);
+    }
+
+    private function formatSleepQuality(float $quality): string
+    {
+        return number_format($quality, 1, '.', '');
+    }
+
     private function buildHeuristicResult(array $payload, ?string $prompt = null): array
     {
         $residentName = $payload['resident']['name'] ?? 'the selected resident';
         $window = $payload['window'] ?? 'the selected period';
         $vitals = $payload['vitals'] ?? [];
+        $comparison = is_array($payload['comparison'] ?? null) ? $payload['comparison'] : [];
+        $facilityFollowUpCandidates = is_array($payload['facility_follow_up_candidates'] ?? null)
+            ? $payload['facility_follow_up_candidates']
+            : [];
         $sleep = $payload['sleep'] ?? [];
         $behaviorCharts = $payload['behavior_charts'] ?? [];
         $appointments = $payload['appointments'] ?? [];
@@ -121,6 +317,8 @@ class ChartAssistantService
         $latestOxygen = $vitals['latest']['oxygen_saturation'] ?? null;
         $avgSleepHours = (float) ($sleep['average_hours'] ?? 0);
         $avgSleepQuality = (float) ($sleep['average_quality'] ?? 0);
+        $avgSleepHoursRoundedUp = (int) ceil($avgSleepHours);
+        $avgSleepQualityFormatted = $this->formatSleepQuality($avgSleepQuality);
         $behaviorCount = (int) ($behaviorCharts['count'] ?? 0);
         $providerNotifiedCount = (int) ($behaviorCharts['provider_notified_count'] ?? 0);
         $behaviorLogCount = (int) ($behaviorCharts['log_count'] ?? 0);
@@ -128,38 +326,106 @@ class ChartAssistantService
         $activeMedicationCount = (int) (($payload['medications']['active_count'] ?? 0));
         $missedMedicationCount = (int) (($payload['medications']['missed_count'] ?? 0));
         $faxCount = (int) (($payload['faxes']['count'] ?? 0));
+        $previousVitalCount = (int) ($comparison['vitals']['count'] ?? 0);
+        $previousCriticalCount = (int) ($comparison['vitals']['critical_count'] ?? 0);
+        $previousWarningCount = (int) ($comparison['vitals']['warning_count'] ?? 0);
+        $previousAvgSleepHours = (float) ($comparison['sleep']['average_hours'] ?? 0);
+        $previousAvgSleepHoursRoundedUp = (int) ceil($previousAvgSleepHours);
+        $previousAvgSleepQuality = (float) ($comparison['sleep']['average_quality'] ?? 0);
+        $previousAvgSleepQualityFormatted = $this->formatSleepQuality($previousAvgSleepQuality);
+        $previousBehaviorCount = (int) ($comparison['behavior_charts']['count'] ?? 0);
+        $previousProviderNotifiedCount = (int) ($comparison['behavior_charts']['provider_notified_count'] ?? 0);
+        $previousUpcomingAppointments = (int) ($comparison['appointments']['upcoming_count'] ?? 0);
+        $previousActiveMedicationCount = (int) ($comparison['medications']['active_count'] ?? 0);
+        $previousMissedMedicationCount = (int) ($comparison['medications']['missed_count'] ?? 0);
+        $previousFaxCount = (int) ($comparison['faxes']['count'] ?? 0);
 
-        $summaryParts = ["$residentName had {$vitalCount} vitals entries during {$window}"];
+        if ($this->isFollowUpListPrompt($prompt)) {
+            $summary = ! empty($facilityFollowUpCandidates)
+                ? $this->buildFacilityFollowUpListSummary($facilityFollowUpCandidates)
+                : $this->buildFollowUpListSummary(
+                    $residentName,
+                    $criticalCount,
+                    $warningCount,
+                    $missedMedicationCount,
+                    $providerNotifiedCount,
+                    $upcomingAppointments,
+                    $behaviorCount,
+                    $faxCount
+                );
+        } elseif ($this->isFollowUpMonitorPrompt($prompt)) {
+            $summary = $this->buildFollowUpMonitorSummary(
+                $criticalCount,
+                $warningCount,
+                $latestStatus,
+                $missedMedicationCount,
+                $providerNotifiedCount,
+                $upcomingAppointments,
+                $behaviorCount,
+                $avgSleepHoursRoundedUp
+            );
+        } elseif ($this->isComparisonPrompt($prompt) && ! empty($comparison)) {
+            $summaryParts = [
+                "vitals entries were {$vitalCount} versus {$previousVitalCount} in the prior period",
+                "medication orders were {$activeMedicationCount} versus {$previousActiveMedicationCount}, with {$missedMedicationCount} missed administration(s) versus {$previousMissedMedicationCount}",
+                "sleep averaged {$avgSleepHoursRoundedUp} hours at a {$avgSleepQualityFormatted} quality score versus {$previousAvgSleepHoursRoundedUp} hours at {$previousAvgSleepQualityFormatted}",
+                "behavior charts were {$behaviorCount} versus {$previousBehaviorCount} and provider alerts were {$providerNotifiedCount} versus {$previousProviderNotifiedCount}",
+            ];
 
-        if ($activeMedicationCount > 0) {
-            $summaryParts[] = 'there are '.$activeMedicationCount.' active medication orders and '.$missedMedicationCount.' missed administration(s) in the review window';
-        }
+            if ($criticalCount > 0) {
+                $summaryParts[] = "{$criticalCount} critical observation(s) still require review";
+            } elseif ($previousCriticalCount > 0) {
+                $summaryParts[] = "critical observations improved from {$previousCriticalCount} to none";
+            } else {
+                $summaryParts[] = 'no urgent vital deviations were detected in either period';
+            }
 
-        if ($faxCount > 0) {
-            $summaryParts[] = 'there are '.$faxCount.' recent fax message(s) related to the resident';
-        }
+            if ($warningCount > 0 || $previousWarningCount > 0) {
+                $summaryParts[] = "warnings changed from {$previousWarningCount} to {$warningCount}";
+            }
 
-        if ($criticalCount > 0) {
-            $summaryParts[] = "$criticalCount critical observation(s) and {$warningCount} warning(s) should be reviewed immediately";
-        } elseif ($warningCount > 0) {
-            $summaryParts[] = "$warningCount warning(s) indicate a need for closer monitoring";
+            if ($upcomingAppointments > 0 || $previousUpcomingAppointments > 0) {
+                $summaryParts[] = "upcoming appointments changed from {$previousUpcomingAppointments} to {$upcomingAppointments}";
+            }
+
+            if ($faxCount > 0 || $previousFaxCount > 0) {
+                $summaryParts[] = "recent fax messages changed from {$previousFaxCount} to {$faxCount}";
+            }
+
+            $summary = ucfirst('Compared with the prior period, '.implode(', ', $summaryParts)).'.';
         } else {
-            $summaryParts[] = 'no urgent vital deviations were detected';
-        }
+            $summaryParts = ["$residentName had {$vitalCount} vitals entries during {$window}"];
 
-        if ($avgSleepHours > 0) {
-            $summaryParts[] = "average sleep was {$avgSleepHours} hours with a quality score of {$avgSleepQuality}";
-        }
+            if ($activeMedicationCount > 0) {
+                $summaryParts[] = 'there are '.$activeMedicationCount.' active medication orders and '.$missedMedicationCount.' missed administration(s) in the review window';
+            }
 
-        if ($behaviorCount > 0) {
-            $summaryParts[] = "$behaviorCount behavior chart record(s) were captured and {$providerNotifiedCount} provider alert(s) were triggered";
-        }
+            if ($faxCount > 0) {
+                $summaryParts[] = 'there are '.$faxCount.' recent fax message(s) related to the resident';
+            }
 
-        if ($upcomingAppointments > 0) {
-            $summaryParts[] = "$upcomingAppointments upcoming appointment(s) should be confirmed";
-        }
+            if ($criticalCount > 0) {
+                $summaryParts[] = "$criticalCount critical observation(s) and {$warningCount} warning(s) should be reviewed immediately";
+            } elseif ($warningCount > 0) {
+                $summaryParts[] = "$warningCount warning(s) indicate a need for closer monitoring";
+            } else {
+                $summaryParts[] = 'no urgent vital deviations were detected';
+            }
 
-        $summary = ucfirst(implode(', ', $summaryParts)).'.';
+            if ($avgSleepHours > 0) {
+                $summaryParts[] = "average sleep was {$avgSleepHoursRoundedUp} hours with a quality score of {$avgSleepQualityFormatted}";
+            }
+
+            if ($behaviorCount > 0) {
+                $summaryParts[] = "$behaviorCount behavior chart record(s) were captured and {$providerNotifiedCount} provider alert(s) were triggered";
+            }
+
+            if ($upcomingAppointments > 0) {
+                $summaryParts[] = "$upcomingAppointments upcoming appointment(s) should be confirmed";
+            }
+
+            $summary = ucfirst(implode(', ', $summaryParts)).'.';
+        }
 
         $insights = [];
         if ($missedMedicationCount > 0) {
@@ -216,7 +482,6 @@ class ChartAssistantService
             'recommendations' => $recommendations,
             'resident' => ['name' => $residentName],
             'window' => $window,
-            'prompt' => $prompt ?? 'Summarize the chart trends and recommend next actions.',
         ];
     }
 

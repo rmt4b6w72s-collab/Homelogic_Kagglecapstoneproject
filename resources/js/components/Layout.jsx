@@ -107,7 +107,14 @@ const caregiverNavigation = [
     { name: 'Residents',  icon: Users,           path: '/my-residents', children: null, section: HUB_SECTION, activePathPrefixes: RESIDENT_HUB_PREFIXES, activePathRegex: RESIDENT_LEGACY_DETAIL },
     { name: 'Clinical',   icon: Stethoscope,     path: '/clinical',     children: null, section: HUB_SECTION, activePathPrefixes: CLINICAL_HUB_PREFIXES },
     { name: 'Operations', icon: Wrench,          path: '/operations',   children: null, section: HUB_SECTION, activePathPrefixes: OPERATIONS_HUB_PREFIXES },
-    { name: 'Reports',    icon: FileText,        path: '/reports',      children: null, section: HUB_SECTION },
+    { name: 'AI Assistant', icon: Command, path: '/chart-assistant-test', children: null, section: HUB_SECTION, activePathPrefixes: ['/chart-assistant-test'] },
+    {
+        name: 'Reports',
+        icon: FileText,
+        path: '/reports',
+        section: HUB_SECTION,
+        children: null,
+    },
 ];
 
 /**
@@ -123,7 +130,14 @@ const facilityStaffHubNavigation = [
     { name: 'Organization',       icon: Building2,      path: '/organization',   children: null, section: HUB_SECTION, activePathPrefixes: ORGANIZATION_HUB_PREFIXES },
     { name: 'Team & compliance', icon: UsersRound,      path: '/team',            children: null, section: HUB_SECTION, activePathPrefixes: TEAM_HUB_PREFIXES },
     { name: 'System',             icon: Settings,        path: '/administration', children: null, section: HUB_SECTION, activePathPrefixes: SYSTEM_HUB_PREFIXES },
-    { name: 'Reports',            icon: FileText,        path: '/reports',        children: null, section: HUB_SECTION },
+    { name: 'AI Assistant', icon: Command, path: '/chart-assistant-test', children: null, section: HUB_SECTION, activePathPrefixes: ['/chart-assistant-test'] },
+    {
+        name: 'Reports',
+        icon: FileText,
+        path: '/reports',
+        section: HUB_SECTION,
+        children: null,
+    },
 ];
 
 export default function Layout() {
@@ -411,6 +425,25 @@ export default function Layout() {
                     permissions,
                     isSuperAdmin
                 );
+            }
+
+            // Keep AI Assistant visible even if module/permission filters omit unmapped paths.
+            const hasAiAssistant = items.some((item) => item.path === '/chart-assistant-test');
+            if (!hasAiAssistant) {
+                const aiAssistantItem = {
+                    name: 'AI Assistant',
+                    icon: Command,
+                    path: '/chart-assistant-test',
+                    children: null,
+                    section: HUB_SECTION,
+                    activePathPrefixes: ['/chart-assistant-test'],
+                };
+                const reportsIndex = items.findIndex((item) => item.path === '/reports' || item.name === 'Reports');
+                if (reportsIndex >= 0) {
+                    items.splice(reportsIndex, 0, aiAssistantItem);
+                } else {
+                    items.push(aiAssistantItem);
+                }
             }
         }
 

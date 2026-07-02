@@ -377,8 +377,9 @@ class ComprehensiveSeeder extends Seeder
     {
         $residents = Resident::all();
         $drugs = Drug::all();
+        $adminUserId = $this->getAdminUserId();
 
-        if ($residents->isEmpty() || $drugs->isEmpty()) {
+        if ($residents->isEmpty() || $drugs->isEmpty() || !$adminUserId) {
             $this->command->warn("⚠️ No residents or drugs found, skipping medication creation");
             return;
         }
@@ -407,7 +408,7 @@ class ComprehensiveSeeder extends Seeder
                     'time_2' => '12:00:00',
                     'time_3' => '18:00:00',
                     'time_4' => null,
-                    'created_by' => User::where('role', 'admin')->first()->id,
+                    'created_by' => $adminUserId,
                     'is_active' => true,
                 ];
             }
@@ -430,7 +431,7 @@ class ComprehensiveSeeder extends Seeder
     private function createVitalSigns(): void
     {
         $residents = Resident::all();
-        $users = User::where('role', '!=', 'admin')->get();
+        $users = $this->getOperationalUsers();
 
         if ($residents->isEmpty() || $users->isEmpty()) {
             $this->command->warn("⚠️ No residents or users found, skipping vital signs creation");
@@ -478,7 +479,7 @@ class ComprehensiveSeeder extends Seeder
     private function createAppointments(): void
     {
         $residents = Resident::all();
-        $users = User::where('role', '!=', 'admin')->get();
+        $users = $this->getOperationalUsers();
 
         if ($residents->isEmpty() || $users->isEmpty()) {
             $this->command->warn("⚠️ No residents or users found, skipping appointments creation");
@@ -526,8 +527,9 @@ class ComprehensiveSeeder extends Seeder
     {
         $residents = Resident::all();
         $caregivers = User::where('role', 'caregiver')->get();
+        $adminUserId = $this->getAdminUserId();
 
-        if ($residents->isEmpty() || $caregivers->isEmpty()) {
+        if ($residents->isEmpty() || $caregivers->isEmpty() || !$adminUserId) {
             $this->command->warn("⚠️ No residents or caregivers found, skipping assignments creation");
             return;
         }
@@ -545,7 +547,7 @@ class ComprehensiveSeeder extends Seeder
                     'caregiver_id' => $caregiver->id,
                     'branch_id' => $resident->branch_id,
                     'assigned_at' => now()->subDays(rand(1, 30)),
-                    'assigned_by' => User::where('role', 'admin')->first()->id,
+                    'assigned_by' => $adminUserId,
                     'notes' => 'Regular care assignment - ' . $this->getRandomShift(),
                     'is_active' => true,
                 ];
@@ -569,7 +571,7 @@ class ComprehensiveSeeder extends Seeder
     private function createAssessments(): void
     {
         $residents = Resident::all();
-        $users = User::where('role', '!=', 'admin')->get();
+        $users = $this->getOperationalUsers();
 
         if ($residents->isEmpty() || $users->isEmpty()) {
             $this->command->warn("⚠️ No residents or users found, skipping assessments creation");
@@ -615,9 +617,10 @@ class ComprehensiveSeeder extends Seeder
 
     private function createLeaveRequests(): void
     {
-        $users = User::where('role', '!=', 'admin')->get();
+        $users = $this->getOperationalUsers();
+        $adminUserId = $this->getAdminUserId();
 
-        if ($users->isEmpty()) {
+        if ($users->isEmpty() || !$adminUserId) {
             $this->command->warn("⚠️ No users found, skipping leave requests creation");
             return;
         }
@@ -628,6 +631,11 @@ class ComprehensiveSeeder extends Seeder
         $leaveRequests = [];
         
         foreach ($users as $user) {
+            $branchId = $this->resolveBranchIdForUser($user);
+            if (! $branchId) {
+                continue;
+            }
+
             // Create 1-2 leave requests per user
             $leaveCount = rand(1, 2);
             
@@ -637,17 +645,22 @@ class ComprehensiveSeeder extends Seeder
                 
                 $leaveRequests[] = [
                     'staff_id' => $user->id,
-                    'branch_id' => $user->assigned_branch_id,
+                    'branch_id' => $branchId,
                     'leave_type' => $leaveTypes[array_rand($leaveTypes)],
                     'start_date' => $startDate->toDateString(),
                     'end_date' => $endDate->toDateString(),
                     'reason' => $this->getRandomLeaveReason(),
                     'status' => $statuses[array_rand($statuses)],
-                    'approved_by' => User::where('role', 'admin')->first()->id,
+                    'approved_by' => $adminUserId,
                     'approved_at' => now()->subDays(rand(1, 15)),
                     'approval_notes' => 'Leave request processed',
                 ];
             }
+        }
+
+        if (empty($leaveRequests)) {
+            $this->command->warn("⚠️ No users with valid branch assignment found, skipping leave requests creation");
+            return;
         }
 
         foreach ($leaveRequests as $leaveData) {
@@ -655,6 +668,19 @@ class ComprehensiveSeeder extends Seeder
         }
 
         $this->command->info("✅ Created " . count($leaveRequests) . " leave requests");
+    }
+
+    private function resolveBranchIdForUser(User $user): ?int
+    {
+        if (! empty($user->assigned_branch_id)) {
+            return (int) $user->assigned_branch_id;
+        }
+
+        if (! empty($user->facility_id)) {
+            return Branch::query()->where('facility_id', $user->facility_id)->value('id');
+        }
+
+        return null;
     }
 
     private function createSleepData(): void
@@ -724,7 +750,7 @@ class ComprehensiveSeeder extends Seeder
     private function createMedicationAdministrations(): void
     {
         $medications = Medication::all();
-        $users = User::where('role', '!=', 'admin')->get();
+        $users = $this->getOperationalUsers();
 
         if ($medications->isEmpty() || $users->isEmpty()) {
             $this->command->warn("⚠️ No medications or users found, skipping medication administrations creation");
@@ -757,6 +783,34 @@ class ComprehensiveSeeder extends Seeder
         }
 
         $this->command->info("✅ Created " . count($administrations) . " medication administrations");
+    }
+
+    private function getAdminUserId(): ?int
+    {
+        $admin = User::query()
+            ->whereIn('role', ['admin', 'administrator'])
+            ->where('is_active', true)
+            ->first();
+
+        if (! $admin) {
+            $admin = User::query()->where('is_active', true)->first();
+        }
+
+        return $admin?->id;
+    }
+
+    private function getOperationalUsers()
+    {
+        $users = User::query()
+            ->whereNotIn('role', ['admin', 'administrator'])
+            ->where('is_active', true)
+            ->get();
+
+        if ($users->isEmpty()) {
+            $users = User::query()->where('is_active', true)->get();
+        }
+
+        return $users;
     }
 
     // Helper methods for random data generation
