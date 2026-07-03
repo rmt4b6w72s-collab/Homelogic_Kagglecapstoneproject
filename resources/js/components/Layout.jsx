@@ -104,7 +104,7 @@ const SYSTEM_HUB_PREFIXES = ['/administration'];
  */
 const caregiverNavigation = [
     { name: 'Dashboard',  icon: LayoutDashboard, path: '/dashboard',    children: null, section: 'Home' },
-    { name: 'AI Assistant', icon: Command, path: '/chart-assistant-test', children: null, section: 'Home', activePathPrefixes: ['/chart-assistant-test'], highlight: true },
+    { name: 'AI Assistant', icon: Command, path: '/ai-assistant', children: null, section: 'Home', activePathPrefixes: ['/ai-assistant'], highlight: true },
     { name: 'Residents',  icon: Users,           path: '/my-residents', children: null, section: HUB_SECTION, activePathPrefixes: RESIDENT_HUB_PREFIXES, activePathRegex: RESIDENT_LEGACY_DETAIL },
     { name: 'Clinical',   icon: Stethoscope,     path: '/clinical',     children: null, section: HUB_SECTION, activePathPrefixes: CLINICAL_HUB_PREFIXES },
     { name: 'Operations', icon: Wrench,          path: '/operations',   children: null, section: HUB_SECTION, activePathPrefixes: OPERATIONS_HUB_PREFIXES },
@@ -123,7 +123,7 @@ const caregiverNavigation = [
  */
 const facilityStaffHubNavigation = [
     { name: 'Dashboard',          icon: LayoutDashboard, path: '/dashboard',      children: null, section: 'Home' },
-    { name: 'AI Assistant', icon: Command, path: '/chart-assistant-test', children: null, section: 'Home', activePathPrefixes: ['/chart-assistant-test'], highlight: true },
+    { name: 'AI Assistant', icon: Command, path: '/ai-assistant', children: null, section: 'Home', activePathPrefixes: ['/ai-assistant'], highlight: true },
     { name: 'Residents',          icon: Users,           path: '/my-residents',   children: null, section: HUB_SECTION, activePathPrefixes: RESIDENT_HUB_PREFIXES, activePathRegex: RESIDENT_LEGACY_DETAIL },
     { name: 'Clinical',           icon: Stethoscope,     path: '/clinical',       children: null, section: HUB_SECTION, activePathPrefixes: CLINICAL_HUB_PREFIXES },
     { name: 'Operations',         icon: Wrench,          path: '/operations',     children: null, section: HUB_SECTION, activePathPrefixes: OPERATIONS_HUB_PREFIXES },
@@ -428,15 +428,15 @@ export default function Layout() {
             }
 
             // Keep AI Assistant visible even if module/permission filters omit unmapped paths.
-            const hasAiAssistant = items.some((item) => item.path === '/chart-assistant-test');
+            const hasAiAssistant = items.some((item) => item.path === '/ai-assistant');
             if (!hasAiAssistant) {
                 const aiAssistantItem = {
                     name: 'AI Assistant',
                     icon: Command,
-                    path: '/chart-assistant-test',
+                    path: '/ai-assistant',
                     children: null,
                     section: 'Home',
-                    activePathPrefixes: ['/chart-assistant-test'],
+                    activePathPrefixes: ['/ai-assistant'],
                     highlight: true,
                 };
                 const dashboardIndex = items.findIndex((item) => item.path === '/dashboard' || item.name === 'Dashboard');

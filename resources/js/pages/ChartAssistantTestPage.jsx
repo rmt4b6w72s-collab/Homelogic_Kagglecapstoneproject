@@ -30,9 +30,9 @@ export default function ChartAssistantTestPage() {
     return (
         <div className="max-w-6xl mx-auto p-6 space-y-6">
             <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-                <h1 className="text-2xl font-semibold text-slate-900">Chart Assistant test page</h1>
+                <h1 className="text-2xl font-semibold text-slate-900">AI Assistant</h1>
                 <p className="mt-2 text-sm text-slate-600">
-                    Select a resident to load the assistant panel and test the resident chart analysis flow immediately.
+                    Select a resident to load the assistant panel and review resident chart analysis.
                 </p>
 
                 <div className="mt-4">

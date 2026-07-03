@@ -306,7 +306,7 @@ function App() {
         <Routes>
             {/* Public routes - must be defined before catch-all */}
             <Route path="/" element={<Suspense fallback={<PageLoader />}><Welcome /></Suspense>} />
-            <Route path="/login" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/login" element={<Navigate to="/ai-assistant" replace />} />
             {/* Family portal invite - must be before path="portal" and path="/*" so it isn't caught by protected routes */}
             <Route path="/portal/accept-invite" element={<Suspense fallback={<PageLoader />}><AcceptInvite /></Suspense>} />
             <Route path="/forgot-password" element={<Suspense fallback={<PageLoader />}><ForgotPassword /></Suspense>} />
@@ -349,7 +349,7 @@ function App() {
                 {/* Main Pages */}
                 <Route path="profile" element={<Suspense fallback={<PageLoader />}><Profile /></Suspense>} />
                 <Route path="dashboard" element={<Suspense fallback={<PageLoader />}><DashboardDispatcher /></Suspense>} />
-                <Route path="chart-assistant-test" element={<Suspense fallback={<PageLoader />}><ChartAssistantTestPage /></Suspense>} />
+                <Route path="ai-assistant" element={<Suspense fallback={<PageLoader />}><ChartAssistantTestPage /></Suspense>} />
 
                 {/* ── Residents section (persistent tab bar) ───────────────── */}
                 <Route element={<Suspense fallback={<PageLoader />}><ResidentsSectionLayout /></Suspense>}>
@@ -563,10 +563,10 @@ function App() {
                 <Route path="super-admin/facilities/:id/edit" element={<Suspense fallback={<PageLoader />}><FacilityEdit /></Suspense>} />
                 <Route path="super-admin/permissions" element={<Suspense fallback={<PageLoader />}><Permissions /></Suspense>} />
 
-                <Route path="*" element={<Navigate to="/dashboard" replace />} />
+                <Route path="*" element={<Navigate to="/ai-assistant" replace />} />
             </Route>
             {/* Keep public routes before catch-all to prevent redirects */}
-            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+            <Route path="*" element={<Navigate to="/ai-assistant" replace />} />
         </Routes>
     );
 }
