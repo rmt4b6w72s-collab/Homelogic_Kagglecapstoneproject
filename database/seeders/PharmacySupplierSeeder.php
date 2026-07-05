@@ -23,80 +23,45 @@ class PharmacySupplierSeeder extends Seeder
                 'contact_person' => 'John Smith',
                 'phone' => '(555) 123-4567',
                 'email' => 'orders@abcpharma.com',
-                'address' => '123 Main Street',
-                'city' => 'Seattle',
-                'state' => 'WA',
-                'zip' => '98101',
-                'fax' => '(555) 123-4568',
-                'license_number' => 'PH-12345',
-                'default_discount' => 5.00,
-                'payment_terms_days' => 30,
+                'address' => '123 Main Street, Seattle, WA 98101',
                 'is_active' => true,
-                'notes' => 'Preferred supplier for general medications',
+                'notes' => 'Preferred supplier for general medications. License PH-12345. Fax (555) 123-4568. 5% discount, net 30.',
             ],
             [
                 'name' => 'MedSupply Co.',
                 'contact_person' => 'Sarah Johnson',
                 'phone' => '(555) 234-5678',
                 'email' => 'contact@medsupply.com',
-                'address' => '456 Oak Avenue',
-                'city' => 'Portland',
-                'state' => 'OR',
-                'zip' => '97201',
-                'fax' => '(555) 234-5679',
-                'license_number' => 'PH-23456',
-                'default_discount' => 7.50,
-                'payment_terms_days' => 45,
+                'address' => '456 Oak Avenue, Portland, OR 97201',
                 'is_active' => true,
-                'notes' => 'Specializes in controlled substances',
+                'notes' => 'Specializes in controlled substances. License PH-23456. Fax (555) 234-5679. 7.5% discount, net 45.',
             ],
             [
                 'name' => 'Quality Medical Supply',
                 'contact_person' => 'Michael Brown',
                 'phone' => '(555) 345-6789',
                 'email' => 'info@qualitymed.com',
-                'address' => '789 Pine Road',
-                'city' => 'Vancouver',
-                'state' => 'WA',
-                'zip' => '98660',
-                'fax' => '(555) 345-6790',
-                'license_number' => 'PH-34567',
-                'default_discount' => 3.00,
-                'payment_terms_days' => 30,
+                'address' => '789 Pine Road, Vancouver, WA 98660',
                 'is_active' => true,
-                'notes' => 'Bulk orders available with discounts',
+                'notes' => 'Bulk orders available with discounts. License PH-34567. Fax (555) 345-6790. 3% discount, net 30.',
             ],
             [
                 'name' => 'Express Pharmacy Services',
                 'contact_person' => 'Emily Davis',
                 'phone' => '(555) 456-7890',
                 'email' => 'orders@expresspharm.com',
-                'address' => '321 Elm Street',
-                'city' => 'Spokane',
-                'state' => 'WA',
-                'zip' => '99201',
-                'fax' => '(555) 456-7891',
-                'license_number' => 'PH-45678',
-                'default_discount' => 10.00,
-                'payment_terms_days' => 15,
+                'address' => '321 Elm Street, Spokane, WA 99201',
                 'is_active' => true,
-                'notes' => 'Fast delivery, emergency orders available',
+                'notes' => 'Fast delivery, emergency orders available. License PH-45678. Fax (555) 456-7891. 10% discount, net 15.',
             ],
             [
                 'name' => 'HealthCare Distributors',
                 'contact_person' => 'Robert Wilson',
                 'phone' => '(555) 567-8901',
                 'email' => 'sales@healthcare-dist.com',
-                'address' => '654 Maple Drive',
-                'city' => 'Tacoma',
-                'state' => 'WA',
-                'zip' => '98401',
-                'fax' => '(555) 567-8902',
-                'license_number' => 'PH-56789',
-                'default_discount' => 5.00,
-                'payment_terms_days' => 30,
+                'address' => '654 Maple Drive, Tacoma, WA 98401',
                 'is_active' => false,
-                'notes' => 'Temporarily inactive - contact before ordering',
+                'notes' => 'Temporarily inactive - contact before ordering. License PH-56789. Fax (555) 567-8902. 5% discount, net 30.',
             ],
         ];
 
@@ -108,39 +73,3 @@ class PharmacySupplierSeeder extends Seeder
         }
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
