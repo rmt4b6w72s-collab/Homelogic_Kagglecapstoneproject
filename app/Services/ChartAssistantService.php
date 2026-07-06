@@ -14,6 +14,10 @@ class ChartAssistantService
 
         $apiKey = config('services.anthropic.api_key') ?: env('ANTHROPIC_API_KEY');
         if (empty($apiKey)) {
+            Log::warning('Chart assistant Anthropic fallback triggered', [
+                'message' => 'ANTHROPIC_API_KEY is not configured; skipped the live API call entirely.',
+            ]);
+
             return array_merge($heuristicResult, [
                 'prompt' => $resolvedPrompt,
                 'mode' => 'heuristic',
