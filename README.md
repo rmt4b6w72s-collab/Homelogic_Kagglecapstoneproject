@@ -120,6 +120,8 @@ flowchart TB
 - Node.js 18+ and npm
 - MySQL (or SQLite for a quick local setup)
 
+> **Deploying to production?** See [`DEPLOYMENT.md`](DEPLOYMENT.md) for the Laravel Forge setup this app actually runs on, including environment variables, the deploy script, and gotchas hit and fixed along the way.
+
 ### Setup
 
 ```bash
